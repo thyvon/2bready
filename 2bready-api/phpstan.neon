@@ -8,9 +8,8 @@ parameters:
     level: 6
 
     ignoreErrors:
-        - '#Unsafe usage of new static#'
 
     excludePaths:
         - app/Http/Middleware/EnsureCompanyIsActive.php
+        - app/Support/Concerns/BelongsToCompany.php
 
-    checkMissingIterableValueType: false

@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 
 class ApiResponse
 {
+    /** @param array<string, mixed> $meta */
     public static function success(mixed $data = null, array $meta = [], int $status = 200): JsonResponse
     {
         $payload = ['data' => $data];
@@ -19,6 +20,7 @@ class ApiResponse
         return response()->json($payload, $status);
     }
 
+    /** @param array<string, mixed> $errors */
     public static function error(string $message, array $errors = [], int $status = 422): JsonResponse
     {
         $payload = ['message' => $message];
@@ -30,6 +32,7 @@ class ApiResponse
         return response()->json($payload, $status);
     }
 
+    /** @param array<string, mixed> $meta */
     public static function created(mixed $data = null, array $meta = []): JsonResponse
     {
         return self::success($data, $meta, 201);

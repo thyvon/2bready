@@ -12,7 +12,7 @@ trait HasUlid
     {
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = strtolower(Str::ulid());
+                $model->{$model->getKeyName()} = strtolower((string) Str::ulid());
             }
         });
     }

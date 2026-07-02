@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +25,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(! $this->app->isProduction());
         JsonResource::withoutWrapping();
+
+        // Point email verification links at the frontend (API-only backend has no web routes)
+        VerifyEmail::createUrlUsing(function ($notifiable) {
+            $hash = sha1($notifiable->getEmailForVerification());
+            $expires = now()->addMinutes(60)->unix();
+
+            return rtrim(config('app.frontend_url', config('app.url')), '/').
+                "/verify-email/{$notifiable->getKey()}/{$hash}?expires={$expires}";
+        });
     }
 }
-

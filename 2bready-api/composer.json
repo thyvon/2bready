@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "bacon/bacon-qr-code": "^3.1",
         "dedoc/scramble": "^0.13.30",
         "laravel/framework": "^11.31",
         "laravel/horizon": "^5.47",
@@ -15,6 +16,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.35",
+        "pragmarx/google2fa-laravel": "^3.0",
         "predis/predis": "*",
         "sentry/sentry-laravel": "^4.26",
         "spatie/laravel-data": "^4.23",
