@@ -1,5 +1,9 @@
 import { AxiosError } from 'axios';
-import { ApiError } from '@/types/api.generated';
+
+export type ApiError = {
+  message: string;
+  errors?: Record<string, string[]>;
+};
 
 export function getApiError(error: unknown): ApiError {
   if (error instanceof AxiosError && error.response?.data) {
