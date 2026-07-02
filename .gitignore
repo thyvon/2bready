@@ -1,0 +1,34 @@
+# Laravel (2bready-api)
+2bready-api/.env
+2bready-api/.env.*
+!2bready-api/.env.example
+!2bready-api/.env.ci
+2bready-api/vendor/
+2bready-api/node_modules/
+2bready-api/storage/logs/*
+2bready-api/storage/framework/cache/*
+2bready-api/storage/framework/sessions/*
+2bready-api/storage/framework/views/*
+2bready-api/bootstrap/cache/*
+2bready-api/public/hot
+2bready-api/public/storage
+
+# Next.js (2bready-web)
+2bready-web/.env.local
+2bready-web/.env.*.local
+2bready-web/node_modules/
+2bready-web/.next/
+2bready-web/out/
+
+# DevOps
+devops/nginx/certs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

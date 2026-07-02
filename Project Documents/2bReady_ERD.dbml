@@ -1,0 +1,316 @@
+// 2bReady — Entity Relationship Diagram
+// Paste this into https://dbdiagram.io (or File > Import > DBML) to render it.
+// Matches Section 5.1 of the MVP proposal and 2bReady_ERD.html.
+
+Table companies {
+  id varchar [pk, note: 'ULID']
+  active_subscription_id varchar [ref: > subscriptions.id, note: 'nullable — null until first payment clears']
+  name varchar
+  registration_no varchar
+  status varchar [note: 'enum: active, suspended']
+  compliance_score int
+  default_locale varchar [note: 'enum: en, kh — default language for company-facing comms']
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [note: 'soft delete']
+
+  Note: 'Tenant record. Every table with company_id hangs off this one. Never store package_id directly — always query through active_subscription_id → subscriptions → packages.'
+}
+
+Table users {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id, note: 'nullable for internal admin/auditor accounts']
+  role_id varchar [ref: > roles.id]
+  name varchar
+  email varchar
+  password_hash varchar
+  status varchar
+  locale varchar [note: 'enum: en, kh — UI language preference, default en']
+  two_factor_secret varchar [note: 'encrypted, nullable — mandatory for Admin/Finance/Auditor roles per §4.2']
+  two_factor_recovery_codes varchar [note: 'encrypted json, nullable']
+  two_factor_confirmed_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table roles {
+  id varchar [pk]
+  name varchar
+  guard_name varchar
+}
+
+Table permissions {
+  id varchar [pk]
+  name varchar
+}
+
+Table role_permission {
+  role_id varchar [ref: > roles.id]
+  permission_id varchar [ref: > permissions.id]
+
+  Note: 'Join table — many-to-many between roles and permissions.'
+}
+
+Table packages {
+  id varchar [pk]
+  name json [note: 'translatable: {"en": "...", "kh": "..."}']
+  price int [note: 'integer cents']
+  duration_days int
+  storage_limit int
+  user_limit int
+  features json
+}
+
+Table subscriptions {
+  id varchar [pk, note: 'ULID']
+  company_id varchar [ref: > companies.id]
+  package_id varchar [ref: > packages.id]
+  status varchar [note: 'enum: active, expired, grace_period, cancelled']
+  starts_at timestamp
+  expires_at timestamp
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Billing history — append-only. Never overwrite: on renewal or upgrade, create a new row and mark the old one expired. companies.active_subscription_id points to the current row.'
+}
+
+Table payments {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  package_id varchar [ref: > packages.id]
+  amount int [note: 'integer cents']
+  method varchar
+  status varchar
+  invoice_no varchar
+  paid_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table refunds {
+  id varchar [pk]
+  payment_id varchar [ref: > payments.id]
+  amount int [note: 'integer cents']
+  reason varchar
+  status varchar [note: 'enum: pending, approved, completed, rejected']
+  processed_by varchar [ref: > users.id]
+  processed_at timestamp
+  created_at timestamp
+
+  Note: 'Backs the "Refund & History" sub-feature of Payment Management. One payment can have multiple refund attempts/partial refunds.'
+}
+
+Table journeys {
+  id varchar [pk]
+  company_id varchar [ref: - companies.id, note: '1:1 — one journey per company']
+  current_level varchar
+  status varchar
+  activated_at timestamp
+}
+
+Table journey_levels {
+  id varchar [pk]
+  journey_id varchar [ref: > journeys.id]
+  level varchar [note: 'L1–L4']
+  label json [note: 'translatable: {"en": "Comply", "kh": "..."}']
+  required_score int
+  status varchar
+  unlocked_at timestamp
+}
+
+Table milestones {
+  id varchar [pk]
+  journey_level_id varchar [ref: > journey_levels.id]
+  name json [note: 'translatable: {"en": "...", "kh": "..."}']
+  order int
+  status varchar
+}
+
+Table milestone_completions {
+  id varchar [pk, note: 'ULID']
+  company_id varchar [ref: > companies.id]
+  milestone_id varchar [ref: > milestones.id]
+  completed_at timestamp
+  trigger varchar [note: 'enum: document_upload, audit_approval, admin_signoff']
+  completed_by varchar [ref: > users.id, note: 'nullable — null for system-triggered completions']
+
+  indexes {
+    (company_id, milestone_id) [unique, name: 'uq_milestone_completion']
+  }
+
+  Note: 'Source of truth for journey progress. MilestoneUnlockRuleEngine reads this table — not milestones directly — to decide whether a level can be unlocked.'
+}
+
+Table trust_badges {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  journey_id varchar [ref: > journeys.id]
+  level varchar
+  issued_at timestamp
+  certificate_path varchar
+}
+
+Table document_templates {
+  id varchar [pk]
+  name json [note: 'translatable: {"en": "...", "kh": "..."}']
+  category json [note: 'translatable: {"en": "...", "kh": "..."}']
+  required bool
+  expiry_required bool
+  sample_file_path varchar
+}
+
+Table documents {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  template_id varchar [ref: > document_templates.id]
+  uploaded_by varchar [ref: > users.id]
+  file_path varchar
+  version int
+  status varchar
+  expiry_date date
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [note: 'soft delete']
+}
+
+Table auditors {
+  id varchar [pk]
+  user_id varchar [ref: - users.id, note: '1:1 — an auditor account is a user account']
+  skills json
+  availability bool
+  rating float
+  status varchar [note: 'enum: active, inactive, suspended']
+}
+
+Table audits {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  auditor_id varchar [ref: > auditors.id]
+  status varchar
+  score int
+  feedback varchar
+  submitted_at timestamp
+  reviewed_at timestamp
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [note: 'soft delete']
+}
+
+Table audit_documents {
+  audit_id varchar [ref: > audits.id]
+  document_id varchar [ref: > documents.id]
+
+  Note: 'Join table — many-to-many between audits and documents.'
+}
+
+Table notification_templates {
+  id varchar [pk]
+  type varchar [note: 'matches notifications.type']
+  channel varchar [note: 'email, in_app, sms']
+  subject json [note: 'translatable: {"en": "...", "kh": "..."}']
+  body json [note: 'translatable: {"en": "...", "kh": "..."}']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Admin-configured content behind the "Templates" sub-feature of Notification Management.'
+}
+
+Table notifications {
+  id varchar [pk]
+  user_id varchar [ref: > users.id]
+  template_id varchar [ref: > notification_templates.id]
+  type varchar
+  channel varchar
+  payload json
+  locale varchar [note: 'enum: en, kh — language this notification was rendered in']
+  read_at timestamp
+}
+
+Table support_tickets {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  user_id varchar [ref: > users.id]
+  subject varchar
+  status varchar
+  priority varchar
+}
+
+Table ticket_messages {
+  id varchar [pk]
+  support_ticket_id varchar [ref: > support_tickets.id]
+  user_id varchar [ref: > users.id, note: 'author — company user or support staff']
+  body varchar
+  created_at timestamp
+
+  Note: 'The reply thread. TicketMessage.php is already named in the backend structure — this was the missing table for it.'
+}
+
+Table sops {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  title varchar
+  file_path varchar
+  status varchar
+}
+
+Table sop_signoffs {
+  sop_id varchar [ref: > sops.id]
+  user_id varchar [ref: > users.id]
+  signed_at timestamp
+
+  Note: 'Join table — many-to-many between sops and users.'
+}
+
+Table data_room_links {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id]
+  created_by varchar [ref: > users.id]
+  token varchar [note: 'unique, unguessable — the shareable URL slug']
+  pin_hash varchar [note: 'nullable — optional PIN protection']
+  expires_at timestamp
+  revoked_at timestamp
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Smart Data Room external sharing links (investor/bank access). Each access event is written to audit_logs, not tracked here — avoids a second logging mechanism.'
+}
+
+Table faqs {
+  id varchar [pk]
+  category varchar
+  question json [note: 'translatable: {"en": "...", "kh": "..."}']
+  answer json [note: 'translatable: {"en": "...", "kh": "..."}']
+  order int
+  status varchar [note: 'enum: published, draft']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Platform-wide, not company-scoped. Backs the FAQ / Help Center sub-feature.'
+}
+
+Table audit_logs {
+  id varchar [pk]
+  company_id varchar [ref: > companies.id, note: 'nullable — platform-level actions have no company']
+  user_id varchar [ref: > users.id, note: 'nullable — system-triggered actions have no user']
+  action varchar [note: 'e.g. login, role_change, payment_approved, audit_decision, document_access, data_room_link_created']
+  entity_type varchar [note: 'polymorphic — which table the action targeted']
+  entity_id varchar [note: 'polymorphic — row id in that table']
+  metadata json [note: 'before/after values, context']
+  ip_address varchar
+  created_at timestamp
+
+  Note: 'Append-only per §4.2 — UPDATE/DELETE revoked at the DB role level, not just app-enforced. No updated_at/deleted_at by design.'
+}
+
+Table system_settings {
+  id varchar [pk]
+  key varchar [note: 'unique — e.g. "email.smtp_host", "security.session_timeout_minutes"']
+  value json [note: 'value shape depends on the setting — string, number, or structured config']
+  group varchar [note: 'general, system, email_sms, security — matches the four Settings sub-tabs']
+  updated_by varchar [ref: > users.id]
+  updated_at timestamp
+
+  Note: 'Key-value store backing the admin Settings module (General/System/Email-SMS/Security). Avoids a migration every time a new setting is added. Changes to this table should themselves write to audit_logs (action: "setting_changed").'
+}
+
+
