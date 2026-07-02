@@ -25,8 +25,8 @@ return [
     */
     'score_thresholds' => [
         'critical' => 25,
-        'warning'  => 50,
-        'good'     => 75,
+        'warning' => 50,
+        'good' => 75,
         'excellent' => 90,
     ],
 

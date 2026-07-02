@@ -1,8 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Exceptions\DomainException;
+use App\Http\Middleware\EnsureCompanyIsActive;
+use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\ScopeToCompany;
+use App\Support\ApiResponse;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,36 +26,36 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->api(prepend: [
-            \App\Http\Middleware\ForceJsonResponse::class,
+            ForceJsonResponse::class,
         ]);
 
         $middleware->alias([
-            'company.active' => \App\Http\Middleware\EnsureCompanyIsActive::class,
-            'company.scope'  => \App\Http\Middleware\ScopeToCompany::class,
+            'company.active' => EnsureCompanyIsActive::class,
+            'company.scope' => ScopeToCompany::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (\App\Exceptions\DomainException $e) {
-            return \App\Support\ApiResponse::error($e->getMessage(), [], 422);
+        $exceptions->render(function (DomainException $e) {
+            return ApiResponse::error($e->getMessage(), [], 422);
         });
 
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e) {
-            return \App\Support\ApiResponse::error('Unauthenticated.', [], 401);
+        $exceptions->render(function (AuthenticationException $e) {
+            return ApiResponse::error('Unauthenticated.', [], 401);
         });
 
-        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return \App\Support\ApiResponse::error('This action is unauthorized.', [], 403);
+        $exceptions->render(function (AuthorizationException $e) {
+            return ApiResponse::error('This action is unauthorized.', [], 403);
         });
 
-        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return \App\Support\ApiResponse::error('Resource not found.', [], 404);
+        $exceptions->render(function (ModelNotFoundException $e) {
+            return ApiResponse::error('Resource not found.', [], 404);
         });
 
-        $exceptions->render(function (\Illuminate\Validation\ValidationException $e) {
-            return \App\Support\ApiResponse::error($e->getMessage(), $e->errors(), 422);
+        $exceptions->render(function (ValidationException $e) {
+            return ApiResponse::error($e->getMessage(), $e->errors(), 422);
         });
 
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException $e) {
-            return \App\Support\ApiResponse::error('Too many requests. Please slow down.', [], 429);
+        $exceptions->render(function (TooManyRequestsHttpException $e) {
+            return ApiResponse::error('Too many requests. Please slow down.', [], 429);
         });
     })->create();

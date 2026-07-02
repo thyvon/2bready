@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Support\Concerns;
 
+use App\Domain\Company\Models\Company;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * THE multi-tenancy boundary. Apply to every tenant-scoped model.
@@ -19,7 +21,7 @@ trait BelongsToCompany
     {
         static::addGlobalScope('company', function (Builder $builder) {
             if ($companyId = static::resolveCurrentCompanyId()) {
-                $builder->where($builder->getModel()->getTable() . '.company_id', $companyId);
+                $builder->where($builder->getModel()->getTable().'.company_id', $companyId);
             }
         });
 
@@ -46,8 +48,8 @@ trait BelongsToCompany
         return $user->company_id ?? null;
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
-        return $this->belongsTo(\App\Domain\Company\Models\Company::class);
+        return $this->belongsTo(Company::class);
     }
 }

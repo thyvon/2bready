@@ -1,283 +1,500 @@
-// 2bReady — Entity Relationship Diagram
+// 2bReady — Entity Relationship Diagram v2.1
 // Paste this into https://dbdiagram.io (or File > Import > DBML) to render it.
-// Matches Section 5.1 of the MVP proposal and 2bReady_ERD.html.
+// Matches Section 5.1 of the MVP proposal v2.1 and the backend domain structure.
+//
+// Key decisions recorded here:
+//  • All non-RBAC tables use ULID (char 26) primary keys — sortable, non-guessable.
+//  • RBAC tables (roles, permissions, model_has_roles, etc.) use Spatie bigint IDs.
+//  • Journey templates (levels, milestones) are GLOBAL — not per-company.
+//    Per-company progress is tracked only via milestone_completions.
+//  • audit_logs: append-only. DB role revokes UPDATE/DELETE. No updated_at/deleted_at.
+//  • All money stored as integer cents. No float for currency.
+//  • Translatable content stored as JSON {"en":"...","kh":"..."}.
+//  • documents versioned as new rows (parent_id chain), not column increments.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IDENTITY & RBAC (Spatie laravel-permission — bigint IDs)
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table roles {
+  id bigint [pk, increment]
+  name varchar [note: 'admin | staff | finance | company_owner | company_member | auditor']
+  guard_name varchar [default: 'web']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Spatie permission roles. Internal roles (admin, staff, finance) have company_id=null on users. External roles (company_owner, company_member, auditor) are scoped to a company.'
+}
+
+Table permissions {
+  id bigint [pk, increment]
+  name varchar
+  guard_name varchar [default: 'web']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table role_has_permissions {
+  permission_id bigint [ref: > permissions.id]
+  role_id bigint [ref: > roles.id]
+
+  indexes {
+    (permission_id, role_id) [pk]
+  }
+}
+
+Table model_has_roles {
+  role_id bigint [ref: > roles.id]
+  model_type varchar [note: 'e.g. App\\Domain\\User\\Models\\User']
+  model_id char(26) [note: 'ULID of the model (user id)']
+
+  indexes {
+    (role_id, model_id, model_type) [pk]
+  }
+}
+
+Table model_has_permissions {
+  permission_id bigint [ref: > permissions.id]
+  model_type varchar
+  model_id char(26)
+
+  indexes {
+    (permission_id, model_id, model_type) [pk]
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USERS & AUTH (ULID)
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table users {
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id, note: 'nullable — null for internal admin/staff/finance accounts']
+  name varchar
+  email varchar [unique]
+  password varchar
+  status varchar [note: 'enum: active, inactive, suspended']
+  locale varchar [note: 'enum: en, kh — UI language preference, default en']
+  two_factor_secret text [note: 'encrypted, nullable — mandatory for admin/finance/auditor roles']
+  two_factor_recovery_codes text [note: 'encrypted JSON array, nullable']
+  two_factor_confirmed_at timestamp [note: 'nullable — null until user completes TOTP setup']
+  email_verified_at timestamp [note: 'nullable']
+  remember_token varchar [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    email [unique]
+    company_id
+    status
+  }
+
+  Note: 'Single users table for all roles. Role assignment is via model_has_roles (Spatie). Admins/staff have company_id=null. Auditors also have a row in the auditors profile table.'
+}
+
+Table personal_access_tokens {
+  id bigint [pk, increment]
+  tokenable_type varchar
+  tokenable_id char(26) [note: 'ULID of the owning model']
+  name varchar
+  token varchar(64) [unique]
+  abilities text [note: 'nullable JSON']
+  last_used_at timestamp [note: 'nullable']
+  expires_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Laravel Sanctum tokens. tokenable_id is char(26) to match ULID users.id.'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 Table companies {
-  id varchar [pk, note: 'ULID']
-  active_subscription_id varchar [ref: > subscriptions.id, note: 'nullable — null until first payment clears']
+  id char(26) [pk, note: 'ULID']
+  active_subscription_id char(26) [ref: > subscriptions.id, note: 'nullable — null until first payment clears']
   name varchar
-  registration_no varchar
-  status varchar [note: 'enum: active, suspended']
-  compliance_score int
+  registration_no varchar [note: 'nullable — legal entity registration number']
+  status varchar [note: 'enum: active, suspended, inactive']
+  compliance_score int [note: 'denormalized cache — recomputed by ComplianceScoreService on AuditDecisionMade. Source of truth is milestone_completions + audit outcomes.']
   default_locale varchar [note: 'enum: en, kh — default language for company-facing comms']
   created_at timestamp
   updated_at timestamp
   deleted_at timestamp [note: 'soft delete']
 
+  indexes {
+    active_subscription_id
+    status
+  }
+
   Note: 'Tenant record. Every table with company_id hangs off this one. Never store package_id directly — always query through active_subscription_id → subscriptions → packages.'
 }
 
-Table users {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id, note: 'nullable for internal admin/auditor accounts']
-  role_id varchar [ref: > roles.id]
-  name varchar
-  email varchar
-  password_hash varchar
-  status varchar
-  locale varchar [note: 'enum: en, kh — UI language preference, default en']
-  two_factor_secret varchar [note: 'encrypted, nullable — mandatory for Admin/Finance/Auditor roles per §4.2']
-  two_factor_recovery_codes varchar [note: 'encrypted json, nullable']
-  two_factor_confirmed_at timestamp [note: 'nullable']
-  created_at timestamp
-  updated_at timestamp
-}
-
-Table roles {
-  id varchar [pk]
-  name varchar
-  guard_name varchar
-}
-
-Table permissions {
-  id varchar [pk]
-  name varchar
-}
-
-Table role_permission {
-  role_id varchar [ref: > roles.id]
-  permission_id varchar [ref: > permissions.id]
-
-  Note: 'Join table — many-to-many between roles and permissions.'
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// PACKAGES & BILLING
+// ─────────────────────────────────────────────────────────────────────────────
 
 Table packages {
-  id varchar [pk]
+  id char(26) [pk, note: 'ULID']
   name json [note: 'translatable: {"en": "...", "kh": "..."}']
+  description json [note: 'translatable: {"en": "...", "kh": "..."}']
   price int [note: 'integer cents']
   duration_days int
-  storage_limit int
-  user_limit int
-  features json
+  storage_limit_mb int [note: 'max document storage in MB; 0 = unlimited']
+  user_limit int [note: 'max company_member seats; 0 = unlimited']
+  features json [note: 'feature flag map — e.g. {"data_room": true, "audit_request": true}']
+  status varchar [note: 'enum: active, inactive — retired packages stay for subscription history']
+  created_at timestamp
+  updated_at timestamp
 }
 
 Table subscriptions {
-  id varchar [pk, note: 'ULID']
-  company_id varchar [ref: > companies.id]
-  package_id varchar [ref: > packages.id]
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  package_id char(26) [ref: > packages.id]
   status varchar [note: 'enum: active, expired, grace_period, cancelled']
   starts_at timestamp
   expires_at timestamp
+  cancelled_at timestamp [note: 'nullable']
   created_at timestamp
   updated_at timestamp
 
-  Note: 'Billing history — append-only. Never overwrite: on renewal or upgrade, create a new row and mark the old one expired. companies.active_subscription_id points to the current row.'
+  indexes {
+    company_id
+    status
+    expires_at
+  }
+
+  Note: 'Billing history — append-only. Never overwrite: on renewal or upgrade, create a new row and mark the old one expired. companies.active_subscription_id points to the current active row.'
 }
 
 Table payments {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  package_id varchar [ref: > packages.id]
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  subscription_id char(26) [ref: > subscriptions.id, note: 'which subscription this payment funds']
   amount int [note: 'integer cents']
-  method varchar
-  status varchar
-  invoice_no varchar
-  paid_at timestamp
+  currency varchar [default: 'USD']
+  method varchar [note: 'e.g. aba_pay, wing, bank_transfer']
+  status varchar [note: 'enum: pending, completed, failed, refunded']
+  transaction_id varchar [note: 'nullable — payment gateway reference for reconciliation']
+  invoice_no varchar [unique]
+  receipt_url varchar [note: 'nullable — link to generated PDF receipt']
+  paid_at timestamp [note: 'nullable — set when status becomes completed']
   created_at timestamp
   updated_at timestamp
+
+  indexes {
+    company_id
+    subscription_id
+    transaction_id
+    status
+  }
 }
 
 Table refunds {
-  id varchar [pk]
-  payment_id varchar [ref: > payments.id]
+  id char(26) [pk, note: 'ULID']
+  payment_id char(26) [ref: > payments.id]
   amount int [note: 'integer cents']
   reason varchar
   status varchar [note: 'enum: pending, approved, completed, rejected']
-  processed_by varchar [ref: > users.id]
-  processed_at timestamp
+  processed_by char(26) [ref: > users.id, note: 'nullable — staff user who approved/processed the refund']
+  processed_at timestamp [note: 'nullable']
   created_at timestamp
 
-  Note: 'Backs the "Refund & History" sub-feature of Payment Management. One payment can have multiple refund attempts/partial refunds.'
+  Note: 'One payment can have multiple partial refund rows. Append-only — never update a completed refund row.'
 }
 
-Table journeys {
-  id varchar [pk]
-  company_id varchar [ref: - companies.id, note: '1:1 — one journey per company']
-  current_level varchar
-  status varchar
-  activated_at timestamp
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPLIANCE JOURNEY (global templates + per-company progress)
+// ─────────────────────────────────────────────────────────────────────────────
 
-Table journey_levels {
-  id varchar [pk]
-  journey_id varchar [ref: > journeys.id]
-  level varchar [note: 'L1–L4']
+Table journey_level_templates {
+  id char(26) [pk, note: 'ULID']
+  code varchar [note: 'enum: L1, L2, L3, L4 — stable identifier used in business logic']
   label json [note: 'translatable: {"en": "Comply", "kh": "..."}']
-  required_score int
-  status varchar
-  unlocked_at timestamp
+  description json [note: 'translatable']
+  required_score int [note: 'minimum compliance_score to unlock this level']
+  order int [note: 'display/unlock sequence']
+
+  Note: 'Admin-managed global template. All companies share the same levels. NOT duplicated per company.'
 }
 
-Table milestones {
-  id varchar [pk]
-  journey_level_id varchar [ref: > journey_levels.id]
+Table milestone_templates {
+  id char(26) [pk, note: 'ULID']
+  journey_level_id char(26) [ref: > journey_level_templates.id]
   name json [note: 'translatable: {"en": "...", "kh": "..."}']
-  order int
-  status varchar
+  description json [note: 'translatable']
+  trigger varchar [note: 'enum: document_upload, audit_approval, admin_signoff']
+  order int [note: 'display sequence within the level']
+  is_required bool [default: true]
+
+  Note: 'Admin-managed global template. One row per milestone across all tenants. Completion is tracked in milestone_completions — not here.'
 }
 
 Table milestone_completions {
-  id varchar [pk, note: 'ULID']
-  company_id varchar [ref: > companies.id]
-  milestone_id varchar [ref: > milestones.id]
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  milestone_id char(26) [ref: > milestone_templates.id]
   completed_at timestamp
-  trigger varchar [note: 'enum: document_upload, audit_approval, admin_signoff']
-  completed_by varchar [ref: > users.id, note: 'nullable — null for system-triggered completions']
+  completed_by char(26) [ref: > users.id, note: 'nullable — null for system-triggered completions']
 
   indexes {
     (company_id, milestone_id) [unique, name: 'uq_milestone_completion']
+    company_id
   }
 
-  Note: 'Source of truth for journey progress. MilestoneUnlockRuleEngine reads this table — not milestones directly — to decide whether a level can be unlocked.'
+  Note: 'Source of truth for journey progress. MilestoneUnlockRuleEngine reads this table. One row per company per milestone — the unique index enforces it.'
 }
 
 Table trust_badges {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  journey_id varchar [ref: > journeys.id]
-  level varchar
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  journey_level_id char(26) [ref: > journey_level_templates.id]
+  level varchar [note: 'L1–L4 — denormalized for display; source is journey_level_id']
   issued_at timestamp
-  certificate_path varchar
+  expires_at timestamp [note: 'nullable — if badges have an expiry']
+  certificate_path varchar [note: 'S3-relative path to the issued PDF certificate']
+  issued_by char(26) [ref: > users.id, note: 'nullable — admin who triggered issuance']
+
+  indexes {
+    company_id
+    journey_level_id
+  }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
 Table document_templates {
-  id varchar [pk]
+  id char(26) [pk, note: 'ULID']
   name json [note: 'translatable: {"en": "...", "kh": "..."}']
   category json [note: 'translatable: {"en": "...", "kh": "..."}']
-  required bool
-  expiry_required bool
-  sample_file_path varchar
+  description json [note: 'translatable — guidance on what to upload']
+  required bool [default: true]
+  expiry_required bool [default: false, note: 'if true, expiry_date on documents is mandatory']
+  sample_file_path varchar [note: 'nullable — optional sample/template file in S3']
+  created_at timestamp
+  updated_at timestamp
 }
 
 Table documents {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  template_id varchar [ref: > document_templates.id]
-  uploaded_by varchar [ref: > users.id]
-  file_path varchar
-  version int
-  status varchar
-  expiry_date date
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  template_id char(26) [ref: > document_templates.id]
+  parent_id char(26) [ref: > documents.id, note: 'nullable — null for v1, points to previous version for v2+']
+  uploaded_by char(26) [ref: > users.id]
+  file_path varchar [note: 'S3-relative path — serve only via signed URLs, never direct']
+  original_filename varchar [note: 'original name as uploaded, for display']
+  mime_type varchar
+  file_size_bytes int
+  version int [default: 1, note: 'version number within the parent chain']
+  status varchar [note: 'enum: pending_review, approved, rejected, expired']
+  rejection_reason varchar [note: 'nullable — filled by reviewer when status = rejected']
+  reviewed_by char(26) [ref: > users.id, note: 'nullable — auditor or admin who reviewed']
+  reviewed_at timestamp [note: 'nullable']
+  expiry_date date [note: 'nullable — required when template.expiry_required = true']
   created_at timestamp
   updated_at timestamp
-  deleted_at timestamp [note: 'soft delete']
+  deleted_at timestamp [note: 'soft delete — file in S3 remains until purge job runs']
+
+  indexes {
+    company_id
+    template_id
+    parent_id
+    status
+    expiry_date
+  }
+
+  Note: 'Versioned via parent_id chain. Each new upload creates a new row; parent_id links to the previous version. Query latest version: WHERE parent_id IS NULL OR latest row per template per company.'
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDITORS & AUDITS
+// ─────────────────────────────────────────────────────────────────────────────
+
 Table auditors {
-  id varchar [pk]
-  user_id varchar [ref: - users.id, note: '1:1 — an auditor account is a user account']
-  skills json
-  availability bool
-  rating float
+  id char(26) [pk, note: 'ULID']
+  user_id char(26) [ref: - users.id, note: '1:1 — an auditor is a user with the auditor role plus this profile']
+  skills json [note: 'nullable — array of skill tags e.g. ["ISO27001","GDPR"]']
+  availability bool [default: true]
+  rating float [note: 'nullable — average score from past audits']
   status varchar [note: 'enum: active, inactive, suspended']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Profile extension for auditor users. Auth happens through users — never a parallel auth system.'
 }
 
 Table audits {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  auditor_id varchar [ref: > auditors.id]
-  status varchar
-  score int
-  feedback varchar
-  submitted_at timestamp
-  reviewed_at timestamp
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  auditor_id char(26) [ref: > auditors.id]
+  status varchar [note: 'enum: pending, in_progress, submitted, approved, rejected, cancelled']
+  score int [note: 'nullable — filled when status = approved']
+  feedback text [note: 'nullable — auditor free-text feedback']
+  deadline timestamp [note: 'nullable — SLA due date; used by reminder scheduler']
+  assigned_at timestamp [note: 'nullable — when auditor was assigned']
+  submitted_at timestamp [note: 'nullable — when auditor submitted the review']
+  reviewed_at timestamp [note: 'nullable — when admin approved or rejected']
+  cancelled_at timestamp [note: 'nullable — use instead of soft delete for compliance records']
   created_at timestamp
   updated_at timestamp
-  deleted_at timestamp [note: 'soft delete']
+
+  indexes {
+    company_id
+    auditor_id
+    status
+    deadline
+  }
+
+  Note: 'No deleted_at — audit records are compliance evidence. Use cancelled_at for cancellation. AuditDecisionMade event triggers ComplianceScoreService.'
 }
 
 Table audit_documents {
-  audit_id varchar [ref: > audits.id]
-  document_id varchar [ref: > documents.id]
+  audit_id char(26) [ref: > audits.id]
+  document_id char(26) [ref: > documents.id]
 
-  Note: 'Join table — many-to-many between audits and documents.'
+  indexes {
+    (audit_id, document_id) [pk]
+  }
+
+  Note: 'Documents submitted as evidence for a specific audit.'
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
 Table notification_templates {
-  id varchar [pk]
-  type varchar [note: 'matches notifications.type']
-  channel varchar [note: 'email, in_app, sms']
+  id char(26) [pk, note: 'ULID']
+  type varchar [note: 'unique slug — matches notification class e.g. audit_assigned, document_expiring']
+  channel varchar [note: 'email | in_app | sms']
   subject json [note: 'translatable: {"en": "...", "kh": "..."}']
-  body json [note: 'translatable: {"en": "...", "kh": "..."}']
+  body json [note: 'translatable, supports {{variables}} — rendered at send time']
   created_at timestamp
   updated_at timestamp
 
-  Note: 'Admin-configured content behind the "Templates" sub-feature of Notification Management.'
+  Note: 'Admin-configured content for outbound notifications. Changes to this table should be written to audit_logs (action: setting_changed).'
 }
 
 Table notifications {
-  id varchar [pk]
-  user_id varchar [ref: > users.id]
-  template_id varchar [ref: > notification_templates.id]
-  type varchar
-  channel varchar
-  payload json
+  id char(26) [pk, note: 'ULID']
+  user_id char(26) [ref: > users.id]
+  template_id char(26) [ref: > notification_templates.id, note: 'nullable — some notifications bypass templates (e.g. password reset)']
+  type varchar [note: 'denormalized type slug for fast lookup']
+  channel varchar [note: 'email | in_app | sms']
+  payload json [note: 'rendered subject + body with variables substituted']
   locale varchar [note: 'enum: en, kh — language this notification was rendered in']
-  read_at timestamp
-}
-
-Table support_tickets {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  user_id varchar [ref: > users.id]
-  subject varchar
-  status varchar
-  priority varchar
-}
-
-Table ticket_messages {
-  id varchar [pk]
-  support_ticket_id varchar [ref: > support_tickets.id]
-  user_id varchar [ref: > users.id, note: 'author — company user or support staff']
-  body varchar
+  status varchar [note: 'enum: pending, sent, failed']
+  sent_at timestamp [note: 'nullable']
+  read_at timestamp [note: 'nullable — in_app channel only']
   created_at timestamp
 
-  Note: 'The reply thread. TicketMessage.php is already named in the backend structure — this was the missing table for it.'
+  indexes {
+    user_id
+    status
+    read_at
+  }
 }
 
-Table sops {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  title varchar
-  file_path varchar
-  status varchar
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPPORT
+// ─────────────────────────────────────────────────────────────────────────────
 
-Table sop_signoffs {
-  sop_id varchar [ref: > sops.id]
-  user_id varchar [ref: > users.id]
-  signed_at timestamp
-
-  Note: 'Join table — many-to-many between sops and users.'
-}
-
-Table data_room_links {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id]
-  created_by varchar [ref: > users.id]
-  token varchar [note: 'unique, unguessable — the shareable URL slug']
-  pin_hash varchar [note: 'nullable — optional PIN protection']
-  expires_at timestamp
-  revoked_at timestamp
+Table support_tickets {
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  user_id char(26) [ref: > users.id, note: 'company user who opened the ticket']
+  assigned_to char(26) [ref: > users.id, note: 'nullable — internal staff assigned to resolve it']
+  subject varchar
+  status varchar [note: 'enum: open, in_progress, waiting_on_customer, resolved, closed']
+  priority varchar [note: 'enum: low, medium, high, urgent']
+  closed_at timestamp [note: 'nullable']
   created_at timestamp
   updated_at timestamp
 
-  Note: 'Smart Data Room external sharing links (investor/bank access). Each access event is written to audit_logs, not tracked here — avoids a second logging mechanism.'
+  indexes {
+    company_id
+    assigned_to
+    status
+  }
 }
 
+Table ticket_messages {
+  id char(26) [pk, note: 'ULID']
+  support_ticket_id char(26) [ref: > support_tickets.id]
+  user_id char(26) [ref: > users.id, note: 'author — company user or internal staff']
+  body text
+  created_at timestamp
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SOPs
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table sops {
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  title json [note: 'translatable: {"en": "...", "kh": "..."}']
+  description json [note: 'translatable, nullable']
+  file_path varchar [note: 'S3-relative path']
+  version int [default: 1]
+  status varchar [note: 'enum: draft, published, archived']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    company_id
+    status
+  }
+}
+
+Table sop_signoffs {
+  id char(26) [pk, note: 'ULID']
+  sop_id char(26) [ref: > sops.id]
+  company_id char(26) [ref: > companies.id, note: 'denormalized for BelongsToCompany scope']
+  user_id char(26) [ref: > users.id]
+  signed_at timestamp
+
+  indexes {
+    (sop_id, user_id) [unique, name: 'uq_sop_signoff']
+    company_id
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMART DATA ROOM
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table data_room_links {
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  created_by char(26) [ref: > users.id]
+  token varchar(64) [unique, note: 'random URL-safe slug — this IS the secret, never log it']
+  pin_hash varchar [note: 'nullable — bcrypt hash of optional PIN; never store PIN plaintext']
+  expires_at timestamp [note: 'nullable — null = no expiry']
+  revoked_at timestamp [note: 'nullable — explicit revocation before expiry']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    company_id
+    token [unique]
+    expires_at
+  }
+
+  Note: 'External investor/bank access links. Each view event is written to audit_logs (action: data_room_accessed) — not tracked in this table to avoid a second log mechanism.'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTENT & SETTINGS
+// ─────────────────────────────────────────────────────────────────────────────
+
 Table faqs {
-  id varchar [pk]
-  category varchar
+  id char(26) [pk, note: 'ULID']
+  category json [note: 'translatable: {"en": "...", "kh": "..."} — admin-facing category label']
   question json [note: 'translatable: {"en": "...", "kh": "..."}']
   answer json [note: 'translatable: {"en": "...", "kh": "..."}']
   order int
@@ -285,32 +502,49 @@ Table faqs {
   created_at timestamp
   updated_at timestamp
 
-  Note: 'Platform-wide, not company-scoped. Backs the FAQ / Help Center sub-feature.'
-}
-
-Table audit_logs {
-  id varchar [pk]
-  company_id varchar [ref: > companies.id, note: 'nullable — platform-level actions have no company']
-  user_id varchar [ref: > users.id, note: 'nullable — system-triggered actions have no user']
-  action varchar [note: 'e.g. login, role_change, payment_approved, audit_decision, document_access, data_room_link_created']
-  entity_type varchar [note: 'polymorphic — which table the action targeted']
-  entity_id varchar [note: 'polymorphic — row id in that table']
-  metadata json [note: 'before/after values, context']
-  ip_address varchar
-  created_at timestamp
-
-  Note: 'Append-only per §4.2 — UPDATE/DELETE revoked at the DB role level, not just app-enforced. No updated_at/deleted_at by design.'
+  Note: 'Platform-wide FAQ content. Not company-scoped. Backs the Help Center.'
 }
 
 Table system_settings {
-  id varchar [pk]
-  key varchar [note: 'unique — e.g. "email.smtp_host", "security.session_timeout_minutes"']
+  id char(26) [pk, note: 'ULID']
+  key varchar [unique, note: 'e.g. "email.smtp_host", "security.session_timeout_minutes"']
   value json [note: 'value shape depends on the setting — string, number, or structured config']
-  group varchar [note: 'general, system, email_sms, security — matches the four Settings sub-tabs']
-  updated_by varchar [ref: > users.id]
+  group varchar [note: 'general | system | email_sms | security — matches the four Settings sub-tabs']
+  updated_by char(26) [ref: > users.id, note: 'nullable — null for system-seeded defaults']
   updated_at timestamp
+  created_at timestamp
 
-  Note: 'Key-value store backing the admin Settings module (General/System/Email-SMS/Security). Avoids a migration every time a new setting is added. Changes to this table should themselves write to audit_logs (action: "setting_changed").'
+  indexes {
+    key [unique]
+    group
+  }
+
+  Note: 'Key-value store for admin Settings module. Changes write to audit_logs (action: setting_changed).'
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG (append-only, DB-enforced immutability)
+// ─────────────────────────────────────────────────────────────────────────────
 
+Table audit_logs {
+  id char(26) [pk, note: 'ULID — sortable, so ORDER BY id = chronological']
+  company_id char(26) [ref: > companies.id, note: 'nullable — platform-level actions (login, setting_changed) have no company']
+  user_id char(26) [ref: > users.id, note: 'nullable — system/cron-triggered actions have no user']
+  action varchar [note: 'e.g. login, logout, role_changed, payment_approved, audit_decision, document_accessed, data_room_accessed, setting_changed']
+  entity_type varchar [note: 'polymorphic — which table the action targeted (e.g. App\\Domain\\Audit\\Models\\Audit)']
+  entity_id char(26) [note: 'polymorphic — ULID of the targeted row']
+  metadata json [note: 'before/after values, extra context. Shape varies by action.']
+  ip_address varchar(45) [note: 'nullable — IPv4 or IPv6']
+  user_agent varchar [note: 'nullable — browser/client string for security forensics']
+  created_at timestamp
+
+  indexes {
+    company_id
+    user_id
+    action
+    entity_type
+    created_at
+  }
+
+  Note: 'Append-only per §4.2. No updated_at, no deleted_at. PostgreSQL DB role has UPDATE/DELETE revoked on this table — immutability is enforced at DB layer, not just app layer. All writes go through RecordAuditLogAction via event listeners only.'
+}
