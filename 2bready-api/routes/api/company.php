@@ -2,4 +2,13 @@
 
 declare(strict_types=1);
 
-// TODO: add routes
+use App\Http\Controllers\Api\V1\CompanyController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('companies')->group(function () {
+    Route::get('/', [CompanyController::class, 'index']);
+    Route::post('/', [CompanyController::class, 'store']);
+    Route::get('{company}', [CompanyController::class, 'show']);
+    Route::patch('{company}', [CompanyController::class, 'update']);
+    Route::delete('{company}', [CompanyController::class, 'destroy']);
+});
