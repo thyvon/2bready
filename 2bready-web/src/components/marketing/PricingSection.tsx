@@ -1,0 +1,108 @@
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import CheckIcon from '@mui/icons-material/Check';
+import DescriptionIcon from '@mui/icons-material/Description';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import SettingsIcon from '@mui/icons-material/Settings';
+import PublicIcon from '@mui/icons-material/Public';
+import Reveal from './Reveal';
+import SpotlightCard from './SpotlightCard';
+import GlowButton from './GlowButton';
+import { pricingContent, pricingPlans } from './content';
+
+const PLAN_ICONS = {
+  compliance: DescriptionIcon,
+  product: AutoAwesomeIcon,
+  operational: SettingsIcon,
+  global: PublicIcon,
+};
+
+export default function PricingSection() {
+  return (
+    <Box component="section" id="pricing" sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 14 }, maxWidth: 1440, mx: 'auto' }}>
+      <Reveal>
+        <Typography variant="h2" component="h2" sx={{ textAlign: 'center', fontSize: { xs: '1.75rem', md: '2.25rem' }, mb: 1.5 }}>
+          {pricingContent.title}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 640, mx: 'auto', mb: 7 }}>
+          {pricingContent.subtitle}
+        </Typography>
+      </Reveal>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 3,
+          alignItems: 'stretch',
+        }}
+      >
+        {pricingPlans.map((plan, i) => {
+          const Icon = PLAN_ICONS[plan.icon];
+          return (
+            <Reveal key={plan.level} delay={i * 0.08}>
+              <Box sx={{ height: '100%' }}>
+                <SpotlightCard>
+                  <Chip
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Icon sx={{ fontSize: 16 }} />
+                        {`${plan.level}: ${plan.name}`}
+                      </Box>
+                    }
+                    size="small"
+                    sx={{
+                      alignSelf: 'flex-start',
+                      mb: 2,
+                      fontWeight: 600,
+                      height: 'auto',
+                      py: 0.5,
+                      bgcolor: 'color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent)',
+                      color: 'primary.main',
+                      '& .MuiChip-label': { display: 'flex', alignItems: 'center', px: 0.5 },
+                    }}
+                  />
+
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                    {plan.badge}
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                    <Typography variant="h3" component="span" sx={{ fontWeight: 800 }}>
+                      {plan.price}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {plan.period}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: plan.price === '$0' ? 'success.main' : 'text.secondary', fontWeight: 600, mb: 3, display: 'block' }}
+                  >
+                    {plan.fee}
+                  </Typography>
+
+                  <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mb: 4 }}>
+                    {plan.features.map((feature) => (
+                      <Box component="li" key={feature} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.25 }}>
+                        <CheckIcon sx={{ fontSize: 16, color: 'success.main', mt: 0.25 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {feature}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  <GlowButton href={plan.cta.href} size="medium">
+                    {plan.cta.label}
+                  </GlowButton>
+                </SpotlightCard>
+              </Box>
+            </Reveal>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}

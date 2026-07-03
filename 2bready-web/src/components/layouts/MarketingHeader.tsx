@@ -13,8 +13,8 @@ import BrandMark from '@/components/marketing/BrandMark';
 
 const NAV_LINKS = [
   { label: 'Features', href: '/#features' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'About', href: '/about' },
+  { label: 'Pricing', href: '/#pricing' },
+  { label: 'About', href: '/#about' },
 ];
 
 export default function MarketingHeader() {

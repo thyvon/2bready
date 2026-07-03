@@ -8,6 +8,8 @@ interface SpotlightCardProps {
   className?: string;
 }
 
+const MAX_TILT = 8; // degrees
+
 export default function SpotlightCard({ children, className }: SpotlightCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -15,14 +17,31 @@ export default function SpotlightCard({ children, className }: SpotlightCardProp
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    el.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
-    el.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    el.style.setProperty('--spot-x', `${x}px`);
+    el.style.setProperty('--spot-y', `${y}px`);
+
+    const px = x / rect.width;   // 0 → 1
+    const py = y / rect.height;  // 0 → 1
+    const rotateY = (px - 0.5) * MAX_TILT * 2;
+    const rotateX = (0.5 - py) * MAX_TILT * 2;
+
+    el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+  };
+
+  const handleMouseLeave = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)';
   };
 
   return (
     <Box
       ref={ref}
       onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className={className}
       sx={{
         position: 'relative',
@@ -32,9 +51,10 @@ export default function SpotlightCard({ children, className }: SpotlightCardProp
         bgcolor: 'background.paper',
         p: 4,
         overflow: 'hidden',
-        transition: 'transform 0.3s ease, border-color 0.3s ease',
+        transformStyle: 'preserve-3d',
+        willChange: 'transform',
+        transition: 'transform 0.15s ease-out, border-color 0.3s ease',
         '&:hover': {
-          transform: 'translateY(-4px)',
           borderColor: 'var(--2br-border-hover)',
         },
         '&::before': {
@@ -50,7 +70,7 @@ export default function SpotlightCard({ children, className }: SpotlightCardProp
         '&:hover::before': { opacity: 1 },
       }}
     >
-      <Box sx={{ position: 'relative', zIndex: 1 }}>{children}</Box>
+      <Box sx={{ position: 'relative', zIndex: 1, transform: 'translateZ(20px)' }}>{children}</Box>
     </Box>
   );
 }
