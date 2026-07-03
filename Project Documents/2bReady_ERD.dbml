@@ -1,12 +1,21 @@
-// 2bReady — Entity Relationship Diagram v2.1
+// 2bReady — Entity Relationship Diagram v3.0
 // Paste this into https://dbdiagram.io (or File > Import > DBML) to render it.
-// Matches Section 5.1 of the MVP proposal v2.1 and the backend domain structure.
+// Matches Section 5 of the MVP proposal v3.0 and the backend domain structure.
+// Field lists are intentionally not exhaustive yet — structure/relationships first,
+// remaining columns to be filled in per-sprint as each domain is actually built.
 //
 // Key decisions recorded here:
 //  • All non-RBAC tables use ULID (char 26) primary keys — sortable, non-guessable.
 //  • RBAC tables (roles, permissions, model_has_roles, etc.) use Spatie bigint IDs.
-//  • Journey templates (levels, milestones) are GLOBAL — not per-company.
+//  • Journey templates are keyed by (country_code, industry_code) via journey_templates —
+//    Cambodia F&B is the first template, not a hardcoded default (v3 §1.8).
 //    Per-company progress is tracked only via milestone_completions.
+//  • TP Partners (audit firms) are a second, parallel tenant type to companies —
+//    never unified into one polymorphic table (v3 §5.2). users.tp_partner_id is the
+//    boundary FK, mirroring users.company_id.
+//  • Only the EXISTENCE of a v3 mechanic is confirmed from the blueprint — specific
+//    numbers (thresholds, %, timeouts) are placeholders and live in platform_settings,
+//    never hardcoded (v3 §0.5). Seed defaults are noted per field below.
 //  • audit_logs: append-only. DB role revokes UPDATE/DELETE. No updated_at/deleted_at.
 //  • All money stored as integer cents. No float for currency.
 //  • Translatable content stored as JSON {"en":"...","kh":"..."}.
@@ -18,12 +27,12 @@
 
 Table roles {
   id bigint [pk, increment]
-  name varchar [note: 'admin | staff | finance | company_owner | company_member | auditor']
+  name varchar [note: 'admin | staff | finance | company_owner | company_member | auditor | tp_admin | tp_staff']
   guard_name varchar [default: 'web']
   created_at timestamp
   updated_at timestamp
 
-  Note: 'Spatie permission roles. Internal roles (admin, staff, finance) have company_id=null on users. External roles (company_owner, company_member, auditor) are scoped to a company.'
+  Note: 'Spatie permission roles. Internal roles (admin, staff, finance) have company_id=null and tp_partner_id=null on users. Company roles (company_owner, company_member) are scoped via company_id. TP roles (auditor, tp_admin, tp_staff — v3, Sprint 7) are scoped via tp_partner_id instead.'
 }
 
 Table permissions {
@@ -69,7 +78,8 @@ Table model_has_permissions {
 
 Table users {
   id char(26) [pk, note: 'ULID']
-  company_id char(26) [ref: > companies.id, note: 'nullable — null for internal admin/staff/finance accounts']
+  company_id char(26) [ref: > companies.id, note: 'nullable — null for internal admin/staff/finance and for TP-partner users']
+  tp_partner_id char(26) [ref: > tp_partners.id, note: 'nullable — v3: set for auditor/tp_admin/tp_staff users belonging to a TP partner firm. Mirrors company_id; a user has at most one of the two set, never both.']
   name varchar
   email varchar [unique]
   password varchar
@@ -86,10 +96,11 @@ Table users {
   indexes {
     email [unique]
     company_id
+    tp_partner_id
     status
   }
 
-  Note: 'Single users table for all roles. Role assignment is via model_has_roles (Spatie). Admins/staff have company_id=null. Auditors also have a row in the auditors profile table.'
+  Note: 'Single users table for all roles. Role assignment is via model_has_roles (Spatie). Admins/staff have company_id=null and tp_partner_id=null. Auditors also have a row in the auditors profile table. tp_partner_id is the BelongsToTpPartner boundary (v3 §1.5), structurally parallel to company_id/BelongsToCompany.'
 }
 
 Table personal_access_tokens {
@@ -115,7 +126,13 @@ Table companies {
   id char(26) [pk, note: 'ULID']
   active_subscription_id char(26) [ref: > subscriptions.id, note: 'nullable — null until first payment clears']
   name varchar
+  name_kh varchar [note: 'nullable — v3: bilingual company name, Khmer']
   registration_no varchar [note: 'nullable — legal entity registration number']
+  employee_count int [note: 'nullable — v3: drives EmployeeCountBypassRule against platform_settings.bypass_employee_threshold (seed 8), not a hardcoded number']
+  bypass_flags json [note: 'v3: JSONB map of milestone/document bypasses this company qualifies for, e.g. {"company_internal_rules": true}']
+  industry_code varchar [note: 'v3: generic ISIC-style code — never assume Cambodia F&B as a hardcoded default. Keys journey_templates lookup with country_code.']
+  country_code varchar [note: 'v3: generic country code, seed default "KH". Keys journey_templates lookup with industry_code.']
+  vault_pin_hash varchar [note: 'nullable — v3: bcrypt hash of Vault PIN (configurable length, seed 6 digits). Never store plaintext, never return in API responses.']
   status varchar [note: 'enum: active, suspended, inactive']
   compliance_score int [note: 'denormalized cache — recomputed by ComplianceScoreService on AuditDecisionMade. Source of truth is milestone_completions + audit outcomes.']
   default_locale varchar [note: 'enum: en, kh — default language for company-facing comms']
@@ -126,9 +143,10 @@ Table companies {
   indexes {
     active_subscription_id
     status
+    (country_code, industry_code)
   }
 
-  Note: 'Tenant record. Every table with company_id hangs off this one. Never store package_id directly — always query through active_subscription_id → subscriptions → packages.'
+  Note: 'Tenant record. Every table with company_id hangs off this one. Never store package_id directly — always query through active_subscription_id → subscriptions → packages. industry_code/country_code exist from Sprint 2 onward per v3 §7 item 4, even though journey_templates itself lands in Sprint 4.'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -206,18 +224,39 @@ Table refunds {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COMPLIANCE JOURNEY (global templates + per-company progress)
+// COMPLIANCE JOURNEY (templates keyed by country/industry + per-company progress)
 // ─────────────────────────────────────────────────────────────────────────────
+
+Table journey_templates {
+  id char(26) [pk, note: 'ULID']
+  country_code varchar [note: 'v3: e.g. "KH" — generic, not hardcoded']
+  industry_code varchar [note: 'v3: e.g. "F&B" — generic, not hardcoded']
+  name json [note: 'translatable: {"en": "...", "kh": "..."}']
+  status varchar [note: 'enum: active, draft, archived']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (country_code, industry_code) [unique]
+  }
+
+  Note: 'v3 §1.8 — the single most important new table for multi-vertical scaling. Parent of journey_level_templates. Cambodia F&B ships as the first row at MVP; a second country/industry is a data-entry exercise against this table, not a schema change.'
+}
 
 Table journey_level_templates {
   id char(26) [pk, note: 'ULID']
+  journey_template_id char(26) [ref: > journey_templates.id, note: 'v3: which taxonomy this level belongs to']
   code varchar [note: 'enum: L1, L2, L3, L4 — stable identifier used in business logic']
   label json [note: 'translatable: {"en": "Comply", "kh": "..."}']
   description json [note: 'translatable']
   required_score int [note: 'minimum compliance_score to unlock this level']
   order int [note: 'display/unlock sequence']
 
-  Note: 'Admin-managed global template. All companies share the same levels. NOT duplicated per company.'
+  indexes {
+    journey_template_id
+  }
+
+  Note: 'Admin-managed template, scoped to a journey_template (country/industry pair) as of v3. All companies sharing that template share the same levels. NOT duplicated per company.'
 }
 
 Table milestone_templates {
@@ -251,16 +290,38 @@ Table trust_badges {
   id char(26) [pk, note: 'ULID']
   company_id char(26) [ref: > companies.id]
   journey_level_id char(26) [ref: > journey_level_templates.id]
+  audit_id char(26) [ref: > audits.id, note: 'v3: the audit whose approval issued this badge']
   level varchar [note: 'L1–L4 — denormalized for display; source is journey_level_id']
   issued_at timestamp
   expires_at timestamp [note: 'nullable — if badges have an expiry']
-  certificate_path varchar [note: 'S3-relative path to the issued PDF certificate']
+  qr_payload_url varchar [note: 'v3: nullable — set once GenerateCertificateJob completes']
   issued_by char(26) [ref: > users.id, note: 'nullable — admin who triggered issuance']
 
   indexes {
     company_id
     journey_level_id
+    audit_id
   }
+
+  Note: 'v3: PDF/QR generation detail moved to certificates (extends this table rather than overloading it — see certificates below).'
+}
+
+Table certificates {
+  id char(26) [pk, note: 'ULID']
+  trust_badge_id char(26) [ref: > trust_badges.id]
+  audit_id char(26) [ref: > audits.id, note: 'QR/verify URL (verify.2bready.asia/{auditId}) uses this ID directly, per confirmed blueprint behavior — v3 §1.6']
+  pdf_url varchar
+  qr_payload_url varchar
+  master_verifier_stamp json [note: 'v3: denormalized snapshot of the platform_settings verifier text at issuance time, so historical certificates do not change if the setting is later updated']
+  issued_at timestamp
+  created_at timestamp
+
+  indexes {
+    trust_badge_id
+    audit_id
+  }
+
+  Note: 'v3 §5.1 — new domain (PublicVerification). Public verify page reads only this table via a narrow, denormalized lookup by audit_id — never other documents or internal data belonging to the underlying company (v3 §1.5).'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -361,6 +422,67 @@ Table audit_documents {
   }
 
   Note: 'Documents submitted as evidence for a specific audit.'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TP MARKETPLACE (v3 — new domain, Sprint 7)
+// tp_partners is a second, parallel tenant type — structurally like companies,
+// never unified into one polymorphic table (v3 §5.2).
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table tp_partners {
+  id char(26) [pk, note: 'ULID']
+  name json [note: 'translatable: {"en": "...", "kh": "..."} — the firm/vendor org, e.g. "ADMIT Global Audit"']
+  expertise json [note: 'array of tags, e.g. ["food_cert","finance_audit","internal_control"]']
+  pricing json [note: 'JSONB: {"L2": cents, "L3": cents, "L4": cents} — each firm sets its own via the TP portal (Sprint 7); mockup $199-$999 range is seed data only, not a business rule (v3 §0.5)']
+  discount_percent int [note: 'nullable — admin/firm-editable "special price" discount; mockup 20% is a seed default, never hardcoded (v3 §0.5)']
+  rating float [note: 'nullable — aggregate from tp_ratings']
+  review_count int [default: 0]
+  status varchar [note: 'enum: pending, active, suspended — ApproveTpPartnerAction is an explicit admin gate, no self-activation (v3 §4.2)']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    status
+  }
+
+  Note: 'v3 §0.3/§5.1. ADMIT Global Audit is seeded as tp_partners row #1 — hireable/rateable like any other firm. Separately, every certificate always stamps a fixed platform_settings "master_verification_authority" value regardless of which firm was hired (v3 §0.3) — that stamp is NOT derived from this table or from tp_hires.'
+}
+
+Table tp_hires {
+  id char(26) [pk, note: 'ULID']
+  company_id char(26) [ref: > companies.id]
+  tp_partner_id char(26) [ref: > tp_partners.id]
+  journey_level varchar [note: 'enum: L2, L3, L4 — which pricing tier was hired']
+  price_agreed_cents int
+  status varchar [note: 'enum: active, completed, cancelled']
+  hired_at timestamp
+  completed_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    company_id
+    tp_partner_id
+    status
+  }
+
+  Note: 'Records the marketplace transaction — the two-sided hire mechanic that v2 did not scope (v3 §0.2).'
+}
+
+Table tp_ratings {
+  id char(26) [pk, note: 'ULID']
+  tp_hire_id char(26) [ref: > tp_hires.id]
+  company_id char(26) [ref: > companies.id]
+  tp_partner_id char(26) [ref: > tp_partners.id]
+  rating int [note: '1-5']
+  review_text text [note: 'nullable']
+  created_at timestamp
+
+  indexes {
+    tp_hire_id [unique, note: 'one rating per completed hire']
+    tp_partner_id
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -489,6 +611,69 @@ Table data_room_links {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VAULT & LEGAL CONSENT (v3 — new domains, Sprint 5)
+// Thin, isolated domains layered on top of Document/DataRoom, not modifying them
+// (v3 §3.6 risk mitigation).
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table vault_unlock_logs {
+  id char(26) [pk, note: 'ULID']
+  user_id char(26) [ref: > users.id, note: 'admin or finance role — finance is further restricted to self-uploaded sensitive documents only (v3 §5.1)']
+  company_id char(26) [ref: > companies.id]
+  unlocked_at timestamp
+  locked_at timestamp [note: 'nullable']
+  lock_reason varchar [note: 'enum: timeout, manual, role_change']
+  created_at timestamp
+
+  indexes {
+    company_id
+    user_id
+  }
+
+  Note: 'companies.vault_pin_hash is the PIN store; this table is the access-trail. Auto-lock timeout is enforced server-side (VaultAutoLockService reading platform_settings.vault_auto_lock_minutes, seed 3) — never trusted to a frontend timer (v3 §4.2).'
+}
+
+Table legal_consents {
+  id char(26) [pk, note: 'ULID']
+  user_id char(26) [ref: > users.id]
+  company_id char(26) [ref: > companies.id]
+  pathway_level varchar [note: 'enum: P3, P4 — the restricted document tiers this consent gates']
+  consent_text_version varchar [note: 'versioned, so old consents remain valid evidence even after terms are updated']
+  accepted_at timestamp
+  ip_address varchar(45) [note: 'nullable']
+
+  indexes {
+    company_id
+    user_id
+  }
+
+  Note: 'v3 §4.2: every consent also writes an audit_logs entry (action: legal_consent_recorded) so it can be proven even if this row were ever disputed.'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEADS (v3 — new domain, Sprint 3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+Table leads {
+  id char(26) [pk, note: 'ULID']
+  name varchar
+  email varchar
+  company_name varchar [note: 'nullable']
+  phone varchar [note: 'nullable']
+  message text [note: 'nullable']
+  requested_tier varchar [note: 'nullable']
+  source varchar [note: 'enum: paywall, marketing_site, referral, admit_unit_upsell — the last is the ADMIT Unit consulting CTA auto-triggered after platform_settings.admit_unit_trigger_days (seed 14) at 0% pathway progress, distinct from a TP marketplace hire (v3 §0.3)']
+  status varchar [note: 'enum: new, contacted, converted, closed']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    source
+    status
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CONTENT & SETTINGS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -505,11 +690,11 @@ Table faqs {
   Note: 'Platform-wide FAQ content. Not company-scoped. Backs the Help Center.'
 }
 
-Table system_settings {
+Table platform_settings {
   id char(26) [pk, note: 'ULID']
-  key varchar [unique, note: 'e.g. "email.smtp_host", "security.session_timeout_minutes"']
+  key varchar [unique, note: 'e.g. "email.smtp_host", "security.session_timeout_minutes", plus v3 business-tunable keys below']
   value json [note: 'value shape depends on the setting — string, number, or structured config']
-  group varchar [note: 'general | system | email_sms | security — matches the four Settings sub-tabs']
+  group varchar [note: 'general | system | email_sms | security | compliance | marketplace — matches the admin Settings sub-tabs']
   updated_by char(26) [ref: > users.id, note: 'nullable — null for system-seeded defaults']
   updated_at timestamp
   created_at timestamp
@@ -519,7 +704,7 @@ Table system_settings {
     group
   }
 
-  Note: 'Key-value store for admin Settings module. Changes write to audit_logs (action: setting_changed).'
+  Note: 'Key-value store for admin Settings module. Changes write to audit_logs (action: setting_changed). v3 §0.5 rule: every business-tunable value the blueprint hardcoded as mockup data lives here, never as a literal in code — e.g. bypass_employee_threshold (seed 8), vault_auto_lock_minutes (seed 3), vault_pin_length (seed 6), data_room_link_expiry_days (seed 7), admit_unit_trigger_days (seed 14), master_verification_authority (the "Verified by / Approved by / Powered by" certificate stamp text, v3 §0.3).'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
