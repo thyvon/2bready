@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>2bReady – Digital Trust Engine for ASEAN Enterprises</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* ── Brand Theme Variables ── */
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #334155;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --brand-blue: #005A9C; 
+            --brand-green: #37A16A; 
+            --brand-blue-hover: #004375;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+        }
+
+        /* ── Reset & Base ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-main); 
+            color: var(--text-main); 
+            line-height: 1.6; 
+            scroll-behavior: smooth; 
+            overflow-x: hidden;
+        }
+        
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-shield {
+            0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px rgba(0,90,156,0)); }
+            50% { transform: scale(1.15); opacity: 0.9; filter: drop-shadow(0 0 8px rgba(0,90,156,0.4)); }
+            100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px rgba(0,90,156,0)); }
+        }
+        @keyframes spin-globe {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes shine {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-up { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* Icon Animation Classes */
+        .anim-shield { display: inline-block; animation: pulse-shield 2.5s infinite ease-in-out; font-style: normal; margin-right: 8px; }
+        .anim-globe { display: inline-block; animation: spin-globe 15s infinite linear; font-style: normal; margin-right: 6px; }
+        .anim-spin-slow { display: inline-block; animation: spin-slow 8s infinite linear; font-style: normal; margin-right: 6px; }
+        .anim-float { display: inline-block; animation: float 3s infinite ease-in-out; font-style: normal; margin-right: 6px; }
+        .anim-shine { display: inline-block; animation: shine 2s infinite ease-in-out; font-style: normal; margin-right: 6px; }
+
+        /* ── Toasts & Buttons ── */
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; gap: 12px; }
+        .toast { background: white; border-radius: 12px; padding: 14px 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border-left: 3px solid; animation: fadeUp 0.25s ease; max-width: 360px; font-size: 0.85rem; }
+        .toast.success { border-left-color: var(--brand-green); }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
+        .toast.info { border-left-color: var(--brand-blue); }
+
+        .btn { display: inline-block; padding: 14px 32px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s ease; font-size: 0.95rem; text-decoration: none; }
+        .btn-primary { background: var(--brand-blue); color: white; }
+        .btn-primary:hover { background: var(--brand-blue-hover); transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0, 90, 156, 0.25); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dark); }
+        .btn-outline:hover { background: var(--bg-card); border-color: var(--brand-blue); color: var(--brand-blue); }
+
+        /* ── Header ── */
+        .landing-header { background: rgba(248, 250, 252, 0.9); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); padding: 0 5%; }
+        .header-container { max-width: 1200px; margin: 0 auto; height: 80px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 800; font-size: 1.8rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; text-decoration: none;}
+        .logo .blue-text { color: var(--brand-blue); }
+        .logo .green-text { color: var(--brand-green); }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--brand-blue); }
+
+        /* ── Hero Section ── */
+        .hero { text-align: center; padding: 120px 24px 80px; max-width: 950px; margin: 0 auto; }
+        .tagline { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 800; margin-bottom: 24px; }
+        .tagline span:nth-child(1) { color: var(--brand-blue); }
+        .tagline span:nth-child(2) { color: var(--text-muted); }
+        .tagline span:nth-child(3) { color: var(--brand-green); }
+        .hero h1 { font-size: 3.8rem; font-weight: 800; color: var(--text-dark); line-height: 1.15; margin-bottom: 24px; letter-spacing: -1.5px; }
+        .hero p { font-size: 1.15rem; color: var(--text-muted); margin: 0 auto 40px; max-width: 750px; }
+        .hero-tags { display: flex; justify-content: center; gap: 16px; margin-bottom: 40px; font-size: 0.9rem; font-weight: 600; flex-wrap: wrap;}
+        .hero-tags span { background: var(--bg-card); border: 1px solid var(--border); padding: 10px 24px; border-radius: 40px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.03);}
+        .tag-blue { color: var(--brand-blue); }
+        .tag-green { color: var(--brand-green); }
+
+        /* ── Layout & Typography ── */
+        .section-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin: 100px 0 20px; color: var(--text-dark); letter-spacing: -0.5px; }
+        .section-subtitle { text-align: center; color: var(--text-muted); max-width: 700px; margin: 0 auto 60px; font-size: 1.1rem; }
+        .grid-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* ── Client Portfolio ── */
+        .portfolio-section { text-align: center; padding: 20px 24px 60px; max-width: 1000px; margin: 0 auto; border-bottom: 1px solid var(--border-light); }
+        .portfolio-title { text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 32px; font-weight: 700; }
+        .portfolio-logos { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; align-items: center; opacity: 0.6; transition: opacity 0.3s ease; filter: grayscale(100%); }
+        .portfolio-logos:hover { opacity: 1; filter: grayscale(0%); }
+        .portfolio-logos h3, .portfolio-logos h4 { font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; margin: 0;}
+        .portfolio-logos h3 { font-size: 1.3rem; }
+        .portfolio-logos h4 { font-size: 1.1rem; color: var(--text-muted); }
+
+        /* ── Stakeholders Section ── */
+        .stakeholder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 80px; }
+        .stakeholder-card { background: var(--bg-card); border-left: 4px solid var(--brand-blue); padding: 32px 24px; border-radius: 0 16px 16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .stakeholder-card h4 { font-size: 1.2rem; color: var(--text-dark); margin-bottom: 12px; font-weight: 700; }
+        .stakeholder-card p { font-size: 0.9rem; color: var(--text-muted); }
+
+        /* ── Professional Services / Pathways ── */
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .service-card { background: var(--bg-card); border-radius: 16px; padding: 40px 32px; border: 1px solid var(--border); display: flex; flex-direction: column; transition: all 0.3s ease; }
+        .service-card:hover { border-color: var(--brand-blue); box-shadow: 0 10px 30px rgba(0, 90, 156, 0.05); transform: translateY(-4px); }
+        
+        .badge-label { font-size: 0.9rem; font-weight: 700; color: var(--brand-blue); background: #f0f7ff; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; margin-bottom: 20px; letter-spacing: 0.5px; }
+        .service-card:nth-child(4) .badge-label { color: var(--text-dark); background: #f1f5f9; }
+        
+        .features { list-style: none; margin-bottom: 32px; flex-grow: 1; }
+        .features li { margin: 14px 0; font-size: 0.95rem; color: var(--text-muted); display: flex; align-items: flex-start; }
+        .features li::before { content: '✓'; margin-right: 12px; color: var(--brand-green); font-weight: 800; }
+
+        /* ── Ecosystem Section ── */
+        .ecosystem-section { background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 100px 0; margin-top: 100px; position: relative; overflow: hidden; }
+        .eco-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 32px; position: relative; z-index: 2; }
+        .eco-card { background: var(--bg-main); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; text-align: center; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; }
+        .eco-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(0,90,156,0.04), rgba(55,161,106,0.04)); opacity: 0; transition: opacity 0.4s ease; z-index: 0; }
+        .eco-card:hover::before { opacity: 1; }
+        .eco-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.08); border-color: var(--brand-blue); }
+        .eco-icon { font-size: 3rem; margin-bottom: 20px; display: inline-block; transition: transform 0.4s ease; position: relative; z-index: 1;}
+        .eco-card:hover .eco-icon { transform: scale(1.15) rotate(5deg); }
+        .eco-card h4 { color: var(--text-dark); font-size: 1.3rem; margin-bottom: 12px; font-weight: 800; position: relative; z-index: 1;}
+        .eco-card p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; position: relative; z-index: 1;}
+
+        /* ── Footer ── */
+        .footer { background: var(--text-dark); padding: 80px 5% 40px; }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; }
+        .footer h4 { font-size: 1rem; margin-bottom: 20px; color: #ffffff; font-weight: 700;}
+        .footer p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 12px; }
+        .copyright { text-align: center; padding-top: 40px; margin-top: 60px; border-top: 1px solid #1e293b; font-size: 0.85rem; color: #64748b; }
+
+        @media (max-width: 768px) { 
+            .hero h1 { font-size: 2.8rem; } 
+            .nav-links { display: none; } 
+            .hero-tags { flex-direction: column; align-items: center; }
+        }
+
+        /* ── Portal Styles (Functional) ── */
+        .portal-container { display: none; }
+        .portal-header { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid var(--border); padding: 0 24px; }
+        .portal-header-content { max-width: 1400px; margin: 0 auto; height: 72px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .portal-main { max-width: 1400px; margin: 90px auto 30px; padding: 0 24px; }
+        .portal-card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 28px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+        .pathway-category { margin-bottom: 28px; border-left: 2px solid var(--border); padding-left: 20px; }
+        .doc-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+        .vault-badge { padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; background: #fee2e2; color: #b91c1c; font-weight: 600;}
+        .vault-unlocked { background: #dcfce7; color: var(--brand-green); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 16px; max-width: 500px; width: 90%; padding: 32px; }
+        .filter-chip { background: var(--border-light); padding: 6px 16px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; border: 1px solid transparent; color: var(--text-muted);}
+        .filter-chip.active { border-color: var(--brand-blue); background: white; color: var(--brand-blue); font-weight: 600;}
+    </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- LANDING PAGE -->
+<div id="landingView">
+    <header class="landing-header">
+        <div class="header-container">
+            <a href="#" class="logo">
+                <svg width="26" height="30" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 28L1.5 23.5V6L12 1.5L22.5 6V23.5L12 28Z" fill="var(--brand-blue)"/>
+                    <path d="M7 14L10.5 17.5L17 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="blue-text">2b</span><span class="green-text">Ready</span>
+            </a>
+            <div class="nav-links">
+                <a href="#stakeholders">Built For</a>
+                <a href="#services">Pathways</a>
+                <a href="#ecosystem">Ecosystem</a>
+                <button class="btn btn-outline" id="existingPurchaseBtn" style="padding: 10px 24px;">Client Portal</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero animate-up">
+        <div class="hero-tags">
+            <span class="tag-blue"><i class="anim-shield">🛡️</i> Bank-Grade Security</span>
+            <span class="tag-green"><i class="anim-globe">🌍</i> ADMIT Global Ecosystem</span>
+        </div>
+        
+        <div class="tagline">
+            <span>Comply.</span> <span>Scale.</span> <span>Lead.</span>
+        </div>
+
+        <h1>The Digital Trust Engine for ASEAN.</h1>
+        <p>A unified compliance and growth platform establishing verifiable trust between ambitious SMEs, Institutional Banks, Governments, and Global Investors.</p>
+        
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <a href="#services" class="btn btn-primary">Explore Pathways</a>
+            <a href="#stakeholders" class="btn btn-outline">Why 2bReady?</a>
+        </div>
+    </section>
+
+    <!-- Client & Partner Portfolio -->
+    <section class="portfolio-section animate-up delay-1">
+        <p class="portfolio-title">Trusted by Leading ASEAN Enterprises & Ecosystem Partners</p>
+        
+        <!-- SME Clients -->
+        <div class="portfolio-logos" style="margin-bottom: 32px;">
+            <h3>Mekong Agri<span style="color: var(--brand-green);">.</span></h3>
+            <h3>VATTANAC <span style="font-weight: 400; font-size: 1.1rem;">Mfg</span></h3>
+            <h3><span style="color: var(--brand-blue);">TonleSap</span> Exports</h3>
+            <h3>Sovann<span style="color: var(--brand-green);">Mera</span></h3>
+        </div>
+        
+        <!-- Institutional & Development Partners -->
+        <div class="portfolio-logos" style="opacity: 0.7; font-size: 1.1rem; gap: 32px;">
+            <h4>USAID Harvest III</h4>
+            <h4>CAPRED Connect</h4>
+            <h4>GIZ-EU CAPSAFE</h4>
+            <h4>CamFEIA</h4>
+        </div>
+    </section>
+
+    <!-- Trusted By & Built For (Stakeholders) -->
+    <div id="stakeholders" class="grid-container animate-up delay-1">
+        <h2 class="section-title" style="margin-top: 60px;">Built for the Entire Ecosystem</h2>
+        <p class="section-subtitle">Our hybrid evaluation model—combining AI extraction with ADMIT UNIT expert verification—delivers uncompromising reliability across all sectors.</p>
+        
+        <div class="stakeholder-grid">
+            <div class="stakeholder-card">
+                <h4>🏢 ASEAN SMEs</h4>
+                <p>Achieve audit-readiness, eliminate administrative bottlenecks, and scale operations securely without the overhead of massive compliance teams.</p>
+            </div>
+            <div class="stakeholder-card" style="border-color: var(--brand-green);">
+                <h4>🏦 Institutional Banks</h4>
+                <p>Access verified, bank-grade financial data (P3/P4) through a Zero-Trust secure vault, accelerating loan approvals and mitigating risk.</p>
+            </div>
+            <div class="stakeholder-card">
+                <h4>🏛️ Governments & NGOs</h4>
+                <p>Ensure strict adherence to local laws (GDT, MoC, MLVT) while supporting development partners in mapping SME growth and ESG sustainability.</p>
+            </div>
+            <div class="stakeholder-card" style="border-color: var(--text-dark);">
+                <h4>💰 Global Investors</h4>
+                <p>Utilize the GoInvestors Smart Data Room to review certified pre-money valuations, independent audits, and institutional-grade financial forecasts.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Services / Pathways (WITH PRICING REINTEGRATED) -->
+    <div id="services" class="grid-container animate-up delay-2">
+        <h2 class="section-title">Standardized Service Pathways</h2>
+        <p class="section-subtitle">Progress your enterprise from foundational legal licensing to institutional investment readiness. Each level is verified and permanently anchored in your digital trust profile.</p>
+        
+        <div class="services-grid">
+            <!-- Level 1 -->
+            <div class="service-card">
+                <div class="badge-label"><i class="anim-float">📋</i> L1: Compliance Readiness</div>
+                
+                <div class="price" style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; letter-spacing: -1px;">$0 <small style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ yr</small></div>
+                <div class="verification-fee" style="font-size: 0.85rem; font-weight: 700; color: var(--brand-green); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">No verification fee</div>
+                
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500;">Authoritative legal and tax structuring.</p>
+                <ul class="features">
+                    <li>Verified MoC & Tax Registration</li>
+                    <li>ISIC Code & Articles of Incorporation</li>
+                    <li>Automated Patent & VAT Tracking</li>
+                    <li>NSSF & MLVT Labor Compliance</li>
+                </ul>
+                <button class="btn btn-outline" style="text-align: center; width: 100%;" onclick="purchasePathway(1)">Start Free</button>
+            </div>
+
+            <!-- Level 2 -->
+            <div class="service-card">
+                <div class="badge-label"><i class="anim-shine">✨</i> L2: Product Excellence</div>
+                
+                <div class="price" style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; letter-spacing: -1px;">$49 <small style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ yr</small></div>
+                <div class="verification-fee" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">+ $25 manual audit fee</div>
+                
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500;">Certified quality and safety standards.</p>
+                <ul class="features">
+                    <li>Lab CoA & Nutrition Verification</li>
+                    <li>GHP / GMP / HACCP Monitoring</li>
+                    <li>Trademark & GS1 Barcoding</li>
+                    <li>Cost of Goods Sold (COGS) Analysis</li>
+                </ul>
+                <button class="btn btn-primary" style="text-align: center; width: 100%;" onclick="purchasePathway(2)">Select Pathway</button>
+            </div>
+
+            <!-- Level 3 -->
+            <div class="service-card">
+                <div class="badge-label"><i class="anim-spin-slow">⚙️</i> L3: Operational Excellence</div>
+                
+                <div class="price" style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; letter-spacing: -1px;">$99 <small style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ yr</small></div>
+                <div class="verification-fee" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">+ $75 manual audit fee</div>
+                
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500;">Robust managerial and financial workflows.</p>
+                <ul class="features">
+                    <li>Master SOP Architecture</li>
+                    <li>CAS-Compliant Chart of Accounts</li>
+                    <li>Financial Statement Preparation</li>
+                    <li>Bank Reconciliation & Tax Matching</li>
+                </ul>
+                <button class="btn btn-primary" style="text-align: center; width: 100%;" onclick="purchasePathway(3)">Select Pathway</button>
+            </div>
+
+            <!-- Level 4 -->
+            <div class="service-card">
+                <div class="badge-label"><i class="anim-globe">🌍</i> L4: Global Readiness</div>
+                
+                <div class="price" style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; letter-spacing: -1px;">$199 <small style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ yr</small></div>
+                <div class="verification-fee" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">+ $150 manual audit fee</div>
+                
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500;">Institutional investment & export grade.</p>
+                <ul class="features">
+                    <li>Certified Independent Financial Audits</li>
+                    <li>Financial Forecasting & Valuation</li>
+                    <li>Global Standards (ISO, BRC, Halal)</li>
+                    <li>Export Logistics & ESG Reporting</li>
+                </ul>
+                <button class="btn btn-primary" style="text-align: center; width: 100%;" onclick="purchasePathway(4)">Select Pathway</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ecosystem Section -->
+    <div id="ecosystem" class="ecosystem-section">
+        <div class="grid-container">
+            <h2 class="section-title animate-up" style="margin-top: 0;">The ADMIT Global Ecosystem</h2>
+            <p class="section-subtitle animate-up delay-1">Achieving verified badges on the 2bReady platform directly unlocks premium connectivity to our specialized growth and commerce subsidiaries.</p>
+            
+            <div class="eco-grid">
+                <div class="eco-card animate-up delay-1">
+                    <div class="eco-icon" style="color: var(--brand-blue);">🎓</div>
+                    <h4>ADMIT Unit</h4>
+                    <p>Expert consulting, Master SOP drafting, and dedicated compliance auditing to establish your operational foundation.</p>
+                </div>
+                <div class="eco-card animate-up delay-2">
+                    <div class="eco-icon" style="color: var(--brand-blue);">🛒</div>
+                    <h4>2bgro Commerce</h4>
+                    <p>Access exclusive B2B commerce channels utilizing your verified L2 Product Excellence badge.</p>
+                </div>
+                <div class="eco-card animate-up delay-3">
+                    <div class="eco-icon" style="color: var(--brand-green);">🚢</div>
+                    <h4>2bShip Logistics</h4>
+                    <p>Premium cross-border fulfillment and supply chain solutions unlocked by achieving L3 Operational Excellence.</p>
+                </div>
+                <div class="eco-card animate-up delay-4">
+                    <div class="eco-icon" style="color: var(--brand-green);">💰</div>
+                    <h4>GoInvestors</h4>
+                    <p>Secure, institutional deal-room access reserved exclusively for L4 Global enterprises seeking capital injection.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <div class="logo" style="margin-bottom: 16px;">
+                    <svg width="24" height="28" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 28L1.5 23.5V6L12 1.5L22.5 6V23.5L12 28Z" fill="var(--brand-blue)"/>
+                        <path d="M7 14L10.5 17.5L17 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="blue-text">2b</span><span class="green-text">Ready</span>
+                </div>
+                <p>The Digital Trust Engine</p>
+                <p>Powered by ADMIT Global</p>
+            </div>
+            <div>
+                <h4>Professional Services</h4>
+                <p>Compliance Auditing</p>
+                <p>SOP Development</p>
+                <p>Financial Structuring</p>
+                <p>Export Readiness</p>
+            </div>
+            <div>
+                <h4>Headquarters</h4>
+                <p>Phnom Penh, Cambodia</p>
+                <p>support@2bready.asia</p>
+                <p>+855 23 999 888</p>
+            </div>
+            <div>
+                <h4>Legal & Security</h4>
+                <p>Zero-Trust Policy</p>
+                <p>Data Protection (AWS)</p>
+                <p>Terms of Service</p>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2026 2bReady – ADMIT Global Co., Ltd. Empowering ASEAN SMEs to Comply. Scale. Lead.
+        </div>
+    </footer>
+</div>
+
+<!-- PORTAL VIEW (Hidden initially, logic maintained from MVP 6.3.3.1) -->
+<div id="portalView" class="portal-container"></div>
+
+<script>
+    // ---------- LANDING INTERACTIONS ----------
+    function showToast(msg, type) {
+        let c = document.getElementById('toastContainer');
+        let t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerText = msg;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+    }
+
+    function purchasePathway(tier) {
+        let names = ["", "Compliance Readiness", "Product Excellence", "Operational Excellence", "Global Readiness"];
+        showToast(`✓ Processing pathway: L${tier} ${names[tier]}... Redirecting to Digital Trust Portal...`, "success");
+        localStorage.setItem("2bReady_purchasedTier", tier);
+        localStorage.setItem("subscriptionPaid", "true");
+        setTimeout(() => {
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('portalView').style.display = 'block';
+            loadPortal();
+        }, 1500);
+    }
+
+    function checkExisting() {
+        let tier = localStorage.getItem("2bReady_purchasedTier");
+        if (tier && parseInt(tier) >= 1) {
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('portalView').style.display = 'block';
+            loadPortal();
+        } else {
+            showToast("No active pathway found. Please select a pathway.", "error");
+        }
+    }
+    document.getElementById('existingPurchaseBtn')?.addEventListener('click', checkExisting);
+
+    // ---------- PORTAL LOGIC (Maintaining Strict RBAC, Expiry & Cron Simulation) ----------
+    let purchasedTier = parseInt(localStorage.getItem("2bReady_purchasedTier") || "0");
+    let docStatuses = {}, vaultUnlocked = false, autoLockTimer = null, currentRole = "admin", auditTrail = [], leads = [], currentFilter = "all";
+    let employeeCount = 42; // Default for logic
+    let subscriptionPaid = false;
+
+    const pathwaysData = {
+        p1: { name: "L1: Compliance Readiness", level: "L1", categories: [
+            { name: "Corporate & Legal", docs: ["Business Registration Certificate", "Articles of Incorporation", "ISIC Mapping Worksheet", "Name Reservation Paper"] },
+            { name: "Tax Compliance", docs: ["Annual Patent Tax", "VAT Certificate", "Bank Account Connection"] },
+            { name: "Labor & NSSF", docs: ["Enterprise Declaration", "NSSF Membership Card", "Internal Regulations"] },
+            { name: "ID & Site Assets", docs: ["Shareholder ID/Passport", "Lease Agreement", "Digital Stamp & Signature"] }
+        ] },
+        p2: { name: "L2: Product Excellence", level: "L2", categories: [
+            { name: "Food Science", docs: ["Lab Certificate of Analysis", "Nutrition Facts Table", "Shelf-life Report"] },
+            { name: "Regulatory & IP", docs: ["Product Registration", "GHP/GMP/HACCP", "Trademark Certificate", "GS1 Membership"] },
+            { name: "Packaging & Value", docs: ["Label Artwork", "COGS Analysis"] }
+        ] },
+        p3: { name: "L3: Operational Excellence", level: "L3", categories: [
+            { name: "SOP & Structure", docs: ["Org Chart", "Job Descriptions", "Master SOP Inventory", "SOP Production"] },
+            { name: "Audit-Ready Finance", docs: ["Chart of Accounts", "Balance Sheet", "Income Statement", "Cash Flow", "Bank Reconciliation", "Tax Return"] }
+        ] },
+        p4: { name: "L4: Global Readiness", level: "L4", categories: [
+            { name: "Financial & Credit", docs: ["CBC Credit Report"] },
+            { name: "Export Readiness", docs: ["Gap Analysis Report", "ISO/BRC/Halal Certificate", "Incoterms Strategy"] }
+        ] }
+    };
+
+    const EXPIRY_DOCS = {
+        "Annual Patent Tax": 6,
+        "Lab Certificate of Analysis": 6,
+        "CBC Credit Report": 3,
+        "GHP/GMP/HACCP": 12,
+        "ISO/BRC/Halal Certificate": 12
+    };
+
+    function isPathwayAccessible(pid) {
+        if (pid === 'p1') return true;
+        if (pid === 'p2') return purchasedTier >= 2;
+        if (pid === 'p3') return purchasedTier >= 3;
+        if (pid === 'p4') return purchasedTier >= 4;
+        return false;
+    }
+
+    function isRestrictedPathway(pid) { return pid === 'p3' || pid === 'p4'; }
+
+    function getDocKey(pid, cat, doc) { return `${pid}_${cat}_${doc}`; }
+    function saveToLocal() { localStorage.setItem("2bReady_vault_full", JSON.stringify({docStatuses, auditTrail, leads, subscriptionPaid})); }
+    
+    function addAudit(action, details) { 
+        auditTrail.unshift({time:new Date().toLocaleString(), role:currentRole, action, details}); 
+        if(auditTrail.length>50) auditTrail.pop(); 
+        saveToLocal(); renderAudit(); 
+    }
+    
+    function renderAudit() { 
+        let div=document.getElementById('auditLogList'); 
+        if(div) div.innerHTML=auditTrail.map(a=>`<div style="padding:6px 0; border-bottom:1px solid var(--border-light); font-family:monospace; color:var(--text-muted); font-size:0.8rem;">${a.time} [${a.role}] ${a.action}: ${a.details}</div>`).join('')||"No events recorded."; 
+    }
+    
+    function showToastPortal(msg,type){ 
+        let c=document.getElementById('toastContainer'); let t=document.createElement('div'); t.className=`toast ${type}`; t.innerText=msg; c.appendChild(t); setTimeout(()=>t.remove(),4000); 
+    }
+    window.showToast = showToastPortal;
+
+    function initDocs() {
+        for(let [pid, p] of Object.entries(pathwaysData)) {
+            for(let cat of p.categories) for(let doc of cat.docs) { 
+                let k = getDocKey(pid, cat.name, doc); 
+                if(!docStatuses[k]) docStatuses[k] = { status:"pending", fileUrl:null, uploadedAt:null, expiryDate:null, rejectedReason:null, uploadedBy:null }; 
+            }
+        }
+        // Employee logic check < 8
+        let irKey = getDocKey('p1', 'Labor & NSSF', 'Internal Regulations');
+        if(employeeCount < 8 && docStatuses[irKey] && docStatuses[irKey].status !== 'verified') {
+            docStatuses[irKey].status = 'verified'; docStatuses[irKey].uploadedBy = 'system';
+        }
+        saveToLocal();
+    }
+
+    function resetAutoLock() {
+        if (autoLockTimer) clearTimeout(autoLockTimer);
+        if (vaultUnlocked && (currentRole === 'admin' || currentRole === 'finance')) {
+            autoLockTimer = setTimeout(() => {
+                if (vaultUnlocked) {
+                    vaultUnlocked = false;
+                    document.getElementById('vaultBadge').innerHTML = '🔒 LOCKED';
+                    document.getElementById('vaultBadge').className = 'vault-badge';
+                    showToastPortal('Vault auto-locked due to inactivity (3min)', 'warning');
+                    addAudit('AUTO_LOCK', 'Vault locked idle');
+                    renderDataCenterPortal();
+                }
+            }, 180000); // 3 minutes strictly enforced
+        }
+    }
+
+    function renderPortalHTML() {
+        document.getElementById('portalView').innerHTML = `
+            <div class="portal-header"><div class="portal-header-content"><div style="font-weight:700; color:var(--brand-blue); display:flex; align-items:center; gap:8px;"><svg width="18" height="21" viewBox="0 0 24 28" fill="none"><path d="M12 28L1.5 23.5V6L12 1.5L22.5 6V23.5L12 28Z" fill="var(--brand-blue)"/></svg> 2bReady Portal <span style="font-weight:400; color:var(--text-muted); margin-left:8px;">| Client Dashboard</span></div>
+            <div style="display:flex; align-items:center; gap:12px;"><select id="roleSelect" style="padding:8px; border-radius:6px; border:1px solid var(--border); font-family:Inter; font-size:0.85rem;"><option value="admin">Admin (CEO)</option><option value="finance">SME Finance</option><option value="staff">SME Staff</option></select>
+            <span id="levelBadgeDisplay" style="font-size:0.85rem; background:var(--border-light); padding:6px 14px; border-radius:6px; font-weight:600; color:var(--brand-blue);">L1 Readiness</span>
+            <button id="unlockVaultBtnPortal" class="btn btn-outline" style="padding:8px 16px; font-size:0.85rem;">Unlock Vault</button>
+            <button id="exportCsvPortalBtn" class="btn btn-outline" style="padding:8px 16px; font-size:0.85rem;">Export CSV</button></div></div></div>
+            
+            <main class="portal-main">
+            <div class="grid-3">
+                <div class="portal-card"><h4 style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">Tax Health</h4><strong style="color:var(--brand-green); font-size:1.1rem;">Good standing</strong></div>
+                <div class="portal-card"><h4 style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">Audit-Ready Score</h4><div style="background:var(--border-light); height:8px; border-radius:10px;"><div id="auditReadyBar" style="width:0%; height:8px; background:var(--brand-blue); border-radius:10px; transition:width 0.4s ease;"></div></div></div>
+                <div class="portal-card"><h4 style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">Vault Status</h4><span id="vaultBadge" class="vault-badge">LOCKED</span></div>
+            </div>
+            
+            <div class="portal-card" id="pathwaysContainerPortal"></div>
+            
+            <div class="portal-card">
+                <h2 style="font-size:1.4rem; margin-bottom:20px; color:var(--text-dark);">Data Center & Compliance Ledger</h2>
+                <div style="display:flex; gap:8px; margin-bottom:20px;">
+                    <input type="text" id="searchDocsPortal" placeholder="Search documents..." style="padding:10px 16px; border:1px solid var(--border); border-radius:6px; flex-grow:1; font-family:Inter;">
+                    <div class="filter-chip active" data-filter="all">All</div>
+                    <div class="filter-chip" data-filter="verified">Verified</div>
+                    <div class="filter-chip" data-filter="expired">Expired</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table"><thead><tr><th>Document</th><th>Pathway</th><th>Status</th><th>Expiry</th><th>Action</th></tr></thead><tbody id="dataCenterBodyPortal"></tbody></table>
+                </div>
+                <div style="margin-top:40px;">
+                    <h3 style="font-size:1.1rem; margin-bottom:12px; color:var(--text-dark);">System Audit Trail</h3>
+                    <div id="auditLogList" style="height:180px; overflow-y:auto; background:var(--bg-main); padding:16px; border-radius:8px; border:1px solid var(--border);"></div>
+                </div>
+            </div>
+            
+            <div class="portal-card" id="adminPanelPortal" style="display:none; border-color:var(--brand-blue);">
+                <h3 style="color:var(--brand-blue); margin-bottom:16px;">Admin Verification Queue</h3>
+                <div id="pendingDocsListPortal"></div>
+            </div>
+            
+            <div id="smartDataRoomPortal" style="display:none;" class="portal-card">
+                <h3 style="color:var(--brand-green); margin-bottom:8px;">GoInvestors Smart Data Room</h3>
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">Generate a time-limited secure link to share P3/P4 financial documentation with institutional investors and banks.</p>
+                <button id="genDataRoomPortalBtn" class="btn btn-primary">Generate Secure Link</button>
+                <div id="dataRoomLinkPortal" style="margin-top:16px;"></div>
+            </div>
+            </main>
+
+            <!-- Modals -->
+            <div class="modal" id="vaultPinModalPortal"><div class="modal-content"><h3 style="margin-bottom:8px;">Authenticate Access</h3><p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">Restricted to SME Admin & Finance roles. Default PIN: 123456</p><input id="vaultPinInputPortal" type="password" maxlength="6" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:6px; margin-bottom:24px; text-align:center; font-size:1.2rem; letter-spacing:8px;"><div style="display:flex; gap:12px;"><button id="verifyPinPortalBtn" class="btn btn-primary" style="flex:1;">Unlock Vault</button><button id="closePinPortalBtn" class="btn btn-outline" style="flex:1;">Cancel</button></div></div></div>
+            <div class="modal" id="previewModalPortal"><div class="modal-content" style="max-width:800px;"><div id="previewContentPortal" style="margin-bottom:20px;"></div><button id="closePreviewPortalBtn" class="btn btn-outline" style="width:100%;">Close Secure Viewer</button></div></div>
+        `;
+    }
+
+    function attachPortalEvents() {
+        document.getElementById('roleSelect')?.addEventListener('change', (e) => { 
+            currentRole = e.target.value; 
+            if(currentRole!=='admin' && currentRole!=='finance' && vaultUnlocked) { 
+                vaultUnlocked=false; 
+                document.getElementById('vaultBadge').innerHTML='LOCKED'; 
+                showToastPortal('Vault locked due to role change','warning'); 
+            } 
+            renderAllPortal(); 
+            addAudit('ROLE_CHANGE',`User assumed role: ${currentRole}`); 
+        });
+
+        document.getElementById('unlockVaultBtnPortal')?.addEventListener('click', () => { 
+            if(currentRole!=='admin' && currentRole!=='finance') { 
+                showToastPortal('Unauthorized: Only Admin or Finance can unlock the Vault','error'); 
+                addAudit('UNAUTHORIZED', `Vault unlock attempt denied for ${currentRole}`);
+                return; 
+            } 
+            document.getElementById('vaultPinModalPortal').classList.add('show'); 
+        });
+
+        document.getElementById('verifyPinPortalBtn')?.addEventListener('click', () => { 
+            let pin=document.getElementById('vaultPinInputPortal').value; 
+            if(pin==='123456') { 
+                vaultUnlocked=true; 
+                document.getElementById('vaultBadge').innerHTML='UNLOCKED'; 
+                document.getElementById('vaultBadge').className='vault-badge vault-unlocked'; 
+                addAudit('VAULT_UNLOCK',`PIN Auth Success by ${currentRole}`); 
+                resetAutoLock();
+                document.getElementById('vaultPinModalPortal').classList.remove('show'); 
+                renderDataCenterPortal(); 
+                showToastPortal('Vault unlocked securely','success'); 
+            } else {
+                showToastPortal('Invalid PIN','error');
+                addAudit('VAULT_FAIL', `Invalid PIN attempt by ${currentRole}`);
+            }
+        });
+
+        document.getElementById('closePinPortalBtn')?.addEventListener('click', () => document.getElementById('vaultPinModalPortal').classList.remove('show'));
+        document.getElementById('exportCsvPortalBtn')?.addEventListener('click', () => exportDataCSVPortal());
+        document.getElementById('searchDocsPortal')?.addEventListener('keyup', () => renderDataCenterPortal());
+        
+        document.querySelectorAll('.filter-chip').forEach(chip => chip.addEventListener('click', (e) => { 
+            currentFilter = e.target.dataset.filter; 
+            document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); 
+            e.target.classList.add('active'); 
+            renderDataCenterPortal(); 
+        }));
+
+        document.getElementById('genDataRoomPortalBtn')?.addEventListener('click', () => { 
+            if(purchasedTier < 4) { showToastPortal('L4 Readiness required for Data Room','error'); return; } 
+            let hash=Math.random().toString(36).substr(2,8); 
+            document.getElementById('dataRoomLinkPortal').innerHTML = `<div style="background:var(--border-light); padding:12px; border-radius:6px; font-family:monospace; color:var(--brand-blue);">https://verify.2bready.asia/dataroom/${hash}</div><p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Link expires in 72 hours.</p>`; 
+            addAudit('DATA_ROOM',`Generated secure link: ${hash}`); 
+        });
+
+        document.getElementById('closePreviewPortalBtn')?.addEventListener('click', () => document.getElementById('previewModalPortal').classList.remove('show'));
+    }
+
+    // RBAC Finance Check Logic
+    function isFinanceRestricted(key) {
+        let parts = key.split('_');
+        let pid = parts[0];
+        if (!isRestrictedPathway(pid)) return false;
+        if (currentRole !== 'finance') return false;
+        let doc = docStatuses[key];
+        if (!doc) return false;
+        // Finance can ONLY access documents they specifically uploaded
+        return doc.uploadedBy !== 'finance';
+    }
+
+    function renderPathwaysPortal() {
+        let container = document.getElementById('pathwaysContainerPortal'); if(!container) return;
+        let html = '';
+        for(let [pid, p] of Object.entries(pathwaysData)) {
+            let isLocked = !isPathwayAccessible(pid);
+            let lockIcon = isLocked ? '🔒 ' : '';
+            html += `<div style="margin-bottom:32px;"><h3 style="margin-bottom:16px; font-weight:700; color:var(--text-dark);">${lockIcon}${p.name}</h3>`;
+            
+            if(isLocked) {
+                html += `<div style="background:var(--bg-main); border:1px dashed var(--text-muted); padding:16px; border-radius:8px; text-align:center;"><p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">This pathway requires an upgraded subscription.</p><button class="btn btn-outline" style="padding:8px 16px; font-size:0.85rem;" onclick="document.getElementById('landingView').style.display='block'; document.getElementById('portalView').style.display='none';">Upgrade Plan</button></div></div>`;
+                continue;
+            }
+
+            for(let cat of p.categories) {
+                html += `<div class="pathway-category"><strong style="color:var(--brand-blue); display:block; margin-bottom:12px;">📁 ${cat.name}</strong>`;
+                for(let doc of cat.docs) {
+                    let key = getDocKey(pid, cat.name, doc);
+                    let st = docStatuses[key]?.status || 'pending';
+                    let stText = st==='verified'?'Verified':st==='under_review'?'In Review':st==='rejected'?'Rejected':st==='expired'?'Expired':'Pending Action';
+                    
+                    let bgStatus = st==='verified'?'#dcfce7':st==='under_review'?'#fef08a':st==='rejected'||st==='expired'?'#fee2e2':'#f1f5f9';
+                    let colStatus = st==='verified'?'#166534':st==='under_review'?'#854d0e':st==='rejected'||st==='expired'?'#b91c1c':'#475569';
+
+                    let showReupload = (st==='rejected' || st==='expired') && currentRole !== 'staff';
+                    
+                    // RBAC UI Blocking
+                    let canUpload = true;
+                    if(isRestrictedPathway(pid) && currentRole === 'staff') canUpload = false;
+
+                    html += `<div class="doc-row">
+                        <span style="color:var(--text-main); font-weight:500;">${doc}</span>
+                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:4px; background:${bgStatus}; color:${colStatus};">${stText}</span>
+                        <div style="display:flex; gap:8px;">
+                            ${canUpload ? `<button class="btn btn-outline uploadDocBtn" data-pid="${pid}" data-cat="${cat.name}" data-doc="${doc}" style="padding:6px 16px; font-size:0.8rem;">Upload</button>` : `<span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Restricted</span>`}
+                            ${showReupload && canUpload ? `<button class="btn btn-outline reuploadBtn" data-key="${key}" style="padding:6px 16px; font-size:0.8rem;">Re-upload</button>` : ''}
+                        </div>
+                    </div>`;
+                }
+                html += `</div>`;
+            }
+            html += `</div>`;
+        }
+        container.innerHTML = html;
+        document.querySelectorAll('.uploadDocBtn').forEach(btn => btn.addEventListener('click', (e) => { 
+            uploadDocumentPortal(btn.dataset.pid, btn.dataset.cat, btn.dataset.doc); 
+        }));
+        document.querySelectorAll('.reuploadBtn').forEach(btn => btn.addEventListener('click', (e) => { 
+            reUploadPortal(btn.dataset.key); 
+        }));
+    }
+
+    function uploadDocumentPortal(pid, cat, docName) {
+        if(!isPathwayAccessible(pid)){ showToastPortal('Pathway Upgrade Required','error'); return; }
+        if(currentRole==='staff' && isRestrictedPathway(pid)){ 
+            showToastPortal('Unauthorized: Staff role cannot upload P3/P4 financial documentation.','error'); 
+            addAudit('UNAUTHORIZED', `Staff upload attempt on ${docName}`);
+            return; 
+        }
+
+        let input=document.createElement('input'); input.type='file'; input.accept='.pdf,.jpg,.png,.docx';
+        input.onchange=e=>{ 
+            let file=e.target.files[0]; 
+            if(file && file.size>15*1024*1024){ showToastPortal('Strict File Limit: Maximum 15MB exceeded','error'); return; }
+            
+            let key=getDocKey(pid,cat,docName);
+            docStatuses[key] = { 
+                status:'under_review', 
+                fileUrl:URL.createObjectURL(file), 
+                uploadedAt:new Date().toISOString(), 
+                expiryDate:null, 
+                rejectedReason:null, 
+                uploadedBy:currentRole // Tag the uploader for Finance isolation
+            };
+            saveToLocal(); 
+            addAudit('UPLOAD',`Submitted: ${docName} by ${currentRole}`); 
+            showToastPortal('File successfully uploaded to Vault. Pending Audit.','success'); 
+            renderAllPortal();
+        }; 
+        input.click();
+    }
+    
+    function reUploadPortal(key){ 
+        let pid = key.split('_')[0];
+        if(currentRole==='staff' && isRestrictedPathway(pid)){ showToastPortal('Unauthorized: Staff cannot modify P3/P4.','error'); return; }
+        if(isFinanceRestricted(key)) { showToastPortal('Access Denied: Finance can only re-upload files they originated.','error'); return; }
+
+        let input=document.createElement('input'); input.type='file'; input.accept='.pdf,.jpg,.png,.docx';
+        input.onchange=e=>{ 
+            let file=e.target.files[0]; 
+            if(file && file.size>15*1024*1024){ showToastPortal('Strict File Limit: 15MB exceeded','error'); return; }
+
+            docStatuses[key].status='under_review'; 
+            docStatuses[key].fileUrl=URL.createObjectURL(file); 
+            docStatuses[key].uploadedAt=new Date().toISOString(); 
+            docStatuses[key].rejectedReason=null; 
+            docStatuses[key].uploadedBy=currentRole; 
+            
+            saveToLocal(); addAudit('REUPLOAD',`Re-uploaded: ${key}`); 
+            showToastPortal('Document securely replaced','success'); 
+            renderAllPortal();
+        }; 
+        input.click();
+    }
+    
+    function adminApprovePortal(key){ 
+        if(currentRole!=='admin') return; 
+        docStatuses[key].status='verified'; 
+        
+        let docName = key.split('_').pop();
+        for (let [pattern, months] of Object.entries(EXPIRY_DOCS)) {
+            if (docName.includes(pattern) || docName === pattern) {
+                let exp = new Date();
+                exp.setMonth(exp.getMonth() + months);
+                docStatuses[key].expiryDate = exp.toISOString().split('T')[0];
+                break;
+            }
+        }
+
+        addAudit('APPROVE',`Admin verified: ${key}`); 
+        saveToLocal(); renderAllPortal(); showToastPortal('Document Verified','success'); 
+    }
+
+    function adminRejectPortal(key){ 
+        if(currentRole!=='admin') return; 
+        let reason=prompt('Required: Enter rejection reason for Audit Trail:'); 
+        if(reason){ 
+            docStatuses[key].status='rejected'; 
+            docStatuses[key].rejectedReason=reason; 
+            addAudit('REJECT',`Admin rejected ${key}. Reason: ${reason}`); 
+            saveToLocal(); renderAllPortal(); showToastPortal('Document Rejected','error'); 
+        } 
+    }
+    
+    function previewDocumentPortal(key, docName){ 
+        let doc=docStatuses[key]; if(!doc||!doc.fileUrl) return; 
+        
+        // RBAC Finance Isolation
+        if(isFinanceRestricted(key)){ 
+            showToastPortal('Access Denied: SME Finance may only view documents they explicitly uploaded.','error'); 
+            addAudit('UNAUTHORIZED', `Finance attempted to preview restricted doc: ${docName}`);
+            return; 
+        }
+
+        let modal=document.getElementById('previewModalPortal'); 
+        let content=document.getElementById('previewContentPortal'); 
+        if(doc.fileUrl.match(/\.pdf$/i)) {
+            content.innerHTML=`<iframe src="${doc.fileUrl}" style="width:100%; height:500px; border:1px solid var(--border); border-radius:8px;"></iframe>`; 
+        } else {
+            content.innerHTML=`<img src="${doc.fileUrl}" style="max-width:100%; border-radius:8px; display:block; margin:0 auto;">`; 
+        }
+        modal.classList.add('show'); 
+        addAudit('PREVIEW', `Accessed view: ${docName}`);
+    }
+    
+    function downloadWithWatermarkPortal(key,docName){ 
+        let doc=docStatuses[key]; if(!doc||!doc.fileUrl) return; 
+        
+        // RBAC Finance Isolation
+        if(isFinanceRestricted(key)){ 
+            showToastPortal('Access Denied: SME Finance may only download documents they explicitly uploaded.','error'); 
+            return; 
+        }
+
+        addAudit('DOWNLOAD',`Secure download initiated: ${docName}`); 
+        let watermark=`2bReady SECURE DOCUMENT VAULT\nUser Profile: ${currentRole}\nTimestamp: ${new Date().toLocaleString()}\nFile Identifier: ${docName}\n\nCONFIDENTIAL - Distribution tracked via ADMIT Global.`; 
+        let blob=new Blob([watermark],{type:'text/plain'}); 
+        let a=document.createElement('a'); 
+        a.href=URL.createObjectURL(blob); 
+        a.download=`2bReady_Vault_${docName.replace(/\s/g,'_')}.txt`; 
+        a.click(); 
+    }
+
+    function renderDataCenterPortal() { 
+        let tbody=document.getElementById('dataCenterBodyPortal'); if(!tbody) return;
+        let search=document.getElementById('searchDocsPortal')?.value.toLowerCase()||'';
+        let items=[];
+        
+        for(let [pid,p] of Object.entries(pathwaysData)){ 
+            if(!isPathwayAccessible(pid)) continue;
+            for(let cat of p.categories) for(let doc of cat.docs){
+                let key=getDocKey(pid,cat.name,doc); let st=docStatuses[key]; let status=st?.status||'pending';
+                
+                if(currentFilter!=='all' && status!==currentFilter) continue;
+                if(search && !doc.toLowerCase().includes(search) && !cat.name.toLowerCase().includes(search)) continue;
+                
+                let isSensitive=(pid==='p3'||pid==='p4');
+                let canView=(!isSensitive)||(currentRole==='admin' && vaultUnlocked)||(currentRole==='finance' && vaultUnlocked && st?.uploadedBy==='finance');
+                
+                let displayName=canView?doc:(isSensitive?'[RESTRICTED VAULT DATA]':doc);
+                let statusText=status==='verified'?'Verified':status==='under_review'?'In Review':status==='rejected'?'Rejected':status==='expired'?'Expired':'Pending';
+                
+                let actionBtn='';
+                if(canView && (status==='verified'||status==='under_review'||status==='expired')){
+                    actionBtn=`<button class="btn btn-outline" onclick="window.downloadPortalHelper('${key}','${doc}')" style="padding:6px 12px; font-size:0.8rem; margin-right:6px;">↓ Save</button><button class="btn btn-outline" onclick="window.previewPortalHelper('${key}','${doc}')" style="padding:6px 12px; font-size:0.8rem;">👁 View</button>`;
+                } else if(isSensitive && !vaultUnlocked){
+                    actionBtn='<span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">🔒 Requires PIN</span>';
+                } else if(isSensitive && currentRole==='finance' && st?.uploadedBy!=='finance') {
+                    actionBtn='<span style="font-size:0.8rem; color:#ef4444; font-weight:600;">🚫 Unowned Data</span>';
+                }
+                items.push({docName:displayName, pathway:p.name.split(':')[0], statusText, uploadDate:st?.uploadedAt?new Date(st.uploadedAt).toLocaleDateString():'-', expiryDate:st?.expiryDate||'-', actionBtn});
+            }
+        }
+        tbody.innerHTML = items.map(i=>`<tr><td style="color:var(--text-dark); font-weight:500;">${i.docName}</td><td style="color:var(--text-muted); font-size:0.85rem;">${i.pathway}</td><td style="font-weight:600;">${i.statusText}</td><td style="color:var(--brand-green); font-size:0.85rem;">${i.expiryDate}</td><td>${i.actionBtn}</td></tr>`).join('');
+    }
+
+    function renderAdminPanelPortal(){ 
+        let panel=document.getElementById('adminPanelPortal'); 
+        if(currentRole!=='admin'){ panel.style.display='none'; return; } 
+        
+        panel.style.display='block'; 
+        let div=document.getElementById('pendingDocsListPortal'); 
+        let pending=Object.entries(docStatuses).filter(([k,v])=>v.status==='under_review'); 
+        
+        if(pending.length===0){ div.innerHTML='<div style="padding:24px; text-align:center; border:1px dashed var(--border); border-radius:8px; color:var(--brand-green); font-weight:600;">✅ Queue Clear. All documents evaluated.</div>'; return; } 
+        
+        div.innerHTML=pending.map(([k,v])=>`<div style="margin-bottom:12px; padding:16px; background:var(--bg-main); border-radius:12px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;"><div><strong style="color:var(--text-dark); font-size:1.05rem;">${k.split('_').slice(2).join('_')}</strong><div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Uploaded By: <span style="font-weight:600; color:var(--brand-blue);">${v.uploadedBy||'System'}</span> | Date: ${new Date(v.uploadedAt).toLocaleDateString()}</div></div><div style="display:flex; gap:8px;"><button class="btn btn-outline" onclick="window.previewPortalHelper('${k}','${k.split('_').slice(2).join('_')}')" style="padding:8px 16px; font-size:0.85rem;">Preview</button><button class="btn btn-primary" onclick="window.approvePortalHelper('${k}')" style="padding:8px 16px; font-size:0.85rem; background:var(--brand-green);">Approve</button><button class="btn btn-outline" onclick="window.rejectPortalHelper('${k}')" style="padding:8px 16px; font-size:0.85rem; border-color:#ef4444; color:#ef4444;">Reject</button></div></div>`).join(''); 
+    }
+
+    // Cron Job Simulation - Expiry Evaluation
+    function evaluateExpirations() {
+        let today = new Date().toISOString().split('T')[0];
+        let expiredFound = false;
+        for (let k in docStatuses) {
+            let doc = docStatuses[k];
+            if (doc.status === 'verified' && doc.expiryDate && doc.expiryDate < today) {
+                doc.status = 'expired';
+                expiredFound = true;
+                addAudit('SYSTEM_CRON', `Document Expiration Triggered: ${k}`);
+            }
+        }
+        if (expiredFound) {
+            showToastPortal('SYSTEM ALERT: Documents have expired. Trust Badge dynamically downgraded.', 'warning');
+            saveToLocal();
+        }
+    }
+
+    function computeScoreAndBadgePortal(){ 
+        ensureAllDocs();
+        evaluateExpirations();
+
+        let total=0,verified=0; 
+        for(let [k,v] of Object.entries(docStatuses)){ 
+            let pid = k.split('_')[0];
+            if(isPathwayAccessible(pid)) {
+                total++; 
+                if(v.status==='verified') verified++; 
+            }
+        } 
+        
+        let pct=total===0?0:Math.round((verified/total)*100); 
+        
+        // Auto-Downgrade logic based on live percentage
+        let newBadge = pct>=90 && purchasedTier>=4 ?"L4 Global":pct>=70 && purchasedTier>=3?"L3 Gold":pct>=50 && purchasedTier>=2?"L2 Silver":"L1 Bronze"; 
+        
+        document.getElementById('levelBadgeDisplay').innerHTML = `🏅 ${newBadge}`; 
+        document.getElementById('auditReadyBar').style.width = `${pct}%`; 
+        return pct; 
+    }
+
+    function exportDataCSVPortal(){ 
+        let rows=[["Document Name", "Pathway", "Status", "Uploaded Date", "Expiry Date", "Uploaded By"]]; 
+        for(let [k,v] of Object.entries(docStatuses)) {
+            rows.push([k.split('_').pop(), k.split('_')[0], v.status, v.uploadedAt||'N/A', v.expiryDate||'N/A', v.uploadedBy||'N/A']);
+        }
+        let blob=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); 
+        let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="2bReady_Compliance_Ledger.csv"; a.click(); 
+        addAudit('EXPORT', 'CSV Ledger Downloaded');
+    }
+    
+    function ensureAllDocs() {
+        for(let [pid, p] of Object.entries(pathwaysData)) {
+            for(let cat of p.categories) for(let doc of cat.docs) { 
+                let k = getDocKey(pid, cat.name, doc); 
+                if(!docStatuses[k]) docStatuses[k] = { status:"pending", fileUrl:null, uploadedAt:null, expiryDate:null, rejectedReason:null, uploadedBy:null }; 
+            }
+        }
+    }
+
+    function renderAllPortal(){ 
+        renderPathwaysPortal(); 
+        renderDataCenterPortal(); 
+        computeScoreAndBadgePortal(); 
+        renderAdminPanelPortal(); 
+        
+        let smart=document.getElementById('smartDataRoomPortal'); 
+        if(purchasedTier>=4) smart.style.display='block'; else smart.style.display='none'; 
+    }
+    
+    window.downloadPortalHelper = downloadWithWatermarkPortal;
+    window.previewPortalHelper = previewDocumentPortal;
+    window.approvePortalHelper = adminApprovePortal;
+    window.rejectPortalHelper = adminRejectPortal;
+    
+    function loadPortal() { 
+        purchasedTier = parseInt(localStorage.getItem("2bReady_purchasedTier")||"0"); 
+        initDocs(); 
+        renderPortalHTML(); 
+        attachPortalEvents(); 
+        renderAllPortal(); 
+    }
+
+    // Boot script check
+    window.onload = () => {
+        let isSub = localStorage.getItem("subscriptionPaid");
+        if(isSub === "true" && localStorage.getItem("2bReady_purchasedTier")) {
+            // Optional: Auto load portal if they already bought it, but landing is fine to show default.
+        }
+    };
+</script>
+</body>
+</html>

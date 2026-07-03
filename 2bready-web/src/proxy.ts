@@ -15,7 +15,7 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  const isDashboard = pathname.startsWith('/dashboard') || pathname === '/';
+  const isDashboard = ['/dashboard', '/admin', '/auditor', '/company'].some((p) => pathname.startsWith(p));
 
   // Redirect authenticated users away from auth pages
   if (isPublic && token) {
