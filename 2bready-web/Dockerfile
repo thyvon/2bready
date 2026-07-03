@@ -7,6 +7,10 @@ RUN npm ci --frozen-lockfile
 # ---- Builder ----
 FROM node:20-alpine AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_NAME
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
