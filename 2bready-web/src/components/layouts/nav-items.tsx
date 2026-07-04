@@ -13,6 +13,7 @@ import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import ArticleIcon from '@mui/icons-material/ArticleOutlined';
 import FolderSharedIcon from '@mui/icons-material/FolderSharedOutlined';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
 
 import { useAuthStore } from '@/store/auth.store';
 import { useTranslation } from '@/lib/i18n';
@@ -53,6 +54,7 @@ const ADMIN_NAV: NavItemDef[] = [
   { labelKey: 'nav.companies',  href: '/admin/companies',    icon: <BusinessIcon fontSize="small" /> },
   { labelKey: 'nav.users',      href: '/admin/users',        icon: <PeopleIcon fontSize="small" /> },
   { labelKey: 'nav.packages',   href: '/admin/packages',     icon: <PaymentIcon fontSize="small" /> },
+  { labelKey: 'nav.payments',   href: '/admin/payments',     icon: <ReceiptLongIcon fontSize="small" /> },
   { labelKey: 'nav.audits',     href: '/admin/audits',       icon: <AssignmentIcon fontSize="small" /> },
   { labelKey: 'nav.documents',  href: '/admin/documents',    icon: <DescriptionIcon fontSize="small" /> },
   { labelKey: 'nav.journey',    href: '/admin/journey',      icon: <RouteIcon fontSize="small" /> },

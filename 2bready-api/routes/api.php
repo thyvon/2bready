@@ -2,10 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\LeadController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     require __DIR__.'/api/auth.php';
+
+    // Public — a lead may come from an anonymous marketing-site visitor, not just an
+    // authenticated company_owner hitting an in-app paywall. Listing leads (for sales
+    // followup) is authenticated and lives in routes/api/payment.php instead.
+    Route::post('leads', [LeadController::class, 'store']);
 
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
     // reaching business routes — pending tokens only carry the 'totp-pending' ability.

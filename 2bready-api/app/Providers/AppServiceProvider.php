@@ -6,6 +6,14 @@ namespace App\Providers;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Company\Policies\CompanyPolicy;
+use App\Domain\Package\Models\Lead;
+use App\Domain\Package\Models\Package;
+use App\Domain\Package\Policies\LeadPolicy;
+use App\Domain\Package\Policies\PackagePolicy;
+use App\Domain\Payment\Models\Payment;
+use App\Domain\Payment\Models\Subscription;
+use App\Domain\Payment\Policies\PaymentPolicy;
+use App\Domain\Payment\Policies\SubscriptionPolicy;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         Gate::policy(Company::class, CompanyPolicy::class);
+        Gate::policy(Package::class, PackagePolicy::class);
+        Gate::policy(Subscription::class, SubscriptionPolicy::class);
+        Gate::policy(Payment::class, PaymentPolicy::class);
+        Gate::policy(Lead::class, LeadPolicy::class);
 
         // Keyed by email+IP so an attacker can't route around the limit from multiple
         // IPs against a single account, nor mass-guess many accounts from one IP.

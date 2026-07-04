@@ -5,8 +5,8 @@ import { useTranslation } from '@/lib/i18n';
 
 type StatusKey =
   | 'active' | 'inactive' | 'suspended'
-  | 'pending' | 'pending_review'
-  | 'approved' | 'paid' | 'published'
+  | 'pending' | 'pending_review' | 'awaiting_confirmation'
+  | 'approved' | 'paid' | 'published' | 'confirmed'
   | 'rejected' | 'failed' | 'cancelled'
   | 'expired'
   | 'open' | 'in_progress'
@@ -19,10 +19,12 @@ const STATUS_COLOR: Record<StatusKey, 'success' | 'error' | 'warning' | 'default
   paid: 'success',
   published: 'success',
   resolved: 'success',
+  confirmed: 'success',
   closed: 'default',
 
   pending: 'warning',
   pending_review: 'warning',
+  awaiting_confirmation: 'warning',
   in_progress: 'warning',
   open: 'info',
   draft: 'default',

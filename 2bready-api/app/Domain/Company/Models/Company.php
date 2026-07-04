@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\Company\Models;
 
 use App\Domain\Company\Enums\CompanyStatus;
+use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -43,6 +45,7 @@ class Company extends Model
         'status',
         'compliance_score',
         'default_locale',
+        'active_subscription_id',
     ];
 
     /** @return array<string, string> */
@@ -60,6 +63,12 @@ class Company extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /** @return BelongsTo<Subscription, $this> */
+    public function activeSubscription(): BelongsTo
+    {
+        return $this->belongsTo(Subscription::class, 'active_subscription_id');
     }
 
     public function isActive(): bool

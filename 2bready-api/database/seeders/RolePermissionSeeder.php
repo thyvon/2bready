@@ -7,13 +7,14 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ─── Define all permissions ────────────────────────────────────────────
         $permissions = [
@@ -40,6 +41,9 @@ class RolePermissionSeeder extends Seeder
             // Payments
             'payment.view',
             'payment.manage',   // refunds, manual adjustments
+
+            // Leads (paywall lead capture)
+            'lead.view',
 
             // Journey
             'journey.view',
@@ -93,12 +97,12 @@ class RolePermissionSeeder extends Seeder
         }
 
         // ─── Create / retrieve roles ───────────────────────────────────────────
-        $admin        = Role::firstOrCreate(['name' => 'admin',          'guard_name' => 'web']);
-        $staff        = Role::firstOrCreate(['name' => 'staff',          'guard_name' => 'web']);
-        $finance      = Role::firstOrCreate(['name' => 'finance',        'guard_name' => 'web']);
-        $owner        = Role::firstOrCreate(['name' => 'company_owner',  'guard_name' => 'web']);
-        $member       = Role::firstOrCreate(['name' => 'company_member', 'guard_name' => 'web']);
-        $auditor      = Role::firstOrCreate(['name' => 'auditor',        'guard_name' => 'web']);
+        $admin = Role::firstOrCreate(['name' => 'admin',          'guard_name' => 'web']);
+        $staff = Role::firstOrCreate(['name' => 'staff',          'guard_name' => 'web']);
+        $finance = Role::firstOrCreate(['name' => 'finance',        'guard_name' => 'web']);
+        $owner = Role::firstOrCreate(['name' => 'company_owner',  'guard_name' => 'web']);
+        $member = Role::firstOrCreate(['name' => 'company_member', 'guard_name' => 'web']);
+        $auditor = Role::firstOrCreate(['name' => 'auditor',        'guard_name' => 'web']);
 
         // ─── Assign permissions ────────────────────────────────────────────────
 
@@ -112,6 +116,7 @@ class RolePermissionSeeder extends Seeder
             'package.view', 'package.manage',
             'subscription.view', 'subscription.manage',
             'payment.view',
+            'lead.view',
             'journey.view', 'journey.complete', 'journey.manage',
             'document.view', 'document.upload', 'document.delete', 'document.manage',
             'audit.view', 'audit.manage',
@@ -130,6 +135,7 @@ class RolePermissionSeeder extends Seeder
             'package.view', 'package.manage',
             'subscription.view', 'subscription.manage',
             'payment.view', 'payment.manage',
+            'lead.view',
             'notification.view',
             'report.view', 'audit_log.view',
         ]);
