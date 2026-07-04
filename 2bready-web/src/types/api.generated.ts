@@ -148,10 +148,113 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["company.index"];
+        put?: never;
+        post: operations["company.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["company.registerOwn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["company.show"];
+        put?: never;
+        post?: never;
+        delete: operations["company.destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["company.update"];
+        trace?: never;
+    };
+    "/v1/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["platformSetting.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/settings/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["platformSetting.update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** CompanyResource */
+        CompanyResource: {
+            id: string;
+            name: string;
+            name_kh: string | null;
+            registration_no: string | null;
+            employee_count: number | null;
+            bypass_flags: unknown[];
+            industry_code: string;
+            country_code: string;
+            status: components["schemas"]["CompanyStatus"];
+            compliance_score: number;
+            default_locale: string;
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
+        /**
+         * CompanyStatus
+         * @enum {string}
+         */
+        CompanyStatus: "active" | "suspended" | "inactive";
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Format: email */
@@ -162,6 +265,15 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+        };
+        /** PlatformSettingResource */
+        PlatformSettingResource: {
+            key: string;
+            value: unknown[];
+            group: string;
+            updated_by: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
         };
         /** RegisterRequest */
         RegisterRequest: {
@@ -181,9 +293,36 @@ export interface components {
             password: string;
             password_confirmation: string;
         };
+        /** StoreCompanyRequest */
+        StoreCompanyRequest: {
+            name: string;
+            name_kh?: string | null;
+            registration_no?: string | null;
+            employee_count?: number | null;
+            industry_code: string;
+            country_code?: string;
+            /** @enum {string} */
+            default_locale?: "en" | "kh";
+        };
         /** TotpVerifyRequest */
         TotpVerifyRequest: {
             code: string;
+        };
+        /** UpdateCompanyRequest */
+        UpdateCompanyRequest: {
+            name?: string;
+            name_kh?: string | null;
+            registration_no?: string | null;
+            employee_count?: number | null;
+            industry_code?: string;
+            country_code?: string;
+            /** @enum {string} */
+            default_locale?: "en" | "kh";
+        };
+        /** UpdatePlatformSettingRequest */
+        UpdatePlatformSettingRequest: {
+            value: string;
+            group?: string;
         };
         /** UserResource */
         UserResource: {
@@ -226,6 +365,30 @@ export interface components {
         };
         /** @description Unauthenticated */
         AuthenticationException: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    /** @description Error overview. */
+                    message: string;
+                };
+            };
+        };
+        /** @description Authorization error */
+        AuthorizationException: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    /** @description Error overview. */
+                    message: string;
+                };
+            };
+        };
+        /** @description Not found */
+        ModelNotFoundException: {
             headers: {
                 [name: string]: unknown;
             };
@@ -510,6 +673,236 @@ export interface operations {
                             message: "Two-factor authentication verified.";
                         };
                         meta: string[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "company.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CompanyResource"][];
+                        meta: {
+                            pagination: {
+                                total: number;
+                                per_page: number;
+                                current_page: number;
+                                last_page: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "company.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCompanyRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CompanyResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "company.registerOwn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCompanyRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            company: components["schemas"]["CompanyResource"];
+                            user: components["schemas"]["UserResource"];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "company.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CompanyResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "company.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "company.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCompanyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CompanyResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "platformSetting.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlatformSettingResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "platformSetting.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePlatformSettingRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlatformSettingResource"];
+                        meta: string;
                     };
                 };
             };
