@@ -83,18 +83,22 @@ const theme = createTheme({
           fontWeight: 500,
           fontSize: '0.875rem',
           padding: '6px 16px',
-          transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+          transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
 
-          // Contained primary: black on light, white on dark (Vercel style)
+          // Contained primary: black on light, white on dark (Vercel style). Hover gets
+          // a subtle lift + shadow — the neutral-palette translation of the marketing
+          // site's GlowButton (a colored glow would clash with this app's monochrome
+          // button language, but the "button responds to hover" feel is the same idea).
           ...(ownerState.variant === 'contained' && ownerState.color === 'primary' && {
             backgroundColor: '#111111',
             color: '#ffffff',
-            '&:hover': { backgroundColor: '#333333' },
+            '&:hover': { backgroundColor: '#333333', transform: 'translateY(-1px)', boxShadow: '0 4px 12px -2px rgba(0,0,0,0.25)' },
+            '&:active': { transform: 'translateY(0)' },
             '&:disabled': { backgroundColor: '#eaeaea', color: '#999999' },
             ...theme.applyStyles('dark', {
               backgroundColor: '#ffffff',
               color: '#000000',
-              '&:hover': { backgroundColor: '#ededed' },
+              '&:hover': { backgroundColor: '#ededed', transform: 'translateY(-1px)', boxShadow: '0 4px 12px -2px rgba(0,0,0,0.5)' },
               '&:disabled': { backgroundColor: '#333333', color: '#666666' },
             }),
           }),
@@ -187,6 +191,7 @@ const theme = createTheme({
           fontSize: '0.875rem',
           borderRadius: 4,
           mx: 0.5,
+          transition: 'background-color 0.15s ease',
           '&:hover': { backgroundColor: 'var(--2br-overlay-hover)' },
           '&.Mui-selected': { backgroundColor: 'var(--2br-nav-active-bg)' },
         },
@@ -224,6 +229,7 @@ const theme = createTheme({
     MuiTableRow: {
       styleOverrides: {
         root: {
+          transition: 'background-color 0.15s ease',
           '&:hover': { backgroundColor: 'var(--2br-overlay-row-hover)' },
           '&:last-child td': { borderBottom: 0 },
         },

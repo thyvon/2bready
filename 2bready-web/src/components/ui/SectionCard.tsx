@@ -22,6 +22,10 @@ export default function SectionCard({ children, title, subtitle, action, noPaddi
         borderRadius: 2,
         bgcolor: 'background.paper',
         overflow: 'hidden',
+        // Matches the smooth theme-switch transition MuiPaper/MuiCard already get
+        // globally (globals.css) — this is a plain Box, so without this it was the
+        // one card-like surface in the app that snapped instantly on theme toggle.
+        transition: 'background-color 0.15s ease, border-color 0.15s ease',
       }}
       className={className}
     >
