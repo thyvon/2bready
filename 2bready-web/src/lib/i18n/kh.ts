@@ -127,6 +127,7 @@ const kh: Record<keyof typeof en, string> = {
   'company.bilingual_hint': 'ស្រេចចិត្ត — ទម្រង់ពីរភាសា',
   'company.registration_hint': 'ស្រេចចិត្ត — លេខចុះបញ្ជីនីតិបុគ្គល',
   'company.employee_count_hint': 'ស្រេចចិត្ត — ប្រើសម្រាប់លក្ខណៈសម្បត្តិឆ្លងកាត់អនុលោមភាព',
+  'company.employee_count_locked_hint': 'ផ្ទៀងផ្ទាត់ និងកំណត់ដោយក្រុម 2bReady — មិនអាចកែសម្រួលដោយខ្លួនឯងបានទេ។',
   'company.setup_title': 'រៀបចំក្រុមហ៊ុនរបស់អ្នក',
   'company.setup_subtitle': 'ប្រាប់យើងអំពីអាជីវកម្មរបស់អ្នកដើម្បីចាប់ផ្តើម។',
   'company.setup_success': '{name} ត្រូវបានរៀបចំរួចរាល់។ សូមស្វាគមន៍!',

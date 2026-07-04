@@ -52,8 +52,15 @@ class CompanyController extends Controller
     {
         $this->authorize('registerOwn', Company::class);
 
+        // employee_count is admin/staff-verified only (see UpdateCompanyRequest) — a company
+        // self-registering must not be able to set the figure its own bypass eligibility is
+        // evaluated against. Strip it even though StoreCompanyRequest's rules allow it for the
+        // admin-facing `store` endpoint this shares its request class with.
+        $data = $request->validated();
+        $data['employee_count'] = null;
+
         $user = $request->user();
-        $company = $action->execute($user, CompanyData::from($request->validated()));
+        $company = $action->execute($user, CompanyData::from($data));
 
         return ApiResponse::created([
             'company' => new CompanyResource($company),

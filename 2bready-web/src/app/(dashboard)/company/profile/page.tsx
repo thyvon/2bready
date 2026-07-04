@@ -96,7 +96,9 @@ export default function CompanyProfilePage() {
         registration_no: parsed.registration_no || undefined,
         industry_code: parsed.industry_code,
         country_code: parsed.country_code,
-        employee_count: parsed.employee_count,
+        // employee_count is admin/staff-verified only — the API ignores it from a
+        // company_owner/company_member regardless, but omit it here too since the field
+        // is permanently disabled on this page.
         default_locale: parsed.default_locale,
       });
       setCompany(updated);
@@ -185,9 +187,9 @@ export default function CompanyProfilePage() {
                 <TextField
                   type="number"
                   fullWidth
-                  disabled={!canEdit}
+                  disabled
                   error={!!errors.employee_count}
-                  helperText={errors.employee_count?.message}
+                  helperText={errors.employee_count?.message ?? t('company.employee_count_locked_hint')}
                   {...register('employee_count')}
                 />
               </Grid>

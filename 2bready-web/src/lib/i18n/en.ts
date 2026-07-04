@@ -123,6 +123,7 @@ const en = {
   'company.bilingual_hint': 'Optional — bilingual profile',
   'company.registration_hint': 'Optional — legal entity registration number',
   'company.employee_count_hint': 'Optional — used for compliance bypass eligibility',
+  'company.employee_count_locked_hint': 'Verified and set by the 2bReady team — not self-editable.',
   'company.setup_title': 'Set up your company',
   'company.setup_subtitle': 'Tell us about your business to get started.',
   'company.setup_success': '{name} is set up. Welcome aboard!',

@@ -31,7 +31,8 @@ export default function CompanySetupPage() {
       registration_no: data.registration_no || undefined,
       industry_code: data.industry_code,
       country_code: data.country_code,
-      employee_count: data.employee_count,
+      // employee_count is admin/staff-verified only — the API ignores it here regardless,
+      // but omit it too so the request is honest about what self-service actually controls.
       default_locale: data.default_locale,
     });
 
@@ -44,7 +45,7 @@ export default function CompanySetupPage() {
     <>
       <PageHeader title={t('company.setup_title')} subtitle={t('company.setup_subtitle')} />
       <SectionCard>
-        <CompanyFormWizard onSubmit={handleSubmit} submitLabel={t('company.finish_setup')} />
+        <CompanyFormWizard onSubmit={handleSubmit} submitLabel={t('company.finish_setup')} hideEmployeeCount />
       </SectionCard>
     </>
   );

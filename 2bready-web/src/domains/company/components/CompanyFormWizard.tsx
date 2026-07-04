@@ -24,6 +24,13 @@ import FieldLabel from '@/components/forms/FieldLabel';
 interface CompanyFormWizardProps {
   onSubmit: (data: CompanyFormOutput) => Promise<void>;
   submitLabel?: string;
+  /**
+   * employee_count feeds CompanyBypassEvaluator's compliance-bypass threshold on the
+   * backend, which now silently ignores it unless the caller is admin/staff/finance.
+   * Hide the field entirely in self-service contexts so a company_owner isn't shown a
+   * control that has no effect.
+   */
+  hideEmployeeCount?: boolean;
 }
 
 function WizardProgress({ step, t }: { step: number; t: ReturnType<typeof useTranslation>['t'] }) {
@@ -71,7 +78,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyFormWizardProps) {
+export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeCount }: CompanyFormWizardProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -189,17 +196,19 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
                     )}
                   />
                 </Box>
-                <Box>
-                  <FieldLabel>{t('company.employee_count')}</FieldLabel>
-                  <TextField
-                    placeholder="e.g. 12"
-                    type="number"
-                    fullWidth
-                    error={!!errors.employee_count}
-                    helperText={errors.employee_count?.message ?? t('company.employee_count_hint')}
-                    {...register('employee_count')}
-                  />
-                </Box>
+                {!hideEmployeeCount && (
+                  <Box>
+                    <FieldLabel>{t('company.employee_count')}</FieldLabel>
+                    <TextField
+                      placeholder="e.g. 12"
+                      type="number"
+                      fullWidth
+                      error={!!errors.employee_count}
+                      helperText={errors.employee_count?.message ?? t('company.employee_count_hint')}
+                      {...register('employee_count')}
+                    />
+                  </Box>
+                )}
               </Box>
             )}
 
@@ -226,7 +235,9 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
                     <ReviewRow label={t('company.name')} value={values.name || '—'} />
                     <ReviewRow label={t('company.name_kh')} value={values.name_kh || '—'} />
                     <ReviewRow label={t('company.registration_no')} value={values.registration_no || '—'} />
-                    <ReviewRow label={t('company.employee_count')} value={values.employee_count != null ? String(values.employee_count) : '—'} />
+                    {!hideEmployeeCount && (
+                      <ReviewRow label={t('company.employee_count')} value={values.employee_count != null ? String(values.employee_count) : '—'} />
+                    )}
                     <ReviewRow label={t('company.industry')} value={optionLabel(t, INDUSTRY_OPTIONS, values.industry_code)} />
                     <ReviewRow label={t('company.country')} value={optionLabel(t, COUNTRY_OPTIONS, values.country_code)} />
                   </Box>

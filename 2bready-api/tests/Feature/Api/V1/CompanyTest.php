@@ -109,6 +109,22 @@ it('requires authentication to self-register a company', function () {
         ->assertUnauthorized();
 });
 
+it('ignores employee_count sent by a self-registering company_owner', function () {
+    $owner = User::factory()->companyOwner()->create(['company_id' => null]);
+
+    // A company can't be trusted to self-report the figure its own compliance
+    // bypass eligibility is evaluated against — only admin/staff/finance may set it.
+    $response = $this->actingAs($owner)->postJson('/api/v1/companies/register', [
+        'name' => 'Self Reported Co',
+        'industry_code' => 'F&B',
+        'employee_count' => 1,
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.company.employee_count', null)
+        ->assertJsonPath('data.company.bypass_flags.company_internal_rules', false);
+});
+
 // ─── Auto-bypass rule (v3 §0.2/§0.5) ────────────────────────────────────────
 
 it('sets the company_internal_rules bypass flag when employee_count is below the platform threshold', function () {
@@ -196,6 +212,26 @@ it('lets a company_owner update their own profile fields but not status', functi
     ])->assertOk()->assertJsonPath('data.name_kh', 'ឈ្មោះថ្មី');
 
     expect($company->fresh()->status->value)->toBe('active');
+});
+
+it('forbids a company_owner from changing their own employee_count', function () {
+    $company = Company::factory()->create(['employee_count' => 20]);
+    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+
+    $this->actingAs($owner)->patchJson("/api/v1/companies/{$company->id}", [
+        'employee_count' => 2,
+    ])->assertOk()->assertJsonPath('data.employee_count', 20);
+
+    expect($company->fresh()->employee_count)->toBe(20);
+});
+
+it('lets an admin change a company employee_count', function () {
+    $company = Company::factory()->create(['employee_count' => 20]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'employee_count' => 2,
+    ])->assertOk()->assertJsonPath('data.employee_count', 2);
 });
 
 it('forbids a company_owner from updating another company', function () {
