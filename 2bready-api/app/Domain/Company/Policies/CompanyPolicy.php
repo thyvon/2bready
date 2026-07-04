@@ -24,6 +24,17 @@ class CompanyPolicy
         return $user->can('company.create');
     }
 
+    /**
+     * Self-service registration is deliberately independent of company.create
+     * (which is an internal-staff permission for onboarding companies on a
+     * client's behalf). A company_owner may register exactly one company —
+     * their own — and only if they aren't already attached to one.
+     */
+    public function registerOwn(User $user): bool
+    {
+        return $user->hasRole('company_owner') && $user->company_id === null;
+    }
+
     public function update(User $user, Company $company): bool
     {
         return $user->can('company.edit') && ($this->isInternal($user) || $user->company_id === $company->id);

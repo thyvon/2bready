@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\User\Actions;
 
 use App\Domain\User\Models\User;
-use PragmaRX\Google2FA\Google2FA;
+use PragmaRX\Google2FAQRCode\Google2FA;
 
 class SetupTotpAction
 {
@@ -18,7 +18,7 @@ class SetupTotpAction
 
         $user->update(['two_factor_secret' => encrypt($secret)]);
 
-        $qrCodeUrl = $this->google2fa->getQRCodeUrl(
+        $qrCodeUrl = $this->google2fa->getQRCodeInline(
             config('app.name'),
             $user->email,
             $secret,

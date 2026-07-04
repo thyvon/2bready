@@ -58,6 +58,57 @@ it('forbids a company_owner from creating a company', function () {
         ->assertForbidden();
 });
 
+// ─── Self-service registration ──────────────────────────────────────────────
+
+it('lets a company_owner without a company register their own', function () {
+    $owner = User::factory()->companyOwner()->create(['company_id' => null]);
+
+    $response = $this->actingAs($owner)->postJson('/api/v1/companies/register', [
+        'name' => 'Owner Registered Co',
+        'industry_code' => 'F&B',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonStructure(['data' => ['company' => ['id', 'name'], 'user' => ['id', 'company_id']]])
+        ->assertJsonPath('data.company.name', 'Owner Registered Co');
+
+    $company = Company::where('name', 'Owner Registered Co')->firstOrFail();
+    expect($owner->fresh()->company_id)->toBe($company->id);
+});
+
+it('forbids a company_owner who already has a company from registering another', function () {
+    $existing = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->create(['company_id' => $existing->id]);
+
+    $this->actingAs($owner)
+        ->postJson('/api/v1/companies/register', ['name' => 'Second Co', 'industry_code' => 'F&B'])
+        ->assertForbidden();
+
+    expect(Company::where('name', 'Second Co')->exists())->toBeFalse();
+});
+
+it('forbids a company_member from self-registering a company', function () {
+    $company = Company::factory()->create();
+    $member = User::factory()->withRole('company_member')->create(['company_id' => null]);
+
+    $this->actingAs($member)
+        ->postJson('/api/v1/companies/register', ['name' => 'Member Co', 'industry_code' => 'F&B'])
+        ->assertForbidden();
+});
+
+it('forbids an admin from using the self-service registration endpoint', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->postJson('/api/v1/companies/register', ['name' => 'Admin Co', 'industry_code' => 'F&B'])
+        ->assertForbidden();
+});
+
+it('requires authentication to self-register a company', function () {
+    $this->postJson('/api/v1/companies/register', ['name' => 'X', 'industry_code' => 'F&B'])
+        ->assertUnauthorized();
+});
+
 // ─── Auto-bypass rule (v3 §0.2/§0.5) ────────────────────────────────────────
 
 it('sets the company_internal_rules bypass flag when employee_count is below the platform threshold', function () {
