@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
+import Popover from '@mui/material/Popover';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
@@ -12,18 +12,35 @@ import CloseIcon from '@mui/icons-material/Close';
 import { isNavItemActive, type NavItem } from '@/components/layouts/nav-items';
 import { useTranslation } from '@/lib/i18n';
 
-interface NavMenuDialogProps {
-  open: boolean;
+interface NavMenuPopoverProps {
+  anchorEl: HTMLElement | null;
   onClose: () => void;
   navItems: NavItem[];
 }
 
-export default function NavMenuDialog({ open, onClose, navItems }: NavMenuDialogProps) {
+export default function NavMenuPopover({ anchorEl, onClose, navItems }: NavMenuPopoverProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Popover
+      open={Boolean(anchorEl)}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+      slotProps={{
+        paper: {
+          sx: {
+            mt: 1,
+            width: 420,
+            maxWidth: 'calc(100vw - 32px)',
+            borderRadius: 2,
+            overflow: 'hidden',
+          },
+        },
+      }}
+    >
       <Box
         sx={{
           display: 'flex',
@@ -75,6 +92,6 @@ export default function NavMenuDialog({ open, onClose, navItems }: NavMenuDialog
           );
         })}
       </Grid>
-    </Dialog>
+    </Popover>
   );
 }
