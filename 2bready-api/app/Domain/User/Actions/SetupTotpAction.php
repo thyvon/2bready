@@ -18,11 +18,20 @@ class SetupTotpAction
 
         $user->update(['two_factor_secret' => encrypt($secret)]);
 
-        $qrCodeUrl = $this->google2fa->getQRCodeInline(
+        $qrCode = $this->google2fa->getQRCodeInline(
             config('app.name'),
             $user->email,
             $secret,
         );
+
+        // google2fa-qrcode only wraps its output as a data: URI when the imagick PHP
+        // extension is loaded (PNG path) — without it, it silently falls back to raw SVG
+        // XML text, which is useless as an <img src>. Normalize both cases ourselves so
+        // this doesn't depend on which extensions happen to be installed in a given
+        // environment (imagick isn't installed in the production image).
+        $qrCodeUrl = str_starts_with($qrCode, 'data:')
+            ? $qrCode
+            : 'data:image/svg+xml;base64,'.base64_encode($qrCode);
 
         return [
             'secret' => $secret,

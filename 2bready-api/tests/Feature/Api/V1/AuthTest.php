@@ -165,10 +165,16 @@ it('resets password with valid token', function () {
 it('generates a TOTP secret for authenticated user', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)
+    $response = $this->actingAs($user)
         ->postJson('/api/v1/auth/totp/setup')
         ->assertOk()
         ->assertJsonStructure(['data' => ['secret', 'qr_code_url']]);
+
+    // Regression: pragmarx/google2fa-qrcode only wraps its output as a data: URI when the
+    // imagick PHP extension is loaded — without it (as in the production image), it
+    // silently returns raw SVG XML text instead, which is useless as an <img src>. This
+    // must always be a data: URI regardless of which extensions happen to be installed.
+    expect($response->json('data.qr_code_url'))->toStartWith('data:');
 });
 
 it('returns 401 on TOTP setup without auth', function () {
