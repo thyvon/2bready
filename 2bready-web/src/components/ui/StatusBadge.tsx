@@ -1,6 +1,7 @@
 'use client';
 
 import Chip from '@mui/material/Chip';
+import { useTranslation } from '@/lib/i18n';
 
 type StatusKey =
   | 'active' | 'inactive' | 'suspended'
@@ -12,26 +13,26 @@ type StatusKey =
   | 'resolved' | 'closed'
   | 'draft';
 
-const STATUS_MAP: Record<StatusKey, { label: string; color: 'success' | 'error' | 'warning' | 'default' | 'info' | 'primary' }> = {
-  active:         { label: 'Active',          color: 'success' },
-  approved:       { label: 'Approved',        color: 'success' },
-  paid:           { label: 'Paid',            color: 'success' },
-  published:      { label: 'Published',       color: 'success' },
-  resolved:       { label: 'Resolved',        color: 'success' },
-  closed:         { label: 'Closed',          color: 'default' },
+const STATUS_COLOR: Record<StatusKey, 'success' | 'error' | 'warning' | 'default' | 'info' | 'primary'> = {
+  active: 'success',
+  approved: 'success',
+  paid: 'success',
+  published: 'success',
+  resolved: 'success',
+  closed: 'default',
 
-  pending:        { label: 'Pending',         color: 'warning' },
-  pending_review: { label: 'Pending Review',  color: 'warning' },
-  in_progress:    { label: 'In Progress',     color: 'warning' },
-  open:           { label: 'Open',            color: 'info' },
-  draft:          { label: 'Draft',           color: 'default' },
+  pending: 'warning',
+  pending_review: 'warning',
+  in_progress: 'warning',
+  open: 'info',
+  draft: 'default',
 
-  rejected:       { label: 'Rejected',        color: 'error' },
-  failed:         { label: 'Failed',          color: 'error' },
-  suspended:      { label: 'Suspended',       color: 'error' },
-  cancelled:      { label: 'Cancelled',       color: 'error' },
-  expired:        { label: 'Expired',         color: 'error' },
-  inactive:       { label: 'Inactive',        color: 'default' },
+  rejected: 'error',
+  failed: 'error',
+  suspended: 'error',
+  cancelled: 'error',
+  expired: 'error',
+  inactive: 'default',
 };
 
 interface StatusBadgeProps {
@@ -40,11 +41,15 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, label }: StatusBadgeProps) {
-  const config = STATUS_MAP[status as StatusKey] ?? { label: status, color: 'default' as const };
+  const { t } = useTranslation();
+  const key = status as StatusKey;
+  const color = STATUS_COLOR[key] ?? 'default';
+  const resolvedLabel = label ?? (STATUS_COLOR[key] ? t(`status.${key}`) : status);
+
   return (
     <Chip
-      label={label ?? config.label}
-      color={config.color}
+      label={resolvedLabel}
+      color={color}
       size="small"
       variant="outlined"
     />

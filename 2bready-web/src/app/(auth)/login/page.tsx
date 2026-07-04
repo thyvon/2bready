@@ -17,10 +17,13 @@ import { loginSchema, type LoginInput } from '@/domains/auth/schemas';
 import { login } from '@/domains/auth/api';
 import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+import FieldLabel from '@/components/forms/FieldLabel';
 
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, setPendingTotp } = useAuthStore();
+  const { t } = useTranslation();
   const [serverError, setServerError] = useState('');
 
   const {
@@ -55,15 +58,13 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout title="Sign in">
+    <AuthLayout title={t('auth.sign_in')}>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {serverError && <Alert severity="error" sx={{ py: 0.5 }}>{serverError}</Alert>}
 
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.75, color: 'text.primary' }}>
-              Email address
-            </Typography>
+            <FieldLabel>{t('auth.email_address')}</FieldLabel>
             <TextField
               type="email"
               placeholder="you@company.com"
@@ -79,7 +80,7 @@ export default function LoginPage() {
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
               <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
-                Password
+                {t('auth.password')}
               </Typography>
               <MuiLink
                 component={Link}
@@ -88,7 +89,7 @@ export default function LoginPage() {
                 underline="hover"
                 sx={{ color: 'text.secondary' }}
               >
-                Forgot password?
+                {t('auth.forgot_password')}
               </MuiLink>
             </Box>
             <TextField
@@ -103,13 +104,13 @@ export default function LoginPage() {
           </Box>
 
           <Button type="submit" variant="contained" size="large" fullWidth loading={isSubmitting} sx={{ mt: 0.5 }}>
-            Continue
+            {t('auth.continue')}
           </Button>
 
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Don&apos;t have an account?{' '}
+            {t('auth.no_account')}{' '}
             <MuiLink component={Link} href="/register" underline="hover" sx={{ fontWeight: 500, color: 'text.primary' }}>
-              Sign up
+              {t('auth.sign_up')}
             </MuiLink>
           </Typography>
         </Box>

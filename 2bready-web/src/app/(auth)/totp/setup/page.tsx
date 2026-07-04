@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
@@ -17,25 +17,36 @@ import { totpCodeSchema, type TotpCodeInput } from '@/domains/auth/schemas';
 import { totpSetup, totpConfirm } from '@/domains/auth/api';
 import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+import FieldLabel from '@/components/forms/FieldLabel';
 import type { TotpSetupResponse } from '@/domains/auth/types';
 
 export default function TotpSetupPage() {
   const router = useRouter();
   const { totpFlow, setAuth, user, token } = useAuthStore();
+  const { t } = useTranslation();
   const [setup, setSetup] = useState<TotpSetupResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [serverError, setServerError] = useState('');
+  // Generating a TOTP secret is not idempotent — each call overwrites the
+  // stored secret, so React Strict Mode's dev-mode double-invoke of this
+  // effect would otherwise race two secrets against each other and show the
+  // user a QR code that doesn't match what's actually stored for verification.
+  const hasRequestedSetup = useRef(false);
 
   useEffect(() => {
     if (totpFlow !== 'setup_required') {
       router.replace('/login');
       return;
     }
+    if (hasRequestedSetup.current) return;
+    hasRequestedSetup.current = true;
+
     totpSetup()
       .then(setSetup)
-      .catch(() => setServerError('Failed to load setup. Please try again.'))
+      .catch(() => setServerError(t('auth.totp_setup_failed')))
       .finally(() => setLoading(false));
-  }, [totpFlow, router]);
+  }, [totpFlow, router, t]);
 
   const {
     register,
@@ -58,8 +69,8 @@ export default function TotpSetupPage() {
 
   return (
     <AuthLayout
-      title="Set up two-factor authentication"
-      subtitle="Scan the QR code with your authenticator app"
+      title={t('auth.totp_setup_title')}
+      subtitle={t('auth.totp_setup_subtitle')}
     >
       {loading && (
         <Box className="flex justify-center py-8">
@@ -80,7 +91,7 @@ export default function TotpSetupPage() {
               unoptimized
             />
             <Typography variant="caption" color="text.secondary" className="text-center">
-              Can&apos;t scan? Enter this key manually:
+              {t('auth.totp_manual_key')}
               <br />
               <strong className="font-mono tracking-widest">{setup.secret}</strong>
             </Typography>
@@ -88,18 +99,21 @@ export default function TotpSetupPage() {
 
           {serverError && <Alert severity="error">{serverError}</Alert>}
 
-          <TextField
-            label="6-digit code from your app"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            fullWidth
-            error={!!errors.code}
-            helperText={errors.code?.message}
-            {...register('code')}
-          />
+          <Box>
+            <FieldLabel>{t('auth.totp_code_label')}</FieldLabel>
+            <TextField
+              placeholder="123456"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              fullWidth
+              error={!!errors.code}
+              helperText={errors.code?.message}
+              {...register('code')}
+            />
+          </Box>
 
           <Button type="submit" variant="contained" size="large" fullWidth loading={isSubmitting}>
-            Enable two-factor authentication
+            {t('auth.totp_enable')}
           </Button>
         </form>
       )}

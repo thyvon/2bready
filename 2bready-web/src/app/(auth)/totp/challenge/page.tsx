@@ -7,16 +7,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 
 import AuthLayout from '@/components/layouts/AuthLayout';
 import { totpCodeSchema, type TotpCodeInput } from '@/domains/auth/schemas';
 import { totpVerify } from '@/domains/auth/api';
 import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+import FieldLabel from '@/components/forms/FieldLabel';
 
 export default function TotpChallengePage() {
   const router = useRouter();
   const { totpFlow, completeTotpFlow } = useAuthStore();
+  const { t } = useTranslation();
   const [serverError, setServerError] = useState('');
 
   useEffect(() => {
@@ -44,25 +48,28 @@ export default function TotpChallengePage() {
 
   return (
     <AuthLayout
-      title="Two-factor authentication"
-      subtitle="Enter the 6-digit code from your authenticator app"
+      title={t('auth.totp_challenge_title')}
+      subtitle={t('auth.totp_challenge_subtitle')}
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
         {serverError && <Alert severity="error">{serverError}</Alert>}
 
-        <TextField
-          label="Authentication code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          autoFocus
-          fullWidth
-          error={!!errors.code}
-          helperText={errors.code?.message}
-          {...register('code')}
-        />
+        <Box>
+          <FieldLabel>{t('auth.totp_auth_code')}</FieldLabel>
+          <TextField
+            placeholder="123456"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            fullWidth
+            error={!!errors.code}
+            helperText={errors.code?.message}
+            {...register('code')}
+          />
+        </Box>
 
         <Button type="submit" variant="contained" size="large" fullWidth loading={isSubmitting}>
-          Verify
+          {t('auth.verify')}
         </Button>
       </form>
     </AuthLayout>

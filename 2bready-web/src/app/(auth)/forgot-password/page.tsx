@@ -8,13 +8,17 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 import AuthLayout from '@/components/layouts/AuthLayout';
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/domains/auth/schemas';
 import { forgotPassword } from '@/domains/auth/api';
 import { getApiError } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+import FieldLabel from '@/components/forms/FieldLabel';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [sent, setSent] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -36,40 +40,43 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthLayout title="Check your email" subtitle="We sent a reset link if that address is registered.">
+      <AuthLayout title={t('auth.check_email_title')} subtitle={t('auth.check_email_subtitle')}>
         <Alert severity="success" className="mb-4">
-          If that email exists, a reset link has been sent. Check your inbox (and spam folder).
+          {t('auth.check_email_body')}
         </Alert>
         <Link href="/login" className="text-blue-600 hover:underline text-sm">
-          Back to sign in
+          {t('auth.back_to_sign_in')}
         </Link>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout title="Reset your password" subtitle="Enter your email to receive a reset link">
+    <AuthLayout title={t('auth.forgot_title')} subtitle={t('auth.forgot_subtitle')}>
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
         {serverError && <Alert severity="error">{serverError}</Alert>}
 
-        <TextField
-          label="Email"
-          type="email"
-          autoComplete="email"
-          autoFocus
-          fullWidth
-          error={!!errors.email}
-          helperText={errors.email?.message}
-          {...register('email')}
-        />
+        <Box>
+          <FieldLabel>{t('auth.email_address')}</FieldLabel>
+          <TextField
+            placeholder="you@company.com"
+            type="email"
+            autoComplete="email"
+            autoFocus
+            fullWidth
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            {...register('email')}
+          />
+        </Box>
 
         <Button type="submit" variant="contained" size="large" fullWidth loading={isSubmitting}>
-          Send reset link
+          {t('auth.send_reset_link')}
         </Button>
 
         <Typography variant="body2" color="text.secondary" className="text-center">
           <Link href="/login" className="text-blue-600 hover:underline">
-            Back to sign in
+            {t('auth.back_to_sign_in')}
           </Link>
         </Typography>
       </form>
