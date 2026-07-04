@@ -11,7 +11,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <Box className="flex items-start justify-between gap-4 mb-6">
+    <Box className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
       <Box>
         <Typography variant="h4" component="h1">
           {title}

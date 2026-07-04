@@ -76,13 +76,13 @@ export default function AdminCompaniesPage() {
       />
 
       <SectionCard noPadding>
-        <Box className="flex gap-3 p-4">
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, p: 2 }}>
           <TextField
             label={t('common.search')}
             size="small"
             value={filters.search ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value || undefined }))}
-            sx={{ minWidth: 220 }}
+            sx={{ width: { xs: '100%', sm: 220 } }}
           />
           <TextField
             select
@@ -90,7 +90,7 @@ export default function AdminCompaniesPage() {
             size="small"
             value={filters.status ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, status: (e.target.value || undefined) as CompanyListFilters['status'] }))}
-            sx={{ minWidth: 160 }}
+            sx={{ width: { xs: '100%', sm: 160 } }}
           >
             <MenuItem value="">{t('common.all')}</MenuItem>
             <MenuItem value="active">{t('common.active')}</MenuItem>

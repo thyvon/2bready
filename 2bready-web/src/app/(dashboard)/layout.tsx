@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Box from '@mui/material/Box';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import { useAuthStore } from '@/store/auth.store';
 import { useLayoutStore } from '@/store/layout.store';
 import DashboardSidebar from '@/components/layouts/DashboardSidebar';
@@ -16,6 +18,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { isAuthenticated } = useAuthStore();
   const { navOrientation } = useLayoutStore();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const theme = useTheme();
+  // Below md, always use the sidebar (drawer) layout — the topbar's dropdown-menu
+  // pattern is a poor fit for small screens, so the user's "Top bar" preference is
+  // only honored at md and above.
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/login');
@@ -23,13 +31,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!isAuthenticated) return null;
 
-  if (navOrientation === 'horizontal') {
+  if (navOrientation === 'horizontal' && !isMobile) {
     return (
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
         <motion.div key="horizontal-nav" initial="initial" animate="animate" variants={fadeIn}>
           <DashboardNavHorizontal />
         </motion.div>
-        <Box component="main" sx={{ p: 4 }}>
+        <Box component="main" sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
           <motion.div key={pathname} initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>
@@ -41,11 +49,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <motion.div key="vertical-nav" initial="initial" animate="animate" variants={fadeIn}>
-        <DashboardSidebar />
+        <DashboardSidebar mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
       </motion.div>
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <DashboardHeader />
-        <Box component="main" sx={{ flex: 1, p: 4 }}>
+        <DashboardHeader onMenuClick={() => setMobileNavOpen(true)} />
+        <Box component="main" sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4 } }}>
           <motion.div key={pathname} initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>
