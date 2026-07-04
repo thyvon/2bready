@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
     require __DIR__.'/api/auth.php';
 
-    Route::middleware(['auth:sanctum'])->group(function () {
+    // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
+    // reaching business routes — pending tokens only carry the 'totp-pending' ability.
+    Route::middleware(['auth:sanctum', 'totp.verified'])->group(function () {
         require __DIR__.'/api/company.php';
         require __DIR__.'/api/user.php';
         require __DIR__.'/api/package.php';

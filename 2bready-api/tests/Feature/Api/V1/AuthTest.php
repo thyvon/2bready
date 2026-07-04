@@ -7,6 +7,8 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Laravel\Sanctum\PersonalAccessToken;
+use PragmaRX\Google2FA\Google2FA;
 
 uses(RefreshDatabase::class);
 
@@ -234,4 +236,105 @@ it('login flags totp_confirmed=true for admin with 2FA enabled', function () {
     ])->assertOk()
         ->assertJsonPath('data.totp_required', true)
         ->assertJsonPath('data.totp_confirmed', true);
+});
+
+// ─── 2FA token-ability enforcement (pending tokens must not reach business routes) ──
+
+it('blocks a pending-totp token (2FA not yet set up) from reaching a business route', function () {
+    $admin = User::factory()->admin()->create();
+    $token = $admin->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
+
+    $this->withToken($token)->getJson('/api/v1/companies')
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Two-factor authentication is required to access this resource.');
+});
+
+it('blocks a pending-totp token (2FA enabled, challenge not completed) from reaching a business route', function () {
+    $admin = User::factory()->admin()->withTotp()->create();
+    $token = $admin->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
+
+    $this->withToken($token)->getJson('/api/v1/companies')->assertForbidden();
+});
+
+it('lets a pending-totp token still reach auth/totp/* and logout', function () {
+    $admin = User::factory()->admin()->withTotp()->create();
+    $token = $admin->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
+
+    $this->withToken($token)->postJson('/api/v1/auth/totp/verify', ['code' => '000000'])
+        ->assertUnprocessable(); // reaches the endpoint's own validation, not blocked by 403
+
+    $this->withToken($token)->postJson('/api/v1/auth/logout')->assertNoContent();
+});
+
+it('lets a fully-capable token reach a business route', function () {
+    $admin = User::factory()->admin()->create();
+    $token = $admin->createToken('api')->plainTextToken;
+
+    $this->withToken($token)->getJson('/api/v1/companies')->assertOk();
+});
+
+it('upgrades to a fully-capable token after totp/confirm succeeds', function () {
+    $admin = User::factory()->admin()->create();
+    $admin->update(['two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP')]);
+    $pending = $admin->createToken('api-pending-totp', ['totp-pending']);
+
+    $code = (new Google2FA)->getCurrentOtp('JBSWY3DPEHPK3PXP');
+
+    $response = $this->withToken($pending->plainTextToken)->postJson('/api/v1/auth/totp/confirm', ['code' => $code]);
+    $response->assertOk()->assertJsonStructure(['data' => ['token', 'message']]);
+
+    // The pending token record itself must be gone (not just superseded), and the new
+    // one must be a plain default-abilities token (able to reach business routes) —
+    // checked directly rather than via a second in-test HTTP call, since Laravel's auth
+    // guard caches the resolved user for the lifetime of the test process, which would
+    // mask a mid-test token change behind a stale cached resolution.
+    expect(PersonalAccessToken::find($pending->accessToken->id))->toBeNull();
+
+    $newTokenModel = $admin->fresh()->tokens()->latest('id')->first();
+    expect($newTokenModel->name)->toBe('api');
+    expect($newTokenModel->can('*'))->toBeTrue();
+});
+
+it('upgrades to a fully-capable token after totp/verify succeeds', function () {
+    $admin = User::factory()->admin()->withTotp()->create();
+    $admin->forceFill(['two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP')])->save();
+    $pending = $admin->createToken('api-pending-totp', ['totp-pending']);
+
+    $code = (new Google2FA)->getCurrentOtp('JBSWY3DPEHPK3PXP');
+
+    $response = $this->withToken($pending->plainTextToken)->postJson('/api/v1/auth/totp/verify', ['code' => $code]);
+    $response->assertOk()->assertJsonStructure(['data' => ['token', 'message']]);
+
+    expect(PersonalAccessToken::find($pending->accessToken->id))->toBeNull();
+
+    $newTokenModel = $admin->fresh()->tokens()->latest('id')->first();
+    expect($newTokenModel->name)->toBe('api');
+    expect($newTokenModel->can('*'))->toBeTrue();
+});
+
+// ─── Rate limiting ───────────────────────────────────────────────────────────
+
+it('throttles repeated login attempts for the same email', function () {
+    User::factory()->create(['email' => 'throttle@example.com', 'password' => bcrypt('Secret1234')]);
+
+    for ($i = 0; $i < 5; $i++) {
+        $this->postJson('/api/v1/auth/login', ['email' => 'throttle@example.com', 'password' => 'wrong'])
+            ->assertUnprocessable();
+    }
+
+    $this->postJson('/api/v1/auth/login', ['email' => 'throttle@example.com', 'password' => 'wrong'])
+        ->assertStatus(429);
+});
+
+it('throttles repeated totp/verify attempts for the same user', function () {
+    $admin = User::factory()->admin()->withTotp()->create();
+    $token = $admin->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
+
+    for ($i = 0; $i < 5; $i++) {
+        $this->withToken($token)->postJson('/api/v1/auth/totp/verify', ['code' => '000000'])
+            ->assertUnprocessable();
+    }
+
+    $this->withToken($token)->postJson('/api/v1/auth/totp/verify', ['code' => '000000'])
+        ->assertStatus(429);
 });

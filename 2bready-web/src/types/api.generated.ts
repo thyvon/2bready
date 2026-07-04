@@ -313,7 +313,6 @@ export interface components {
             name?: string;
             name_kh?: string | null;
             registration_no?: string | null;
-            employee_count?: number | null;
             industry_code?: string;
             country_code?: string;
             /** @enum {string} */
@@ -637,6 +636,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: {
+                            token: string;
                             /** @constant */
                             message: "Two-factor authentication enabled.";
                         };

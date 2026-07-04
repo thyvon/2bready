@@ -23,7 +23,7 @@ import type { TotpSetupResponse } from '@/domains/auth/types';
 
 export default function TotpSetupPage() {
   const router = useRouter();
-  const { totpFlow, setAuth, user, token } = useAuthStore();
+  const { totpFlow, setAuth, user } = useAuthStore();
   const { t } = useTranslation();
   const [setup, setSetup] = useState<TotpSetupResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,9 +57,12 @@ export default function TotpSetupPage() {
   const onSubmit = async (data: TotpCodeInput) => {
     setServerError('');
     try {
-      await totpConfirm(data);
-      if (user && token) {
-        setAuth(user, token);
+      // The token returned here is a fresh, fully-capable one — the token held since
+      // login only carries the restricted 'totp-pending' ability and cannot reach the
+      // dashboard's API calls once we navigate past this page.
+      const newToken = await totpConfirm(data);
+      if (user) {
+        setAuth(user, newToken);
       }
       router.replace('/dashboard');
     } catch (err) {

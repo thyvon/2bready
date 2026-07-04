@@ -56,9 +56,14 @@ class AuthController extends Controller
             return ApiResponse::error('Your account has been suspended.', [], 403);
         }
 
-        // If 2FA is required but not confirmed, prompt for setup
+        // If 2FA is required but not confirmed, prompt for setup. This token is
+        // deliberately scoped to the 'totp-pending' ability only (not the default '*') so
+        // it can reach the auth/totp/* + logout endpoints but nothing else — enforced by
+        // the EnsureTwoFactorVerified middleware on every other protected route. A
+        // password-only credential must never be enough to reach business data when the
+        // account requires 2FA.
         if ($user->requiresTwoFactor() && ! $user->hasTwoFactorEnabled()) {
-            $token = $user->createToken('api')->plainTextToken;
+            $token = $user->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
 
             return ApiResponse::success([
                 'user' => new UserResource($user),
@@ -68,9 +73,9 @@ class AuthController extends Controller
             ], [], 200);
         }
 
-        // If 2FA is set up, require the code before issuing the token
+        // If 2FA is set up, require the code before issuing a fully-capable token.
         if ($user->hasTwoFactorEnabled()) {
-            $token = $user->createToken('api-pending-totp')->plainTextToken;
+            $token = $user->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
 
             return ApiResponse::success([
                 'user' => new UserResource($user),
@@ -141,7 +146,17 @@ class AuthController extends Controller
             return ApiResponse::error('Invalid verification code.', ['code' => ['The code is incorrect or expired.']], 422);
         }
 
-        return ApiResponse::success(['message' => 'Two-factor authentication enabled.'], [], 200);
+        // Upgrade from the restricted 'totp-pending' token to a fully-capable one now
+        // that 2FA setup is confirmed — mirrors totpVerify()'s token upgrade below. The
+        // frontend must swap to this new token; the old one it had been holding since
+        // login can no longer reach business routes.
+        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->createToken('api')->plainTextToken;
+
+        return ApiResponse::success([
+            'token' => $token,
+            'message' => 'Two-factor authentication enabled.',
+        ], [], 200);
     }
 
     public function totpVerify(TotpVerifyRequest $request, VerifyTotpAction $action): JsonResponse
@@ -152,7 +167,7 @@ class AuthController extends Controller
             return ApiResponse::error('Invalid verification code.', ['code' => ['The code is incorrect or expired.']], 422);
         }
 
-        // Revoke pending token, issue a clean one
+        // Revoke the restricted pending token, issue a fully-capable one.
         $request->user()->currentAccessToken()->delete();
         $token = $request->user()->createToken('api')->plainTextToken;
 

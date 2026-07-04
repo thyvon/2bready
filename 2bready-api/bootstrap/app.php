@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Exceptions\DomainException;
 use App\Http\Middleware\EnsureCompanyIsActive;
+use App\Http\Middleware\EnsureTwoFactorVerified;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\ScopeToCompany;
 use App\Support\ApiResponse;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'company.active' => EnsureCompanyIsActive::class,
             'company.scope' => ScopeToCompany::class,
+            'totp.verified' => EnsureTwoFactorVerified::class,
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,

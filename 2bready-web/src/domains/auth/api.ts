@@ -35,8 +35,9 @@ export async function totpSetup(): Promise<TotpSetupResponse> {
   return res.data.data;
 }
 
-export async function totpConfirm(data: TotpCodeInput): Promise<void> {
-  await api.post('/auth/totp/confirm', data);
+export async function totpConfirm(data: TotpCodeInput): Promise<string> {
+  const res = await api.post<{ data: { token: string } }>('/auth/totp/confirm', data);
+  return res.data.data.token;
 }
 
 export async function totpVerify(data: TotpCodeInput): Promise<string> {
