@@ -4,30 +4,7 @@ import Link from 'next/link';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import BrandMark from '@/components/marketing/BrandMark';
-
-const FOOTER_COLUMNS = [
-  {
-    title: 'Product',
-    links: [
-      { label: 'Features', href: '/#features' },
-      { label: 'Pricing', href: '/pricing' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'About', href: '/about' },
-      { label: 'Contact', href: '/contact' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
-    ],
-  },
-];
+import { footerContent, footerColumns } from '@/components/marketing/content';
 
 export default function MarketingFooter() {
   return (
@@ -57,28 +34,37 @@ export default function MarketingFooter() {
             2bReady
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            The digital trust engine for audit-ready businesses.
+            {footerContent.tagline}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {footerContent.poweredBy}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {FOOTER_COLUMNS.map((col) => (
+          {footerColumns.map((col) => (
             <Box key={col.title}>
               <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
                 {col.title}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {col.links.map((link) => (
-                  <Typography
-                    key={link.href}
-                    component={Link}
-                    href={link.href}
-                    variant="body2"
-                    sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'text.primary' } }}
-                  >
-                    {link.label}
-                  </Typography>
-                ))}
+                {col.items.map((item) =>
+                  'href' in item ? (
+                    <Typography
+                      key={item.label}
+                      component={Link}
+                      href={item.href}
+                      variant="body2"
+                      sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'text.primary' } }}
+                    >
+                      {item.label}
+                    </Typography>
+                  ) : (
+                    <Typography key={item.label} variant="body2" color="text.secondary">
+                      {item.label}
+                    </Typography>
+                  )
+                )}
               </Box>
             </Box>
           ))}
@@ -90,7 +76,7 @@ export default function MarketingFooter() {
         color="text.secondary"
         sx={{ display: 'block', textAlign: 'center', mt: 6 }}
       >
-        © {new Date().getFullYear()} 2bReady. All rights reserved.
+        {footerContent.copyright}
       </Typography>
     </Box>
   );

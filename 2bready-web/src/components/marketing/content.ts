@@ -66,87 +66,175 @@ export const pricingPlans = [
   {
     level: 'L1',
     icon: 'compliance',
-    name: 'The Launchpad',
-    badge: 'Bronze Foundation · Licensed',
+    name: 'Compliance Readiness',
     price: '$0',
     period: '/ year',
     fee: 'No verification fee',
+    description: 'Authoritative legal and tax structuring.',
     features: [
-      'MoC Business Registration',
-      'Articles of Incorporation (AoI)',
-      'ISIC Code Analysis & Selection',
-      'Business Name Reservation Certificate',
-      'Annual Patent Tax (with expiry tracking)',
-      'VAT Certificate',
-      'Bank Account E-Filing Receipt',
-      'MLVT Enterprise Declaration',
-      'NSSF Membership Card',
-      'Internal Company Regulations',
-      'Shareholder ID/Passport',
-      'Lease Agreement / Land Title',
-      'Company Stamp & Digital Signature',
+      'Verified MoC & Tax Registration',
+      'ISIC Code & Articles of Incorporation',
+      'Automated Patent & VAT Tracking',
+      'NSSF & MLVT Labor Compliance',
     ],
     cta: { label: 'Start Free', href: '/register' },
   },
   {
     level: 'L2',
     icon: 'product',
-    name: 'Product Engineering',
-    badge: 'Silver Quality · Certified',
+    name: 'Product Excellence',
     price: '$49',
     period: '/ year',
-    fee: '+ $25 one-time verification fee',
+    fee: '+ $25 manual audit fee',
+    description: 'Certified quality and safety standards.',
     features: [
-      'Lab Certificate of Analysis (CoA) – expiry tracked',
-      'Nutrition Facts Table',
-      'Shelf-life Study Report',
-      'Product Registration Certificate',
-      'GHP/GMP/HACCP Certificate – expiry tracked',
-      'Trademark Registration Certificate',
-      'GS1 Membership & GTIN Tracker',
-      'Final Approved Label Artwork',
-      'COGS Analysis (Cost of Goods Sold)',
+      'Lab CoA & Nutrition Verification',
+      'GHP / GMP / HACCP Monitoring',
+      'Trademark & GS1 Barcoding',
+      'Cost of Goods Sold (COGS) Analysis',
     ],
-    cta: { label: 'Subscribe', href: '/register?level=l2' },
+    cta: { label: 'Select Pathway', href: '/register?level=l2' },
   },
   {
     level: 'L3',
     icon: 'operational',
     name: 'Operational Excellence',
-    badge: 'Gold Structure · Optimized',
     price: '$99',
     period: '/ year',
-    fee: '+ $75 one-time verification fee',
+    fee: '+ $75 manual audit fee',
+    description: 'Robust managerial and financial workflows.',
     features: [
-      'Organizational Chart',
-      'Job Descriptions for all roles',
-      'Master SOP Inventory',
-      'Core SOPs (Production & Warehouse)',
-      'CAS Standard Chart of Accounts',
-      'Balance Sheet',
-      'Income Statement (P&L)',
-      'Cash Flow Statement',
-      'Bank Reconciliation Report',
-      'Tax Return E-Filing Records',
+      'Master SOP Architecture',
+      'CAS-Compliant Chart of Accounts',
+      'Financial Statement Preparation',
+      'Bank Reconciliation & Tax Matching',
     ],
-    cta: { label: 'Subscribe', href: '/register?level=l3' },
+    cta: { label: 'Select Pathway', href: '/register?level=l3' },
   },
   {
     level: 'L4',
     icon: 'global',
     name: 'Global Readiness',
-    badge: 'Platinum Prestige · Investable',
     price: '$199',
     period: '/ year',
-    fee: '+ $150 one-time verification fee',
+    fee: '+ $150 manual audit fee',
+    description: 'Institutional investment & export grade.',
     features: [
-      'CBC Credit Report (expiry 3-6 months)',
-      'Independent Audited Financial Statements',
-      'Financial Projections & Business Valuation',
-      'Market Gap Analysis Report',
-      'ISO / BRC / Halal Certificates – expiry tracked',
-      'Incoterms & International Logistics Strategy',
+      'Certified Independent Financial Audits',
+      'Financial Forecasting & Valuation',
+      'Global Standards (ISO, BRC, Halal)',
+      'Export Logistics & ESG Reporting',
     ],
-    cta: { label: 'Subscribe', href: '/register?level=l4' },
+    cta: { label: 'Select Pathway', href: '/register?level=l4' },
+  },
+] as const;
+
+export const portfolioContent = {
+  title: 'Trusted by Leading ASEAN Enterprises & Ecosystem Partners',
+};
+
+export const portfolioClients = [
+  'Mekong Agri',
+  'VATTANAC Mfg',
+  'TonleSap Exports',
+  'SovannMera',
+] as const;
+
+export const portfolioPartners = [
+  'USAID Harvest III',
+  'CAPRED Connect',
+  'GIZ-EU CAPSAFE',
+  'CamFEIA',
+] as const;
+
+export const stakeholdersContent = {
+  title: 'Built for the Entire Ecosystem',
+  subtitle:
+    'Our hybrid evaluation model — combining AI extraction with expert verification — delivers uncompromising reliability across all sectors.',
+};
+
+export const stakeholders = [
+  {
+    icon: 'sme',
+    title: 'ASEAN SMEs',
+    description: 'Achieve audit-readiness, eliminate administrative bottlenecks, and scale operations securely without the overhead of massive compliance teams.',
+  },
+  {
+    icon: 'banks',
+    title: 'Institutional Banks',
+    description: 'Access verified, bank-grade financial data through a Zero-Trust secure vault, accelerating loan approvals and mitigating risk.',
+  },
+  {
+    icon: 'government',
+    title: 'Governments & NGOs',
+    description: 'Ensure strict adherence to local laws while supporting development partners in mapping SME growth and ESG sustainability.',
+  },
+  {
+    icon: 'investors',
+    title: 'Global Investors',
+    description: 'Utilize the Smart Data Room to review certified pre-money valuations, independent audits, and institutional-grade financial forecasts.',
+  },
+] as const;
+
+export const ecosystemContent = {
+  title: 'The ADMIT Global Ecosystem',
+  subtitle:
+    'Achieving verified badges on the 2bReady platform directly unlocks premium connectivity to our specialized growth and commerce subsidiaries.',
+};
+
+export const ecosystemPartners = [
+  {
+    icon: 'consulting',
+    name: 'ADMIT Unit',
+    description: 'Expert consulting, Master SOP drafting, and dedicated compliance auditing to establish your operational foundation.',
+  },
+  {
+    icon: 'commerce',
+    name: '2bgro Commerce',
+    description: 'Access exclusive B2B commerce channels utilizing your verified L2 Product Excellence badge.',
+  },
+  {
+    icon: 'logistics',
+    name: '2bShip Logistics',
+    description: 'Premium cross-border fulfillment and supply chain solutions unlocked by achieving L3 Operational Excellence.',
+  },
+  {
+    icon: 'investment',
+    name: 'GoInvestors',
+    description: 'Secure, institutional deal-room access reserved exclusively for L4 Global enterprises seeking capital injection.',
+  },
+] as const;
+
+export const footerContent = {
+  tagline: 'The Digital Trust Engine',
+  poweredBy: 'Powered by ADMIT Global',
+  copyright: '© 2026 2bReady – ADMIT Global Co., Ltd. Empowering ASEAN SMEs to Comply. Scale. Lead.',
+};
+
+export const footerColumns = [
+  {
+    title: 'Professional Services',
+    items: [
+      { label: 'Compliance Auditing' },
+      { label: 'SOP Development' },
+      { label: 'Financial Structuring' },
+      { label: 'Export Readiness' },
+    ],
+  },
+  {
+    title: 'Headquarters',
+    items: [
+      { label: 'Phnom Penh, Cambodia' },
+      { label: 'support@2bready.asia', href: 'mailto:support@2bready.asia' },
+      { label: '+855 23 999 888', href: 'tel:+85523999888' },
+    ],
+  },
+  {
+    title: 'Legal & Security',
+    items: [
+      { label: 'Zero-Trust Policy', href: '/security' },
+      { label: 'Data Protection (AWS)', href: '/security#data-protection' },
+      { label: 'Terms of Service', href: '/terms' },
+    ],
   },
 ] as const;

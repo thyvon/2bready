@@ -6,11 +6,12 @@ import Box from '@mui/material/Box';
 interface SpotlightCardProps {
   children: React.ReactNode;
   className?: string;
+  tilt?: boolean;
 }
 
 const MAX_TILT = 8; // degrees
 
-export default function SpotlightCard({ children, className }: SpotlightCardProps) {
+export default function SpotlightCard({ children, className, tilt = true }: SpotlightCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -28,7 +29,9 @@ export default function SpotlightCard({ children, className }: SpotlightCardProp
     const rotateY = (px - 0.5) * MAX_TILT * 2;
     const rotateX = (0.5 - py) * MAX_TILT * 2;
 
-    el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    if (tilt) {
+      el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    }
   };
 
   const handleMouseLeave = () => {

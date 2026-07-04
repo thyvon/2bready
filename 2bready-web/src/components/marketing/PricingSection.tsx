@@ -54,7 +54,7 @@ export default function PricingSection() {
                     size="small"
                     sx={{
                       alignSelf: 'flex-start',
-                      mb: 2,
+                      mb: 3,
                       fontWeight: 600,
                       height: 'auto',
                       py: 0.5,
@@ -63,10 +63,6 @@ export default function PricingSection() {
                       '& .MuiChip-label': { display: 'flex', alignItems: 'center', px: 0.5 },
                     }}
                   />
-
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                    {plan.badge}
-                  </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
                     <Typography variant="h3" component="span" sx={{ fontWeight: 800 }}>
@@ -81,6 +77,10 @@ export default function PricingSection() {
                     sx={{ color: plan.price === '$0' ? 'success.main' : 'text.secondary', fontWeight: 600, mb: 3, display: 'block' }}
                   >
                     {plan.fee}
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, pb: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    {plan.description}
                   </Typography>
 
                   <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mb: 4 }}>

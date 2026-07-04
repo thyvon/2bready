@@ -10,11 +10,14 @@ import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import BrandMark from '@/components/marketing/BrandMark';
+import NavHoverLink from '@/components/marketing/NavHoverLink';
 
 const NAV_LINKS = [
+  { label: 'Built For', href: '/#stakeholders' },
   { label: 'Features', href: '/#features' },
   { label: 'Pricing', href: '/#pricing' },
-  { label: 'About', href: '/#about' },
+  { label: 'Ecosystem', href: '/#ecosystem' },
+  { label: 'About', href: '/about' },
 ];
 
 export default function MarketingHeader() {
@@ -50,15 +53,12 @@ export default function MarketingHeader() {
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 3 }}>
         {NAV_LINKS.map((link) => (
-          <Typography
+          <NavHoverLink
             key={link.href}
-            component={Link}
             href={link.href}
-            variant="body2"
-            sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'text.primary' } }}
-          >
-            {link.label}
-          </Typography>
+            label={link.label}
+            sx={{ fontSize: '0.875rem' }}
+          />
         ))}
       </Box>
 
@@ -82,16 +82,13 @@ export default function MarketingHeader() {
       <Drawer anchor="right" open={menuOpen} onClose={() => setMenuOpen(false)}>
         <Box sx={{ width: 260, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV_LINKS.map((link) => (
-            <Typography
+            <NavHoverLink
               key={link.href}
-              component={Link}
               href={link.href}
-              variant="body1"
+              label={link.label}
               onClick={() => setMenuOpen(false)}
-              sx={{ color: 'text.primary', textDecoration: 'none', fontWeight: 500 }}
-            >
-              {link.label}
-            </Typography>
+              sx={{ fontSize: '1rem', fontWeight: 500 }}
+            />
           ))}
           <Button component={Link} href="/login" variant="outlined" onClick={() => setMenuOpen(false)}>
             Sign in
