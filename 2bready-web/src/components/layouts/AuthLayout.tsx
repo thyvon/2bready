@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import LanguageSwitcher from '@/components/layouts/LanguageSwitcher';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -25,8 +26,9 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
         py: 8,
       }}
     >
-      {/* Theme toggle — fixed top-right */}
-      <Box sx={{ position: 'fixed', top: 16, right: 16 }}>
+      {/* Language switcher + theme toggle — fixed top-right */}
+      <Box sx={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <LanguageSwitcher />
         <ThemeToggle />
       </Box>
 

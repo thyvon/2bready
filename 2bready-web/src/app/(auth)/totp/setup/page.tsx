@@ -23,7 +23,7 @@ import type { TotpSetupResponse } from '@/domains/auth/types';
 
 export default function TotpSetupPage() {
   const router = useRouter();
-  const { totpFlow, setAuth, user } = useAuthStore();
+  const { totpFlow, hasHydrated, setAuth, user } = useAuthStore();
   const { t } = useTranslation();
   const [setup, setSetup] = useState<TotpSetupResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,10 @@ export default function TotpSetupPage() {
   const hasRequestedSetup = useRef(false);
 
   useEffect(() => {
+    // Wait for the persisted store to rehydrate — otherwise this reads the
+    // pre-hydration default (totpFlow: 'none') on every hard reload and
+    // wrongly bounces an in-progress setup back to /login.
+    if (!hasHydrated) return;
     if (totpFlow !== 'setup_required') {
       router.replace('/login');
       return;
@@ -46,7 +50,7 @@ export default function TotpSetupPage() {
       .then(setSetup)
       .catch(() => setServerError(t('auth.totp_setup_failed')))
       .finally(() => setLoading(false));
-  }, [totpFlow, router, t]);
+  }, [hasHydrated, totpFlow, router, t]);
 
   const {
     register,

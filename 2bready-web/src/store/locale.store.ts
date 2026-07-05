@@ -1,19 +1,12 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-
 export type Locale = 'en' | 'kh';
 
-interface LocaleState {
-  locale: Locale;
-  setLocale: (locale: Locale) => void;
-}
+export const LOCALE_COOKIE = 'locale';
 
-export const useLocaleStore = create<LocaleState>()(
-  persist(
-    (set) => ({
-      locale: 'en',
-      setLocale: (locale) => set({ locale }),
-    }),
-    { name: '2bready-locale' }
-  )
-);
+// Pure and framework-agnostic on purpose: called server-side (RootLayout, via
+// next/headers' cookies()) to pick the locale for the very first HTML sent to
+// the browser, and client-side (LocaleProvider) to read the same cookie back.
+// Whichever locale the server rendered with is what LocaleProvider's initial
+// state must also start as, or hydration mismatches.
+export function parseLocaleCookie(value: string | null | undefined): Locale {
+  return value === 'kh' ? 'kh' : 'en';
+}

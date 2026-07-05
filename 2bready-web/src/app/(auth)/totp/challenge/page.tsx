@@ -19,15 +19,19 @@ import FieldLabel from '@/components/forms/FieldLabel';
 
 export default function TotpChallengePage() {
   const router = useRouter();
-  const { totpFlow, completeTotpFlow } = useAuthStore();
+  const { totpFlow, hasHydrated, completeTotpFlow } = useAuthStore();
   const { t } = useTranslation();
   const [serverError, setServerError] = useState('');
 
   useEffect(() => {
+    // Wait for the persisted store to rehydrate — otherwise this reads the
+    // pre-hydration default (totpFlow: 'none') on every hard reload and
+    // wrongly bounces an in-progress challenge back to /login.
+    if (!hasHydrated) return;
     if (totpFlow !== 'challenge') {
       router.replace('/login');
     }
-  }, [totpFlow, router]);
+  }, [hasHydrated, totpFlow, router]);
 
   const {
     register,

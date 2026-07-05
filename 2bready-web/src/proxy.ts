@@ -19,12 +19,18 @@ const REDIRECT_IF_AUTHENTICATED_PATHS = [
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
+  // auth_full is set only once 2FA (or a no-2FA login) fully completes — see
+  // syncTokenCookie in auth.store.ts. auth_token alone is not enough here: a
+  // pending-2FA session already holds a token cookie, and treating that as
+  // "authenticated" would bounce it away from /login into a /dashboard it
+  // can't actually render (isAuthenticated is still false there), looping.
+  const isFullyAuthenticated = request.cookies.get('auth_full')?.value === '1';
 
   const redirectIfAuthenticated = REDIRECT_IF_AUTHENTICATED_PATHS.some((p) => pathname.startsWith(p));
   const isDashboard = ['/dashboard', '/admin', '/auditor', '/company'].some((p) => pathname.startsWith(p));
 
   // Redirect fully-authenticated users away from auth pages
-  if (redirectIfAuthenticated && token) {
+  if (redirectIfAuthenticated && isFullyAuthenticated) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

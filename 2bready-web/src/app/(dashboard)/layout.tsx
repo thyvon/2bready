@@ -16,7 +16,7 @@ import { fadeIn, pageTransition } from '@/lib/motion';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, hasHydrated } = useAuthStore();
   const { navOrientation } = useLayoutStore();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const theme = useTheme();
@@ -26,10 +26,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
+    // Wait for the persisted store to rehydrate — otherwise this reads the
+    // pre-hydration default (isAuthenticated: false) on every hard reload and
+    // redirects a genuinely-authenticated session back to /login.
+    if (!hasHydrated) return;
     if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router]);
 
-  if (!isAuthenticated) return null;
+  if (!hasHydrated || !isAuthenticated) return null;
 
   if (navOrientation === 'horizontal' && !isMobile) {
     return (
