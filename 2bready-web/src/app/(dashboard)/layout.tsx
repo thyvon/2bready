@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <motion.div key="horizontal-nav" initial="initial" animate="animate" variants={fadeIn}>
           <DashboardNavHorizontal />
         </motion.div>
-        <Box component="main" sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+        <Box component="main" sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
           <motion.div key={pathname} initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>
@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </motion.div>
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <DashboardHeader onMenuClick={() => setMobileNavOpen(true)} />
-        <Box component="main" sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4 } }}>
+        <Box component="main" sx={{ flex: 1, p: { xs: 1.5, sm: 2, md: 2.5 } }}>
           <motion.div key={pathname} initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>

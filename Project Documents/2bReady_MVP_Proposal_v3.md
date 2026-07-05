@@ -111,6 +111,17 @@ This has one direct effect on Sprint scope (§3.3): **every sprint touching thes
 
 The blueprint is Cambodia-F&B-specific by necessity (NSSF, MoC, ISIC codes, CAS accounting). The architecture underneath it should not be. v3 makes the compliance taxonomy, journey levels, and document requirements **configuration, not code**, so a second country or industry vertical is a data-entry exercise, not a rebuild. Details in §1.8.
 
+### 0.7 Addendum (2026-07): a company_owner can now own more than one company
+
+Discovered as a real gap, not a hypothetical: as originally built (Sprint 1–3), `users.company_id` is a single nullable foreign key — a company_owner belongs to exactly one company, enforced both by the schema and by `CompanyPolicy::registerOwn()` explicitly blocking self-registration of a second company once `company_id` is set. This matches a solo-SME assumption the blueprint never actually stated one way or the other; it just wasn't questioned until now. **Confirmed direction going forward: one person can own multiple companies** — an agency, holding company, or serial founder running more than one SME through a single 2bReady login, switching between them the way Slack/GitHub let one account move between workspaces/orgs.
+
+**Architecture decision, resolved the same way §0.3 resolved TP-as-tenant — before it compounds, not after:**
+
+- **`users.company_id` is replaced by a `company_user` pivot table** (`user_id`, `company_id`, timestamps) — true many-to-many. `RegisterOwnCompanyAction` no longer overwrites a single column; it adds a new membership row, and the old "block if already has a company" policy guard is removed since having one no longer disqualifies registering another.
+- **A new `users.current_company_id`** (nullable FK) becomes the "active company" — the single thing every tenant-scoped query still needs to resolve to exactly one company per request. This is what `BelongsToCompany`, `ScopeToCompany`, and `EnsureCompanyIsActive` read from now, instead of the old `company_id`. A new "switch active company" endpoint validates the target is in the caller's own `company_user` memberships before updating it.
+- **Roles stay global, not per-company.** spatie/laravel-permission's `teams` feature (config `teams => false`, unchanged) is deliberately *not* being turned on for this: nothing in the product today assigns a user a different role per company, and there's no invite-another-owner's-company flow yet to justify that complexity. `company_owner` simply describes the kind of user; the pivot table alone describes which companies they're linked to.
+- **This is the same class of decision as §0.3 for exactly the same reason**: it touches the multi-tenancy boundary itself (`BelongsToCompany`, the single most safety-critical trait in the backend per its own documented rule — see `2bready-api/CLAUDE.md` Rule #1), the frontend auth store/routing (`user.company_id` becomes `user.companies[]` + `current_company_id`, and the existing "redirect owner without a company to /setup" logic needs to key off "zero memberships" instead of "company_id is null"), and retroactively touches Sprint 2 (Company Management), which already shipped against the single-company assumption. Resolving the schema now, rather than letting more sprints build on the old assumption, avoids a much larger retrofit later.
+
 ---
 
 ## 1. Technology Proposal
@@ -219,10 +230,11 @@ app/Domain/
 └─ Sop/                                ← UNCHANGED from v2, now explicitly scheduled (§3.3)
 ```
 
-Existing v2 domains (Company, User, Package, Payment, Journey, Document, Notification, Support, AuditLog, DataRoom, Shared) are unchanged in structure, with two additions:
+Existing v2 domains (Company, User, Package, Payment, Journey, Document, Notification, Support, AuditLog, DataRoom, Shared) are unchanged in structure, with three additions:
 
 - `Company` model gains `name_kh`, `employee_count`, and a `bypass_flags` JSONB column. **The mechanic is confirmed** (an employee-count threshold bypasses the "Company Internal Rules" document, not a whole "Internal Regulations" category as the settings UI copy loosely suggests) — **but per §0.5, the mockup's threshold of 8 is a placeholder, not a confirmed business rule.** `EmployeeCountBypassRule` (inside `Journey/Services/`) reads the threshold from `platform_settings.bypass_employee_threshold` (admin-editable, seeded at 8) rather than hardcoding the number, following the same rule-engine pattern already used for milestone unlocks.
 - `MilestoneUnlockRuleEngine` (Journey domain, unchanged location) gains one more strategy: bypass rules are evaluated *before* the standard unlock rules, so a bypassed milestone never appears as "required" to begin with.
+- **`User` model gains a `companies()` many-to-many relation** (through the new `company_user` pivot, §0.7) replacing the old single `company()` belongs-to, plus a `currentCompany()` belongs-to via the new `current_company_id` column. `Company/Actions/SwitchActiveCompanyAction` (NEW) validates the target company against the caller's own memberships and updates `current_company_id` — this is the only write path allowed to change it.
 
 #### Backend structure rules — one addition to v2's list
 
@@ -405,6 +417,8 @@ All v2 entities (§5.1) and design notes (§5.2) carry over unchanged — compan
 | `legal_consents` | `user_id`, `company_id`, `pathway_level`, `consent_text_version`, `accepted_at`, `ip_address`. **Confirmed consent text from blueprint**: *"I agree to the Terms of Use — I confirm authorization and will use this document for legitimate business purposes. It contains confidential information,"* tied to a reference to 2bReady's Data Protection Policy. |
 | `leads` | `name`, `email`, `company_name`, `phone`, `message`, `requested_tier`, `source` (paywall/marketing_site/referral/**admit_unit_upsell** — confirmed, see §0.3), `status`, `created_at`. |
 | `certificates` | `trust_badge_id` FK, `audit_id` FK (QR/verify URL uses this directly per confirmed blueprint behavior — see §1.6 note on the `public_verification_id` idea being a labeled recommendation, not a requirement), `pdf_url`, `qr_payload_url`, `issued_at`, `master_verifier_stamp` (denormalized snapshot of the platform verifier text at time of issuance, so historical certificates don't change if the platform setting is later updated). Extends `trust_badges` rather than overloading it. |
+| `company_user` (NEW, §0.7) | `user_id`, `company_id`, timestamps. Replaces `users.company_id` as the membership record — true many-to-many, so one person can be linked to more than one company. No `role` column here: roles stay global (spatie/laravel-permission, `teams => false`, unchanged), this table only tracks *which* companies a user is linked to. |
+| `users.current_company_id` (NEW, §0.7) | Nullable FK to `companies`, added to the existing `users` table (not a new table). The one thing every tenant-scoped query resolves against — `BelongsToCompany` reads this instead of the old `company_id`. Changed only via `SwitchActiveCompanyAction`, which validates the target is in the caller's own `company_user` rows first. |
 
 ### 5.2 Key Design Notes (additions to v2's list)
 
@@ -413,6 +427,7 @@ All v2 entities (§5.1) and design notes (§5.2) carry over unchanged — compan
 - **`certificates` uses `audit_id` directly in its public URL/QR code, per confirmed blueprint behavior (§1.6)** — not a separate obfuscated identifier. A separate non-guessable ID was this proposal's own earlier (mislabeled) security recommendation; ULIDs are already non-sequential and hard to guess, so this is treated as a reasonable simplification, not a gap, unless the owner decides otherwise.
 - **`data_room_links` mechanics — confirmed detail from blueprint, worth calling out explicitly** since v2's original spec didn't detail it: shared data-room links are time-limited (**7-day expiry**, confirmed) and password-protected with an **auto-generated password** shown alongside the link at creation time. Implementation detail (the blueprint generates the password from a truncated hash) is a mockup shortcut — production should use a proper random token, but the *behavior* (expiring, password-gated share link) is confirmed product intent, not a guess.
 - **`journey_templates` is the single most important new table for the "beyond requirements" goal** — every other new-vertical decision (which documents, which levels, which badges) hangs off this one row.
+- **`company_user` and `current_company_id` split "membership" from "active context" on purpose (§0.7)** — a user can belong to many companies, but every tenant-scoped query still only ever needs to answer "which one, right now," never "which ones." Collapsing these into one concept (e.g. always scoping to "all of the user's companies" instead of one active company) would silently turn every list/detail endpoint into a cross-company query — exactly the kind of ambiguity `BelongsToCompany` (Rule #1, backend `CLAUDE.md`) exists to prevent.
 
 ---
 

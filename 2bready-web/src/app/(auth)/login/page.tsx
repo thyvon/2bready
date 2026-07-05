@@ -78,20 +78,21 @@ export default function LoginPage() {
           </Box>
 
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
-                {t('auth.password')}
-              </Typography>
-              <MuiLink
-                component={Link}
-                href="/forgot-password"
-                variant="body2"
-                underline="hover"
-                sx={{ color: 'text.secondary' }}
-              >
-                {t('auth.forgot_password')}
-              </MuiLink>
-            </Box>
+            <FieldLabel
+              action={
+                <MuiLink
+                  component={Link}
+                  href="/forgot-password"
+                  variant="body2"
+                  underline="hover"
+                  sx={{ color: 'text.secondary' }}
+                >
+                  {t('auth.forgot_password')}
+                </MuiLink>
+              }
+            >
+              {t('auth.password')}
+            </FieldLabel>
             <TextField
               type="password"
               placeholder="••••••••"

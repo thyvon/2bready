@@ -20,7 +20,12 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'locale' => $this->locale,
             'status' => $this->status,
-            'company_id' => $this->company_id,
+            'current_company_id' => $this->current_company_id,
+            // A user can belong to more than one company (§0.7 of the MVP proposal) —
+            // the frontend's company switcher lists these, current_company_id says which
+            // one is active. Lazy-loads if not already eager-loaded; this resource wraps
+            // a single user, never a collection, so the extra query is a one-off, not N+1.
+            'companies' => CompanyResource::collection($this->companies),
             'roles' => $this->getRoleNames(),
             'email_verified_at' => $this->email_verified_at,
             'totp_enabled' => $this->hasTwoFactorEnabled(),

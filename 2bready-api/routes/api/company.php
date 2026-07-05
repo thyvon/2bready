@@ -12,4 +12,5 @@ Route::prefix('companies')->group(function () {
     Route::get('{company}', [CompanyController::class, 'show']);
     Route::patch('{company}', [CompanyController::class, 'update']);
     Route::delete('{company}', [CompanyController::class, 'destroy']);
+    Route::post('{company}/switch', [CompanyController::class, 'switch']);
 });

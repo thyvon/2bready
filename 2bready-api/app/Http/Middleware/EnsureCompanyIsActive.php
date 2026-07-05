@@ -14,7 +14,7 @@ class EnsureCompanyIsActive
     {
         $user = $request->user();
 
-        if ($user && $user->company && ! $user->company->isActive()) {
+        if ($user && $user->currentCompany && ! $user->currentCompany->isActive()) {
             return response()->json(['message' => 'Your company account is suspended or inactive.'], 403);
         }
 

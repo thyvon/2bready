@@ -24,6 +24,7 @@ import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormSelect from '@/components/forms/FormSelect';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listPackages, createPackage, updatePackage, deletePackage } from '@/domains/package/api';
@@ -175,7 +176,6 @@ export default function AdminPackagesPage() {
     <>
       <PageHeader
         title={t('package.title')}
-        subtitle={t('package.subtitle')}
         action={
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
             {t('package.new_package')}
@@ -249,11 +249,11 @@ export default function AdminPackagesPage() {
                   name="billing_period"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} select fullWidth error={!!errors.billing_period} helperText={errors.billing_period?.message}>
+                    <FormSelect {...field} fullWidth error={!!errors.billing_period} helperText={errors.billing_period?.message}>
                       <MenuItem value="monthly">{t('package.billing_period.monthly')}</MenuItem>
                       <MenuItem value="yearly">{t('package.billing_period.yearly')}</MenuItem>
                       <MenuItem value="one_time">{t('package.billing_period.one_time')}</MenuItem>
-                    </TextField>
+                    </FormSelect>
                   )}
                 />
               </Box>

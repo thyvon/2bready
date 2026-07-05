@@ -30,3 +30,8 @@ export async function updateCompany(id: string, data: UpdateCompanyPayload): Pro
 export async function deleteCompany(id: string): Promise<void> {
   await api.delete(`/companies/${id}`);
 }
+
+export async function switchActiveCompany(id: string): Promise<User> {
+  const res = await api.post<{ data: User }>(`/companies/${id}/switch`);
+  return res.data.data;
+}

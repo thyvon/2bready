@@ -26,6 +26,7 @@ import { INDUSTRY_OPTIONS, COUNTRY_OPTIONS, LOCALE_OPTIONS } from '@/domains/com
 import { getApiError, formatDate } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormSelect from '@/components/forms/FormSelect';
 
 export default function CompanyProfilePage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function CompanyProfilePage() {
   } = useForm<CompanyFormInput>({ resolver: zodResolver(companyFormSchema) });
 
   useEffect(() => {
-    if (!user?.company_id) {
+    if (!user?.current_company_id) {
       router.replace(hasRole('company_owner') ? '/company/setup' : '/company');
       return;
     }
@@ -59,7 +60,7 @@ export default function CompanyProfilePage() {
       setLoading(true);
       setLoadError('');
       try {
-        const data = await getCompany(user!.company_id!);
+        const data = await getCompany(user!.current_company_id!);
         if (cancelled) return;
         setCompany(data);
         reset({
@@ -127,7 +128,7 @@ export default function CompanyProfilePage() {
 
   return (
     <>
-      <PageHeader title={company.name} subtitle={t('company.profile_subtitle')} />
+      <PageHeader title={company.name} />
 
       <Box className="flex flex-col gap-4">
         <SectionCard title={t('company.overview')}>
@@ -199,11 +200,11 @@ export default function CompanyProfilePage() {
                   name="industry_code"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} select fullWidth disabled={!canEdit} error={!!errors.industry_code} helperText={errors.industry_code?.message}>
+                    <FormSelect {...field} fullWidth disabled={!canEdit} error={!!errors.industry_code} helperText={errors.industry_code?.message}>
                       {INDUSTRY_OPTIONS.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
                       ))}
-                    </TextField>
+                    </FormSelect>
                   )}
                 />
               </Grid>
@@ -213,11 +214,11 @@ export default function CompanyProfilePage() {
                   name="country_code"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} select fullWidth disabled={!canEdit} error={!!errors.country_code} helperText={errors.country_code?.message}>
+                    <FormSelect {...field} fullWidth disabled={!canEdit} error={!!errors.country_code} helperText={errors.country_code?.message}>
                       {COUNTRY_OPTIONS.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
                       ))}
-                    </TextField>
+                    </FormSelect>
                   )}
                 />
               </Grid>
@@ -227,11 +228,11 @@ export default function CompanyProfilePage() {
                   name="default_locale"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} select fullWidth disabled={!canEdit} error={!!errors.default_locale} helperText={errors.default_locale?.message}>
+                    <FormSelect {...field} fullWidth disabled={!canEdit} error={!!errors.default_locale} helperText={errors.default_locale?.message}>
                       {LOCALE_OPTIONS.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
                       ))}
-                    </TextField>
+                    </FormSelect>
                   )}
                 />
               </Grid>

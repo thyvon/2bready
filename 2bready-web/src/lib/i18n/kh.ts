@@ -65,6 +65,11 @@ const kh: Record<keyof typeof en, string> = {
   'header.language_desc': 'ជ្រើសរើសភាសាដែលអ្នកចង់បាន។',
   'header.open_menu': 'បើកម៉ឺនុយរុករក',
   'header.close_menu': 'បិទម៉ឺនុយ',
+  'header.switch_company': 'ប្តូរក្រុមហ៊ុន',
+  'header.add_company': 'បន្ថែមក្រុមហ៊ុនផ្សេងទៀត',
+  'header.new_company_short': 'ថ្មី',
+  'header.collapse_sidebar': 'បង្រួមរបារចំហៀង',
+  'header.expand_sidebar': 'ពង្រីករបារចំហៀង',
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   'auth.sign_in': 'ចូល',

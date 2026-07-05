@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Company\Actions\CreateCompanyAction;
 use App\Domain\Company\Actions\DeleteCompanyAction;
 use App\Domain\Company\Actions\RegisterOwnCompanyAction;
+use App\Domain\Company\Actions\SwitchActiveCompanyAction;
 use App\Domain\Company\Actions\UpdateCompanyAction;
 use App\Domain\Company\Contracts\CompanyRepositoryInterface;
 use App\Domain\Company\DTOs\CompanyData;
@@ -91,5 +92,14 @@ class CompanyController extends Controller
         $action->execute($company);
 
         return ApiResponse::noContent();
+    }
+
+    public function switch(Request $request, Company $company, SwitchActiveCompanyAction $action): JsonResponse
+    {
+        $this->authorize('switchTo', $company);
+
+        $user = $action->execute($request->user(), $company);
+
+        return ApiResponse::success(new UserResource($user->fresh()));
     }
 }

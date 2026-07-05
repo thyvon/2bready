@@ -14,15 +14,18 @@ import { useTranslation } from '@/lib/i18n';
 
 export default function CompanySetupPage() {
   const router = useRouter();
-  const { user, token, hasRole, setAuth } = useAuthStore();
+  const { token, hasRole, setAuth } = useAuthStore();
   const toast = useToast();
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!hasRole('company_owner') || user?.company_id) {
+    // A company_owner can register more than one company (§0.7 of the MVP
+    // proposal) — this page stays reachable even after they already have one,
+    // unlike the old single-company assumption that redirected away once set.
+    if (!hasRole('company_owner')) {
       router.replace('/company');
     }
-  }, [hasRole, user, router]);
+  }, [hasRole, router]);
 
   const handleSubmit = async (data: CompanyFormOutput) => {
     const { company, user: updatedUser } = await registerOwnCompany({
@@ -43,7 +46,7 @@ export default function CompanySetupPage() {
 
   return (
     <>
-      <PageHeader title={t('company.setup_title')} subtitle={t('company.setup_subtitle')} />
+      <PageHeader title={t('company.setup_title')} />
       <SectionCard>
         <CompanyFormWizard onSubmit={handleSubmit} submitLabel={t('company.finish_setup')} hideEmployeeCount />
       </SectionCard>

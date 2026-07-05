@@ -20,6 +20,7 @@ import { stepTransition, easeOut } from '@/lib/motion';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormSelect from '@/components/forms/FormSelect';
 
 interface CompanyFormWizardProps {
   onSubmit: (data: CompanyFormOutput) => Promise<void>;
@@ -174,11 +175,11 @@ export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeC
                     name="industry_code"
                     control={control}
                     render={({ field }) => (
-                      <TextField {...field} select fullWidth error={!!errors.industry_code} helperText={errors.industry_code?.message}>
+                      <FormSelect {...field} fullWidth error={!!errors.industry_code} helperText={errors.industry_code?.message}>
                         {INDUSTRY_OPTIONS.map((opt) => (
                           <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
                         ))}
-                      </TextField>
+                      </FormSelect>
                     )}
                   />
                 </Box>
@@ -188,11 +189,11 @@ export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeC
                     name="country_code"
                     control={control}
                     render={({ field }) => (
-                      <TextField {...field} select fullWidth error={!!errors.country_code} helperText={errors.country_code?.message}>
+                      <FormSelect {...field} fullWidth error={!!errors.country_code} helperText={errors.country_code?.message}>
                         {COUNTRY_OPTIONS.map((opt) => (
                           <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
                         ))}
-                      </TextField>
+                      </FormSelect>
                     )}
                   />
                 </Box>
@@ -220,11 +221,11 @@ export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeC
                     name="default_locale"
                     control={control}
                     render={({ field }) => (
-                      <TextField {...field} select fullWidth error={!!errors.default_locale} helperText={errors.default_locale?.message}>
+                      <FormSelect {...field} fullWidth error={!!errors.default_locale} helperText={errors.default_locale?.message}>
                         {LOCALE_OPTIONS.map((opt) => (
                           <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
                         ))}
-                      </TextField>
+                      </FormSelect>
                     )}
                   />
                 </Box>

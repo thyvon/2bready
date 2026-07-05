@@ -20,7 +20,7 @@ beforeEach(function () {
 
 it('lets a company_owner subscribe their company to a package via bank transfer', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $package = Package::factory()->create(['price_cents' => 19900]);
 
     $response = $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
@@ -39,7 +39,7 @@ it('lets a company_owner subscribe their company to a package via bank transfer'
 
 it('lets a company_owner subscribe via the fake stripe gateway', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $package = Package::factory()->create();
 
     $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
@@ -52,7 +52,7 @@ it('lets a company_owner subscribe via the fake stripe gateway', function () {
 
 it('forbids subscribing to an inactive package', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $package = Package::factory()->inactive()->create();
 
     $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
@@ -62,7 +62,7 @@ it('forbids subscribing to an inactive package', function () {
 });
 
 it('forbids a company_owner without a company from subscribing', function () {
-    $owner = User::factory()->companyOwner()->create(['company_id' => null]);
+    $owner = User::factory()->companyOwner()->create();
     $package = Package::factory()->create();
 
     $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
@@ -94,7 +94,7 @@ it('requires authentication to subscribe', function () {
 
 it('lets a company_owner mark their own manual payment as submitted', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
     $payment = Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
 
@@ -106,7 +106,7 @@ it('lets a company_owner mark their own manual payment as submitted', function (
 });
 
 it('forbids submitting another company\'s payment', function () {
-    $owner = User::factory()->companyOwner()->create(['company_id' => Company::factory()->create()->id]);
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
     $otherCompany = Company::factory()->create();
     $subscription = Subscription::factory()->create(['company_id' => $otherCompany->id]);
     $payment = Payment::factory()->create(['company_id' => $otherCompany->id, 'subscription_id' => $subscription->id]);
@@ -140,7 +140,7 @@ it('lets finance confirm a payment and activates the subscription', function () 
 
 it('forbids a company_owner from confirming their own payment', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
     $payment = Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
 
@@ -162,7 +162,7 @@ it('lets an admin reject a payment', function () {
 
 it('lets a company_owner list only their own payments', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
     Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
 

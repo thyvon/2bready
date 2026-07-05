@@ -13,7 +13,7 @@ class CaptureLeadAction
     public function execute(LeadData $data, ?User $user = null): Lead
     {
         return Lead::create([
-            'company_id' => $user?->company_id,
+            'company_id' => $user?->current_company_id,
             'name' => $data->name,
             'email' => $data->email,
             'phone' => $data->phone,

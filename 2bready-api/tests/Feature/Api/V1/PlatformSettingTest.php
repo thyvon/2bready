@@ -37,7 +37,7 @@ it('lets an admin update a platform setting', function () {
 
 it('forbids a non-admin from viewing platform settings', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)->getJson('/api/v1/settings')->assertForbidden();
 });

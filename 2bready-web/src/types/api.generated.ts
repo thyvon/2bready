@@ -196,6 +196,22 @@ export interface paths {
         patch: operations["company.update"];
         trace?: never;
     };
+    "/v1/companies/{company}/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["company.switch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/leads": {
         parameters: {
             query?: never;
@@ -572,7 +588,14 @@ export interface components {
             email: string;
             locale: string;
             status: components["schemas"]["UserStatus"];
-            company_id: string | null;
+            current_company_id: string | null;
+            /**
+             * @description A user can belong to more than one company (§0.7 of the MVP proposal) —
+             *     the frontend's company switcher lists these, current_company_id says which
+             *     one is active. Lazy-loads if not already eager-loaded; this resource wraps
+             *     a single user, never a collection, so the extra query is a one-off, not N+1.
+             */
+            companies: components["schemas"]["CompanyResource"][];
             roles: Record<string, never>;
             /** Format: date-time */
             email_verified_at: string | null;
@@ -1097,6 +1120,34 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "company.switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "lead.index": {

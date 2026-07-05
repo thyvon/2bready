@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domain\Company\Models\Company;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -27,7 +28,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'locale' => 'en',
             'status' => 'active',
-            'company_id' => null,
+            'current_company_id' => null,
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
@@ -57,6 +58,20 @@ class UserFactory extends Factory
     public function companyOwner(): static
     {
         return $this->withRole('company_owner');
+    }
+
+    /**
+     * Attaches the user to a company (company_user membership) and makes it
+     * their active one — the factory-side equivalent of RegisterOwnCompanyAction,
+     * replacing what used to be a plain `company_id` attribute (§0.7 of the MVP
+     * proposal — a user can belong to more than one company now).
+     */
+    public function withCompany(Company $company): static
+    {
+        return $this->state(['current_company_id' => $company->id])
+            ->afterCreating(function (User $user) use ($company) {
+                $user->companies()->syncWithoutDetaching([$company->id]);
+            });
     }
 
     public function withTotp(): static

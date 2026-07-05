@@ -13,6 +13,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
+import FormSelect from '@/components/forms/FormSelect';
 import { useAuthStore } from '@/store/auth.store';
 import { listCompanies } from '@/domains/company/api';
 import type { Company, CompanyListFilters } from '@/domains/company/types';
@@ -67,7 +68,6 @@ export default function AdminCompaniesPage() {
     <>
       <PageHeader
         title={t('admin.companies_title')}
-        subtitle={t('admin.companies_subtitle')}
         action={
           <Button component={Link} href="/admin/companies/new" variant="contained" startIcon={<AddIcon />}>
             {t('admin.new_company')}
@@ -84,8 +84,7 @@ export default function AdminCompaniesPage() {
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value || undefined }))}
             sx={{ width: { xs: '100%', sm: 220 } }}
           />
-          <TextField
-            select
+          <FormSelect
             label={t('common.status')}
             size="small"
             value={filters.status ?? ''}
@@ -96,7 +95,7 @@ export default function AdminCompaniesPage() {
             <MenuItem value="active">{t('common.active')}</MenuItem>
             <MenuItem value="suspended">{t('common.suspended')}</MenuItem>
             <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
-          </TextField>
+          </FormSelect>
         </Box>
 
         {error && (

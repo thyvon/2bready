@@ -16,7 +16,7 @@ class CompanyPolicy
 
     public function view(User $user, Company $company): bool
     {
-        return $user->can('company.view') && ($this->isInternal($user) || $user->company_id === $company->id);
+        return $user->can('company.view') && ($this->isInternal($user) || $this->isMember($user, $company));
     }
 
     public function create(User $user): bool
@@ -27,22 +27,34 @@ class CompanyPolicy
     /**
      * Self-service registration is deliberately independent of company.create
      * (which is an internal-staff permission for onboarding companies on a
-     * client's behalf). A company_owner may register exactly one company —
-     * their own — and only if they aren't already attached to one.
+     * client's behalf). A company_owner may register any number of companies
+     * (§0.7 of the MVP proposal) — no longer capped at one.
      */
     public function registerOwn(User $user): bool
     {
-        return $user->hasRole('company_owner') && $user->company_id === null;
+        return $user->hasRole('company_owner');
+    }
+
+    /** Switching which of the user's own companies is the active one — see SwitchActiveCompanyAction. */
+    public function switchTo(User $user, Company $company): bool
+    {
+        return $this->isMember($user, $company);
     }
 
     public function update(User $user, Company $company): bool
     {
-        return $user->can('company.edit') && ($this->isInternal($user) || $user->company_id === $company->id);
+        return $user->can('company.edit') && ($this->isInternal($user) || $this->isMember($user, $company));
     }
 
     public function delete(User $user, Company $company): bool
     {
         return $user->can('company.delete') && $this->isInternal($user);
+    }
+
+    /** Membership, not just "currently active" — a user can view/edit/switch to any company they belong to. */
+    private function isMember(User $user, Company $company): bool
+    {
+        return $user->companies()->where('companies.id', $company->id)->exists();
     }
 
     private function isInternal(User $user): bool

@@ -61,6 +61,11 @@ const en = {
   'header.language_desc': 'Choose your preferred language.',
   'header.open_menu': 'Open navigation menu',
   'header.close_menu': 'Close menu',
+  'header.switch_company': 'Switch company',
+  'header.add_company': 'Add another company',
+  'header.new_company_short': 'New',
+  'header.collapse_sidebar': 'Collapse sidebar',
+  'header.expand_sidebar': 'Expand sidebar',
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   'auth.sign_in': 'Sign in',

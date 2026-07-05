@@ -35,7 +35,7 @@ class SubscriptionController extends Controller
         $user = $request->user();
         $package = Package::query()->where('is_active', true)->findOrFail($request->validated('package_id'));
 
-        $result = $action->execute($user->company, $package, PaymentMethod::from($request->validated('method')));
+        $result = $action->execute($user->currentCompany, $package, PaymentMethod::from($request->validated('method')));
 
         return ApiResponse::created([
             'subscription' => new SubscriptionResource($result['subscription']),

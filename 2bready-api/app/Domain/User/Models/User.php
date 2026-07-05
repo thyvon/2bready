@@ -12,6 +12,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -20,7 +21,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property UserStatus $status
- * @property string|null $company_id
+ * @property string|null $current_company_id
  * @property string $locale
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -43,7 +44,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'company_id',
+        'current_company_id',
         'status',
         'locale',
         'two_factor_secret',
@@ -85,9 +86,27 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->status === UserStatus::Active;
     }
 
-    /** @return BelongsTo<Company, $this> */
-    public function company(): BelongsTo
+    /**
+     * All companies this user is a member of (owner or staff). See §0.7 of the
+     * MVP proposal: one person can now own/belong to more than one company —
+     * this replaces what used to be a single company_id column.
+     *
+     * @return BelongsToMany<Company, $this>
+     */
+    public function companies(): BelongsToMany
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsToMany(Company::class, 'company_user');
+    }
+
+    /**
+     * The company every tenant-scoped query resolves against right now — see
+     * BelongsToCompany::resolveCurrentCompanyId(). Changed only via
+     * SwitchActiveCompanyAction, which checks membership in companies() first.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function currentCompany(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'current_company_id');
     }
 }

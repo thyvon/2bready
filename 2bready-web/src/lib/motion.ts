@@ -21,8 +21,6 @@ export const fadeIn: Variants = {
   exit: { opacity: 0, transition: { ...easeOut, duration: 0.12 } },
 };
 
-export const navPillTransition: Transition = { type: 'spring', stiffness: 500, damping: 40 };
-
 // Horizontal slide for wizard/stepper content — direction is 1 for forward, -1 for back.
 export const stepTransition = (direction: 1 | -1): Variants => ({
   initial: { opacity: 0, x: direction * 24 },

@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
+import FormSelect from '@/components/forms/FormSelect';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listPayments, confirmPayment, rejectPayment } from '@/domains/payment/api';
@@ -120,17 +120,17 @@ export default function AdminPaymentsPage() {
 
   return (
     <>
-      <PageHeader title={t('admin.payments_title')} subtitle={t('admin.payments_subtitle')} />
+      <PageHeader title={t('admin.payments_title')} />
 
       <SectionCard noPadding>
         <Box sx={{ p: 2 }}>
-          <TextField select label={t('common.status')} size="small" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 220 }}>
+          <FormSelect label={t('common.status')} size="small" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 220 }}>
             <MenuItem value="">{t('common.all')}</MenuItem>
             <MenuItem value="awaiting_confirmation">{t('status.awaiting_confirmation')}</MenuItem>
             <MenuItem value="pending">{t('status.pending')}</MenuItem>
             <MenuItem value="confirmed">{t('status.confirmed')}</MenuItem>
             <MenuItem value="rejected">{t('status.rejected')}</MenuItem>
-          </TextField>
+          </FormSelect>
         </Box>
 
         <DataTable

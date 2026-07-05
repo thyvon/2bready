@@ -31,7 +31,7 @@ export default function SectionCard({ children, title, subtitle, action, noPaddi
     >
       {(title || action) && (
         <>
-          <Box className="flex items-center justify-between gap-4 px-6 py-4">
+          <Box className="flex items-center justify-between gap-4 px-4 py-3">
             <Box>
               {title && (
                 <Typography variant="h6" component="h2">
@@ -49,7 +49,7 @@ export default function SectionCard({ children, title, subtitle, action, noPaddi
           <Divider />
         </>
       )}
-      <Box className={noPadding ? '' : 'p-6'}>{children}</Box>
+      <Box className={noPadding ? '' : 'p-4'}>{children}</Box>
     </Box>
   );
 }

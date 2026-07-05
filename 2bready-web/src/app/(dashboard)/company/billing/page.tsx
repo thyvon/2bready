@@ -145,7 +145,7 @@ export default function CompanyBillingPage() {
 
   return (
     <>
-      <PageHeader title={t('nav.subscription')} subtitle={t('billing.subtitle')} />
+      <PageHeader title={t('nav.subscription')} />
 
       {isActive && subscription && (
         <SectionCard title={t('billing.current_plan')}>
@@ -277,7 +277,7 @@ export default function CompanyBillingPage() {
         </DialogActions>
       </Dialog>
 
-      {!user?.company_id && <Alert severity="warning" sx={{ mt: 3 }}>{t('company.no_company_title')}</Alert>}
+      {!user?.current_company_id && <Alert severity="warning" sx={{ mt: 3 }}>{t('company.no_company_title')}</Alert>}
     </>
   );
 }

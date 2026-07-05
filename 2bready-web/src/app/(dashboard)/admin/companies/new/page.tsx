@@ -38,7 +38,7 @@ export default function NewCompanyPage() {
 
   return (
     <>
-      <PageHeader title={t('admin.new_company')} subtitle={t('admin.new_company_subtitle')} />
+      <PageHeader title={t('admin.new_company')} />
       <SectionCard>
         <CompanyFormWizard onSubmit={handleSubmit} submitLabel={t('company.create_company')} />
       </SectionCard>

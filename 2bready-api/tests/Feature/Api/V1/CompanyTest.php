@@ -51,7 +51,7 @@ it('requires authentication to create a company', function () {
 
 it('forbids a company_owner from creating a company', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)
         ->postJson('/api/v1/companies', ['name' => 'X', 'industry_code' => 'F&B'])
@@ -61,7 +61,7 @@ it('forbids a company_owner from creating a company', function () {
 // ─── Self-service registration ──────────────────────────────────────────────
 
 it('lets a company_owner without a company register their own', function () {
-    $owner = User::factory()->companyOwner()->create(['company_id' => null]);
+    $owner = User::factory()->companyOwner()->create();
 
     $response = $this->actingAs($owner)->postJson('/api/v1/companies/register', [
         'name' => 'Owner Registered Co',
@@ -69,27 +69,30 @@ it('lets a company_owner without a company register their own', function () {
     ]);
 
     $response->assertCreated()
-        ->assertJsonStructure(['data' => ['company' => ['id', 'name'], 'user' => ['id', 'company_id']]])
+        ->assertJsonStructure(['data' => ['company' => ['id', 'name'], 'user' => ['id', 'current_company_id']]])
         ->assertJsonPath('data.company.name', 'Owner Registered Co');
 
     $company = Company::where('name', 'Owner Registered Co')->firstOrFail();
-    expect($owner->fresh()->company_id)->toBe($company->id);
+    expect($owner->fresh()->current_company_id)->toBe($company->id);
 });
 
-it('forbids a company_owner who already has a company from registering another', function () {
+it('lets a company_owner who already has a company register another (§0.7 — many companies per owner)', function () {
     $existing = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $existing->id]);
+    $owner = User::factory()->companyOwner()->withCompany($existing)->create();
 
-    $this->actingAs($owner)
-        ->postJson('/api/v1/companies/register', ['name' => 'Second Co', 'industry_code' => 'F&B'])
-        ->assertForbidden();
+    $response = $this->actingAs($owner)
+        ->postJson('/api/v1/companies/register', ['name' => 'Second Co', 'industry_code' => 'F&B']);
 
-    expect(Company::where('name', 'Second Co')->exists())->toBeFalse();
+    $response->assertCreated()->assertJsonPath('data.company.name', 'Second Co');
+
+    $second = Company::where('name', 'Second Co')->firstOrFail();
+    expect($owner->fresh()->companies()->pluck('companies.id')->all())->toEqualCanonicalizing([$existing->id, $second->id]);
+    expect($owner->fresh()->current_company_id)->toBe($second->id);
 });
 
 it('forbids a company_member from self-registering a company', function () {
     $company = Company::factory()->create();
-    $member = User::factory()->withRole('company_member')->create(['company_id' => null]);
+    $member = User::factory()->withRole('company_member')->create();
 
     $this->actingAs($member)
         ->postJson('/api/v1/companies/register', ['name' => 'Member Co', 'industry_code' => 'F&B'])
@@ -110,7 +113,7 @@ it('requires authentication to self-register a company', function () {
 });
 
 it('ignores employee_count sent by a self-registering company_owner', function () {
-    $owner = User::factory()->companyOwner()->create(['company_id' => null]);
+    $owner = User::factory()->companyOwner()->create();
 
     // A company can't be trusted to self-report the figure its own compliance
     // bypass eligibility is evaluated against — only admin/staff/finance may set it.
@@ -165,7 +168,7 @@ it('lets an admin list companies', function () {
 
 it('forbids a company_member from listing all companies', function () {
     $company = Company::factory()->create();
-    $member = User::factory()->withRole('company_member')->create(['company_id' => $company->id]);
+    $member = User::factory()->withRole('company_member')->withCompany($company)->create();
 
     $this->actingAs($member)->getJson('/api/v1/companies')->assertForbidden();
 });
@@ -174,7 +177,7 @@ it('forbids a company_member from listing all companies', function () {
 
 it('lets a company_owner view their own company', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)->getJson("/api/v1/companies/{$company->id}")
         ->assertOk()
@@ -184,7 +187,7 @@ it('lets a company_owner view their own company', function () {
 it('forbids a company_owner from viewing another company', function () {
     $ownCompany = Company::factory()->create();
     $otherCompany = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $ownCompany->id]);
+    $owner = User::factory()->companyOwner()->withCompany($ownCompany)->create();
 
     $this->actingAs($owner)->getJson("/api/v1/companies/{$otherCompany->id}")->assertForbidden();
 });
@@ -204,7 +207,7 @@ it('lets an admin update any company including status', function () {
 
 it('lets a company_owner update their own profile fields but not status', function () {
     $company = Company::factory()->create(['status' => 'active']);
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)->patchJson("/api/v1/companies/{$company->id}", [
         'name_kh' => 'ឈ្មោះថ្មី',
@@ -216,7 +219,7 @@ it('lets a company_owner update their own profile fields but not status', functi
 
 it('forbids a company_owner from changing their own employee_count', function () {
     $company = Company::factory()->create(['employee_count' => 20]);
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)->patchJson("/api/v1/companies/{$company->id}", [
         'employee_count' => 2,
@@ -237,7 +240,7 @@ it('lets an admin change a company employee_count', function () {
 it('forbids a company_owner from updating another company', function () {
     $ownCompany = Company::factory()->create();
     $otherCompany = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $ownCompany->id]);
+    $owner = User::factory()->companyOwner()->withCompany($ownCompany)->create();
 
     $this->actingAs($owner)
         ->patchJson("/api/v1/companies/{$otherCompany->id}", ['name' => 'Hijack'])
@@ -257,7 +260,7 @@ it('lets an admin soft-delete a company', function () {
 
 it('forbids a company_owner from deleting a company', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->create(['company_id' => $company->id]);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)->deleteJson("/api/v1/companies/{$company->id}")->assertForbidden();
 });

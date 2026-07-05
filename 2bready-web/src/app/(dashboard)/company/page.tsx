@@ -18,14 +18,13 @@ export default function CompanyDashboardPage() {
   const { t } = useTranslation();
 
   const firstName = user?.name?.split(' ')[0];
-  const needsCompany = hasRole('company_owner') && !user?.company_id;
+  const needsCompany = hasRole('company_owner') && !user?.companies?.length;
 
   if (needsCompany) {
     return (
       <>
         <PageHeader
           title={firstName ? t('company.welcome_back', { name: firstName }) : t('company.welcome_back_generic')}
-          subtitle={t('company.dashboard_subtitle')}
         />
 
         <SectionCard title={t('company.no_company_title')} subtitle={t('company.no_company_subtitle')}>
@@ -43,7 +42,6 @@ export default function CompanyDashboardPage() {
     <>
       <PageHeader
         title={firstName ? t('company.welcome_back', { name: firstName }) : t('company.welcome_back_generic')}
-        subtitle={t('company.dashboard_subtitle')}
       />
 
       <Grid container spacing={3} component={motion.div} initial="hidden" animate="show" variants={cardGridContainer}>

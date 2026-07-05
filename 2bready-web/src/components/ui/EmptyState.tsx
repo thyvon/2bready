@@ -21,7 +21,7 @@ export default function EmptyState({
   const { t } = useTranslation();
 
   return (
-    <Box className="flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
+    <Box className="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
       <Box sx={{ color: 'text.disabled', fontSize: 40 }}>
         {icon ?? <InboxIcon fontSize="inherit" />}
       </Box>
