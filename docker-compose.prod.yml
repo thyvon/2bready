@@ -51,7 +51,7 @@ services:
   web:
     build:
       context: ./2bready-web
-      dockerfile: Dockerfile
+      dockerfile: apps/admin-portal/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-2bReady}
