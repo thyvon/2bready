@@ -1,4 +1,4 @@
-import type { components } from '@/types/api.generated';
+import type { components } from '@2bready/api-client';
 
 export type Company = components['schemas']['CompanyResource'];
 export type CompanyStatus = components['schemas']['CompanyStatus'];

@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--mui-palette-background-default);
+  --color-foreground: var(--mui-palette-text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/*
+  Hide the body until InitColorSchemeScript sets data-mui-color-scheme.
+  The script is synchronous so it runs before first paint — this only
+  guards against a rare late-running-script flash.
+*/
+html:not([data-mui-color-scheme]) body {
+  visibility: hidden;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+}

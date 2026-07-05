@@ -1,4 +1,4 @@
-import type { components } from '@/types/api.generated';
+import type { components } from '@2bready/api-client';
 
 export type User = components['schemas']['UserResource'];
 export type UserStatus = components['schemas']['UserStatus'];

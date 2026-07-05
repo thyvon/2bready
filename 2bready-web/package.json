@@ -2,41 +2,19 @@
   "name": "2bready-web",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "type-check": "tsc --noEmit",
-    "generate:types": "npx openapi-typescript http://localhost:8080/docs/api.json -o src/types/api.generated.ts"
-  },
-  "dependencies": {
-    "@emotion/cache": "^11.14.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/server": "^11.11.0",
-    "@emotion/styled": "^11.14.1",
-    "@hookform/resolvers": "^5.4.0",
-    "@mui/icons-material": "^9.1.1",
-    "@mui/material": "^9.1.2",
-    "@mui/material-nextjs": "^9.1.1",
-    "axios": "^1.18.1",
-    "framer-motion": "^12.42.2",
-    "next": "16.2.10",
-    "openapi-typescript": "^7.13.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-hook-form": "^7.80.0",
-    "zod": "^4.4.3",
-    "zustand": "^5.0.14"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.10",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "dev:admin": "npm run dev -w admin-portal",
+    "build:admin": "npm run build -w admin-portal",
+    "lint:admin": "npm run lint -w admin-portal",
+    "type-check:admin": "npm run type-check -w admin-portal",
+    "dev:client": "npm run dev -w client-portal",
+    "build:client": "npm run build -w client-portal",
+    "lint:client": "npm run lint -w client-portal",
+    "type-check:client": "npm run type-check -w client-portal",
+    "generate:types": "npm run generate:types -w @2bready/api-client"
   }
 }
