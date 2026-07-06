@@ -5,7 +5,7 @@ import { GeistMono } from 'geist/font/mono';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from '@/components/Providers';
 import { PortalShell } from '@/components/layout/PortalShell';
-import { LOCALE_COOKIE, parseLocaleCookie } from '@/store/locale.store';
+import { LOCALE_COOKIE, getLocaleConfig, parseLocaleCookie } from '@/store/locale.store';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      lang={initialLocale === 'kh' ? 'km' : 'en'}
+      lang={getLocaleConfig(initialLocale).htmlLang}
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >

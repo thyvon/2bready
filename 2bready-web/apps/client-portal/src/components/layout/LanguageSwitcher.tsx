@@ -10,22 +10,14 @@ import CheckIcon from '@mui/icons-material/Check';
 import Tooltip from '@mui/material/Tooltip';
 
 import { useTranslation, type Locale } from '@/lib/i18n';
+import { LOCALES, getLocaleConfig } from '@/store/locale.store';
 
 // Flag emoji (🇬🇧/🇰🇭) render as a merged flag picture only when the OS has a
 // color-emoji font supporting that ligature — many Linux setups don't, and
 // silently fall back to the two bare letters ("GB"/"KH") side by side. A
 // plain styled badge looks the same everywhere, regardless of the visitor's
-// system fonts.
-const LOCALE_BADGES: Record<Locale, string> = {
-  en: 'EN',
-  kh: 'KH',
-};
-
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  kh: 'ខ្មែរ',
-};
-
+// system fonts. Badge/label text comes from LOCALES (locale.store.ts) — the
+// single source of truth for supported locales — not a map hardcoded here.
 function LocaleBadge({ locale }: { locale: Locale }) {
   return (
     <Box
@@ -44,7 +36,7 @@ function LocaleBadge({ locale }: { locale: Locale }) {
         lineHeight: 1,
       }}
     >
-      {LOCALE_BADGES[locale]}
+      {getLocaleConfig(locale).badge}
     </Box>
   );
 }
@@ -79,11 +71,16 @@ export function LanguageSwitcher() {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         slotProps={{ paper: { sx: { mt: 0.5, minWidth: 180 } } }}
       >
-        {(Object.keys(LOCALE_BADGES) as Locale[]).map((key) => (
-          <MenuItem key={key} selected={key === locale} onClick={() => handleSelect(key)} sx={{ gap: 1.5 }}>
-            <LocaleBadge locale={key} />
-            <ListItemText primary={LOCALE_LABELS[key]} />
-            {key === locale && <CheckIcon fontSize="small" color="action" />}
+        {LOCALES.map((option) => (
+          <MenuItem
+            key={option.code}
+            selected={option.code === locale}
+            onClick={() => handleSelect(option.code)}
+            sx={{ gap: 1.5 }}
+          >
+            <LocaleBadge locale={option.code} />
+            <ListItemText primary={option.label} />
+            {option.code === locale && <CheckIcon fontSize="small" color="action" />}
           </MenuItem>
         ))}
       </Menu>

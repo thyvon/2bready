@@ -1,4 +1,9 @@
-const kh = {
+import type en from './en';
+
+// Typed against en's exact key set (not `as const` here) — missing a key
+// is a compile error, not a silent runtime fallback to English, and adding
+// a stray key that doesn't exist in en.ts is a compile error too.
+const kh: Record<keyof typeof en, string> = {
   // ─── Nav labels ──────────────────────────────────────────────────────────
   'nav.overview': 'ទិដ្ឋភាពទូទៅ',
   'nav.journey': 'ដំណើរអនុលោមភាព',
@@ -40,6 +45,6 @@ const kh = {
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.language': 'ភាសា',
-} as const;
+};
 
 export default kh;
