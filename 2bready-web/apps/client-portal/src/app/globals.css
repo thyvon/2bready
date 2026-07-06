@@ -3,7 +3,7 @@
 @theme inline {
   --color-background: var(--mui-palette-background-default);
   --color-foreground: var(--mui-palette-text-primary);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-geist-sans), var(--font-kantumruy);
   --font-mono: var(--font-geist-mono);
 }
 

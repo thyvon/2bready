@@ -1,13 +1,22 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
+import { Kantumruy_Pro } from 'next/font/google';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from '@/components/Providers';
 import { LOCALE_COOKIE, getLocaleConfig, parseLocaleCookie } from '@/store/locale.store';
 import './globals.css';
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
+// Geist has no Khmer glyphs — Kantumruy Pro fills that gap. Both variables
+// sit in the same font-family stack (theme/index.ts); the browser
+// automatically falls through to Kantumruy Pro per-character for any glyph
+// Geist can't render, so Latin text still renders in Geist and Khmer text
+// renders in Kantumruy Pro without any locale-conditional logic.
+const kantumruyPro = Kantumruy_Pro({
+  variable: '--font-kantumruy',
+  subsets: ['khmer', 'latin'],
+});
 
 export const metadata: Metadata = {
   title: '2bReady — Compliance Readiness Platform',
@@ -26,7 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={getLocaleConfig(initialLocale).htmlLang}
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${kantumruyPro.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased" suppressHydrationWarning>

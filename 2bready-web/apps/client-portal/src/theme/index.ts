@@ -37,7 +37,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+    fontFamily: 'var(--font-geist-sans), var(--font-kantumruy), system-ui, sans-serif',
     h1:      { fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.2 },
     h2:      { fontSize: '1.5rem', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.3 },
     h3:      { fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1.4 },

@@ -1,3 +1,5 @@
+'use client';
+
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { SectionCard, EmptyState } from '@2bready/ui-core';
