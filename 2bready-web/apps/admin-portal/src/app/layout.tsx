@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from '@/components/Providers';
-import { LOCALE_COOKIE, parseLocaleCookie } from '@/store/locale.store';
+import { LOCALE_COOKIE, getLocaleConfig, parseLocaleCookie } from '@/store/locale.store';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      lang={initialLocale === 'kh' ? 'km' : 'en'}
+      lang={getLocaleConfig(initialLocale).htmlLang}
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
