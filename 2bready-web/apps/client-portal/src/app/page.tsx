@@ -6,11 +6,14 @@ import { motion } from 'framer-motion';
 import { GlowButton, cardGridContainer } from '@2bready/ui-core';
 import { AuroraBackground } from '@/components/layout/AuroraBackground';
 import { DomainTile } from '@/components/layout/DomainTile';
-import { CLIENT_NAV } from '@/components/layout/nav-items';
-
-const domainTiles = CLIENT_NAV.filter((item) => item.href !== '/');
+import { useNavItems } from '@/components/layout/nav-items';
+import { useTranslation } from '@/lib/i18n';
 
 export default function OverviewPage() {
+  const { t } = useTranslation();
+  const { all } = useNavItems();
+  const domainTiles = all.filter((item) => item.href !== '/');
+
   return (
     <Box className="flex flex-col gap-16">
       <Box sx={{ position: 'relative', textAlign: 'center', py: { xs: 4, md: 8 } }}>
@@ -21,12 +24,12 @@ export default function OverviewPage() {
             className="portal-gradient-text"
             sx={{ fontSize: { xs: '2.25rem', md: '3rem' }, mb: 2 }}
           >
-            Your compliance readiness, at a glance
+            {t('overview.title')}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560, mx: 'auto', mb: 4 }}>
-            Track your journey, manage documents, and stay audit-ready — all in one place.
+            {t('overview.subtitle')}
           </Typography>
-          <GlowButton href="/journey">Continue your journey</GlowButton>
+          <GlowButton href="/journey">{t('overview.cta')}</GlowButton>
         </Box>
       </Box>
 

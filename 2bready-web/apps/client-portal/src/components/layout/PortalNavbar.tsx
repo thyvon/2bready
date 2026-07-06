@@ -15,7 +15,9 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { motion } from 'framer-motion';
 import { NavHoverLink, ThemeToggle } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
-import { PRIMARY_NAV, SECONDARY_NAV, CLIENT_NAV, isNavItemActive } from './nav-items';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useNavItems, isNavItemActive } from './nav-items';
+import { useTranslation } from '@/lib/i18n';
 
 // Delay before closing on mouse-leave — long enough that moving the cursor
 // from the trigger down into the panel (crossing the small gap between them)
@@ -108,6 +110,8 @@ const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPil
 
 export function PortalNavbar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
+  const { primary, secondary, all } = useNavItems();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreAnchorRef = useRef<HTMLDivElement>(null);
@@ -140,7 +144,7 @@ export function PortalNavbar() {
     requestAnimationFrame(() => firstItemRef.current?.focus());
   };
 
-  const secondaryActive = SECONDARY_NAV.some((item) => isNavItemActive(pathname, item));
+  const secondaryActive = secondary.some((item) => isNavItemActive(pathname, item));
 
   return (
     <Box
@@ -171,7 +175,7 @@ export function PortalNavbar() {
       </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
-        {PRIMARY_NAV.map((item) => (
+        {primary.map((item) => (
           <NavPillItem key={item.href} href={item.href} label={item.label} active={isNavItemActive(pathname, item)} />
         ))}
 
@@ -183,7 +187,7 @@ export function PortalNavbar() {
         >
           <NavPillItem
             ref={moreTriggerRef}
-            label="More"
+            label={t('nav.more')}
             active={secondaryActive}
             onClick={openMoreViaKeyboard}
             endIcon={<KeyboardArrowDownIcon fontSize="small" />}
@@ -212,7 +216,7 @@ export function PortalNavbar() {
                   overflow: 'hidden',
                 }}
               >
-                {SECONDARY_NAV.map((item, index) => (
+                {secondary.map((item, index) => (
                   <Box
                     key={item.href}
                     ref={index === 0 ? firstItemRef : undefined}
@@ -245,17 +249,21 @@ export function PortalNavbar() {
 
       <Box sx={{ flex: 1 }} />
 
-      <ThemeToggle />
+      <LanguageSwitcher />
+      <ThemeToggle
+        labels={{ light: t('theme.light'), dark: t('theme.dark'), system: t('theme.system') }}
+        ariaLabel={t('theme.toggle')}
+      />
 
       <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
-        <IconButton size="small" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <IconButton size="small" onClick={() => setMobileOpen(true)} aria-label={t('nav.open_menu')}>
           <MenuIcon />
         </IconButton>
       </Box>
 
       <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
         <Box sx={{ width: 260, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {CLIENT_NAV.map((item) => (
+          {all.map((item) => (
             <NavHoverLink
               key={item.href}
               href={item.href}

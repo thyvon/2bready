@@ -16,13 +16,20 @@ const ICONS = {
   system: <SettingsBrightnessOutlinedIcon fontSize="small" />,
 };
 
-const LABELS = {
+const DEFAULT_LABELS = {
   light: 'Light mode — click for dark',
   dark: 'Dark mode — click for system',
   system: 'System theme — click for light',
 };
 
-export function ThemeToggle() {
+export interface ThemeToggleProps {
+  /** Override the per-mode tooltip text — pass translated strings for a localized app. */
+  labels?: { light: string; dark: string; system: string };
+  /** Override the button's aria-label — pass a translated string for a localized app. */
+  ariaLabel?: string;
+}
+
+export function ThemeToggle({ labels = DEFAULT_LABELS, ariaLabel = 'toggle color scheme' }: ThemeToggleProps = {}) {
   const { mode, setMode } = useColorScheme();
   // MUI's `mode` is NOT a safe hydration guard by itself: the server resolves
   // it from the static `defaultMode="system"` prop (truthy), while the client's
@@ -41,14 +48,14 @@ export function ThemeToggle() {
   const next = CYCLE[(CYCLE.indexOf(current) + 1) % CYCLE.length];
 
   return (
-    <Tooltip title={ready ? LABELS[current] : ''} arrow>
+    <Tooltip title={ready ? labels[current] : ''} arrow>
       <span>
         <IconButton
           size="small"
           onClick={() => setMode(next)}
           disabled={!ready}
           sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-          aria-label="toggle color scheme"
+          aria-label={ariaLabel}
         >
           {ICONS[current]}
         </IconButton>
