@@ -1,9 +1,11 @@
+import { adminUrl } from '@/lib/admin-url';
+
 export const heroContent = {
   tagline: 'Comply. Scale. Lead.',
   headline: 'Compliance readiness, built into a trust engine',
   subheadline:
     "2bReady turns audit-readiness into a guided, verifiable journey — documents, auditors, and trust badges in one platform your investors and banks can actually trust.",
-  primaryCta: { label: 'Get started free', href: '/register' },
+  primaryCta: { label: 'Get started free', href: adminUrl('/register') },
   secondaryCta: { label: 'See how it works', href: '/#features' },
 };
 
@@ -52,8 +54,8 @@ export const journeyLevels = [
 export const ctaContent = {
   title: 'Ready to become audit-ready?',
   description: 'Create your company profile and start your first compliance level today — no credit card required.',
-  primaryCta: { label: 'Get started free', href: '/register' },
-  secondaryCta: { label: 'Sign in', href: '/login' },
+  primaryCta: { label: 'Get started free', href: adminUrl('/register') },
+  secondaryCta: { label: 'Sign in', href: adminUrl('/login') },
 };
 
 export const pricingContent = {
@@ -77,7 +79,7 @@ export const pricingPlans = [
       'Automated Patent & VAT Tracking',
       'NSSF & MLVT Labor Compliance',
     ],
-    cta: { label: 'Start Free', href: '/register' },
+    cta: { label: 'Start Free', href: adminUrl('/register') },
   },
   {
     level: 'L2',
@@ -93,7 +95,7 @@ export const pricingPlans = [
       'Trademark & GS1 Barcoding',
       'Cost of Goods Sold (COGS) Analysis',
     ],
-    cta: { label: 'Select Pathway', href: '/register?level=l2' },
+    cta: { label: 'Select Pathway', href: adminUrl('/register?level=l2') },
   },
   {
     level: 'L3',
@@ -109,7 +111,7 @@ export const pricingPlans = [
       'Financial Statement Preparation',
       'Bank Reconciliation & Tax Matching',
     ],
-    cta: { label: 'Select Pathway', href: '/register?level=l3' },
+    cta: { label: 'Select Pathway', href: adminUrl('/register?level=l3') },
   },
   {
     level: 'L4',
@@ -125,7 +127,7 @@ export const pricingPlans = [
       'Global Standards (ISO, BRC, Halal)',
       'Export Logistics & ESG Reporting',
     ],
-    cta: { label: 'Select Pathway', href: '/register?level=l4' },
+    cta: { label: 'Select Pathway', href: adminUrl('/register?level=l4') },
   },
 ] as const;
 

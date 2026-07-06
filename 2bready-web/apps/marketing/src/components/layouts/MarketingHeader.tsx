@@ -11,6 +11,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import BrandMark from '@/components/marketing/BrandMark';
 import NavHoverLink from '@/components/marketing/NavHoverLink';
+import { adminUrl } from '@/lib/admin-url';
 
 const NAV_LINKS = [
   { label: 'Built For', href: '/#stakeholders' },
@@ -64,10 +65,10 @@ export default function MarketingHeader() {
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
         <ThemeToggle />
-        <Button component={Link} href="/login" size="small" sx={{ color: 'text.primary' }}>
+        <Button component={Link} href={adminUrl('/login')} size="small" sx={{ color: 'text.primary' }}>
           Sign in
         </Button>
-        <Button component={Link} href="/register" variant="contained" size="small">
+        <Button component={Link} href={adminUrl('/register')} variant="contained" size="small">
           Get started
         </Button>
       </Box>
@@ -90,10 +91,10 @@ export default function MarketingHeader() {
               sx={{ fontSize: '1rem', fontWeight: 500 }}
             />
           ))}
-          <Button component={Link} href="/login" variant="outlined" onClick={() => setMenuOpen(false)}>
+          <Button component={Link} href={adminUrl('/login')} variant="outlined" onClick={() => setMenuOpen(false)}>
             Sign in
           </Button>
-          <Button component={Link} href="/register" variant="contained" onClick={() => setMenuOpen(false)}>
+          <Button component={Link} href={adminUrl('/register')} variant="contained" onClick={() => setMenuOpen(false)}>
             Get started
           </Button>
         </Box>
