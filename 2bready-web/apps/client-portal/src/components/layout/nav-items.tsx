@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
 import FolderSharedOutlinedIcon from '@mui/icons-material/FolderSharedOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
@@ -44,7 +43,6 @@ const PRIMARY_NAV_DEFS = [
   { labelKey: 'nav.overview', href: '/' },
   { labelKey: 'nav.journey', href: '/journey', descriptionKey: 'nav.journey_desc', icon: <RouteOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.audits', href: '/audits', descriptionKey: 'nav.audits_desc', icon: <AssignmentOutlinedIcon fontSize="small" /> },
-  { labelKey: 'nav.documents', href: '/documents', descriptionKey: 'nav.documents_desc', icon: <DescriptionOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.trust_badge', href: '/trust-badge', descriptionKey: 'nav.trust_badge_desc', icon: <VerifiedOutlinedIcon fontSize="small" /> },
 ] as const satisfies readonly NavItemDef[];
 

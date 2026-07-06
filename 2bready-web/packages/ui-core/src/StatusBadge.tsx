@@ -5,7 +5,7 @@ import Chip from '@mui/material/Chip';
 type StatusKey =
   | 'active' | 'inactive' | 'suspended'
   | 'pending' | 'pending_review' | 'awaiting_confirmation'
-  | 'approved' | 'paid' | 'published' | 'confirmed'
+  | 'approved' | 'paid' | 'published' | 'confirmed' | 'verified'
   | 'rejected' | 'failed' | 'cancelled'
   | 'expired'
   | 'open' | 'in_progress'
@@ -19,6 +19,7 @@ const STATUS_COLOR: Record<StatusKey, 'success' | 'error' | 'warning' | 'default
   published: 'success',
   resolved: 'success',
   confirmed: 'success',
+  verified: 'success',
   closed: 'default',
 
   pending: 'warning',
