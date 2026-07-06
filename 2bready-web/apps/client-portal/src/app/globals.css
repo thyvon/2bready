@@ -20,3 +20,47 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
 }
+
+@keyframes portal-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(4%, 6%) scale(1.08); }
+  66% { transform: translate(-3%, -4%) scale(0.96); }
+}
+
+@keyframes portal-shimmer {
+  to { background-position: 200% center; }
+}
+
+.portal-grid-bg {
+  background-image:
+    linear-gradient(to right, var(--mui-palette-divider) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mui-palette-divider) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 40%, transparent 100%);
+  opacity: 0.5;
+}
+
+.portal-aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  animation: portal-drift 18s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.portal-gradient-text {
+  background: linear-gradient(100deg, var(--mui-palette-text-primary) 30%, var(--mui-palette-primary-main) 55%, var(--mui-palette-secondary-main) 70%, var(--mui-palette-text-primary) 90%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: portal-shimmer 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-aurora,
+  .portal-gradient-text {
+    animation: none;
+  }
+}

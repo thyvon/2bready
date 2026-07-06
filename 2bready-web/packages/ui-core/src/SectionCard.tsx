@@ -1,5 +1,6 @@
 'use client';
 
+import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
@@ -13,19 +14,12 @@ export interface SectionCardProps {
   className?: string;
 }
 
+// Builds on MUI's themed Card rather than re-declaring border/radius/background
+// on a plain Box — the shell's shape comes from one place (each app's MuiCard
+// theme override), so it can't drift out of sync with plain <Card> usage elsewhere.
 export function SectionCard({ children, title, subtitle, action, noPadding, className }: SectionCardProps) {
   return (
-    <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 2,
-        bgcolor: 'background.paper',
-        overflow: 'hidden',
-        transition: 'background-color 0.15s ease, border-color 0.15s ease',
-      }}
-      className={className}
-    >
+    <Card sx={{ overflow: 'hidden' }} className={className}>
       {(title || action) && (
         <>
           <Box className="flex items-center justify-between gap-4 px-4 py-3">
@@ -47,6 +41,6 @@ export function SectionCard({ children, title, subtitle, action, noPadding, clas
         </>
       )}
       <Box className={noPadding ? '' : 'p-4'}>{children}</Box>
-    </Box>
+    </Card>
   );
 }
