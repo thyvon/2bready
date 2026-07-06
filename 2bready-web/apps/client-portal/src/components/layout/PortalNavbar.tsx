@@ -16,6 +16,8 @@ import { motion } from 'framer-motion';
 import { NavHoverLink, ThemeToggle } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { NotificationBell } from './NotificationBell';
+import { UserMenu } from './UserMenu';
 import { useNavItems, isNavItemActive } from './nav-items';
 import { useTranslation } from '@/lib/i18n';
 
@@ -153,7 +155,10 @@ export function PortalNavbar() {
         height: 64,
         display: 'flex',
         alignItems: 'center',
-        gap: 5,
+        // On mobile, the flex children are just [logo, spacer, icon-cluster,
+        // hamburger] — 40px between each of those on a ~375px screen was
+        // enough on its own to push the hamburger button off-screen.
+        gap: { xs: 2, md: 5 },
         px: { xs: 2, md: 4 },
         borderBottom: '1px solid',
         borderColor: 'divider',
@@ -249,11 +254,18 @@ export function PortalNavbar() {
 
       <Box sx={{ flex: 1 }} />
 
-      <LanguageSwitcher />
-      <ThemeToggle
-        labels={{ light: t('theme.light'), dark: t('theme.dark'), system: t('theme.system') }}
-        ariaLabel={t('theme.toggle')}
-      />
+      {/* The header's own `gap: 5` is meant to separate broad groups (logo,
+          nav links, this cluster) — without its own tighter gap, these four
+          icon buttons would inherit that same 40px between each other. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <LanguageSwitcher />
+        <ThemeToggle
+          labels={{ light: t('theme.light'), dark: t('theme.dark'), system: t('theme.system') }}
+          ariaLabel={t('theme.toggle')}
+        />
+        <NotificationBell />
+        <UserMenu />
+      </Box>
 
       <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
         <IconButton size="small" onClick={() => setMobileOpen(true)} aria-label={t('nav.open_menu')}>

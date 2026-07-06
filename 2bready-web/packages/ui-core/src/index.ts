@@ -1,4 +1,5 @@
 export { SectionCard, type SectionCardProps } from './SectionCard';
+export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './Breadcrumbs';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ErrorState, type ErrorStateProps } from './ErrorState';
 export { LoadingState, type LoadingStateProps } from './LoadingState';

@@ -40,6 +40,9 @@ const en = {
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.language': 'Language',
+  'header.notifications': 'Notifications',
+  'header.no_notifications': 'No notifications yet',
+  'header.account': 'Account',
 } as const;
 
 export default en;

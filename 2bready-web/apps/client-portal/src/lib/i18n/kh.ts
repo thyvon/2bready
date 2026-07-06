@@ -45,6 +45,9 @@ const kh: Record<keyof typeof en, string> = {
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.language': 'ភាសា',
+  'header.notifications': 'ការជូនដំណឹង',
+  'header.no_notifications': 'មិនទាន់មានការជូនដំណឹងទេ',
+  'header.account': 'គណនី',
 };
 
 export default kh;
