@@ -58,6 +58,17 @@ services:
     networks:
       - 2bready
 
+  client:
+    build:
+      context: ./2bready-web
+      dockerfile: apps/client-portal/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-2bReady}
+        NEXT_PUBLIC_BASE_PATH: /portal
+    networks:
+      - 2bready
+
   postgres:
     image: postgres:16-alpine
     environment:
