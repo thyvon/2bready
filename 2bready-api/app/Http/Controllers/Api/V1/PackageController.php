@@ -13,21 +13,32 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Package\StorePackageRequest;
 use App\Http\Requests\Api\V1\Package\UpdatePackageRequest;
 use App\Http\Resources\Api\V1\PackageResource;
+use App\Http\Resources\Api\V1\PublicPackageResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PackageController extends Controller
 {
+    // Unauthenticated — landing-page pricing. No $this->authorize() call here on
+    // purpose: there's no logged-in user to check a policy against. Only active
+    // packages are exposed, and PublicPackageResource whitelists a narrow field set.
+    public function publicIndex(): JsonResponse
+    {
+        $packages = Package::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        return ApiResponse::success(PublicPackageResource::collection($packages));
+    }
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Package::class);
 
         $query = Package::query()->orderBy('sort_order');
 
-        // Non-internal users (company_owner/member choosing a plan) only ever see
-        // active, sellable packages — retired plans stay visible to staff for
-        // historical/reporting reasons only.
         if (! $request->user()->hasAnyRole(['admin', 'staff', 'finance'])) {
             $query->where('is_active', true);
         }

@@ -15,10 +15,8 @@ import { adminUrl } from '@/lib/admin-url';
 
 const NAV_LINKS = [
   { label: 'Built For', href: '/#stakeholders' },
-  { label: 'Features', href: '/#features' },
-  { label: 'Pricing', href: '/#pricing' },
+  { label: 'Pathways', href: '/#pricing' },
   { label: 'Ecosystem', href: '/#ecosystem' },
-  { label: 'About', href: '/about' },
 ];
 
 export default function MarketingHeader() {
@@ -66,10 +64,11 @@ export default function MarketingHeader() {
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
         <ThemeToggle />
         <Button component={Link} href={adminUrl('/login')} size="small" sx={{ color: 'text.primary' }}>
-          Sign in
+          Login
         </Button>
-        <Button component={Link} href={adminUrl('/register')} variant="contained" size="small">
-          Get started
+        {/* TODO: wire up once destination (role-based portal routing) is built by team */}
+        <Button variant="outlined" size="small">
+          Client Portal
         </Button>
       </Box>
 
@@ -92,10 +91,11 @@ export default function MarketingHeader() {
             />
           ))}
           <Button component={Link} href={adminUrl('/login')} variant="outlined" onClick={() => setMenuOpen(false)}>
-            Sign in
+            Login
           </Button>
-          <Button component={Link} href={adminUrl('/register')} variant="contained" onClick={() => setMenuOpen(false)}>
-            Get started
+
+          <Button variant="outlined" onClick={() => setMenuOpen(false)}>
+            Client Portal
           </Button>
         </Box>
       </Drawer>
