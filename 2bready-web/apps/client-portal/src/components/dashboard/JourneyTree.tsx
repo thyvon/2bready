@@ -4,11 +4,18 @@ import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
+import { motion } from 'framer-motion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import { GlowButton, StatusBadge } from '@2bready/ui-core';
+import { GlowButton, StatusBadge, cardGridContainer, cardGridItem, easeOutExpo } from '@2bready/ui-core';
 import { TIER_LABELS, levelDocCount, type BadgeLevel, type Milestone } from '@/lib/journey-data';
+
+// Shared with every hover/interaction transition in this tree so motion
+// reads as one system rather than a grab-bag of ad-hoc durations — same
+// curve as ui-core's easeOut, expressed as a CSS string since these are
+// plain sx transitions, not framer-motion props.
+const EASE_CSS = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
 // No verification tracking exists yet (that's Sprint 4/5 backend work), so
 // every document is honestly "pending" and every rollup is 0 — but the
@@ -50,6 +57,7 @@ function MilestoneNode({
   milestone,
   level,
   unlocked,
+  isFirst,
   isLast,
   defaultOpen,
   renderDocAction,
@@ -57,6 +65,7 @@ function MilestoneNode({
   milestone: Milestone;
   level: BadgeLevel;
   unlocked: boolean;
+  isFirst: boolean;
   isLast: boolean;
   defaultOpen: boolean;
   renderDocAction: RenderDocAction;
@@ -66,10 +75,23 @@ function MilestoneNode({
 
   return (
     <Box sx={{ position: 'relative', pl: 3 }}>
-      {/* Branch connector: a short horizontal tick to the milestone dot, and
-          a vertical segment continuing down to the next milestone (omitted
-          on the last one so the line doesn't dangle past it). */}
-      <Box sx={{ position: 'absolute', left: 0, top: 14, width: 16, height: '2px', bgcolor: 'divider' }} />
+      {/* Branch connector: a rounded elbow curving from the trunk down to the
+          milestone dot (border-radius on the corner, not two hard-angled
+          boxes) — reads as a drawn line rather than two abutting rectangles.
+          The first milestone has no incoming vertical (nothing above it to
+          connect to), just its own horizontal tick. */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 0,
+          top: isFirst ? 14 : -6,
+          width: 16,
+          height: isFirst ? '2px' : 20,
+          ...(isFirst
+            ? { bgcolor: 'divider' }
+            : { borderLeft: '2px solid', borderBottom: '2px solid', borderColor: 'divider', borderBottomLeftRadius: '8px' }),
+        }}
+      />
       {!isLast && <Box sx={{ position: 'absolute', left: 0, top: 14, bottom: -20, width: '2px', bgcolor: 'divider' }} />}
 
       <Box
@@ -82,9 +104,9 @@ function MilestoneNode({
           py: 0.75,
           px: 1,
           mx: -1,
-          borderRadius: '4px',
-          transition: 'background-color 0.1s ease',
-          '&:hover': { bgcolor: 'action.hover' },
+          borderRadius: '6px',
+          transition: `background-color 0.15s ${EASE_CSS}, transform 0.15s ${EASE_CSS}`,
+          '&:hover': { bgcolor: 'action.hover', transform: 'translateX(2px)' },
         }}
       >
         <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'text.primary', flexShrink: 0 }} />
@@ -94,11 +116,11 @@ function MilestoneNode({
         <StatusChip verified={verified} total={milestone.docs.length} />
         <ExpandMoreIcon
           fontSize="small"
-          sx={{ color: 'text.secondary', transition: 'transform 0.15s ease', transform: open ? 'rotate(180deg)' : 'none' }}
+          sx={{ color: 'text.secondary', transition: `transform 0.2s ${EASE_CSS}`, transform: open ? 'rotate(180deg)' : 'none' }}
         />
       </Box>
 
-      <Collapse in={open}>
+      <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
         <Box sx={{ pl: 2.5, py: 0.5, display: 'flex', flexDirection: 'column' }}>
           {milestone.docs.map((doc, i) => (
             <Box
@@ -141,10 +163,23 @@ function LevelNode({
 
   return (
     <Box sx={{ position: 'relative', pl: 6, pb: isLast ? 0 : 5 }}>
-      {/* Trunk connector down to the next level node. */}
-      {!isLast && <Box sx={{ position: 'absolute', left: 19, top: 40, bottom: 0, width: '2px', bgcolor: 'divider' }} />}
+      {/* Trunk connector down to the next level node — grows in from the top
+          on mount rather than appearing instantly, so the tree reads as
+          drawn/constructed once, not a static SVG-less div. */}
+      {!isLast && (
+        <Box
+          component={motion.div}
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ ...easeOutExpo, delay: 0.15 }}
+          sx={{ position: 'absolute', left: 19, top: 40, bottom: 0, width: '2px', bgcolor: 'divider', transformOrigin: 'top' }}
+        />
+      )}
 
-      {/* Level node circle, sitting on the trunk. */}
+      {/* Level node circle, sitting on the trunk — unlocked levels get a soft
+          success-colored glow ring (same color-mix recipe as GlowButton's
+          blue glow, tinted green) so "unlocked" reads as a real state change,
+          not just a border-color swap. */}
       <Box
         sx={{
           position: 'absolute',
@@ -161,6 +196,10 @@ function LevelNode({
           borderColor: unlocked ? 'success.main' : 'divider',
           bgcolor: 'background.paper',
           zIndex: 1,
+          transition: `box-shadow 0.25s ${EASE_CSS}`,
+          boxShadow: unlocked
+            ? '0 0 0 4px color-mix(in srgb, var(--mui-palette-success-main) 15%, transparent), 0 4px 16px -4px color-mix(in srgb, var(--mui-palette-success-main) 45%, transparent)'
+            : 'none',
         }}
       >
         {badge.emoji}
@@ -214,6 +253,7 @@ function LevelNode({
             milestone={milestone}
             level={badge}
             unlocked={unlocked}
+            isFirst={i === 0}
             isLast={i === badge.milestones.length - 1}
             defaultOpen={defaultMilestonesOpen}
             renderDocAction={renderDocAction}
@@ -254,16 +294,17 @@ export interface JourneyTreeProps {
 // implementation, not a second one per page.
 export function JourneyTree({ levels, isUnlocked, defaultMilestonesOpen = false, renderDocAction = DefaultDocAction }: JourneyTreeProps) {
   return (
-    <Box sx={{ pt: 1 }}>
+    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ pt: 1 }}>
       {levels.map((badge, i) => (
-        <LevelNode
-          key={badge.level}
-          badge={badge}
-          unlocked={isUnlocked(badge)}
-          isLast={i === levels.length - 1}
-          defaultMilestonesOpen={defaultMilestonesOpen}
-          renderDocAction={renderDocAction}
-        />
+        <Box component={motion.div} key={badge.level} variants={cardGridItem}>
+          <LevelNode
+            badge={badge}
+            unlocked={isUnlocked(badge)}
+            isLast={i === levels.length - 1}
+            defaultMilestonesOpen={defaultMilestonesOpen}
+            renderDocAction={renderDocAction}
+          />
+        </Box>
       ))}
     </Box>
   );

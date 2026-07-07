@@ -5,7 +5,6 @@ import { GeistMono } from 'geist/font/mono';
 import { Kantumruy_Pro } from 'next/font/google';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from '@/components/Providers';
-import { PortalShell } from '@/components/layout/PortalShell';
 import { LOCALE_COOKIE, getLocaleConfig, parseLocaleCookie } from '@/store/locale.store';
 import './globals.css';
 
@@ -41,9 +40,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="min-h-screen antialiased" suppressHydrationWarning>
         <InitColorSchemeScript defaultMode="system" />
-        <Providers initialLocale={initialLocale}>
-          <PortalShell>{children}</PortalShell>
-        </Providers>
+        {/* No PortalShell (navbar) here — that lives in app/(portal)/layout.tsx.
+            app/onboarding is a sibling route outside that group specifically
+            so a brand-new company doesn't see the full nav before their
+            profile exists. */}
+        <Providers initialLocale={initialLocale}>{children}</Providers>
       </body>
     </html>
   );

@@ -7,12 +7,13 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import { motion } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadOutlinedIcon from '@mui/icons-material/UploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
-import { Breadcrumbs, SectionCard, EmptyState, StatusBadge } from '@2bready/ui-core';
+import { Breadcrumbs, SectionCard, EmptyState, StatusBadge, UploadDropzone } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
 import { JourneyTree, type RenderDocAction } from '@/components/dashboard/JourneyTree';
@@ -49,8 +50,17 @@ export default function JourneyPage() {
   const [filter, setFilter] = useState<DocStatus | 'all'>('all');
   const isFiltering = query.trim().length > 0 || filter !== 'all';
 
+  // No upload API exists yet — "uploading" a file locally moves that one
+  // document to 'review' so the flow is demoable, layered on top of the
+  // seeded 'pending' data rather than replacing it.
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, DocStatus>>({});
+  const [uploadDoc, setUploadDoc] = useState<string | null>(null);
+
   const documents = useMemo(() => getAllDocuments(), []);
-  const statusByName = useMemo(() => new Map(documents.map((d) => [d.name, d.status])), [documents]);
+  const statusByName = useMemo(
+    () => new Map(documents.map((d) => [d.name, statusOverrides[d.name] ?? d.status])),
+    [documents, statusOverrides],
+  );
 
   const filteredLevels: BadgeLevel[] = useMemo(() => {
     if (!isFiltering) return BADGE_LEVELS;
@@ -83,14 +93,14 @@ export default function JourneyPage() {
         <StatusBadge status={status} label={STATUS_LABEL[status]} />
         {status === 'pending' && (
           <Tooltip title="Upload">
-            <IconButton size="small">
+            <IconButton size="small" onClick={() => setUploadDoc(doc)}>
               <UploadOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
         {(status === 'rejected' || status === 'expired') && (
           <Tooltip title="Re-upload">
-            <IconButton size="small">
+            <IconButton size="small" onClick={() => setUploadDoc(doc)}>
               <RefreshOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -138,11 +148,19 @@ export default function JourneyPage() {
         items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'Compliance Journey' }]}
       />
 
-      <Typography variant="body2" color="text.secondary">
-        {BADGE_LEVELS.length} levels · {totalDocs} documents total. Search or filter to find a document, or click a
-        milestone to browse its checklist — Pro and Enterprise levels stay visible so you can see what upgrading
-        unlocks.
-      </Typography>
+      <Box>
+        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'primary.main' }}>
+          Journey → Level → Milestone → Documents
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mt: 0.5 }}>
+          Your full compliance checklist
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 640 }}>
+          {BADGE_LEVELS.length} levels · {totalDocs} documents total. Search or filter to find a document, or click a
+          milestone to browse its checklist — Pro and Enterprise levels stay visible so you can see what upgrading
+          unlocks.
+        </Typography>
+      </Box>
 
       <SectionCard>
         <Box className="flex flex-col gap-4">
@@ -160,6 +178,15 @@ export default function JourneyPage() {
                 ),
               },
             }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&.Mui-focused': {
+                  boxShadow:
+                    '0 0 0 3px color-mix(in srgb, var(--mui-palette-primary-main) 15%, transparent), 0 6px 20px -6px color-mix(in srgb, var(--mui-palette-primary-main) 40%, transparent)',
+                },
+              },
+            }}
           />
 
           <Box className="flex items-center gap-1.5" sx={{ flexWrap: 'wrap' }}>
@@ -168,6 +195,13 @@ export default function JourneyPage() {
                 key={f.key}
                 onClick={() => setFilter(f.key)}
                 sx={{
+                  position: 'relative',
+                  // Establishes its own stacking context so the pill's
+                  // z-index:-1 below is scoped to this chip only — without
+                  // this, -1 escapes to the nearest ancestor stacking
+                  // context and paints behind SectionCard's own background,
+                  // making the pill (and its text) invisible.
+                  zIndex: 0,
                   cursor: 'pointer',
                   userSelect: 'none',
                   px: 1.5,
@@ -175,12 +209,22 @@ export default function JourneyPage() {
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: 600,
-                  transition: 'background-color 0.1s ease',
-                  ...(filter === f.key
-                    ? { bgcolor: 'text.primary', color: 'background.paper' }
-                    : { bgcolor: 'action.selected', color: 'text.secondary', '&:hover': { bgcolor: 'action.hover' } }),
+                  transition: 'color 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                  color: filter === f.key ? 'background.paper' : 'text.secondary',
+                  '&:hover': filter === f.key ? {} : { color: 'text.primary' },
                 }}
               >
+                {filter === f.key && (
+                  <Box
+                    component={motion.div}
+                    layoutId="journey-filter-pill"
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    sx={{ position: 'absolute', inset: 0, borderRadius: '9999px', bgcolor: 'text.primary', zIndex: -1 }}
+                  />
+                )}
+                {filter !== f.key && (
+                  <Box sx={{ position: 'absolute', inset: 0, borderRadius: '9999px', bgcolor: 'action.selected', zIndex: -1 }} />
+                )}
                 {f.label}
               </Box>
             ))}
@@ -198,6 +242,16 @@ export default function JourneyPage() {
           )}
         </Box>
       </SectionCard>
+
+      <UploadDropzone
+        open={uploadDoc !== null}
+        onClose={() => setUploadDoc(null)}
+        title={uploadDoc ?? ''}
+        onUpload={() => {
+          if (uploadDoc) setStatusOverrides((prev) => ({ ...prev, [uploadDoc]: 'review' }));
+          setUploadDoc(null);
+        }}
+      />
     </Box>
   );
 }
