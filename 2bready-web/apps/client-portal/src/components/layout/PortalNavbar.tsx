@@ -260,14 +260,23 @@ export function PortalNavbar() {
           nav links, this cluster) — without its own tighter gap, these four
           icon buttons would inherit that same 40px between each other. */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <CompanySwitcher />
-        {/* Same "honest zero" as everywhere else — no verification tracking
-            exists yet, so this reads 0% until real per-document status does. */}
-        <Tooltip title="Audit Ready">
-          <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
-            <RadialMeter percent={0} size={32} strokeWidth={4} fillColor="var(--mui-palette-primary-main)" />
-          </Box>
-        </Tooltip>
+        {/* CompanySwitcher's text (a company name, potentially long) and the
+            donut together don't fit next to the hamburger button on a
+            narrow phone — they overflowed the viewport in production.
+            Notification/account stay icon-only (bounded width, no overflow
+            risk) so those remain reachable on mobile; company switching
+            isn't available there yet — a mobile-drawer entry for it is a
+            reasonable follow-up, not assumed here. */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
+          <CompanySwitcher />
+          {/* Same "honest zero" as everywhere else — no verification tracking
+              exists yet, so this reads 0% until real per-document status does. */}
+          <Tooltip title="Audit Ready">
+            <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
+              <RadialMeter percent={0} size={32} strokeWidth={4} fillColor="var(--mui-palette-primary-main)" />
+            </Box>
+          </Tooltip>
+        </Box>
         <NotificationBell />
         <UserMenu />
       </Box>
