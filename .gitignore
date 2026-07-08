@@ -33,3 +33,7 @@ Thumbs.db
 *.swp
 *.swo
 logfile
+
+2bready-web/next-env.d.ts
+2bready-web/tsconfig.tsbuildinfo
+2bready-web/.tmp-tsconfig.tsbuildinfo

@@ -7,17 +7,14 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import VerifiedIcon from '@mui/icons-material/Verified';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import GroupsIcon from '@mui/icons-material/Groups';
+import PublicIcon from '@mui/icons-material/Public';
 import AuroraBackground from './AuroraBackground';
 import GlowButton from './GlowButton';
-import TrustScorePreview from './TrustScorePreview';
 import { heroContent, heroPills } from './content';
 
 const PILL_ICONS = {
   shield: VerifiedIcon,
-  timeline: TimelineIcon,
-  groups: GroupsIcon,
+  globe: PublicIcon,
 };
 
 const container: Variants = {
@@ -105,15 +102,6 @@ export default function HeroSection() {
             </Box>
           </motion.div>
         </Box>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: 'relative', zIndex: 1 }}
-      >
-        <TrustScorePreview />
       </motion.div>
     </Box>
   );

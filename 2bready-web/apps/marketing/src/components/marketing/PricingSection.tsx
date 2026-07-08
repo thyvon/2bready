@@ -1,3 +1,5 @@
+'use client';
+
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
@@ -9,7 +11,8 @@ import PublicIcon from '@mui/icons-material/Public';
 import Reveal from './Reveal';
 import SpotlightCard from './SpotlightCard';
 import GlowButton from './GlowButton';
-import { pricingContent, pricingPlans } from './content';
+import { pricingContent } from './content';
+import { usePublicPricing } from './usePublicPricing';
 
 const PLAN_ICONS = {
   compliance: DescriptionIcon,
@@ -19,6 +22,8 @@ const PLAN_ICONS = {
 };
 
 export default function PricingSection() {
+  const pricingPlans = usePublicPricing();
+
   return (
     <Box component="section" id="pricing" sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 14 }, maxWidth: 1440, mx: 'auto' }}>
       <Reveal>
