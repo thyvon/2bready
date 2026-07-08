@@ -8,6 +8,8 @@ services:
     depends_on:
       - api
       - web
+      - marketing
+      - client
     networks:
       - 2bready
 
@@ -55,6 +57,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-2bReady}
+        NEXT_PUBLIC_BASE_PATH: /admin
     networks:
       - 2bready
 
@@ -66,6 +69,18 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-2bReady}
         NEXT_PUBLIC_BASE_PATH: /portal
+    networks:
+      - 2bready
+
+  marketing:
+    build:
+      context: ./2bready-web
+      dockerfile: apps/marketing/Dockerfile
+      args:
+        # Same-origin path split (not a subdomain) — admin-portal now lives
+        # at /admin on this same domain, so this is a relative path, not a
+        # different host. See apps/marketing/src/lib/admin-url.ts.
+        NEXT_PUBLIC_ADMIN_PORTAL_URL: /admin
     networks:
       - 2bready
 

@@ -12,7 +12,11 @@ const api = createApiClient({
       // again on the next request. That mismatch is what produced a stuck/blank
       // dashboard for sessions that went bad after a deploy.
       useAuthStore.getState().clearAuth();
-      window.location.href = '/login';
+      // Raw window.location assignments aren't basePath-aware the way
+      // next/link is — now that production mounts this app at /admin (see
+      // next.config.ts), a bare '/login' would send the browser to the
+      // root domain (marketing) instead of back into this app.
+      window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/login`;
     }
   },
 });
