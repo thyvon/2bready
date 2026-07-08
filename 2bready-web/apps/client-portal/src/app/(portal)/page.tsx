@@ -8,17 +8,19 @@ import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import { SectionCard, GlowButton, cardGridContainer, cardGridItem } from '@2bready/ui-core';
 import { PillarCard } from '@/components/dashboard/PillarCard';
-import { TrustBadgeJourney } from '@/components/dashboard/TrustBadgeJourney';
 import { JourneyTree } from '@/components/dashboard/JourneyTree';
-import { PILLARS, BADGE_LEVELS } from '@/lib/journey-data';
+import { TrustJourneyHero } from '@/components/dashboard/TrustJourneyHero';
+import { PILLARS, BADGE_LEVELS, levelDocCount } from '@/lib/journey-data';
 
 const L1 = [BADGE_LEVELS[0]];
+const TOTAL_DOCS = BADGE_LEVELS.reduce((sum, level) => sum + levelDocCount(level), 0);
+const TAX_COMPLIANCE_DOCS = L1[0].milestones.find((m) => m.name === 'Tax Compliance')!.docs.length;
 
 const PILLAR_ICONS = {
   comply: <ShieldOutlinedIcon fontSize="small" />,
@@ -26,28 +28,69 @@ const PILLAR_ICONS = {
   lead: <WorkspacePremiumOutlinedIcon fontSize="small" />,
 };
 
-const ECOSYSTEM = [
-  { icon: <StorefrontOutlinedIcon fontSize="small" />, name: '2bgro Commerce', desc: 'B2B commerce channels unlocked by your L2 Product Excellence badge.' },
-  { icon: <LocalShippingOutlinedIcon fontSize="small" />, name: '2bShip Logistics', desc: 'Cross-border fulfillment unlocked by L3 Operational Excellence.' },
-  { icon: <HandshakeOutlinedIcon fontSize="small" />, name: 'GoInvestors', desc: 'Institutional deal-room access reserved for L4 Global enterprises.' },
-  { icon: <SchoolOutlinedIcon fontSize="small" />, name: 'ADMIT Consulting', desc: 'Expert consulting and Master SOP drafting for your operational foundation.' },
-];
+// Same lift + glow hover as PillarCard, applied to every other card on this
+// page so hovering anything on Overview feels like one consistent surface,
+// not just the pillar grid. Passed via SectionCard's opt-in `sx` — other
+// pages' SectionCard usages are untouched.
+const cardHoverSx = {
+  transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    transform: 'translateY(-3px)',
+    boxShadow:
+      '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 18%, transparent), 0 20px 40px -16px color-mix(in srgb, var(--mui-palette-primary-main) 30%, transparent)',
+  },
+};
 
 export default function OverviewPage() {
   return (
     <Box className="flex flex-col gap-6">
-      {/* Compact functional header — replaces the marketing-style hero now
-          that this page is a real dashboard, not a landing moment. */}
-      <Box>
-        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'primary.main' }}>
-          Your Trust Journey
-        </Typography>
-        <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: '-0.02em', mt: 0.5 }}>
-          Comply. Scale. Lead.
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 480 }}>
-          Build a resilient, audit-ready foundation. Automate operations. Become a legacy brand.
-        </Typography>
+      <TrustJourneyHero overallPct={0} currentLevel="L1" pendingDocs={TOTAL_DOCS} />
+
+      {/* Three at-a-glance insight cards — same "honest zero" data as
+          everywhere else in the app, not the reference mockup's own
+          placeholder numbers. */}
+      <Box className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <SectionCard sx={cardHoverSx}>
+          <Box className="flex items-center gap-2" sx={{ mb: 1 }}>
+            <CheckCircleOutlinedIcon sx={{ fontSize: '1.125rem', color: 'success.main' }} />
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}>
+              Tax Health
+            </Typography>
+          </Box>
+          <Box className="flex items-center gap-1.5">
+            <WarningAmberOutlinedIcon sx={{ fontSize: '1.125rem', color: 'warning.main' }} />
+            <Typography variant="body2" sx={{ fontWeight: 700, color: 'warning.dark' }}>
+              {TAX_COMPLIANCE_DOCS} tax documents pending
+            </Typography>
+          </Box>
+        </SectionCard>
+
+        <SectionCard sx={cardHoverSx}>
+          <Box className="flex items-center gap-2" sx={{ mb: 1 }}>
+            <BarChartOutlinedIcon sx={{ fontSize: '1.125rem', color: 'text.secondary' }} />
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}>
+              Audit-Ready
+            </Typography>
+          </Box>
+          <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
+            <Box sx={{ width: '0%', height: '100%', borderRadius: '4px', bgcolor: 'primary.main' }} />
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
+            0%
+          </Typography>
+        </SectionCard>
+
+        <SectionCard sx={cardHoverSx}>
+          <Box className="flex items-center gap-2" sx={{ mb: 1 }}>
+            <PushPinOutlinedIcon sx={{ fontSize: '1.125rem', color: 'error.main' }} />
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}>
+              Next Milestone
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            {TOTAL_DOCS} documents need attention
+          </Typography>
+        </SectionCard>
       </Box>
 
       {/* 3 pillars — Comply (free, always unlocked), Scale (pro), Lead (enterprise) */}
@@ -59,12 +102,10 @@ export default function OverviewPage() {
         ))}
       </motion.div>
 
-      <TrustBadgeJourney unlockedLevels={[]} overallPct={0} />
-
       {/* Current stage: L1 · The Launchpad, the only pathway on the free
           tier — reuses JourneyTree (scoped to just this one level) instead
           of re-implementing the milestone/document list by hand. */}
-      <SectionCard title="L1 · The Launchpad — Bronze Foundation" subtitle="0/13 verified">
+      <SectionCard title="L1 · The Launchpad — Bronze Foundation" subtitle="0/13 verified" sx={cardHoverSx}>
         <JourneyTree levels={L1} isUnlocked={() => true} />
         <Box sx={{ mt: 2 }}>
           <GlowButton href="/journey" size="medium">
@@ -77,7 +118,7 @@ export default function OverviewPage() {
           now; differentiated from the softer nudge card below by icon
           weight (solid dark badge here vs. a lighter one there), not a
           border accent. */}
-      <SectionCard>
+      <SectionCard sx={cardHoverSx}>
         <Box className="flex items-center gap-4">
           <Box sx={{ width: 40, height: 40, borderRadius: '8px', bgcolor: 'text.primary', color: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <DescriptionOutlinedIcon fontSize="small" />
@@ -99,7 +140,7 @@ export default function OverviewPage() {
       {/* Growth nudge — mirrors the owner concept's ADMIT upsell, which only
           appears after 14 days of zero progress; shown here as a static
           preview state since there's no account-age tracking yet. */}
-      <SectionCard>
+      <SectionCard sx={cardHoverSx}>
         <Box className="flex items-center gap-4">
           <Box sx={{ width: 40, height: 40, borderRadius: '8px', bgcolor: 'action.selected', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <LightbulbOutlinedIcon fontSize="small" />
@@ -117,45 +158,6 @@ export default function OverviewPage() {
           </GlowButton>
         </Box>
       </SectionCard>
-
-      {/* Ecosystem cross-sell, tied to specific badge unlocks */}
-      <Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
-          The ADMIT Global Ecosystem
-        </Typography>
-        <Box className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {ECOSYSTEM.map((item) => (
-            <Box
-              key={item.name}
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: '8px',
-                p: 1.75,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1,
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow:
-                    '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 15%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--mui-palette-primary-main) 50%, transparent)',
-                },
-              }}
-            >
-              <Box sx={{ width: 30, height: 30, borderRadius: '8px', bgcolor: 'action.selected', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary' }}>
-                {item.icon}
-              </Box>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {item.name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
-                {item.desc}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
     </Box>
   );
 }

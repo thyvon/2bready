@@ -13,10 +13,12 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import MenuIcon from '@mui/icons-material/Menu';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { motion } from 'framer-motion';
-import { NavHoverLink, ThemeToggle } from '@2bready/ui-core';
+import Tooltip from '@mui/material/Tooltip';
+import { NavHoverLink } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import { CompanySwitcher } from './CompanySwitcher';
 import { NotificationBell } from './NotificationBell';
+import { RadialMeter } from '@/components/dashboard/RadialMeter';
 import { UserMenu } from './UserMenu';
 import { useNavItems, isNavItemActive } from './nav-items';
 import { useTranslation } from '@/lib/i18n';
@@ -258,11 +260,14 @@ export function PortalNavbar() {
           nav links, this cluster) — without its own tighter gap, these four
           icon buttons would inherit that same 40px between each other. */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <LanguageSwitcher />
-        <ThemeToggle
-          labels={{ light: t('theme.light'), dark: t('theme.dark'), system: t('theme.system') }}
-          ariaLabel={t('theme.toggle')}
-        />
+        <CompanySwitcher />
+        {/* Same "honest zero" as everywhere else — no verification tracking
+            exists yet, so this reads 0% until real per-document status does. */}
+        <Tooltip title="Audit Ready">
+          <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
+            <RadialMeter percent={0} size={32} strokeWidth={4} fillColor="var(--mui-palette-primary-main)" />
+          </Box>
+        </Tooltip>
         <NotificationBell />
         <UserMenu />
       </Box>

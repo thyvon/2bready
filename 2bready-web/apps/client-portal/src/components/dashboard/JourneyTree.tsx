@@ -144,6 +144,169 @@ function MilestoneNode({
   );
 }
 
+// Mobile has no room for the desktop tree's decorative trunk/elbow
+// connectors (they either get clipped or force horizontal scroll once the
+// left-edge indentation stacks up) — rather than shrinking that same layout
+// until it's illegible, this is a distinct, deliberately simpler
+// presentation: a centered stack of level cards, each a self-contained
+// accordion with no connector lines at all. Same data and renderDocAction,
+// so a mobile visitor sees the identical checklist, just laid out for a
+// narrow, one-thing-at-a-time screen instead of a wide branching diagram.
+function MobileMilestoneRow({
+  milestone,
+  level,
+  renderDocAction,
+  defaultOpen,
+}: {
+  milestone: Milestone;
+  level: BadgeLevel;
+  renderDocAction: RenderDocAction;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const verified = 0;
+
+  return (
+    <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+      <Box
+        className="flex items-center gap-2"
+        onClick={() => setOpen((v) => !v)}
+        sx={{ cursor: 'pointer', userSelect: 'none', py: 1.25 }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
+          {milestone.name}
+        </Typography>
+        <StatusChip verified={verified} total={milestone.docs.length} />
+        <ExpandMoreIcon
+          fontSize="small"
+          sx={{ color: 'text.secondary', transition: `transform 0.2s ${EASE_CSS}`, transform: open ? 'rotate(180deg)' : 'none' }}
+        />
+      </Box>
+      <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', pb: 1 }}>
+          {milestone.docs.map((doc) => (
+            <Box key={doc} className="flex items-center gap-3" sx={{ py: 0.75 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                {doc}
+              </Typography>
+              {renderDocAction(doc, { level, milestone })}
+            </Box>
+          ))}
+        </Box>
+      </Collapse>
+    </Box>
+  );
+}
+
+function MobileLevelCard({
+  badge,
+  unlocked,
+  defaultMilestonesOpen,
+  renderDocAction,
+}: {
+  badge: BadgeLevel;
+  unlocked: boolean;
+  defaultMilestonesOpen: boolean;
+  renderDocAction: RenderDocAction;
+}) {
+  const totalDocs = levelDocCount(badge);
+  const verifiedDocs = 0;
+  const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+
+  return (
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: '8px',
+        p: 2.5,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        textAlign: 'left',
+        gap: 1,
+      }}
+    >
+      <Box
+        sx={{
+          alignSelf: 'center',
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.375rem',
+          border: '2px solid',
+          borderColor: unlocked ? 'success.main' : 'divider',
+          boxShadow: unlocked
+            ? '0 0 0 4px color-mix(in srgb, var(--mui-palette-success-main) 15%, transparent), 0 4px 16px -4px color-mix(in srgb, var(--mui-palette-success-main) 45%, transparent)'
+            : 'none',
+        }}
+      >
+        {badge.emoji}
+      </Box>
+
+      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+        {badge.level} {badge.name} · {badge.pathwayName}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {badge.milestones.length} milestones · {totalDocs} documents
+      </Typography>
+
+      <Box
+        className="flex items-center gap-1"
+        sx={{
+          fontSize: '0.6875rem',
+          fontWeight: 700,
+          letterSpacing: '0.03em',
+          px: 1.25,
+          py: 0.375,
+          borderRadius: '9999px',
+          mt: 0.5,
+          ...(unlocked ? { bgcolor: 'success.light', color: 'success.dark' } : { bgcolor: 'action.selected', color: 'text.secondary' }),
+        }}
+      >
+        {unlocked ? <CheckCircleOutlinedIcon sx={{ fontSize: '0.875rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '0.875rem' }} />}
+        {unlocked ? 'UNLOCKED' : TIER_LABELS[badge.tier]}
+      </Box>
+
+      <Box sx={{ width: '100%', mt: 1 }}>
+        <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
+          <Box sx={{ width: `${pct}%`, height: '100%', borderRadius: '4px', bgcolor: unlocked ? 'success.main' : 'text.disabled', transition: 'width 0.4s ease' }} />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums', mt: 0.5 }}>
+          <span>{pct}%</span>
+          <span>{verifiedDocs}/{totalDocs} verified</span>
+        </Box>
+      </Box>
+
+      <Box sx={{ width: '100%', mt: 1 }}>
+        {badge.milestones.map((milestone) => (
+          <MobileMilestoneRow
+            key={milestone.name}
+            milestone={milestone}
+            level={badge}
+            renderDocAction={renderDocAction}
+            defaultOpen={defaultMilestonesOpen}
+          />
+        ))}
+      </Box>
+
+      {!unlocked && (
+        <Box sx={{ width: '100%', mt: 1.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Upgrade to {TIER_LABELS[badge.tier]} to unlock this level.
+          </Typography>
+          <GlowButton href="/billing" size="small">
+            Upgrade →
+          </GlowButton>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 function LevelNode({
   badge,
   unlocked,
@@ -292,20 +455,48 @@ export interface JourneyTreeProps {
 // (browsing, collapsed) and the Documents page (acting on files, expanded
 // with real Upload/Preview/Download actions) via renderDocAction — one tree
 // implementation, not a second one per page.
+//
+// Renders two layouts, toggled by CSS breakpoint (not JS/useMediaQuery, so
+// there's no hydration flicker): the tree above for md+ screens, and a
+// centered stack of plain accordion cards (MobileLevelCard) below for xs —
+// see that component's own comment for why mobile doesn't just shrink the
+// same connector-line diagram.
 export function JourneyTree({ levels, isUnlocked, defaultMilestonesOpen = false, renderDocAction = DefaultDocAction }: JourneyTreeProps) {
   return (
-    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ pt: 1 }}>
-      {levels.map((badge, i) => (
-        <Box component={motion.div} key={badge.level} variants={cardGridItem}>
-          <LevelNode
-            badge={badge}
-            unlocked={isUnlocked(badge)}
-            isLast={i === levels.length - 1}
-            defaultMilestonesOpen={defaultMilestonesOpen}
-            renderDocAction={renderDocAction}
-          />
-        </Box>
-      ))}
-    </Box>
+    <>
+      <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ pt: 1, display: { xs: 'none', md: 'block' } }}>
+        {levels.map((badge, i) => (
+          <Box component={motion.div} key={badge.level} variants={cardGridItem}>
+            <LevelNode
+              badge={badge}
+              unlocked={isUnlocked(badge)}
+              isLast={i === levels.length - 1}
+              defaultMilestonesOpen={defaultMilestonesOpen}
+              renderDocAction={renderDocAction}
+            />
+          </Box>
+        ))}
+      </Box>
+
+      <Box
+        component={motion.div}
+        variants={cardGridContainer}
+        initial="hidden"
+        animate="show"
+        className="flex flex-col gap-3"
+        sx={{ pt: 1, display: { xs: 'flex', md: 'none' } }}
+      >
+        {levels.map((badge) => (
+          <Box component={motion.div} key={badge.level} variants={cardGridItem}>
+            <MobileLevelCard
+              badge={badge}
+              unlocked={isUnlocked(badge)}
+              defaultMilestonesOpen={defaultMilestonesOpen}
+              renderDocAction={renderDocAction}
+            />
+          </Box>
+        ))}
+      </Box>
+    </>
   );
 }

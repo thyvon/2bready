@@ -37,6 +37,10 @@ const en = {
   'theme.light': 'Light mode — click for dark',
   'theme.dark': 'Dark mode — click for system',
   'theme.system': 'System theme — click for light',
+  'theme.section_label': 'Theme',
+  'theme.light_label': 'Light',
+  'theme.dark_label': 'Dark',
+  'theme.system_label': 'System',
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.language': 'Language',

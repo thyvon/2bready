@@ -4,8 +4,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import type { Pillar } from '@/lib/journey-data';
-import { TIER_LABELS } from '@/lib/journey-data';
+import type { Pillar, Tier } from '@/lib/journey-data';
+import { TIER_LABELS, activeLevelCodes } from '@/lib/journey-data';
+import { RadialMeter } from './RadialMeter';
 
 export interface PillarCardProps {
   pillar: Pillar;
@@ -16,32 +17,72 @@ export interface PillarCardProps {
   unlocked: boolean;
 }
 
+// One hue per tier, escalating — Normal stays monochrome (the plain,
+// default tier), Pro picks up the app's own brand blue (a real step up),
+// Enterprise gets a gold accent (the universal "top tier" signal, from
+// Amex/airline-status cards to SaaS pricing pages) — not a full theme
+// change, just this one card's accent, so it stays a deliberate exception
+// rather than a second brand color creeping in everywhere.
+const TIER_ACCENT: Record<Tier, string> = {
+  free: 'var(--mui-palette-text-primary)',
+  pro: 'var(--mui-palette-primary-main)',
+  enterprise: '#b8860b',
+};
+
+// Premium-but-light — a subtle paper-to-tint gradient, a soft elevated
+// shadow, a glowing icon badge, and a quiet icon watermark instead of the
+// flat single-color card this replaced. Built on theme tokens (not
+// hardcoded hex) apart from the one gold accent above, so it stays correct
+// if the app's own dark-mode toggle is ever used — the owner's actual
+// preference is a light interface, this just gives the light card real
+// presence rather than reaching for a dark "black card" look.
 export function PillarCard({ pillar, icon, verifiedDocs, unlocked }: PillarCardProps) {
   const pct = pillar.totalDocs === 0 ? 0 : Math.round((verifiedDocs / pillar.totalDocs) * 100);
+  const levels = activeLevelCodes(pillar.id).join(' · ');
+  const accent = TIER_ACCENT[pillar.tier];
 
   return (
     <Box
       sx={{
         position: 'relative',
-        border: '1px solid',
-        borderColor: 'divider',
+        overflow: 'hidden',
+        // Matches the theme's own MuiCard override (SectionCard etc.) — one
+        // radius token across every card-shaped surface, not a one-off value.
         borderRadius: '8px',
-        bgcolor: 'background.paper',
         p: 2.5,
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,
-        // Same blue-tinted glow recipe as GlowButton, not a border change —
-        // a soft shadow halo instead of a hard outline.
-        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        background: `linear-gradient(160deg, var(--mui-palette-background-paper) 0%, color-mix(in srgb, ${accent} 5%, var(--mui-palette-background-paper)) 100%)`,
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: '0 1px 2px rgba(16,24,40,0.04), 0 8px 24px -12px rgba(16,24,40,0.10)',
+        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow:
-            '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 15%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--mui-palette-primary-main) 50%, transparent)',
+          transform: 'translateY(-3px)',
+          boxShadow: `0 0 0 1px color-mix(in srgb, ${accent} 18%, transparent), 0 20px 40px -16px color-mix(in srgb, ${accent} 30%, transparent)`,
         },
       }}
     >
-      <Box className="flex items-start justify-between">
+      {/* Oversized, near-invisible watermark of the pillar's own icon — a
+          quiet "engraving" rather than a busy decorative pattern. */}
+      <Box
+        sx={{
+          position: 'absolute',
+          right: -18,
+          bottom: -18,
+          fontSize: '7.5rem',
+          lineHeight: 1,
+          color: 'text.primary',
+          opacity: 0.03,
+          pointerEvents: 'none',
+          '& svg': { fontSize: 'inherit' },
+        }}
+      >
+        {icon}
+      </Box>
+
+      <Box className="flex items-start justify-between" sx={{ position: 'relative' }}>
         <Box
           sx={{
             width: 40,
@@ -52,6 +93,7 @@ export function PillarCard({ pillar, icon, verifiedDocs, unlocked }: PillarCardP
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            boxShadow: `0 4px 16px -4px color-mix(in srgb, ${accent} 45%, transparent)`,
             '& svg': { fontSize: '1.375rem' },
           }}
         >
@@ -76,31 +118,36 @@ export function PillarCard({ pillar, icon, verifiedDocs, unlocked }: PillarCardP
         </Box>
       </Box>
 
-      <Box>
-        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary' }}>
-          {pillar.label}
-        </Typography>
-        <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
-          {pillar.name}
-        </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-          {pillar.sub}
-        </Typography>
+      <Box className="flex items-center gap-3" sx={{ position: 'relative' }}>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: accent }}>
+            {pillar.label}
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
+            {pillar.name}
+          </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+            {pillar.sub}
+            {unlocked ? ` · ${levels}` : ''}
+          </Typography>
+        </Box>
+        <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+            {verifiedDocs}/{pillar.totalDocs}
+          </Typography>
+        </Box>
+        <RadialMeter
+          percent={pct}
+          size={80}
+          strokeWidth={7}
+          trackColor="var(--mui-palette-action-selected)"
+          fillColor={accent}
+        />
       </Box>
 
-      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55, flex: 1 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55, flex: 1, position: 'relative' }}>
         {pillar.description}
       </Typography>
-
-      <Box>
-        <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
-          <Box sx={{ width: `${pct}%`, height: '100%', borderRadius: '4px', bgcolor: 'text.primary', transition: 'width 0.4s ease' }} />
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums', mt: 0.75 }}>
-          <span>{pct}%</span>
-          <span>{verifiedDocs}/{pillar.totalDocs}</span>
-        </Box>
-      </Box>
     </Box>
   );
 }

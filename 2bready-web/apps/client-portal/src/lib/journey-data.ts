@@ -187,6 +187,33 @@ export function levelDocCount(level: BadgeLevel): number {
   return level.milestones.reduce((sum, m) => sum + m.docs.length, 0);
 }
 
+/**
+ * A pillar's levels unlock sequentially within the pillar — Scale's L3 only
+ * becomes relevant once L2 is fully verified, so the Overview cards shouldn't
+ * advertise it before then. No per-level verified count exists yet (every
+ * level is honestly 0%), so this always reduces to just the pillar's first
+ * level today — but the sequencing logic is real and ready for a real
+ * verified count the moment one exists.
+ */
+export function activeLevelCodes(pillarId: Pillar['id']): LevelCode[] {
+  const levels = BADGE_LEVELS.filter((level) => level.pillar === pillarId);
+  const active: LevelCode[] = [];
+  for (const level of levels) {
+    if (active.length === 0) {
+      active.push(level.level);
+      continue;
+    }
+    const prev = levels[active.length - 1];
+    const prevVerified = 0; // seed for the real per-level rollup once document status exists
+    if (levelDocCount(prev) > 0 && prevVerified === levelDocCount(prev)) {
+      active.push(level.level);
+    } else {
+      break;
+    }
+  }
+  return active;
+}
+
 // Re-verification windows called out explicitly in the signed-off taxonomy —
 // everything else has no expiry (a one-time document, e.g. Articles of
 // Incorporation).

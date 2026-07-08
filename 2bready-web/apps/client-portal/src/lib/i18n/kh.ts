@@ -42,6 +42,10 @@ const kh: Record<keyof typeof en, string> = {
   'theme.light': 'របៀបភ្លឺ — ចុចដើម្បីប្តូរទៅងងឹត',
   'theme.dark': 'របៀបងងឹត — ចុចដើម្បីប្តូរទៅតាមប្រព័ន្ធ',
   'theme.system': 'តាមប្រព័ន្ធ — ចុចដើម្បីប្តូរទៅភ្លឺ',
+  'theme.section_label': 'រចនាប័ទ្ម',
+  'theme.light_label': 'ភ្លឺ',
+  'theme.dark_label': 'ងងឹត',
+  'theme.system_label': 'តាមប្រព័ន្ធ',
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.language': 'ភាសា',
