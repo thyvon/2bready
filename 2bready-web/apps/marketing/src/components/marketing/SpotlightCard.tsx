@@ -2,16 +2,18 @@
 
 import { useRef } from 'react';
 import Box from '@mui/material/Box';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 interface SpotlightCardProps {
   children: React.ReactNode;
   className?: string;
   tilt?: boolean;
+  sx?: SxProps<Theme>;
 }
 
-const MAX_TILT = 8; // degrees
+const MAX_TILT = 8; 
 
-export default function SpotlightCard({ children, className, tilt = true }: SpotlightCardProps) {
+export default function SpotlightCard({ children, className, tilt = true, sx }: SpotlightCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -24,20 +26,23 @@ export default function SpotlightCard({ children, className, tilt = true }: Spot
     el.style.setProperty('--spot-x', `${x}px`);
     el.style.setProperty('--spot-y', `${y}px`);
 
-    const px = x / rect.width;   // 0 → 1
-    const py = y / rect.height;  // 0 → 1
-    const rotateY = (px - 0.5) * MAX_TILT * 2;
-    const rotateX = (0.5 - py) * MAX_TILT * 2;
-
     if (tilt) {
+      const px = x / rect.width;   
+      const py = y / rect.height;  
+      const rotateY = (px - 0.5) * MAX_TILT * 2;
+      const rotateX = (0.5 - py) * MAX_TILT * 2;
       el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    } else {
+      el.style.transform = 'translateY(-4px)'; 
     }
   };
 
   const handleMouseLeave = () => {
     const el = ref.current;
     if (!el) return;
-    el.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)';
+    el.style.transform = tilt
+      ? 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)'
+      : 'translateY(0)';
   };
 
   return (
@@ -46,34 +51,41 @@ export default function SpotlightCard({ children, className, tilt = true }: Spot
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={className}
-      sx={{
-        position: 'relative',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: '16px',
-        bgcolor: 'background.paper',
-        p: 4,
-        overflow: 'hidden',
-        transformStyle: 'preserve-3d',
-        willChange: 'transform',
-        transition: 'transform 0.15s ease-out, border-color 0.3s ease',
-        '&:hover': {
-          borderColor: 'var(--2br-border-hover)',
+      sx={[
+        {
+          position: 'relative',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: '16px',
+          bgcolor: 'background.paper',
+          p: 4,
+          overflow: 'hidden',
+          transformStyle: 'preserve-3d',
+          willChange: 'transform',
+          transition: 'transform 0.15s ease-out, border-color 0.3s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          '&:hover': {
+            borderColor: 'var(--2br-border-hover)',
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 'inherit',
+            background: 'radial-gradient(320px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(0,112,243,0.12), transparent 70%)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: 'none',
+          },
+          '&:hover::before': { opacity: 1 },
         },
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          borderRadius: 'inherit',
-          background: 'radial-gradient(320px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(0,112,243,0.12), transparent 70%)',
-          opacity: 0,
-          transition: 'opacity 0.3s ease',
-          pointerEvents: 'none',
-        },
-        '&:hover::before': { opacity: 1 },
-      }}
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
-      <Box sx={{ position: 'relative', zIndex: 1, transform: 'translateZ(20px)' }}>{children}</Box>
+      <Box sx={{ position: 'relative', zIndex: 1, transform: 'translateZ(20px)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {children}
+      </Box>
     </Box>
   );
 }
