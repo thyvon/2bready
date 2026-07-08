@@ -1,3 +1,5 @@
+'use client';
+
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -15,6 +17,13 @@ const STAKEHOLDER_ICONS = {
   investors: TrendingUpIcon,
 };
 
+const STAKEHOLDER_ACCENTS = {
+  sme: '#2563eb',
+  banks: '#16a34a',
+  government: '#0f172a',
+  investors: '#ca8a04',
+};
+
 function StakeholderCard({
   icon,
   title,
@@ -27,42 +36,39 @@ function StakeholderCard({
   delay: number;
 }) {
   const Icon = STAKEHOLDER_ICONS[icon];
+  const accent = STAKEHOLDER_ACCENTS[icon];
+
   return (
-    <Reveal delay={delay}>
-      <SpotlightCard>
-        <Icon sx={{ fontSize: 28, mb: 2, color: 'primary.main' }} />
-        <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 700 }}>
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {description}
-        </Typography>
-      </SpotlightCard>
+    <Reveal delay={delay} y={0} x={40}>
+      <Box sx={{ height: '100%' }}>
+        <SpotlightCard
+        tilt={false}
+          sx={{
+            height: '100%',
+            borderLeft: '3px solid',
+            borderLeftColor: accent,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Icon sx={{ fontSize: 22, color: accent }} />
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
+              {title}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        </SpotlightCard>
+      </Box>
     </Reveal>
   );
 }
 
 export default function StakeholdersSection() {
-  // Split into a top pair and a bottom pair, sandwiching the heading in the middle.
-  const [topPair, bottomPair] = [stakeholders.slice(0, 2), stakeholders.slice(2, 4)];
-
   return (
-    <Box component="section" id="stakeholders" sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 14 }, maxWidth: 1100, mx: 'auto' }}>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-          gap: 3,
-          mb: { xs: 5, sm: 6 },
-        }}
-      >
-        {topPair.map(({ icon, title, description }, i) => (
-          <StakeholderCard key={title} icon={icon} title={title} description={description} delay={i * 0.08} />
-        ))}
-      </Box>
-
+    <Box component="section" id="stakeholders" sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 14 }, maxWidth: 1200, mx: 'auto' }}>
       <Reveal>
-        <Box sx={{ maxWidth: 640, mx: 'auto', textAlign: 'center', my: { xs: 4, sm: 5 } }}>
+        <Box sx={{ maxWidth: 640, mx: 'auto', textAlign: 'center', mb: { xs: 5, sm: 6 } }}>
           <Typography variant="h2" component="h2" sx={{ fontSize: { xs: '1.75rem', md: '2.25rem' }, mb: 1.5 }}>
             {stakeholdersContent.title}
           </Typography>
@@ -75,12 +81,12 @@ export default function StakeholdersSection() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
           gap: 3,
-          mt: { xs: 5, sm: 6 },
+          alignItems: 'stretch',
         }}
       >
-        {bottomPair.map(({ icon, title, description }, i) => (
+        {stakeholders.map(({ icon, title, description }, i) => (
           <StakeholderCard key={title} icon={icon} title={title} description={description} delay={i * 0.08} />
         ))}
       </Box>

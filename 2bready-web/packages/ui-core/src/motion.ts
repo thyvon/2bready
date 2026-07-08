@@ -33,3 +33,13 @@ export const cardGridItem: Variants = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: easeOutExpo },
 };
+
+// Directional slide for multi-step wizards — `direction` is 1 going forward
+// (Next), -1 going back, so the incoming step slides in from the side you
+// navigated toward and the outgoing step exits the opposite way, matching
+// how a physical stack of cards would move.
+export const stepTransition = (direction: 1 | -1): Variants => ({
+  initial: { opacity: 0, x: direction * 24 },
+  animate: { opacity: 1, x: 0, transition: easeOutExpo },
+  exit: { opacity: 0, x: direction * -24, transition: { ...easeOut, duration: 0.12 } },
+});

@@ -48,7 +48,7 @@ export default function PricingSection() {
           return (
             <Reveal key={plan.level} delay={i * 0.08}>
               <Box sx={{ height: '100%' }}>
-                <SpotlightCard>
+                <SpotlightCard sx={{ height: '100%' }}>
                   <Chip
                     label={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -99,9 +99,11 @@ export default function PricingSection() {
                     ))}
                   </Box>
 
-                  <GlowButton href={plan.cta.href} size="medium">
-                    {plan.cta.label}
-                  </GlowButton>
+                  <Box sx={{ mt: 'auto' }}>
+                    <GlowButton href={plan.cta.href} size="medium">
+                      {plan.cta.label}
+                    </GlowButton>
+                  </Box>
                 </SpotlightCard>
               </Box>
             </Reveal>

@@ -64,7 +64,7 @@ export default function OverviewPage() {
       {/* Current stage: L1 · The Launchpad, the only pathway on the free
           tier — reuses JourneyTree (scoped to just this one level) instead
           of re-implementing the milestone/document list by hand. */}
-      <SectionCard title="P1 · The Launchpad — Bronze Foundation" subtitle="0/13 verified">
+      <SectionCard title="L1 · The Launchpad — Bronze Foundation" subtitle="0/13 verified">
         <JourneyTree levels={L1} isUnlocked={() => true} />
         <Box sx={{ mt: 2 }}>
           <GlowButton href="/journey" size="medium">
@@ -87,7 +87,7 @@ export default function OverviewPage() {
               Upload MoC Registration
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The first document to verify in P1 · The Launchpad. Required before your company can move to Tax Compliance.
+              The first document to verify in L1 · The Launchpad. Required before your company can move to Tax Compliance.
             </Typography>
           </Box>
           <GlowButton href="/journey" size="medium">
@@ -109,7 +109,7 @@ export default function OverviewPage() {
               Stuck getting started?
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              ADMIT Unit&apos;s compliance experts can prepare your P1 documents for you — book a free consultation.
+              ADMIT Unit&apos;s compliance experts can prepare your L1 documents for you — book a free consultation.
             </Typography>
           </Box>
           <GlowButton href="/support" size="medium">

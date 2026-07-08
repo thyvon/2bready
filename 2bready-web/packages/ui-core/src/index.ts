@@ -7,4 +7,5 @@ export { StatusBadge, type StatusBadgeProps } from './StatusBadge';
 export { NavHoverLink, type NavHoverLinkProps } from './NavHoverLink';
 export { GlowButton, type GlowButtonProps } from './GlowButton';
 export { ThemeToggle, type ThemeToggleProps } from './ThemeToggle';
-export { easeOut, easeOutExpo, pageTransition, fadeIn, cardGridContainer, cardGridItem } from './motion';
+export { UploadDropzone, type UploadDropzoneProps } from './UploadDropzone';
+export { easeOut, easeOutExpo, pageTransition, fadeIn, cardGridContainer, cardGridItem, stepTransition } from './motion';
