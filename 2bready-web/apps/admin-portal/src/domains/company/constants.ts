@@ -1,4 +1,6 @@
 import type { useTranslation } from '@/lib/i18n';
+import type { Locale } from '@/store/locale.store';
+import type { Industry } from './types';
 
 type T = ReturnType<typeof useTranslation>['t'];
 type TranslationKey = Parameters<T>[0];
@@ -8,13 +10,12 @@ interface Option {
   labelKey: TranslationKey;
 }
 
-export const INDUSTRY_OPTIONS: Option[] = [
-  { value: 'F&B', labelKey: 'company.industry.fnb' },
-  { value: 'RETAIL', labelKey: 'company.industry.retail' },
-  { value: 'MANUFACTURING', labelKey: 'company.industry.manufacturing' },
-  { value: 'SERVICES', labelKey: 'company.industry.services' },
-  { value: 'OTHER', labelKey: 'company.industry.other' },
-];
+// Industry is real, admin-managed reference data (see the Industry domain on
+// the backend) — no static option list here. Fetch via useIndustries() and
+// label with industryLabel() below instead.
+export function industryLabel(industry: Industry, locale: Locale): string {
+  return locale === 'kh' && industry.name_kh ? industry.name_kh : industry.name;
+}
 
 export const COUNTRY_OPTIONS: Option[] = [
   { value: 'KH', labelKey: 'company.country.kh' },

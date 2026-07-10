@@ -15,6 +15,7 @@ use App\Http\Requests\Api\V1\Package\UpdatePackageRequest;
 use App\Http\Resources\Api\V1\PackageResource;
 use App\Http\Resources\Api\V1\PublicPackageResource;
 use App\Support\ApiResponse;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,27 +24,42 @@ class PackageController extends Controller
     // Unauthenticated — landing-page pricing. No $this->authorize() call here on
     // purpose: there's no logged-in user to check a policy against. Only active
     // packages are exposed, and PublicPackageResource whitelists a narrow field set.
-    public function publicIndex(): JsonResponse
+    // Optional ?industry=<code> scopes to that industry's own catalog — industry is
+    // the top-level partition (see Industry domain), not a price override on a
+    // shared list, so an unmatched/omitted code just returns industry-agnostic rows.
+    public function publicIndex(Request $request): JsonResponse
     {
-        $packages = Package::query()
+        $query = Package::query()
+            ->with('industry')
             ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
+            ->orderBy('sort_order');
 
-        return ApiResponse::success(PublicPackageResource::collection($packages));
+        $this->scopeToIndustry($query, $request);
+
+        return ApiResponse::success(PublicPackageResource::collection($query->get()));
     }
 
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Package::class);
 
-        $query = Package::query()->orderBy('sort_order');
+        $query = Package::query()->with('industry')->orderBy('sort_order');
 
         if (! $request->user()->hasAnyRole(['admin', 'staff', 'finance'])) {
             $query->where('is_active', true);
         }
 
+        $this->scopeToIndustry($query, $request);
+
         return ApiResponse::success(PackageResource::collection($query->get()));
+    }
+
+    /** @param Builder<Package> $query */
+    private function scopeToIndustry(Builder $query, Request $request): void
+    {
+        if ($request->filled('industry')) {
+            $query->whereHas('industry', fn ($q) => $q->where('code', $request->string('industry')));
+        }
     }
 
     public function store(StorePackageRequest $request, CreatePackageAction $action): JsonResponse

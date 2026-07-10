@@ -212,6 +212,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/industry-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["industry.publicIndex"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/industries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["industry.index"];
+        put?: never;
+        post: operations["industry.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/industries/{industry}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["industry.show"];
+        put?: never;
+        post?: never;
+        delete: operations["industry.destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["industry.update"];
+        trace?: never;
+    };
     "/v1/leads": {
         parameters: {
             query?: never;
@@ -222,6 +270,22 @@ export interface paths {
         get: operations["lead.index"];
         put?: never;
         post: operations["lead.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["package.publicIndex"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -398,7 +462,8 @@ export interface components {
             registration_no: string | null;
             employee_count: number | null;
             bypass_flags: unknown[];
-            industry_code: string;
+            industry_id: string;
+            industry_code?: string;
             country_code: string;
             status: components["schemas"]["CompanyStatus"];
             compliance_score: number;
@@ -417,6 +482,20 @@ export interface components {
         ForgotPasswordRequest: {
             /** Format: email */
             email: string;
+        };
+        /** IndustryResource */
+        IndustryResource: {
+            id: string;
+            code: string;
+            name: string;
+            name_kh: string | null;
+            description: string | null;
+            is_active: boolean;
+            sort_order: number;
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
         };
         /** LeadResource */
         LeadResource: {
@@ -443,6 +522,8 @@ export interface components {
             name_kh: string | null;
             description: string | null;
             price_cents: number;
+            industry_id: string | null;
+            industry_code?: string;
             billing_period: components["schemas"]["BillingPeriod"];
             is_active: boolean;
             sort_order: number;
@@ -487,6 +568,25 @@ export interface components {
             /** Format: date-time */
             updated_at: string | null;
         };
+        /** PublicIndustryResource */
+        PublicIndustryResource: {
+            id: string;
+            code: string;
+            name: string;
+            name_kh: string | null;
+            sort_order: number;
+        };
+        /** PublicPackageResource */
+        PublicPackageResource: {
+            id: string;
+            name: string;
+            name_kh: string | null;
+            description: string | null;
+            price_cents: number;
+            industry_code?: string;
+            billing_period: components["schemas"]["BillingPeriod"];
+            sort_order: number;
+        };
         /** RegisterRequest */
         RegisterRequest: {
             name: string;
@@ -511,10 +611,19 @@ export interface components {
             name_kh?: string | null;
             registration_no?: string | null;
             employee_count?: number | null;
-            industry_code: string;
+            industry_id: string;
             country_code?: string;
             /** @enum {string} */
             default_locale?: "en" | "kh";
+        };
+        /** StoreIndustryRequest */
+        StoreIndustryRequest: {
+            code: string;
+            name: string;
+            name_kh?: string | null;
+            description?: string | null;
+            is_active?: boolean;
+            sort_order?: number;
         };
         /** StorePackageRequest */
         StorePackageRequest: {
@@ -522,6 +631,7 @@ export interface components {
             name_kh?: string | null;
             description?: string | null;
             price_cents: number;
+            industry_id?: string | null;
             /** @enum {string} */
             billing_period?: "monthly" | "yearly" | "one_time";
             is_active?: boolean;
@@ -560,10 +670,19 @@ export interface components {
             name?: string;
             name_kh?: string | null;
             registration_no?: string | null;
-            industry_code?: string;
+            industry_id?: string;
             country_code?: string;
             /** @enum {string} */
             default_locale?: "en" | "kh";
+        };
+        /** UpdateIndustryRequest */
+        UpdateIndustryRequest: {
+            code?: string;
+            name?: string;
+            name_kh?: string | null;
+            description?: string | null;
+            is_active?: boolean;
+            sort_order?: number;
         };
         /** UpdatePackageRequest */
         UpdatePackageRequest: {
@@ -571,6 +690,7 @@ export interface components {
             name_kh?: string | null;
             description?: string | null;
             price_cents?: number;
+            industry_id?: string | null;
             /** @enum {string} */
             billing_period?: "monthly" | "yearly" | "one_time";
             is_active?: boolean;
@@ -1150,6 +1270,166 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "industry.publicIndex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PublicIndustryResource"][];
+                        meta: string;
+                    };
+                };
+            };
+        };
+    };
+    "industry.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["IndustryResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "industry.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreIndustryRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["IndustryResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "industry.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The industry ID */
+                industry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["IndustryResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "industry.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The industry ID */
+                industry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "industry.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The industry ID */
+                industry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateIndustryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["IndustryResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "lead.index": {
         parameters: {
             query?: never;
@@ -1199,6 +1479,28 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "package.publicIndex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PublicPackageResource"][];
+                        meta: string;
+                    };
+                };
+            };
         };
     };
     "package.index": {

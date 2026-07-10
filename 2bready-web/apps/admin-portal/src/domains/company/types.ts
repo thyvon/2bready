@@ -4,6 +4,7 @@ export type Company = components['schemas']['CompanyResource'];
 export type CompanyStatus = components['schemas']['CompanyStatus'];
 export type StoreCompanyPayload = components['schemas']['StoreCompanyRequest'];
 export type UpdateCompanyPayload = components['schemas']['UpdateCompanyRequest'];
+export type Industry = components['schemas']['IndustryResource'];
 
 export type Pagination = {
   total: number;
@@ -15,6 +16,6 @@ export type Pagination = {
 export type CompanyListFilters = {
   status?: CompanyStatus;
   country_code?: string;
-  industry_code?: string;
+  industry_id?: string;
   search?: string;
 };

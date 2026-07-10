@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Industry\Models\Industry;
 use App\Domain\User\Models\User;
 use Database\Seeders\PlatformSettingSeeder;
 use Database\Seeders\RolePermissionSeeder;
@@ -13,6 +14,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
     $this->seed(PlatformSettingSeeder::class);
+    $this->industry = Industry::factory()->create(['code' => 'F&B']);
 });
 
 // ─── Create ──────────────────────────────────────────────────────────────────
@@ -23,13 +25,15 @@ it('lets an admin create a company', function () {
     $response = $this->actingAs($admin)->postJson('/api/v1/companies', [
         'name' => 'Sabay Bakery',
         'name_kh' => 'សាបាយ បេከើរី',
-        'industry_code' => 'F&B',
+        'industry_id' => $this->industry->id,
         'employee_count' => 12,
     ]);
 
     $response->assertCreated()
-        ->assertJsonStructure(['data' => ['id', 'name', 'name_kh', 'industry_code', 'country_code', 'status']])
+        ->assertJsonStructure(['data' => ['id', 'name', 'name_kh', 'industry_id', 'industry_code', 'country_code', 'status']])
         ->assertJsonPath('data.name', 'Sabay Bakery')
+        ->assertJsonPath('data.industry_id', $this->industry->id)
+        ->assertJsonPath('data.industry_code', 'F&B')
         ->assertJsonPath('data.country_code', 'KH');
 
     expect(Company::where('name', 'Sabay Bakery')->exists())->toBeTrue();
@@ -41,11 +45,20 @@ it('rejects company creation without required fields', function () {
     $this->actingAs($admin)
         ->postJson('/api/v1/companies', [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'industry_code']);
+        ->assertJsonValidationErrors(['name', 'industry_id']);
+});
+
+it('rejects company creation with an unknown industry_id', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->postJson('/api/v1/companies', ['name' => 'X', 'industry_id' => 'not-a-real-id'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['industry_id']);
 });
 
 it('requires authentication to create a company', function () {
-    $this->postJson('/api/v1/companies', ['name' => 'X', 'industry_code' => 'F&B'])
+    $this->postJson('/api/v1/companies', ['name' => 'X', 'industry_id' => $this->industry->id])
         ->assertUnauthorized();
 });
 
@@ -54,7 +67,7 @@ it('forbids a company_owner from creating a company', function () {
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
 
     $this->actingAs($owner)
-        ->postJson('/api/v1/companies', ['name' => 'X', 'industry_code' => 'F&B'])
+        ->postJson('/api/v1/companies', ['name' => 'X', 'industry_id' => $this->industry->id])
         ->assertForbidden();
 });
 
@@ -65,7 +78,7 @@ it('lets a company_owner without a company register their own', function () {
 
     $response = $this->actingAs($owner)->postJson('/api/v1/companies/register', [
         'name' => 'Owner Registered Co',
-        'industry_code' => 'F&B',
+        'industry_id' => $this->industry->id,
     ]);
 
     $response->assertCreated()
@@ -81,7 +94,7 @@ it('lets a company_owner who already has a company register another (§0.7 — m
     $owner = User::factory()->companyOwner()->withCompany($existing)->create();
 
     $response = $this->actingAs($owner)
-        ->postJson('/api/v1/companies/register', ['name' => 'Second Co', 'industry_code' => 'F&B']);
+        ->postJson('/api/v1/companies/register', ['name' => 'Second Co', 'industry_id' => $this->industry->id]);
 
     $response->assertCreated()->assertJsonPath('data.company.name', 'Second Co');
 
@@ -95,7 +108,7 @@ it('forbids a company_member from self-registering a company', function () {
     $member = User::factory()->withRole('company_member')->create();
 
     $this->actingAs($member)
-        ->postJson('/api/v1/companies/register', ['name' => 'Member Co', 'industry_code' => 'F&B'])
+        ->postJson('/api/v1/companies/register', ['name' => 'Member Co', 'industry_id' => $this->industry->id])
         ->assertForbidden();
 });
 
@@ -103,12 +116,12 @@ it('forbids an admin from using the self-service registration endpoint', functio
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)
-        ->postJson('/api/v1/companies/register', ['name' => 'Admin Co', 'industry_code' => 'F&B'])
+        ->postJson('/api/v1/companies/register', ['name' => 'Admin Co', 'industry_id' => $this->industry->id])
         ->assertForbidden();
 });
 
 it('requires authentication to self-register a company', function () {
-    $this->postJson('/api/v1/companies/register', ['name' => 'X', 'industry_code' => 'F&B'])
+    $this->postJson('/api/v1/companies/register', ['name' => 'X', 'industry_id' => $this->industry->id])
         ->assertUnauthorized();
 });
 
@@ -119,7 +132,7 @@ it('ignores employee_count sent by a self-registering company_owner', function (
     // bypass eligibility is evaluated against — only admin/staff/finance may set it.
     $response = $this->actingAs($owner)->postJson('/api/v1/companies/register', [
         'name' => 'Self Reported Co',
-        'industry_code' => 'F&B',
+        'industry_id' => $this->industry->id,
         'employee_count' => 1,
     ]);
 
@@ -135,7 +148,7 @@ it('sets the company_internal_rules bypass flag when employee_count is below the
 
     $response = $this->actingAs($admin)->postJson('/api/v1/companies', [
         'name' => 'Tiny Cafe',
-        'industry_code' => 'F&B',
+        'industry_id' => $this->industry->id,
         'employee_count' => 3,
     ]);
 
@@ -147,7 +160,7 @@ it('does not set the bypass flag when employee_count is at or above the platform
 
     $response = $this->actingAs($admin)->postJson('/api/v1/companies', [
         'name' => 'Big Restaurant Group',
-        'industry_code' => 'F&B',
+        'industry_id' => $this->industry->id,
         'employee_count' => 50,
     ]);
 
@@ -164,6 +177,17 @@ it('lets an admin list companies', function () {
         ->assertOk()
         ->assertJsonCount(3, 'data')
         ->assertJsonStructure(['data', 'meta' => ['pagination']]);
+});
+
+it('lets an admin filter companies by industry_id', function () {
+    $other = Industry::factory()->create(['code' => 'RETAIL']);
+    Company::factory()->create(['industry_id' => $this->industry->id]);
+    Company::factory()->create(['industry_id' => $other->id]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->getJson('/api/v1/companies?industry_id='.$this->industry->id)
+        ->assertOk()
+        ->assertJsonCount(1, 'data');
 });
 
 it('forbids a company_member from listing all companies', function () {
@@ -193,6 +217,29 @@ it('forbids a company_owner from viewing another company', function () {
 });
 
 // ─── Update ──────────────────────────────────────────────────────────────────
+
+it('lets an admin change a company to a different industry', function () {
+    $retail = Industry::factory()->create(['code' => 'RETAIL']);
+    $company = Company::factory()->create(['industry_id' => $this->industry->id]);
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'industry_id' => $retail->id,
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.industry_id', $retail->id)
+        ->assertJsonPath('data.industry_code', 'RETAIL');
+});
+
+it('rejects updating a company to an unknown industry_id', function () {
+    $company = Company::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'industry_id' => 'not-a-real-id',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['industry_id']);
+});
 
 it('lets an admin update any company including status', function () {
     $company = Company::factory()->create();

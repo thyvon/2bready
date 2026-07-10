@@ -1,10 +1,21 @@
 import api from '@/lib/api';
-import type { User } from '@/domains/auth/types';
-import type { Company, CompanyListFilters, Pagination, StoreCompanyPayload, UpdateCompanyPayload } from './types';
+import type { Company, CompanyListFilters, Industry, Pagination, StoreCompanyPayload, UpdateCompanyPayload } from './types';
+
+// This app only manages companies on 2bReady's behalf (admin/staff/finance) —
+// self-service registration/switching (registerOwnCompany, switchActiveCompany)
+// is client-portal's responsibility, not this app's. See feedback memory:
+// "Client (Company owner) use only at Client portal."
 
 export async function listCompanies(filters: CompanyListFilters = {}): Promise<{ companies: Company[]; pagination: Pagination }> {
   const res = await api.get<{ data: Company[]; meta: { pagination: Pagination } }>('/companies', { params: filters });
   return { companies: res.data.data, pagination: res.data.meta.pagination };
+}
+
+// Used to populate CompanyFormWizard's industry dropdown when admin/staff create
+// or edit a company on a client's behalf.
+export async function listIndustries(): Promise<Industry[]> {
+  const res = await api.get<{ data: Industry[] }>('/industries');
+  return res.data.data;
 }
 
 export async function getCompany(id: string): Promise<Company> {
@@ -17,11 +28,6 @@ export async function createCompany(data: StoreCompanyPayload): Promise<Company>
   return res.data.data;
 }
 
-export async function registerOwnCompany(data: StoreCompanyPayload): Promise<{ company: Company; user: User }> {
-  const res = await api.post<{ data: { company: Company; user: User } }>('/companies/register', data);
-  return res.data.data;
-}
-
 export async function updateCompany(id: string, data: UpdateCompanyPayload): Promise<Company> {
   const res = await api.patch<{ data: Company }>(`/companies/${id}`, data);
   return res.data.data;
@@ -29,9 +35,4 @@ export async function updateCompany(id: string, data: UpdateCompanyPayload): Pro
 
 export async function deleteCompany(id: string): Promise<void> {
   await api.delete(`/companies/${id}`);
-}
-
-export async function switchActiveCompany(id: string): Promise<User> {
-  const res = await api.post<{ data: User }>(`/companies/${id}/switch`);
-  return res.data.data;
 }

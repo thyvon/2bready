@@ -13,7 +13,7 @@ class CompanyData extends Data
         public readonly ?string $name_kh,
         public readonly ?string $registration_no,
         public readonly ?int $employee_count,
-        public readonly string $industry_code,
+        public readonly string $industry_id,
         public readonly string $country_code = 'KH',
         public readonly string $default_locale = 'en',
     ) {}

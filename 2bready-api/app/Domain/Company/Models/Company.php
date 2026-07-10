@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Company\Models;
 
 use App\Domain\Company\Enums\CompanyStatus;
+use App\Domain\Industry\Models\Industry;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 use App\Support\Concerns\HasUlid;
@@ -40,7 +41,7 @@ class Company extends Model
         'registration_no',
         'employee_count',
         'bypass_flags',
-        'industry_code',
+        'industry_id',
         'country_code',
         'status',
         'compliance_score',
@@ -69,6 +70,12 @@ class Company extends Model
     public function activeSubscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class, 'active_subscription_id');
+    }
+
+    /** @return BelongsTo<Industry, $this> */
+    public function industry(): BelongsTo
+    {
+        return $this->belongsTo(Industry::class);
     }
 
     public function isActive(): bool

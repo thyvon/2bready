@@ -4,25 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
-use App\Domain\Package\Models\Package;
+use App\Domain\Industry\Models\Industry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Package */
-class PackageResource extends JsonResource
+/** @mixin Industry */
+class IndustryResource extends JsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
+            'code' => $this->code,
             'name' => $this->name,
             'name_kh' => $this->name_kh,
             'description' => $this->description,
-            'price_cents' => $this->price_cents,
-            'industry_id' => $this->industry_id,
-            'industry_code' => $this->whenLoaded('industry', fn () => $this->industry?->code),
-            'billing_period' => $this->billing_period,
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
             'created_at' => $this->created_at,

@@ -17,7 +17,7 @@ class EloquentCompanyRepository implements CompanyRepositoryInterface
      */
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        return CompanyFilters::apply(Company::query(), $filters)
+        return CompanyFilters::apply(Company::query()->with('industry'), $filters)
             ->latest()
             ->paginate($perPage);
     }

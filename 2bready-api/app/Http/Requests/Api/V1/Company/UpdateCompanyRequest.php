@@ -15,7 +15,7 @@ class UpdateCompanyRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'name_kh' => ['sometimes', 'nullable', 'string', 'max:255'],
             'registration_no' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'industry_code' => ['sometimes', 'string', 'max:50'],
+            'industry_id' => ['sometimes', 'string', 'exists:industries,id'],
             'country_code' => ['sometimes', 'string', 'size:2'],
             'default_locale' => ['sometimes', 'string', 'in:en,kh'],
         ];

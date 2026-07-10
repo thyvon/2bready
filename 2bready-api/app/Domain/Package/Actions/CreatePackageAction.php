@@ -12,6 +12,7 @@ class CreatePackageAction
     public function execute(PackageData $data): Package
     {
         return Package::create([
+            'industry_id' => $data->industry_id,
             'name' => $data->name,
             'name_kh' => $data->name_kh,
             'description' => $data->description,

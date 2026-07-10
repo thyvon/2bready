@@ -25,6 +25,10 @@ class RolePermissionSeeder extends Seeder
             'company.delete',
             'company.list',
 
+            // Industries (reference data for company setup)
+            'industry.view',
+            'industry.manage',
+
             // Team / Users
             'user.manage',      // admin: full user management
             'user.invite',      // owner: invite members to own company
@@ -112,6 +116,7 @@ class RolePermissionSeeder extends Seeder
         // Staff — everything except destructive financial ops & platform settings
         $staff->syncPermissions([
             'company.view', 'company.edit', 'company.create', 'company.list',
+            'industry.view', 'industry.manage',
             'user.manage', 'user.invite', 'user.remove',
             'package.view', 'package.manage',
             'subscription.view', 'subscription.manage',
@@ -143,6 +148,7 @@ class RolePermissionSeeder extends Seeder
         // Company Owner — full control of own company
         $owner->syncPermissions([
             'company.view', 'company.edit',
+            'industry.view',
             'user.invite', 'user.remove',
             'package.view',
             'subscription.view',
@@ -161,6 +167,7 @@ class RolePermissionSeeder extends Seeder
         // Company Member — read + contribute within own company
         $member->syncPermissions([
             'company.view',
+            'industry.view',
             'journey.view', 'journey.complete',
             'document.view', 'document.upload',
             'audit.view',

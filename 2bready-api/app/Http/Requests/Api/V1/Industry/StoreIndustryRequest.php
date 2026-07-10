@@ -2,22 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\Package;
+namespace App\Http\Requests\Api\V1\Industry;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePackageRequest extends FormRequest
+class StoreIndustryRequest extends FormRequest
 {
     /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
         return [
+            'code' => ['required', 'string', 'max:50', 'unique:industries,code'],
             'name' => ['required', 'string', 'max:255'],
             'name_kh' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'price_cents' => ['required', 'integer', 'min:0'],
-            'industry_id' => ['nullable', 'string', 'exists:industries,id'],
-            'billing_period' => ['sometimes', 'string', 'in:monthly,yearly,one_time'],
             'is_active' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];

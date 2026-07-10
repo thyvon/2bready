@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Industry\Models\Industry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +23,7 @@ class CompanyFactory extends Factory
             'registration_no' => null,
             'employee_count' => null,
             'bypass_flags' => [],
-            'industry_code' => 'F&B',
+            'industry_id' => Industry::factory(),
             'country_code' => 'KH',
             'status' => 'active',
             'compliance_score' => 0,

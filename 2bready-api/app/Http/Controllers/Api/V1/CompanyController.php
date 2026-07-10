@@ -27,7 +27,7 @@ class CompanyController extends Controller
     {
         $this->authorize('viewAny', Company::class);
 
-        $companies = $repository->paginate($request->only(['status', 'country_code', 'industry_code', 'search']));
+        $companies = $repository->paginate($request->only(['status', 'country_code', 'industry_id', 'search']));
 
         return ApiResponse::success(
             CompanyResource::collection($companies->items()),
@@ -46,7 +46,7 @@ class CompanyController extends Controller
 
         $company = $action->execute(CompanyData::from($request->validated()));
 
-        return ApiResponse::created(new CompanyResource($company));
+        return ApiResponse::created(new CompanyResource($company->load('industry')));
     }
 
     public function registerOwn(StoreCompanyRequest $request, RegisterOwnCompanyAction $action): JsonResponse
@@ -64,7 +64,7 @@ class CompanyController extends Controller
         $company = $action->execute($user, CompanyData::from($data));
 
         return ApiResponse::created([
-            'company' => new CompanyResource($company),
+            'company' => new CompanyResource($company->load('industry')),
             'user' => new UserResource($user->fresh()),
         ]);
     }
@@ -73,7 +73,7 @@ class CompanyController extends Controller
     {
         $this->authorize('view', $company);
 
-        return ApiResponse::success(new CompanyResource($company));
+        return ApiResponse::success(new CompanyResource($company->load('industry')));
     }
 
     public function update(UpdateCompanyRequest $request, Company $company, UpdateCompanyAction $action): JsonResponse
@@ -82,7 +82,7 @@ class CompanyController extends Controller
 
         $company = $action->execute($company, $request->validated());
 
-        return ApiResponse::success(new CompanyResource($company));
+        return ApiResponse::success(new CompanyResource($company->load('industry')));
     }
 
     public function destroy(Company $company, DeleteCompanyAction $action): JsonResponse

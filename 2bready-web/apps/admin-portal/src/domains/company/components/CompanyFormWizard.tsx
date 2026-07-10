@@ -15,7 +15,8 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 
 import { COMPANY_FORM_STEPS, companyFormDefaults, companyFormSchema, type CompanyFormInput, type CompanyFormOutput } from '@/domains/company/schemas';
-import { INDUSTRY_OPTIONS, COUNTRY_OPTIONS, LOCALE_OPTIONS, optionLabel } from '@/domains/company/constants';
+import { COUNTRY_OPTIONS, LOCALE_OPTIONS, optionLabel, industryLabel } from '@/domains/company/constants';
+import { useIndustries } from '@/domains/company/hooks';
 import { stepTransition, easeOut } from '@/lib/motion';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -25,13 +26,6 @@ import FormSelect from '@/components/forms/FormSelect';
 interface CompanyFormWizardProps {
   onSubmit: (data: CompanyFormOutput) => Promise<void>;
   submitLabel?: string;
-  /**
-   * employee_count feeds CompanyBypassEvaluator's compliance-bypass threshold on the
-   * backend, which now silently ignores it unless the caller is admin/staff/finance.
-   * Hide the field entirely in self-service contexts so a company_owner isn't shown a
-   * control that has no effect.
-   */
-  hideEmployeeCount?: boolean;
 }
 
 function WizardProgress({ step, t }: { step: number; t: ReturnType<typeof useTranslation>['t'] }) {
@@ -79,8 +73,9 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeCount }: CompanyFormWizardProps) {
-  const { t } = useTranslation();
+export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyFormWizardProps) {
+  const { t, locale } = useTranslation();
+  const { industries, loading: industriesLoading } = useIndustries();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [serverError, setServerError] = useState('');
@@ -172,12 +167,12 @@ export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeC
                 <Box>
                   <FieldLabel>{t('company.industry')}</FieldLabel>
                   <Controller
-                    name="industry_code"
+                    name="industry_id"
                     control={control}
                     render={({ field }) => (
-                      <FormSelect {...field} fullWidth error={!!errors.industry_code} helperText={errors.industry_code?.message}>
-                        {INDUSTRY_OPTIONS.map((opt) => (
-                          <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
+                      <FormSelect {...field} fullWidth disabled={industriesLoading} error={!!errors.industry_id} helperText={errors.industry_id?.message}>
+                        {industries.map((industry) => (
+                          <MenuItem key={industry.id} value={industry.id}>{industryLabel(industry, locale)}</MenuItem>
                         ))}
                       </FormSelect>
                     )}
@@ -197,19 +192,17 @@ export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeC
                     )}
                   />
                 </Box>
-                {!hideEmployeeCount && (
-                  <Box>
-                    <FieldLabel>{t('company.employee_count')}</FieldLabel>
-                    <TextField
-                      placeholder="e.g. 12"
-                      type="number"
-                      fullWidth
-                      error={!!errors.employee_count}
-                      helperText={errors.employee_count?.message ?? t('company.employee_count_hint')}
-                      {...register('employee_count')}
-                    />
-                  </Box>
-                )}
+                <Box>
+                  <FieldLabel>{t('company.employee_count')}</FieldLabel>
+                  <TextField
+                    placeholder="e.g. 12"
+                    type="number"
+                    fullWidth
+                    error={!!errors.employee_count}
+                    helperText={errors.employee_count?.message ?? t('company.employee_count_hint')}
+                    {...register('employee_count')}
+                  />
+                </Box>
               </Box>
             )}
 
@@ -236,10 +229,14 @@ export default function CompanyFormWizard({ onSubmit, submitLabel, hideEmployeeC
                     <ReviewRow label={t('company.name')} value={values.name || '—'} />
                     <ReviewRow label={t('company.name_kh')} value={values.name_kh || '—'} />
                     <ReviewRow label={t('company.registration_no')} value={values.registration_no || '—'} />
-                    {!hideEmployeeCount && (
-                      <ReviewRow label={t('company.employee_count')} value={values.employee_count != null ? String(values.employee_count) : '—'} />
-                    )}
-                    <ReviewRow label={t('company.industry')} value={optionLabel(t, INDUSTRY_OPTIONS, values.industry_code)} />
+                    <ReviewRow label={t('company.employee_count')} value={values.employee_count != null ? String(values.employee_count) : '—'} />
+                    <ReviewRow
+                      label={t('company.industry')}
+                      value={(() => {
+                        const selected = industries.find((i) => i.id === values.industry_id);
+                        return selected ? industryLabel(selected, locale) : '—';
+                      })()}
+                    />
                     <ReviewRow label={t('company.country')} value={optionLabel(t, COUNTRY_OPTIONS, values.country_code)} />
                   </Box>
                 </Box>

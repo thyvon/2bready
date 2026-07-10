@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\IndustryController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\PackageController;
 use Illuminate\Support\Facades\Route;
@@ -19,10 +20,17 @@ Route::prefix('v1')->group(function () {
     // listing endpoint stay protected in routes/api/package.php.
     Route::get('pricing', [PackageController::class, 'publicIndex']);
 
+    // Public — client-portal's onboarding wizard needs this before any auth session
+    // exists there. Distinct name from the authenticated `industries` listing in
+    // routes/api/industry.php (same reasoning as `pricing` vs `packages` above) so
+    // the two don't collide on the same URI.
+    Route::get('industry-options', [IndustryController::class, 'publicIndex']);
+
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
     // reaching business routes — pending tokens only carry the 'totp-pending' ability.
     Route::middleware(['auth:sanctum', 'totp.verified'])->group(function () {
         require __DIR__.'/api/company.php';
+        require __DIR__.'/api/industry.php';
         require __DIR__.'/api/user.php';
         require __DIR__.'/api/package.php';
         require __DIR__.'/api/payment.php';

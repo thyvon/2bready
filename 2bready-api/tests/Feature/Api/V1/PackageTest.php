@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Industry\Models\Industry;
 use App\Domain\Package\Models\Package;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -41,6 +42,29 @@ it('requires authentication to list packages', function () {
     $this->getJson('/api/v1/packages')->assertUnauthorized();
 });
 
+it('scopes the public pricing list to an industry when requested', function () {
+    $fnb = Industry::factory()->create(['code' => 'F&B']);
+    $manufacturing = Industry::factory()->create(['code' => 'MANUFACTURING']);
+    Package::factory()->create(['name' => 'F&B Plan', 'industry_id' => $fnb->id]);
+    Package::factory()->create(['name' => 'Manufacturing Plan', 'industry_id' => $manufacturing->id]);
+    Package::factory()->create(['name' => 'Generic Plan', 'industry_id' => null]);
+
+    $response = $this->getJson('/api/v1/pricing?industry=F%26B');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(1);
+    expect($response->json('data.0.name'))->toBe('F&B Plan');
+    expect($response->json('data.0.industry_code'))->toBe('F&B');
+});
+
+it('returns every active package when no industry is requested', function () {
+    $fnb = Industry::factory()->create(['code' => 'F&B']);
+    Package::factory()->create(['industry_id' => $fnb->id]);
+    Package::factory()->create(['industry_id' => null]);
+
+    $this->getJson('/api/v1/pricing')->assertOk()->assertJsonCount(2, 'data');
+});
+
 // ─── Create ──────────────────────────────────────────────────────────────────
 
 it('lets an admin create a package', function () {
@@ -55,6 +79,29 @@ it('lets an admin create a package', function () {
     $response->assertCreated()
         ->assertJsonPath('data.name', 'Growth')
         ->assertJsonPath('data.price_cents', 19900);
+});
+
+it('lets an admin create a package scoped to an industry', function () {
+    $industry = Industry::factory()->create(['code' => 'RETAIL']);
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->postJson('/api/v1/packages', [
+        'name' => 'Retail Growth',
+        'price_cents' => 19900,
+        'industry_id' => $industry->id,
+    ]);
+
+    $response->assertCreated()->assertJsonPath('data.industry_id', $industry->id);
+});
+
+it('rejects a package with an unknown industry_id', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/packages', [
+        'name' => 'Growth',
+        'price_cents' => 19900,
+        'industry_id' => 'not-a-real-id',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['industry_id']);
 });
 
 it('rejects package creation without required fields', function () {

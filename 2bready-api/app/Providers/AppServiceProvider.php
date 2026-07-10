@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Company\Policies\CompanyPolicy;
+use App\Domain\Industry\Models\Industry;
+use App\Domain\Industry\Policies\IndustryPolicy;
 use App\Domain\Package\Models\Lead;
 use App\Domain\Package\Models\Package;
 use App\Domain\Package\Policies\LeadPolicy;
@@ -41,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         Gate::policy(Company::class, CompanyPolicy::class);
+        Gate::policy(Industry::class, IndustryPolicy::class);
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(Subscription::class, SubscriptionPolicy::class);
         Gate::policy(Payment::class, PaymentPolicy::class);
