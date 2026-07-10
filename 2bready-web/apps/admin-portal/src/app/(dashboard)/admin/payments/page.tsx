@@ -30,7 +30,7 @@ export default function AdminPaymentsPage() {
   const [actingOn, setActingOn] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/company');
+    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
   }, [hasAnyRole, router]);
 
   const load = async () => {

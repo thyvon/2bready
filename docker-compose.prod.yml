@@ -77,10 +77,12 @@ services:
       context: ./2bready-web
       dockerfile: apps/marketing/Dockerfile
       args:
-        # Same-origin path split (not a subdomain) — admin-portal now lives
-        # at /admin on this same domain, so this is a relative path, not a
-        # different host. See apps/marketing/src/lib/admin-url.ts.
+        # Same-origin path split (not a subdomain) — admin-portal and
+        # client-portal both live on this same domain, so these are relative
+        # paths, not different hosts. See apps/marketing/src/lib/admin-url.ts
+        # and apps/marketing/src/lib/client-portal-url.ts.
         NEXT_PUBLIC_ADMIN_PORTAL_URL: /admin
+        NEXT_PUBLIC_CLIENT_PORTAL_URL: /portal
     networks:
       - 2bready
 

@@ -1,18 +1,12 @@
 // Local types — see domains/package/types.ts for why.
 
+// Subscribing is company-side self-service (client-portal's responsibility) —
+// this app only confirms/rejects payments on 2bReady's behalf, so subscription
+// and gateway-data shapes (SubscribeResult, BankTransferGatewayData,
+// StripeGatewayData, Subscription) don't live here.
+
 export type PaymentMethod = 'stripe' | 'manual_bank_transfer';
 export type PaymentStatus = 'pending' | 'awaiting_confirmation' | 'confirmed' | 'failed' | 'rejected';
-export type SubscriptionStatus = 'pending' | 'active' | 'expired' | 'cancelled';
-
-export type Subscription = {
-  id: string;
-  company_id: string;
-  package: import('@/domains/package/types').Package | null;
-  status: SubscriptionStatus;
-  started_at: string | null;
-  expires_at: string | null;
-  created_at: string;
-};
 
 export type Payment = {
   id: string;
@@ -26,28 +20,6 @@ export type Payment = {
   submitted_at: string | null;
   confirmed_at: string | null;
   created_at: string;
-};
-
-export type BankTransferGatewayData = {
-  bank_name: string;
-  account_name: string;
-  account_number: string;
-  reference: string;
-  amount_cents: number;
-  currency: string;
-};
-
-export type StripeGatewayData = {
-  stub: true;
-  client_secret: string;
-  amount_cents: number;
-  currency: string;
-};
-
-export type SubscribeResult = {
-  subscription: Subscription;
-  payment: Payment;
-  gateway_data: BankTransferGatewayData | StripeGatewayData;
 };
 
 export type LeadPayload = {

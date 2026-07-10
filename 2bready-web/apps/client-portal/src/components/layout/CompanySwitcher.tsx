@@ -9,27 +9,69 @@ import ListItemText from '@mui/material/ListItemText';
 import CheckIcon from '@mui/icons-material/Check';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
+import { useAuthStore } from '@/store/auth.store';
+import { switchActiveCompany } from '@/lib/company-api';
 
-// No auth/company API exists yet for client-portal (UI-first) — seeded with
-// two placeholder companies (matching admin-portal's real "a company_owner
-// can belong to more than one company" mechanic, §0.7 of the MVP proposal)
-// so the switch interaction is actually demoable, not a single-company dead
-// control. Selecting a company only updates local state — no real session
-// switch happens until a real company API/auth store exists here.
-const MOCK_COMPANIES = [
-  { id: '1', name: 'BlueOcean Foods' },
-  { id: '2', name: 'Golden Rice Export Co., Ltd.' },
-];
+const nameSx = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: 160,
+} as const;
 
 export function CompanySwitcher() {
-  const [currentId, setCurrentId] = useState(MOCK_COMPANIES[0].id);
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const setAuth = useAuthStore((s) => s.setAuth);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const current = MOCK_COMPANIES.find((c) => c.id === currentId)!;
+  const [switching, setSwitching] = useState(false);
+
+  const companies = user?.companies ?? [];
+  const current = companies.find((c) => c.id === user?.current_company_id) ?? companies[0];
+
+  if (!current) return null;
+
+  // Onboarding lets a company_owner register more than one company over
+  // time (§0.7 of the MVP proposal) — most accounts have exactly one though,
+  // so a dropdown affordance with nothing to switch to would be misleading.
+  if (companies.length <= 1) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          px: 1.25,
+          color: 'text.secondary',
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+        }}
+      >
+        <ApartmentOutlinedIcon sx={{ fontSize: '1rem' }} />
+        <Box component="span" sx={nameSx}>
+          {current.name}
+        </Box>
+      </Box>
+    );
+  }
+
+  const handleSwitch = async (companyId: string) => {
+    setAnchorEl(null);
+    if (companyId === current.id || !token) return;
+    setSwitching(true);
+    try {
+      const updatedUser = await switchActiveCompany(companyId);
+      setAuth(updatedUser, token);
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   return (
     <>
       <Button
         onClick={(e) => setAnchorEl(e.currentTarget)}
+        disabled={switching}
         startIcon={<ApartmentOutlinedIcon sx={{ fontSize: '1rem' }} />}
         endIcon={<KeyboardArrowDownIcon sx={{ fontSize: '1rem' }} />}
         sx={{
@@ -42,7 +84,7 @@ export function CompanySwitcher() {
           '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
         }}
       >
-        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Box component="span" sx={nameSx}>
           {current.name}
         </Box>
       </Button>
@@ -54,18 +96,10 @@ export function CompanySwitcher() {
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slotProps={{ paper: { sx: { mt: 0.5, minWidth: 220 } } }}
       >
-        {MOCK_COMPANIES.map((c) => (
-          <MenuItem
-            key={c.id}
-            selected={c.id === currentId}
-            onClick={() => {
-              setCurrentId(c.id);
-              setAnchorEl(null);
-            }}
-            sx={{ gap: 1.5 }}
-          >
+        {companies.map((c) => (
+          <MenuItem key={c.id} selected={c.id === current.id} onClick={() => handleSwitch(c.id)} sx={{ gap: 1.5 }}>
             <ListItemText primary={c.name} />
-            {c.id === currentId && <CheckIcon fontSize="small" color="action" />}
+            {c.id === current.id && <CheckIcon fontSize="small" color="action" />}
           </MenuItem>
         ))}
       </Menu>

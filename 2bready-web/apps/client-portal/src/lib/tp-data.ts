@@ -39,10 +39,10 @@ export function specialPrice(listPrice: number): number {
 
 // Explicit business rule: the marketplace only surfaces TPs whose expertise
 // matches this client's own industry/journey — never the full, unfiltered
-// audit-type directory. `company.industry_code` (see Sprint 2 proposal
-// notes) will drive this once a real company record exists; hardcoded to
-// Food & Beverage's matching expertise for now since there's no company data
-// fetch yet (UI-first, per established workflow).
+// audit-type directory. The company's real `industry_id` (see the Industry
+// domain on 2bready-api) will drive this once a real company record exists;
+// hardcoded to Food & Beverage's matching expertise for now since there's no
+// company data fetch yet (UI-first, per established workflow).
 export const CLIENT_MATCHING_EXPERTISE: Expertise[] = ['food_cert'];
 
 export function matchesClientIndustry(partner: TpPartner): boolean {

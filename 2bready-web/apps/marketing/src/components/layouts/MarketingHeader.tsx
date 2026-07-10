@@ -11,7 +11,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import BrandMark from '@/components/marketing/BrandMark';
 import NavHoverLink from '@/components/marketing/NavHoverLink';
-import { adminUrl } from '@/lib/admin-url';
+import { clientPortalUrl } from '@/lib/client-portal-url';
 
 const NAV_LINKS = [
   { label: 'Built For', href: '/#stakeholders' },
@@ -63,11 +63,7 @@ export default function MarketingHeader() {
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
         <ThemeToggle />
-        <Button component={Link} href={adminUrl('/login')} size="small" sx={{ color: 'text.primary' }}>
-          Login
-        </Button>
-        {/* TODO: wire up once destination (role-based portal routing) is built by team */}
-        <Button variant="outlined" size="small">
+        <Button component={Link} href={clientPortalUrl('/login')} variant="outlined" size="small">
           Client Portal
         </Button>
       </Box>
@@ -90,11 +86,7 @@ export default function MarketingHeader() {
               sx={{ fontSize: '1rem', fontWeight: 500 }}
             />
           ))}
-          <Button component={Link} href={adminUrl('/login')} variant="outlined" onClick={() => setMenuOpen(false)}>
-            Login
-          </Button>
-
-          <Button variant="outlined" onClick={() => setMenuOpen(false)}>
+          <Button component={Link} href={clientPortalUrl('/login')} variant="outlined" onClick={() => setMenuOpen(false)}>
             Client Portal
           </Button>
         </Box>

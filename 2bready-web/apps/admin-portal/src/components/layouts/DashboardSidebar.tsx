@@ -13,7 +13,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavItems, isNavItemActive, type NavItem } from '@/components/layouts/nav-items';
 import { useLayoutStore } from '@/store/layout.store';
 import { useTranslation } from '@/lib/i18n';
-import CompanySwitcher from '@/components/layouts/CompanySwitcher';
 
 const SIDEBAR_WIDTH = 240;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
@@ -109,14 +108,6 @@ function SidebarContent({
           </Typography>
         )}
       </Box>
-
-      {/* Company switcher — lives here (not the topbar) so it doesn't eat mobile
-          header space; only meaningful expanded, since it needs to show a name. */}
-      {!collapsed && (
-        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <CompanySwitcher />
-        </Box>
-      )}
 
       {/* Nav */}
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: 1.5, py: 2 }} className="flex flex-col gap-0.5">

@@ -19,7 +19,7 @@ export default function NewCompanyPage() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/company');
+    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
   }, [hasAnyRole, router]);
 
   const handleSubmit = async (data: CompanyFormOutput) => {
@@ -27,7 +27,7 @@ export default function NewCompanyPage() {
       name: data.name,
       name_kh: data.name_kh || undefined,
       registration_no: data.registration_no || undefined,
-      industry_code: data.industry_code,
+      industry_id: data.industry_id,
       country_code: data.country_code,
       employee_count: data.employee_count,
       default_locale: data.default_locale,

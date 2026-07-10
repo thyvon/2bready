@@ -46,7 +46,7 @@ export default function AdminPackagesPage() {
   const [serverError, setServerError] = useState('');
 
   useEffect(() => {
-    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/company');
+    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
   }, [hasAnyRole, router]);
 
   const load = async () => {

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Pages that make no sense to show someone who already holds a fully-authenticated
-// session — redirect them to the dashboard instead.
+// session — redirect them to the dashboard instead. No /register here — this app
+// is back-office only (admin/staff/finance/auditor); company signup happens in
+// client-portal, not here.
 const REDIRECT_IF_AUTHENTICATED_PATHS = [
   '/login',
-  '/register',
   '/forgot-password',
   '/reset-password',
 ];
@@ -27,7 +28,7 @@ export function proxy(request: NextRequest) {
   const isFullyAuthenticated = request.cookies.get('auth_full')?.value === '1';
 
   const redirectIfAuthenticated = REDIRECT_IF_AUTHENTICATED_PATHS.some((p) => pathname.startsWith(p));
-  const isDashboard = ['/dashboard', '/admin', '/auditor', '/company'].some((p) => pathname.startsWith(p));
+  const isDashboard = ['/dashboard', '/admin', '/auditor'].some((p) => pathname.startsWith(p));
 
   // Redirect fully-authenticated users away from auth pages
   if (redirectIfAuthenticated && isFullyAuthenticated) {

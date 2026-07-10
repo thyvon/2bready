@@ -52,6 +52,7 @@ const kh: Record<keyof typeof en, string> = {
   'header.notifications': 'ការជូនដំណឹង',
   'header.no_notifications': 'មិនទាន់មានការជូនដំណឹងទេ',
   'header.account': 'គណនី',
+  'header.sign_out': 'ចាកចេញ',
 };
 
 export default kh;

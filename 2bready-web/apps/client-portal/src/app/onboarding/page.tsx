@@ -1,28 +1,55 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { CompanySetupWizard } from '@/components/onboarding/CompanySetupWizard';
 import type { CompanySetupOutput } from '@/lib/company-setup-schema';
+import { registerOwnCompany } from '@/lib/company-api';
+import { useAuthStore } from '@/store/auth.store';
 
 // Deliberately outside app/(portal) — a brand-new company hasn't set up
 // their profile yet, so they shouldn't see the full nav (Journey, Audits,
 // Billing, ...) before it exists. See app/(portal)/layout.tsx and the root
 // app/layout.tsx for how this opts out of PortalShell.
 //
-// No company API exists to POST this to yet (UI-first) — the schema already
-// matches 2bready-api's real Company fields (name, name_kh, industry_code,
-// country_code), but the backend today only has the basic columns wired up,
-// nothing more. Submitting just moves on to the portal; wiring this to a
-// real create-company call is a distinct future task.
+// Requires an authenticated session — account creation happens on the
+// separate /register page (kept distinct because a company_owner can
+// register more than one company over time, so "create my account" and
+// "create a company" have to stay independently reusable steps).
 export default function OnboardingPage() {
   const router = useRouter();
+  const { isAuthenticated, hasHydrated } = useAuthStore();
 
-  const handleComplete = (_data: CompanySetupOutput) => {
+  useEffect(() => {
+    if (hasHydrated && !isAuthenticated) {
+      router.replace('/register');
+    }
+  }, [hasHydrated, isAuthenticated, router]);
+
+  const handleComplete = async (data: CompanySetupOutput) => {
+    await registerOwnCompany({
+      name: data.name,
+      name_kh: data.name_kh || undefined,
+      registration_no: data.registration_no || undefined,
+      industry_id: data.industry_id,
+      country_code: data.country_code,
+    });
     router.push('/');
   };
+
+  // Waiting on localStorage rehydration (or the redirect above to fire) — an
+  // unauthenticated flash of the wizard itself would be worse than a spinner.
+  if (!hasHydrated || !isAuthenticated) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box

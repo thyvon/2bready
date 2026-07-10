@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-import Typography from '@mui/material/Typography';
 import MuiLink from '@mui/material/Link';
 import Box from '@mui/material/Box';
 
@@ -107,13 +106,6 @@ export default function LoginPage() {
           <Button type="submit" variant="contained" size="large" fullWidth loading={isSubmitting} sx={{ mt: 0.5 }}>
             {t('auth.continue')}
           </Button>
-
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            {t('auth.no_account')}{' '}
-            <MuiLink component={Link} href="/register" underline="hover" sx={{ fontWeight: 500, color: 'text.primary' }}>
-              {t('auth.sign_up')}
-            </MuiLink>
-          </Typography>
         </Box>
       </form>
     </AuthLayout>

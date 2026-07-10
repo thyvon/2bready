@@ -1,14 +1,9 @@
 import api from '@/lib/api';
 import type { LoginResponse, RegisterResponse, TotpSetupResponse } from './types';
-import type { LoginInput, RegisterInput, ForgotPasswordInput, ResetPasswordInput, TotpCodeInput } from './schemas';
+import type { LoginInput, ForgotPasswordInput, ResetPasswordInput, TotpCodeInput } from './schemas';
 
 export async function login(data: LoginInput): Promise<LoginResponse> {
   const res = await api.post<{ data: LoginResponse }>('/auth/login', data);
-  return res.data.data;
-}
-
-export async function register(data: RegisterInput, locale: 'en' | 'kh' = 'en'): Promise<RegisterResponse> {
-  const res = await api.post<{ data: RegisterResponse }>('/auth/register', { ...data, locale });
   return res.data.data;
 }
 

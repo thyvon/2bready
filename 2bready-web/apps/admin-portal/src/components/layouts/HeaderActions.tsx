@@ -15,17 +15,14 @@ import PersonIcon from '@mui/icons-material/Person';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 
 import { useAuthStore } from '@/store/auth.store';
-import { useLayoutStore } from '@/store/layout.store';
 import { logout } from '@/domains/auth/api';
 import ControlCenterDrawer from '@/components/layouts/ControlCenterDrawer';
 import LanguageSwitcher from '@/components/layouts/LanguageSwitcher';
-import CompanySwitcher from '@/components/layouts/CompanySwitcher';
 import { useTranslation } from '@/lib/i18n';
 
 export default function HeaderActions() {
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
-  const { navOrientation } = useLayoutStore();
   const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [controlCenterOpen, setControlCenterOpen] = useState(false);
@@ -42,12 +39,6 @@ export default function HeaderActions() {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {/* In the vertical/sidebar layout, the company switcher lives in the sidebar
-          itself (above the nav menu) instead — showing it here too would waste
-          precious topbar width on mobile, where the sidebar is a drawer, not
-          always visible. The horizontal layout has no sidebar, so it stays here. */}
-      {navOrientation === 'horizontal' && <CompanySwitcher />}
-
       <IconButton
         size="small"
         onClick={() => setControlCenterOpen(true)}

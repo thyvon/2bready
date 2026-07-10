@@ -47,6 +47,7 @@ const en = {
   'header.notifications': 'Notifications',
   'header.no_notifications': 'No notifications yet',
   'header.account': 'Account',
+  'header.sign_out': 'Sign out',
 } as const;
 
 export default en;

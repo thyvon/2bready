@@ -38,7 +38,7 @@ export default function AdminCompaniesPage() {
   ];
 
   useEffect(() => {
-    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/company');
+    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
   }, [hasAnyRole, router]);
 
   useEffect(() => {

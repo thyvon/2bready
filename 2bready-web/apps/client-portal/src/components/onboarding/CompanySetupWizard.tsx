@@ -10,6 +10,7 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
@@ -24,15 +25,17 @@ import {
   COMPANY_SETUP_STEPS,
   companySetupDefaults,
   companySetupSchema,
-  INDUSTRY_OPTIONS,
   COUNTRY_OPTIONS,
   optionLabel,
   type CompanySetupInput,
   type CompanySetupOutput,
 } from '@/lib/company-setup-schema';
+import { useIndustries } from '@/lib/useIndustries';
+import { useTranslation } from '@/lib/i18n';
+import { getApiError } from '@2bready/api-client';
 
 export interface CompanySetupWizardProps {
-  onComplete: (data: CompanySetupOutput) => void;
+  onComplete: (data: CompanySetupOutput) => Promise<void>;
 }
 
 const STEP_ICONS = [
@@ -115,12 +118,15 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-// No company API exists to call from client-portal yet (UI-first, per
-// established workflow) — onComplete just hands back the validated data so
-// the onboarding page can decide what "done" means (redirect to the portal).
+// onComplete calls the real registerOwnCompany endpoint (see onboarding/page.tsx)
+// — errors (e.g. a transient network failure) surface back here so the user
+// doesn't lose their entered data and can just retry from the review step.
 export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
+  const { locale } = useTranslation();
+  const { industries, loading: industriesLoading } = useIndustries();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+  const [serverError, setServerError] = useState('');
 
   const {
     register,
@@ -128,7 +134,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
     trigger,
     watch,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CompanySetupInput>({
     resolver: zodResolver(companySetupSchema),
     defaultValues: companySetupDefaults,
@@ -150,11 +156,20 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
     setStep((s) => s - 1);
   };
 
-  const submit = (data: CompanySetupInput) => onComplete(companySetupSchema.parse(data));
+  const submit = async (data: CompanySetupInput) => {
+    setServerError('');
+    try {
+      await onComplete(companySetupSchema.parse(data));
+    } catch (err) {
+      setServerError(getApiError(err).message);
+    }
+  };
 
   return (
     <Box component="form" onSubmit={handleSubmit(submit)} noValidate>
       <StepIndicator step={step} />
+
+      {serverError && <Alert severity="error" sx={{ mb: 3 }}>{serverError}</Alert>}
 
       {/* pt here (not on the inner step boxes) matters: overflow:hidden clips
           anything outside this box's own padding box, and MUI's outlined
@@ -202,7 +217,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
             {step === 1 && (
               <Box className="flex flex-col gap-5">
                 <Controller
-                  name="industry_code"
+                  name="industry_id"
                   control={control}
                   render={({ field }) => (
                     <TextField
@@ -211,13 +226,14 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                       label="Industry"
                       required
                       fullWidth
-                      error={!!errors.industry_code}
-                      helperText={errors.industry_code?.message}
+                      disabled={industriesLoading}
+                      error={!!errors.industry_id}
+                      helperText={errors.industry_id?.message}
                       slotProps={{ input: { startAdornment: <InputAdornment position="start"><CategoryOutlinedIcon fontSize="small" color="action" /></InputAdornment> } }}
                     >
-                      {INDUSTRY_OPTIONS.map((opt) => (
-                        <MenuItem key={opt.value} value={opt.value}>
-                          {opt.label}
+                      {industries.map((industry) => (
+                        <MenuItem key={industry.id} value={industry.id}>
+                          {locale === 'kh' && industry.name_kh ? industry.name_kh : industry.name}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -267,7 +283,14 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                   <ReviewRow label="Company Name" value={values.name || '—'} />
                   <ReviewRow label="Khmer Name" value={values.name_kh || '—'} />
                   <ReviewRow label="Registration No." value={values.registration_no || '—'} />
-                  <ReviewRow label="Industry" value={optionLabel(INDUSTRY_OPTIONS, values.industry_code)} />
+                  <ReviewRow
+                    label="Industry"
+                    value={(() => {
+                      const selected = industries.find((i) => i.id === values.industry_id);
+                      if (!selected) return '—';
+                      return locale === 'kh' && selected.name_kh ? selected.name_kh : selected.name;
+                    })()}
+                  />
                   <ReviewRow label="Country" value={optionLabel(COUNTRY_OPTIONS, values.country_code)} />
                 </Box>
               </Box>
@@ -281,8 +304,15 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
           Back
         </Button>
         {isLastStep ? (
-          <GlowButton type="submit" size="medium">
-            Enter Your Portal
+          // type="button" + explicit handleSubmit(submit) on purpose, not
+          // type="submit" — the Next button one step earlier is type="button"
+          // in this exact same JSX slot, and morphing a button's type on the
+          // very click that triggers the re-render can make the browser treat
+          // that click as hitting the new submit-type button, auto-submitting
+          // before the review screen ever gets a chance to render. Matches
+          // admin-portal's CompanyFormWizard, which avoids this the same way.
+          <GlowButton type="button" onClick={handleSubmit(submit)} size="medium" disabled={isSubmitting}>
+            {isSubmitting ? 'Setting up…' : 'Enter Your Portal'}
           </GlowButton>
         ) : (
           <GlowButton type="button" onClick={handleNext} size="medium">
