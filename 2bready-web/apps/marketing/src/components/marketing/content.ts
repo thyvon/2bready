@@ -134,32 +134,38 @@ export const stakeholders = [
   },
 ] as const;
 
-export const ecosystemContent = {
-  title: 'The ADMIT Global Ecosystem',
+export const howItWorksContent = {
+  title: 'How It Works',
   subtitle:
-    'Achieving verified badges on the 2bReady platform directly unlocks premium connectivity to our specialized growth and commerce subsidiaries.',
+    'From registration to a verified badge — a clear, guided path to establishing trust with customers, partners, investors, and financial institutions.',
 };
 
-export const ecosystemPartners = [
+export const howItWorksSteps = [
   {
-    icon: 'consulting',
-    name: 'ADMIT Unit',
-    description: 'Expert consulting, Master SOP drafting, and dedicated compliance auditing to establish your operational foundation.',
+    icon: 'account',
+    name: 'Create an Account & Set Up Your Company',
+    description: 'Register your account and complete your company profile to get started.',
   },
   {
-    icon: 'commerce',
-    name: '2bgro Commerce',
-    description: 'Access exclusive B2B commerce channels utilizing your verified L2 Product Excellence badge.',
+    icon: 'journey',
+    name: 'Activate Your Customer Journey',
+    description: 'Unlock your selected compliance or business readiness pathway to begin the journey.',
   },
   {
-    icon: 'logistics',
-    name: '2bShip Logistics',
-    description: 'Premium cross-border fulfillment and supply chain solutions unlocked by achieving L3 Operational Excellence.',
+    icon: 'upload',
+    name: 'Upload Required Documents',
+    description: 'Submit the required business documents and supporting evidence through the platform.',
   },
   {
-    icon: 'investment',
-    name: 'GoInvestors',
-    description: 'Secure, institutional deal-room access reserved exclusively for L4 Global enterprises seeking capital injection.',
+    icon: 'audit',
+    name: 'Complete the Readiness Audit',
+    description: 'Perform a self-assessment or work with an auditor to evaluate your compliance and readiness.',
+  },
+  {
+    icon: 'badge',
+    name: 'Verification & Trust Badge',
+    description:
+      'Once your submission is successfully verified, your company receives a Verified Trust Badge, demonstrating compliance and increasing credibility with customers, partners, investors, and financial institutions.',
   },
 ] as const;
 

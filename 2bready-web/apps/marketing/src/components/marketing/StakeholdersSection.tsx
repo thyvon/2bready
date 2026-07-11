@@ -42,20 +42,39 @@ function StakeholderCard({
     <Reveal delay={delay} y={0} x={40}>
       <Box sx={{ height: '100%' }}>
         <SpotlightCard
-        tilt={false}
+          tilt={false}
           sx={{
             height: '100%',
+            p: { xs: 3, md: 4 },
             borderLeft: '3px solid',
             borderLeftColor: accent,
+            transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-left-color 0.25s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: `0 12px 24px -8px ${accent}33`,
+            },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-            <Icon sx={{ fontSize: 22, color: accent }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 44,
+                height: 44,
+                borderRadius: '10px',
+                bgcolor: `${accent}1a`,
+                flexShrink: 0,
+              }}
+            >
+              <Icon sx={{ fontSize: 24, color: accent }} />
+            </Box>
             <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
               {title}
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
             {description}
           </Typography>
         </SpotlightCard>
@@ -81,9 +100,11 @@ export default function StakeholdersSection() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-          gap: 3,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+          gap: { xs: 3, md: 4 },
           alignItems: 'stretch',
+          maxWidth: 900,
+          mx: 'auto',
         }}
       >
         {stakeholders.map(({ icon, title, description }, i) => (
