@@ -16,7 +16,7 @@ import { adminUrl } from '@/lib/admin-url';
 const NAV_LINKS = [
   { label: 'Built For', href: '/#stakeholders' },
   { label: 'Pathways', href: '/#pricing' },
-  { label: 'Ecosystem', href: '/#ecosystem' },
+  { label: 'How It Works', href: '/#how-it-works' },
 ];
 
 export default function MarketingHeader() {
@@ -27,9 +27,9 @@ export default function MarketingHeader() {
       component="header"
       sx={{
         height: 64,
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr auto', md: '1fr auto 1fr' },
         alignItems: 'center',
-        justifyContent: 'space-between',
         px: { xs: 2, md: 4 },
         borderBottom: '1px solid',
         borderColor: 'divider',
@@ -50,7 +50,7 @@ export default function MarketingHeader() {
         2bReady
       </Typography>
 
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 3 }}>
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
         {NAV_LINKS.map((link) => (
           <NavHoverLink
             key={link.href}
@@ -61,7 +61,7 @@ export default function MarketingHeader() {
         ))}
       </Box>
 
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
         <ThemeToggle />
         <Button component={Link} href={adminUrl('/login')} size="small" sx={{ color: 'text.primary' }}>
           Login
@@ -72,7 +72,7 @@ export default function MarketingHeader() {
         </Button>
       </Box>
 
-      <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
         <ThemeToggle />
         <IconButton size="small" onClick={() => setMenuOpen(true)} aria-label="Open menu">
           <MenuIcon />
