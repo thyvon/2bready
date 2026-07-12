@@ -2,13 +2,11 @@
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import Reveal from './Reveal';
 import SpotlightCard from './SpotlightCard';
 import { howItWorksContent, howItWorksSteps } from './content';
@@ -18,7 +16,7 @@ const STEP_ICONS = {
   journey: RocketLaunchIcon,
   upload: UploadFileIcon,
   audit: FactCheckIcon,
-  badge: EmojiEventsIcon,
+  badge: VerifiedIcon,
 };
 
 export default function HowItWorksSection() {
@@ -36,7 +34,6 @@ export default function HowItWorksSection() {
       <Box sx={{ display: 'flex', flexDirection: 'column' }}>
         {howItWorksSteps.map(({ icon, name, description }, i) => {
           const Icon = STEP_ICONS[icon];
-          const stepNumber = i + 1;
           const isFirst = i === 0;
           const isLast = i === howItWorksSteps.length - 1;
 
@@ -87,41 +84,13 @@ export default function HowItWorksSection() {
                     tilt={false}
                     sx={isLast ? { borderColor: 'success.main' } : undefined}
                   >
-                    <Box
-                      sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        px: 1.25,
-                        py: 0.5,
-                        borderRadius: 5,
-                        bgcolor: isLast ? 'success.main' : 'action.hover',
-                        color: isLast ? 'success.contrastText' : 'text.secondary',
-                        mb: 1.5,
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        {isLast ? 'Final Step' : `Step ${stepNumber}`}
-                      </Typography>
-                    </Box>
-
                     <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 700 }}>
-                      {isLast ? 'Ready to Go' : name}
+                      {name}
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
                       {description}
                     </Typography>
-
-                    {isLast && (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        endIcon={<ArrowForwardIcon />}
-                        sx={{ mt: 2.5, borderRadius: '10px', textTransform: 'none', fontWeight: 700, px: 3 }}
-                      >
-                        Explore Dashboard
-                      </Button>
-                    )}
                   </SpotlightCard>
                 </Box>
               </Box>

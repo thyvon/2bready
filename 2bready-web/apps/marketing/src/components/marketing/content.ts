@@ -169,6 +169,12 @@ export const howItWorksSteps = [
   },
 ] as const;
 
+export const ctaContent = {
+  title: 'Ready to Get Started?',
+  subtitle: 'Join ASEAN SMEs building verified trust with customers, banks, and investors on 2bReady.',
+  cta: { label: 'Call to Action', href: adminUrl('/register') },
+};
+
 export const footerContent = {
   tagline: 'The Digital Trust Engine',
   poweredBy: 'Powered by ADMIT Global',

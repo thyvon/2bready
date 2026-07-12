@@ -4,6 +4,7 @@ import PortfolioSection from '@/components/marketing/PortfolioSection';
 import StakeholdersSection from '@/components/marketing/StakeholdersSection';
 import PricingSection from '@/components/marketing/PricingSection';
 import EcosystemSection from '@/components/marketing/HowItWorksSection';
+import CtaSection from '@/components/marketing/CtaSection';
 
 export const metadata: Metadata = {
   title: '2bReady — Compliance Readiness Platform',
@@ -18,6 +19,7 @@ export default function LandingPage() {
       <StakeholdersSection />
       <PricingSection />
       <EcosystemSection />
+      <CtaSection />
     </>
   );
 }
