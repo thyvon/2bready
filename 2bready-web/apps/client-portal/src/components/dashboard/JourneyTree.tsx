@@ -9,7 +9,17 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import { GlowButton, StatusBadge, cardGridContainer, cardGridItem, easeOutExpo } from '@2bready/ui-core';
-import { TIER_LABELS, levelDocCount, type BadgeLevel, type Milestone } from '@/lib/journey-data';
+import { TIER_LABELS, type Tier } from '@/lib/journey-data';
+import {
+  LEVEL_EMOJI,
+  DOC_STATUS_LABEL,
+  levelTotalDocs,
+  levelVerifiedDocs,
+  toDocStatus,
+  type JourneyLevel,
+  type JourneyMilestone,
+  type JourneyDocument,
+} from '@/lib/journey-api';
 
 // Shared with every hover/interaction transition in this tree so motion
 // reads as one system rather than a grab-bag of ad-hoc durations — same
@@ -17,10 +27,14 @@ import { TIER_LABELS, levelDocCount, type BadgeLevel, type Milestone } from '@/l
 // plain sx transitions, not framer-motion props.
 const EASE_CSS = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
-// No verification tracking exists yet (that's Sprint 4/5 backend work), so
-// every document is honestly "pending" and every rollup is 0 — but the
-// rollup math itself (not-started / in-progress / complete) is real and
-// ready for a real `verifiedCount` the moment document status exists.
+// A milestone with any real progress (something uploaded, even if still
+// under review/rejected — anything past the untouched "pending" state)
+// starts expanded, so a returning user sees what needs attention without
+// clicking through every milestone to find it.
+function milestoneHasUpload(milestone: JourneyMilestone): boolean {
+  return milestone.documents.some((doc) => toDocStatus(doc.status) !== 'pending');
+}
+
 function rollupStatus(verified: number, total: number): { label: string; bgcolor: string; color: string } {
   if (total > 0 && verified === total) return { label: 'Complete', bgcolor: 'success.light', color: 'success.dark' };
   if (verified > 0) return { label: `${verified}/${total} verified`, bgcolor: 'warning.light', color: 'warning.dark' };
@@ -47,10 +61,11 @@ function StatusChip({ verified, total }: { verified: number; total: number }) {
   );
 }
 
-export type RenderDocAction = (doc: string, ctx: { level: BadgeLevel; milestone: Milestone }) => React.ReactNode;
+export type RenderDocAction = (doc: JourneyDocument, ctx: { level: JourneyLevel; milestone: JourneyMilestone }) => React.ReactNode;
 
-function DefaultDocAction() {
-  return <StatusBadge status="pending" label="Pending" />;
+function DefaultDocAction(doc: JourneyDocument) {
+  const status = toDocStatus(doc.status);
+  return <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />;
 }
 
 function MilestoneNode({
@@ -62,16 +77,16 @@ function MilestoneNode({
   defaultOpen,
   renderDocAction,
 }: {
-  milestone: Milestone;
-  level: BadgeLevel;
+  milestone: JourneyMilestone;
+  level: JourneyLevel;
   unlocked: boolean;
   isFirst: boolean;
   isLast: boolean;
   defaultOpen: boolean;
   renderDocAction: RenderDocAction;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const verified = 0; // seed for the real per-document status once it exists
+  const [open, setOpen] = useState(defaultOpen || milestoneHasUpload(milestone));
+  const verified = milestone.documents.filter((doc) => toDocStatus(doc.status) === 'verified').length;
 
   return (
     <Box sx={{ position: 'relative', pl: 3 }}>
@@ -113,7 +128,7 @@ function MilestoneNode({
         <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
           {milestone.name}
         </Typography>
-        <StatusChip verified={verified} total={milestone.docs.length} />
+        <StatusChip verified={verified} total={milestone.documents.length} />
         <ExpandMoreIcon
           fontSize="small"
           sx={{ color: 'text.secondary', transition: `transform 0.2s ${EASE_CSS}`, transform: open ? 'rotate(180deg)' : 'none' }}
@@ -122,18 +137,18 @@ function MilestoneNode({
 
       <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
         <Box sx={{ pl: 2.5, py: 0.5, display: 'flex', flexDirection: 'column' }}>
-          {milestone.docs.map((doc, i) => (
+          {milestone.documents.map((doc, i) => (
             <Box
-              key={doc}
+              key={doc.id}
               className="flex items-center gap-3"
               sx={{
                 py: 1,
-                borderBottom: i === milestone.docs.length - 1 ? 'none' : '1px solid',
+                borderBottom: i === milestone.documents.length - 1 ? 'none' : '1px solid',
                 borderColor: 'divider',
               }}
             >
               <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                {doc}
+                {doc.name}
               </Typography>
               {renderDocAction(doc, { level, milestone })}
             </Box>
@@ -158,13 +173,13 @@ function MobileMilestoneRow({
   renderDocAction,
   defaultOpen,
 }: {
-  milestone: Milestone;
-  level: BadgeLevel;
+  milestone: JourneyMilestone;
+  level: JourneyLevel;
   renderDocAction: RenderDocAction;
   defaultOpen: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const verified = 0;
+  const [open, setOpen] = useState(defaultOpen || milestoneHasUpload(milestone));
+  const verified = milestone.documents.filter((doc) => toDocStatus(doc.status) === 'verified').length;
 
   return (
     <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
@@ -176,7 +191,7 @@ function MobileMilestoneRow({
         <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
           {milestone.name}
         </Typography>
-        <StatusChip verified={verified} total={milestone.docs.length} />
+        <StatusChip verified={verified} total={milestone.documents.length} />
         <ExpandMoreIcon
           fontSize="small"
           sx={{ color: 'text.secondary', transition: `transform 0.2s ${EASE_CSS}`, transform: open ? 'rotate(180deg)' : 'none' }}
@@ -184,10 +199,10 @@ function MobileMilestoneRow({
       </Box>
       <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', pb: 1 }}>
-          {milestone.docs.map((doc) => (
-            <Box key={doc} className="flex items-center gap-3" sx={{ py: 0.75 }}>
+          {milestone.documents.map((doc) => (
+            <Box key={doc.id} className="flex items-center gap-3" sx={{ py: 0.75 }}>
               <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                {doc}
+                {doc.name}
               </Typography>
               {renderDocAction(doc, { level, milestone })}
             </Box>
@@ -201,17 +216,20 @@ function MobileMilestoneRow({
 function MobileLevelCard({
   badge,
   unlocked,
+  tier,
   defaultMilestonesOpen,
   renderDocAction,
 }: {
-  badge: BadgeLevel;
+  badge: JourneyLevel;
   unlocked: boolean;
+  tier: Tier | undefined;
   defaultMilestonesOpen: boolean;
   renderDocAction: RenderDocAction;
 }) {
-  const totalDocs = levelDocCount(badge);
-  const verifiedDocs = 0;
+  const totalDocs = levelTotalDocs(badge);
+  const verifiedDocs = levelVerifiedDocs(badge);
   const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+  const emoji = LEVEL_EMOJI[badge.code];
 
   return (
     <Box
@@ -244,11 +262,11 @@ function MobileLevelCard({
             : 'none',
         }}
       >
-        {badge.emoji}
+        {emoji}
       </Box>
 
       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-        {badge.level} {badge.name} · {badge.pathwayName}
+        {badge.code} {badge.name} · {badge.pathway_name}
       </Typography>
       <Typography variant="caption" color="text.secondary">
         {badge.milestones.length} milestones · {totalDocs} documents
@@ -268,7 +286,7 @@ function MobileLevelCard({
         }}
       >
         {unlocked ? <CheckCircleOutlinedIcon sx={{ fontSize: '0.875rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '0.875rem' }} />}
-        {unlocked ? 'UNLOCKED' : TIER_LABELS[badge.tier]}
+        {unlocked ? 'UNLOCKED' : tier ? TIER_LABELS[tier] : ''}
       </Box>
 
       <Box sx={{ width: '100%', mt: 1 }}>
@@ -284,7 +302,7 @@ function MobileLevelCard({
       <Box sx={{ width: '100%', mt: 1 }}>
         {badge.milestones.map((milestone) => (
           <MobileMilestoneRow
-            key={milestone.name}
+            key={milestone.id}
             milestone={milestone}
             level={badge}
             renderDocAction={renderDocAction}
@@ -293,10 +311,10 @@ function MobileLevelCard({
         ))}
       </Box>
 
-      {!unlocked && (
+      {!unlocked && tier && (
         <Box sx={{ width: '100%', mt: 1.5 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Upgrade to {TIER_LABELS[badge.tier]} to unlock this level.
+            Upgrade to {TIER_LABELS[tier]} to unlock this level.
           </Typography>
           <GlowButton href="/billing" size="small">
             Upgrade →
@@ -310,19 +328,22 @@ function MobileLevelCard({
 function LevelNode({
   badge,
   unlocked,
+  tier,
   isLast,
   defaultMilestonesOpen,
   renderDocAction,
 }: {
-  badge: BadgeLevel;
+  badge: JourneyLevel;
   unlocked: boolean;
+  tier: Tier | undefined;
   isLast: boolean;
   defaultMilestonesOpen: boolean;
   renderDocAction: RenderDocAction;
 }) {
-  const totalDocs = levelDocCount(badge);
-  const verifiedDocs = 0; // seed for the real rollup once document status exists
+  const totalDocs = levelTotalDocs(badge);
+  const verifiedDocs = levelVerifiedDocs(badge);
   const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+  const emoji = LEVEL_EMOJI[badge.code];
 
   return (
     <Box sx={{ position: 'relative', pl: 6, pb: isLast ? 0 : 5 }}>
@@ -365,13 +386,13 @@ function LevelNode({
             : 'none',
         }}
       >
-        {badge.emoji}
+        {emoji}
       </Box>
 
       <Box className="flex items-center gap-2" sx={{ minHeight: 40 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            {badge.level} {badge.name} · {badge.pathwayName}
+            {badge.code} {badge.name} · {badge.pathway_name}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {badge.milestones.length} milestones · {totalDocs} documents
@@ -393,7 +414,7 @@ function LevelNode({
           }}
         >
           {unlocked ? <CheckCircleOutlinedIcon sx={{ fontSize: '0.875rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '0.875rem' }} />}
-          {unlocked ? 'UNLOCKED' : TIER_LABELS[badge.tier]}
+          {unlocked ? 'UNLOCKED' : tier ? TIER_LABELS[tier] : ''}
         </Box>
       </Box>
 
@@ -412,7 +433,7 @@ function LevelNode({
       <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         {badge.milestones.map((milestone, i) => (
           <MilestoneNode
-            key={milestone.name}
+            key={milestone.id}
             milestone={milestone}
             level={badge}
             unlocked={unlocked}
@@ -424,10 +445,10 @@ function LevelNode({
         ))}
       </Box>
 
-      {!unlocked && (
+      {!unlocked && tier && (
         <Box className="flex items-center justify-between gap-3" sx={{ mt: 2, pl: 3 }}>
           <Typography variant="body2" color="text.secondary">
-            Upgrade to {TIER_LABELS[badge.tier]} to unlock this level.
+            Upgrade to {TIER_LABELS[tier]} to unlock this level.
           </Typography>
           <GlowButton href="/billing" size="small">
             Upgrade →
@@ -439,11 +460,13 @@ function LevelNode({
 }
 
 export interface JourneyTreeProps {
-  levels: BadgeLevel[];
-  isUnlocked: (badge: BadgeLevel) => boolean;
+  levels: JourneyLevel[];
+  isUnlocked: (level: JourneyLevel) => boolean;
+  /** The subscription tier required for this level, for the locked-state badge/copy — real data from Package.tier via PackageProvider, not a hardcoded lookup. Undefined levels just show no tier badge. */
+  tierFor?: (level: JourneyLevel) => Tier | undefined;
   /** Auto-expand every milestone — the Journey page wants collapsed-by-default (browsing), the Documents page wants everything open (acting on documents). */
   defaultMilestonesOpen?: boolean;
-  /** What to render after each document's name — defaults to the plain "Pending" badge; the Documents page overrides this with status + real action buttons. */
+  /** What to render after each document's name — defaults to the plain status badge; the Documents page overrides this with real action buttons. */
   renderDocAction?: RenderDocAction;
 }
 
@@ -456,20 +479,27 @@ export interface JourneyTreeProps {
 // with real Upload/Preview/Download actions) via renderDocAction — one tree
 // implementation, not a second one per page.
 //
+// `isUnlocked` is caller-supplied rather than reading the real
+// `level.unlocked` field directly, because callers mean different things by
+// it: subscription-tier access vs. genuine journey-progress unlocking.
+// Keeping it a prop lets each caller pick the right one without this
+// component taking a position.
+//
 // Renders two layouts, toggled by CSS breakpoint (not JS/useMediaQuery, so
 // there's no hydration flicker): the tree above for md+ screens, and a
 // centered stack of plain accordion cards (MobileLevelCard) below for xs —
 // see that component's own comment for why mobile doesn't just shrink the
 // same connector-line diagram.
-export function JourneyTree({ levels, isUnlocked, defaultMilestonesOpen = false, renderDocAction = DefaultDocAction }: JourneyTreeProps) {
+export function JourneyTree({ levels, isUnlocked, tierFor, defaultMilestonesOpen = false, renderDocAction = DefaultDocAction }: JourneyTreeProps) {
   return (
     <>
       <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ pt: 1, display: { xs: 'none', md: 'block' } }}>
         {levels.map((badge, i) => (
-          <Box component={motion.div} key={badge.level} variants={cardGridItem}>
+          <Box component={motion.div} key={badge.code} variants={cardGridItem}>
             <LevelNode
               badge={badge}
               unlocked={isUnlocked(badge)}
+              tier={tierFor?.(badge)}
               isLast={i === levels.length - 1}
               defaultMilestonesOpen={defaultMilestonesOpen}
               renderDocAction={renderDocAction}
@@ -487,10 +517,11 @@ export function JourneyTree({ levels, isUnlocked, defaultMilestonesOpen = false,
         sx={{ pt: 1, display: { xs: 'flex', md: 'none' } }}
       >
         {levels.map((badge) => (
-          <Box component={motion.div} key={badge.level} variants={cardGridItem}>
+          <Box component={motion.div} key={badge.code} variants={cardGridItem}>
             <MobileLevelCard
               badge={badge}
               unlocked={isUnlocked(badge)}
+              tier={tierFor?.(badge)}
               defaultMilestonesOpen={defaultMilestonesOpen}
               renderDocAction={renderDocAction}
             />

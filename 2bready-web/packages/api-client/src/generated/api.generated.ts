@@ -212,6 +212,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/documents/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["document.templates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["document.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documents/{document}/preview-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["document.previewUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documents/{document}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["document.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documents/{document}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["document.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/industry-options": {
         parameters: {
             query?: never;
@@ -258,6 +338,54 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["industry.update"];
+        trace?: never;
+    };
+    "/v1/journey": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["journey.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/journey/companies/{company}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["journey.showForCompany"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/journey/companies/{company}/milestones/{milestone}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["journey.completeMilestone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/leads": {
@@ -478,6 +606,38 @@ export interface components {
          * @enum {string}
          */
         CompanyStatus: "active" | "suspended" | "inactive";
+        /** DocumentResource */
+        DocumentResource: {
+            id: string;
+            document_template_id: string;
+            original_filename: string;
+            mime_type: string;
+            size_bytes: number;
+            status: components["schemas"]["DocumentStatus"];
+            rejection_reason: string | null;
+            /** Format: date-time */
+            verified_at: string | null;
+            /** Format: date-time */
+            expires_at: string | null;
+            /** Format: date-time */
+            created_at: string | null;
+        };
+        /**
+         * DocumentStatus
+         * @enum {string}
+         */
+        DocumentStatus: "pending_scan" | "scan_failed" | "review" | "verified" | "rejected" | "expired";
+        /** DocumentTemplateResource */
+        DocumentTemplateResource: {
+            id: string;
+            milestone_id: string;
+            name: string;
+            description: string | null;
+            is_required: boolean;
+            expiry_months: number | null;
+            sort_order: number;
+            latest_document: components["schemas"]["DocumentResource"] | null;
+        };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Format: email */
@@ -497,6 +657,54 @@ export interface components {
             /** Format: date-time */
             updated_at: string | null;
         };
+        /**
+         * JourneyPillar
+         * @enum {string}
+         */
+        JourneyPillar: "comply" | "scale" | "lead";
+        /** JourneyResource */
+        JourneyResource: {
+            id: string;
+            status: components["schemas"]["JourneyStatus"];
+            /** Format: date-time */
+            activated_at: string | null;
+            journey_template: {
+                id: string;
+                name: string;
+                name_kh: string | null;
+            };
+            levels: {
+                id: string;
+                code: string;
+                name: string;
+                pathway_name: string;
+                pillar: components["schemas"]["JourneyPillar"];
+                unlocked: boolean;
+                milestones: {
+                    id: string;
+                    name: string;
+                    completed: boolean;
+                    documents: {
+                        id: string;
+                        /**
+                         * @description The real, uploaded Document row's id — null until one exists.
+                         *     Needed to request a signed preview URL (GET
+                         *     /documents/{document}/preview-url); `id` above is always the
+                         *     DocumentTemplate's id, not this one.
+                         */
+                        document_id: string;
+                        name: string;
+                        is_required: boolean;
+                        status: string | "pending";
+                    }[];
+                }[];
+            }[];
+        };
+        /**
+         * JourneyStatus
+         * @enum {string}
+         */
+        JourneyStatus: "active" | "completed";
         /** LeadResource */
         LeadResource: {
             id: string;
@@ -515,6 +723,11 @@ export interface components {
             email: string;
             password: string;
         };
+        /**
+         * MilestoneCompletionTrigger
+         * @enum {string}
+         */
+        MilestoneCompletionTrigger: "document_upload" | "audit_approval" | "admin_signoff";
         /** PackageResource */
         PackageResource: {
             id: string;
@@ -524,7 +737,10 @@ export interface components {
             price_cents: number;
             industry_id: string | null;
             industry_code?: string;
+            journey_level_id: string | null;
+            journey_level_code?: string;
             billing_period: components["schemas"]["BillingPeriod"];
+            tier: components["schemas"]["Tier"];
             is_active: boolean;
             sort_order: number;
             /** Format: date-time */
@@ -584,7 +800,9 @@ export interface components {
             description: string | null;
             price_cents: number;
             industry_code?: string;
+            journey_level_code?: string;
             billing_period: components["schemas"]["BillingPeriod"];
+            tier: components["schemas"]["Tier"];
             sort_order: number;
         };
         /** RegisterRequest */
@@ -596,6 +814,10 @@ export interface components {
             /** @enum {string} */
             locale?: "en" | "kh";
             password_confirmation: string;
+        };
+        /** RejectDocumentRequest */
+        RejectDocumentRequest: {
+            reason: string;
         };
         /** ResetPasswordRequest */
         ResetPasswordRequest: {
@@ -616,6 +838,16 @@ export interface components {
             /** @enum {string} */
             default_locale?: "en" | "kh";
         };
+        /** StoreDocumentRequest */
+        StoreDocumentRequest: {
+            document_template_id: string;
+            /**
+             * Format: binary
+             * @description MIME + size validated here, before the file ever touches storage
+             *     or the malware-scan job — CLAUDE.md's non-negotiable rule.
+             */
+            file: string;
+        };
         /** StoreIndustryRequest */
         StoreIndustryRequest: {
             code: string;
@@ -632,8 +864,11 @@ export interface components {
             description?: string | null;
             price_cents: number;
             industry_id?: string | null;
+            journey_level_id?: string | null;
             /** @enum {string} */
             billing_period?: "monthly" | "yearly" | "one_time";
+            /** @enum {string} */
+            tier?: "free" | "pro" | "enterprise";
             is_active?: boolean;
             sort_order?: number;
         };
@@ -661,6 +896,11 @@ export interface components {
          * @enum {string}
          */
         SubscriptionStatus: "pending" | "active" | "expired" | "cancelled";
+        /**
+         * Tier
+         * @enum {string}
+         */
+        Tier: "free" | "pro" | "enterprise";
         /** TotpVerifyRequest */
         TotpVerifyRequest: {
             code: string;
@@ -691,8 +931,11 @@ export interface components {
             description?: string | null;
             price_cents?: number;
             industry_id?: string | null;
+            journey_level_id?: string | null;
             /** @enum {string} */
             billing_period?: "monthly" | "yearly" | "one_time";
+            /** @enum {string} */
+            tier?: "free" | "pro" | "enterprise";
             is_active?: boolean;
             sort_order?: number;
         };
@@ -1270,6 +1513,153 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "document.templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "document.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["StoreDocumentRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "document.previewUrl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document ID */
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            url: string;
+                            mime_type: string;
+                            original_filename: string;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "document.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document ID */
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "document.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document ID */
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectDocumentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "industry.publicIndex": {
         parameters: {
             query?: never;
@@ -1428,6 +1818,106 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "journey.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "No journey found for this company.";
+                        errors: string[];
+                    };
+                };
+            };
+        };
+    };
+    "journey.showForCompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "journey.completeMilestone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The milestone ID */
+                milestone: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            milestone_id: string;
+                            /** Format: date-time */
+                            completed_at: string;
+                            trigger: components["schemas"]["MilestoneCompletionTrigger"];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "lead.index": {

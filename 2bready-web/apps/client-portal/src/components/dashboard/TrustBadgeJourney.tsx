@@ -4,16 +4,21 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import { SectionCard } from '@2bready/ui-core';
-import { BADGE_LEVELS, TIER_LABELS } from '@/lib/journey-data';
+import { TIER_LABELS, type Tier } from '@/lib/journey-data';
+import { LEVEL_EMOJI, type JourneyLevel } from '@/lib/journey-api';
 
 export interface TrustBadgeJourneyProps {
-  /** Which levels are unlocked so far — empty until a company completes and can afford Level 1. */
-  unlockedLevels: Array<(typeof BADGE_LEVELS)[number]['level']>;
+  /** The real journey's levels — empty until a company has an activated journey. */
+  levels: JourneyLevel[];
+  /** Which levels are unlocked so far, by code — empty until a company completes and can afford Level 1. */
+  unlockedLevels: string[];
+  /** Real per-level tier, by code, from Package.tier via PackageProvider — not a hardcoded lookup. */
+  tierByLevelCode: Record<string, Tier>;
   /** Overall percent across every level's documents, for the bottom track. */
   overallPct: number;
 }
 
-export function TrustBadgeJourney({ unlockedLevels, overallPct }: TrustBadgeJourneyProps) {
+export function TrustBadgeJourney({ levels, unlockedLevels, tierByLevelCode, overallPct }: TrustBadgeJourneyProps) {
   return (
     <SectionCard
       title="Your Trust Badge Journey"
@@ -30,24 +35,25 @@ export function TrustBadgeJourney({ unlockedLevels, overallPct }: TrustBadgeJour
     >
       <Box className="flex flex-col gap-4">
         <Box className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {BADGE_LEVELS.map((badge) => {
-            const unlocked = unlockedLevels.includes(badge.level);
+          {levels.map((badge) => {
+            const unlocked = unlockedLevels.includes(badge.code);
+            const tier = tierByLevelCode[badge.code];
             return (
               <Box
-                key={badge.level}
+                key={badge.code}
                 sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '8px', p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {badge.emoji} {badge.level} {badge.name}
+                  {LEVEL_EMOJI[badge.code]} {badge.code} {badge.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {badge.pathwayName} · {TIER_LABELS[badge.tier]}
+                  {badge.pathway_name} · {tier ? TIER_LABELS[tier] : ''}
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: 600, mt: 0.5, color: unlocked ? 'success.main' : badge.tier === 'free' ? 'text.secondary' : 'primary.main' }}
+                  sx={{ fontWeight: 600, mt: 0.5, color: unlocked ? 'success.main' : tier === 'free' ? 'text.secondary' : 'primary.main' }}
                 >
-                  {unlocked ? '✅ Unlocked' : badge.tier === 'free' ? '🔒 Not started' : `🔒 Upgrade to ${TIER_LABELS[badge.tier]}`}
+                  {unlocked ? '✅ Unlocked' : tier === 'free' ? '🔒 Not started' : `🔒 Upgrade to ${tier ? TIER_LABELS[tier] : ''}`}
                 </Typography>
               </Box>
             );

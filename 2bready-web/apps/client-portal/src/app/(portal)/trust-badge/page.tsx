@@ -8,17 +8,26 @@ import { Breadcrumbs, SectionCard, EmptyState, GlowButton } from '@2bready/ui-co
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
 import { TrustBadgeJourney } from '@/components/dashboard/TrustBadgeJourney';
-import { BADGE_LEVELS, levelDocCount } from '@/lib/journey-data';
-
-// No verification tracking exists yet (Sprint 4/5 backend work), so nobody
-// has actually earned a badge — the hero and verification link stay honest
-// empty states rather than showing a fake "Bronze" the moment L1 exists.
-const TOTAL_DOCS = BADGE_LEVELS.reduce((sum, level) => sum + levelDocCount(level), 0);
+import { useJourney } from '@/components/JourneyProvider';
+import { usePackages } from '@/components/PackageProvider';
+import { PageLoader } from '@/components/PageLoader';
+import { allDocuments, countVerified } from '@/lib/journey-api';
+import { tierByLevelCode } from '@/lib/package-api';
 
 export default function TrustBadgePage() {
   const { t } = useTranslation();
   const { all } = useNavItems();
   const item = all.find((i) => i.href === '/trust-badge');
+  const { journey, loading: journeyLoading } = useJourney();
+  const { packages, loading: packagesLoading } = usePackages();
+  const levels = journey?.levels ?? [];
+  const documents = allDocuments(journey);
+  const totalDocs = documents.length;
+  const verifiedDocs = countVerified(documents);
+  const overallPct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+  const unlockedLevels = levels.filter((level) => level.unlocked).map((level) => level.code);
+
+  if (journeyLoading || packagesLoading) return <PageLoader />;
 
   return (
     <Box className="flex flex-col gap-6">
@@ -68,12 +77,14 @@ export default function TrustBadgePage() {
           <Box>
             <Typography variant="h6">Not certified yet</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420, mt: 0.5 }}>
-              0 of {TOTAL_DOCS} documents verified. Complete The Launchpad (L1 · Bronze) to earn your first badge.
+              {verifiedDocs} of {totalDocs} documents verified. Complete{' '}
+              {levels[0] ? `${levels[0].pathway_name} (${levels[0].code} · ${levels[0].name})` : 'Level 1'} to earn your first
+              badge.
             </Typography>
           </Box>
           <Box sx={{ width: '100%', maxWidth: 320, mt: 1 }}>
             <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
-              <Box sx={{ width: '0%', height: '100%', borderRadius: '4px', bgcolor: 'primary.main' }} />
+              <Box sx={{ width: `${overallPct}%`, height: '100%', borderRadius: '4px', bgcolor: 'primary.main', transition: 'width 0.4s ease' }} />
             </Box>
           </Box>
           <Box sx={{ mt: 1 }}>
@@ -84,7 +95,12 @@ export default function TrustBadgePage() {
         </Box>
       </SectionCard>
 
-      <TrustBadgeJourney unlockedLevels={[]} overallPct={0} />
+      <TrustBadgeJourney
+        levels={levels}
+        unlockedLevels={unlockedLevels}
+        tierByLevelCode={tierByLevelCode(packages)}
+        overallPct={overallPct}
+      />
 
       <SectionCard title="Public Verification" subtitle="Share your certified status with anyone, without exposing your documents">
         <EmptyState

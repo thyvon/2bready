@@ -10,10 +10,9 @@ import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined';
 import { Breadcrumbs, SectionCard, GlowButton } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
-import { BADGE_LEVELS, levelDocCount } from '@/lib/journey-data';
-
-const L4 = BADGE_LEVELS[3];
-const L4_TOTAL_DOCS = levelDocCount(L4);
+import { useJourney } from '@/components/JourneyProvider';
+import { PageLoader } from '@/components/PageLoader';
+import { levelTotalDocs, levelVerifiedDocs } from '@/lib/journey-api';
 
 const FEATURES = [
   { icon: <LinkOutlinedIcon fontSize="small" />, title: 'One secure link', desc: 'A single shareable link for investors, banks, or partners — no account or login required on their end.' },
@@ -30,6 +29,13 @@ export default function DataRoomPage() {
   const { t } = useTranslation();
   const { all } = useNavItems();
   const item = all.find((i) => i.href === '/data-room');
+  const { journey, loading } = useJourney();
+  const l4 = journey?.levels.find((level) => level.code === 'L4') ?? null;
+  const l4TotalDocs = l4 ? levelTotalDocs(l4) : 0;
+  const l4VerifiedDocs = l4 ? levelVerifiedDocs(l4) : 0;
+  const l4Milestones = l4?.milestones.length ?? 0;
+
+  if (loading) return <PageLoader />;
 
   return (
     <Box className="flex flex-col gap-6">
@@ -79,8 +85,8 @@ export default function DataRoomPage() {
           <Box>
             <Typography variant="h6">Locked</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mt: 0.5 }}>
-              Requires the Enterprise plan and 100% verification of L4 · Platinum ({L4_TOTAL_DOCS} documents across{' '}
-              {L4.milestones.length} milestones). 0 of {L4_TOTAL_DOCS} verified today.
+              Requires the Enterprise plan and 100% verification of L4 · {l4?.name ?? 'Platinum'} ({l4TotalDocs} documents
+              across {l4Milestones} milestones). {l4VerifiedDocs} of {l4TotalDocs} verified today.
             </Typography>
           </Box>
           <Box sx={{ mt: 1 }}>

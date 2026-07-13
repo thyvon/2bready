@@ -10,9 +10,9 @@ import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { Breadcrumbs, SectionCard, GlowButton } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
-import { BADGE_LEVELS } from '@/lib/journey-data';
-
-const SOP_MILESTONE = BADGE_LEVELS[2].milestones.find((m) => m.name === 'SOP & Structure')!;
+import { useJourney } from '@/components/JourneyProvider';
+import { PageLoader } from '@/components/PageLoader';
+import { toDocStatus } from '@/lib/journey-api';
 
 const FEATURES = [
   { icon: <MarkEmailReadOutlinedIcon fontSize="small" />, title: 'Send to any employee', desc: 'Email a verified SOP document directly to an employee for read & acknowledge sign-off.' },
@@ -22,15 +22,21 @@ const FEATURES = [
 
 // Real mechanic from the owner's concept file (sopSignoffCard): only
 // verified L2/L3 documents can be sent for employee sign-off — the dropdown
-// there is populated exclusively from docs with status === 'verified'. No
-// document has ever been verified anywhere in this app (verification is an
-// auditor/admin action, not something the client can do to themselves), so
-// this stays honestly locked rather than faked as available, same pattern
-// as the Data Room page.
+// there is populated exclusively from docs with status === 'verified'.
+// Verification is now a real admin/auditor action and the counts below are
+// real, but the send-to-employee flow itself isn't built yet, so this page
+// stays honestly locked regardless of verified count until that flow
+// exists — same pattern as the Data Room page.
 export default function SopsPage() {
   const { t } = useTranslation();
   const { all } = useNavItems();
   const item = all.find((i) => i.href === '/sops');
+  const { journey, loading } = useJourney();
+  const l3 = journey?.levels.find((level) => level.code === 'L3') ?? null;
+  const sopMilestone = l3?.milestones.find((m) => m.name === 'SOP & Structure') ?? null;
+  const sopVerifiedDocs = sopMilestone?.documents.filter((doc) => toDocStatus(doc.status) === 'verified').length ?? 0;
+
+  if (loading) return <PageLoader />;
 
   return (
     <Box className="flex flex-col gap-6">
@@ -80,8 +86,8 @@ export default function SopsPage() {
           <Box>
             <Typography variant="h6">Locked</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 460, mt: 0.5 }}>
-              Requires at least one verified document from L3 · Gold&apos;s {SOP_MILESTONE.name} milestone —{' '}
-              {SOP_MILESTONE.docs.join(', ')}. 0 verified today.
+              Requires at least one verified document from L3 · {l3?.name ?? 'Gold'}&apos;s {sopMilestone?.name ?? 'SOP & Structure'}{' '}
+              milestone — {sopMilestone?.documents.map((doc) => doc.name).join(', ') ?? ''}. {sopVerifiedDocs} verified today.
             </Typography>
           </Box>
           <Box sx={{ mt: 1 }}>

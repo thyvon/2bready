@@ -16,11 +16,10 @@ import { SectionCard, GlowButton, cardGridContainer, cardGridItem } from '@2brea
 import { PillarCard } from '@/components/dashboard/PillarCard';
 import { JourneyTree } from '@/components/dashboard/JourneyTree';
 import { TrustJourneyHero } from '@/components/dashboard/TrustJourneyHero';
-import { PILLARS, BADGE_LEVELS, levelDocCount } from '@/lib/journey-data';
-
-const L1 = [BADGE_LEVELS[0]];
-const TOTAL_DOCS = BADGE_LEVELS.reduce((sum, level) => sum + levelDocCount(level), 0);
-const TAX_COMPLIANCE_DOCS = L1[0].milestones.find((m) => m.name === 'Tax Compliance')!.docs.length;
+import { PageLoader } from '@/components/PageLoader';
+import { PILLARS } from '@/lib/journey-data';
+import { useJourney } from '@/components/JourneyProvider';
+import { allDocuments, pillarDocuments, pillarLevels, countVerified, levelTotalDocs, levelVerifiedDocs, toDocStatus } from '@/lib/journey-api';
 
 const PILLAR_ICONS = {
   comply: <ShieldOutlinedIcon fontSize="small" />,
@@ -42,13 +41,57 @@ const cardHoverSx = {
 };
 
 export default function OverviewPage() {
+  const { journey, loading } = useJourney();
+
+  if (loading) return <PageLoader />;
+
+  const documents = allDocuments(journey);
+  const totalDocs = documents.length;
+  const verifiedDocs = countVerified(documents);
+  const overallPct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+  const pendingDocs = totalDocs - verifiedDocs;
+
+  // Scoped to the comply pillar specifically, not "last unlocked across every
+  // pillar" — scale/lead each always unlock their own first level too (an
+  // upgrade-gated entry point, not real progress), so that would surface e.g.
+  // "L4" the moment a company exists, regardless of actual document
+  // progress. Comply is the one pathway every company is actually on before
+  // upgrading, matching the "current stage" section below.
+  const complyLevels = pillarLevels(journey, 'comply');
+  const unlockedComplyLevels = complyLevels.filter((level) => level.unlocked);
+  const currentLevel = unlockedComplyLevels.length > 0 ? unlockedComplyLevels[unlockedComplyLevels.length - 1].code : 'L1';
+
+  // The "current stage" section below always shows the comply pillar's
+  // first level — that's the one free pathway every company starts on.
+  const complyLevel = complyLevels[0] ?? null;
+  const complyTotalDocs = complyLevel ? levelTotalDocs(complyLevel) : 0;
+  const complyVerifiedDocs = complyLevel ? levelVerifiedDocs(complyLevel) : 0;
+
+  // Real tax-compliance document count, found by milestone name rather than
+  // a hardcoded array index — matches whatever the current level's real
+  // milestone taxonomy actually contains.
+  const taxMilestone = complyLevel?.milestones.find((m) => m.name === 'Tax Compliance') ?? null;
+  const taxDocsPending = taxMilestone ? taxMilestone.documents.filter((doc) => toDocStatus(doc.status) !== 'verified').length : 0;
+
+  // The single next actionable document in the comply level, in milestone
+  // order — replaces a permanently-fixed "Upload MoC Registration" card
+  // with whatever's actually next, and disappears once nothing's pending.
+  const nextDocument = (() => {
+    if (!complyLevel) return null;
+    for (const milestone of complyLevel.milestones) {
+      for (const doc of milestone.documents) {
+        if (toDocStatus(doc.status) !== 'verified') return { doc, milestone };
+      }
+    }
+    return null;
+  })();
+
   return (
     <Box className="flex flex-col gap-6">
-      <TrustJourneyHero overallPct={0} currentLevel="L1" pendingDocs={TOTAL_DOCS} />
+      <TrustJourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
 
-      {/* Three at-a-glance insight cards — same "honest zero" data as
-          everywhere else in the app, not the reference mockup's own
-          placeholder numbers. */}
+      {/* Three at-a-glance insight cards — Audit-Ready reuses the same
+          overallPct as the hero above (one real metric, shown twice). */}
       <Box className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SectionCard sx={cardHoverSx}>
           <Box className="flex items-center gap-2" sx={{ mb: 1 }}>
@@ -60,7 +103,7 @@ export default function OverviewPage() {
           <Box className="flex items-center gap-1.5">
             <WarningAmberOutlinedIcon sx={{ fontSize: '1.125rem', color: 'warning.main' }} />
             <Typography variant="body2" sx={{ fontWeight: 700, color: 'warning.dark' }}>
-              {TAX_COMPLIANCE_DOCS} tax documents pending
+              {taxDocsPending} tax documents pending
             </Typography>
           </Box>
         </SectionCard>
@@ -73,10 +116,10 @@ export default function OverviewPage() {
             </Typography>
           </Box>
           <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
-            <Box sx={{ width: '0%', height: '100%', borderRadius: '4px', bgcolor: 'primary.main' }} />
+            <Box sx={{ width: `${overallPct}%`, height: '100%', borderRadius: '4px', bgcolor: 'primary.main', transition: 'width 0.4s ease' }} />
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
-            0%
+            {overallPct}%
           </Typography>
         </SectionCard>
 
@@ -88,54 +131,79 @@ export default function OverviewPage() {
             </Typography>
           </Box>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            {TOTAL_DOCS} documents need attention
+            {pendingDocs} documents need attention
           </Typography>
         </SectionCard>
       </Box>
 
-      {/* 3 pillars — Comply (free, always unlocked), Scale (pro), Lead (enterprise) */}
+      {/* 3 pillars — Comply (free, always unlocked), Scale (pro), Lead (enterprise).
+          `unlocked` stays tier-gated (pillar.tier === 'free'), not journey
+          progress — real subscription tiers don't exist yet (Package.tier is
+          still missing), so this deliberately isn't wired to `level.unlocked`. */}
       <motion.div variants={cardGridContainer} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {PILLARS.map((pillar) => (
-          <motion.div key={pillar.id} variants={cardGridItem}>
-            <PillarCard pillar={pillar} icon={PILLAR_ICONS[pillar.id]} verifiedDocs={0} unlocked={pillar.tier === 'free'} />
-          </motion.div>
-        ))}
+        {PILLARS.map((pillar) => {
+          const docs = pillarDocuments(journey, pillar.id);
+          return (
+            <motion.div key={pillar.id} variants={cardGridItem}>
+              <PillarCard
+                pillar={pillar}
+                icon={PILLAR_ICONS[pillar.id]}
+                verifiedDocs={countVerified(docs)}
+                totalDocs={docs.length}
+                activeLevelCodes={pillarLevels(journey, pillar.id)
+                  .filter((level) => level.unlocked)
+                  .map((level) => level.code)}
+                unlocked={pillar.tier === 'free'}
+              />
+            </motion.div>
+          );
+        })}
       </motion.div>
 
-      {/* Current stage: L1 · The Launchpad, the only pathway on the free
-          tier — reuses JourneyTree (scoped to just this one level) instead
-          of re-implementing the milestone/document list by hand. */}
-      <SectionCard title="L1 · The Launchpad — Bronze Foundation" subtitle="0/13 verified" sx={cardHoverSx}>
-        <JourneyTree levels={L1} isUnlocked={() => true} />
-        <Box sx={{ mt: 2 }}>
-          <GlowButton href="/journey" size="medium">
-            View All Documents
-          </GlowButton>
-        </Box>
-      </SectionCard>
+      {/* Current stage — the comply pillar's first (and so far only) level,
+          the one free pathway every company starts on. Reuses JourneyTree
+          (scoped to just this one level) instead of re-implementing the
+          milestone/document list by hand. */}
+      {complyLevel && (
+        <SectionCard
+          title={`${complyLevel.code} · ${complyLevel.pathway_name} — ${complyLevel.name}`}
+          subtitle={`${complyVerifiedDocs}/${complyTotalDocs} verified`}
+          sx={cardHoverSx}
+        >
+          <JourneyTree levels={[complyLevel]} isUnlocked={() => true} />
+          <Box sx={{ mt: 2 }}>
+            <GlowButton href="/journey" size="medium">
+              View All Documents
+            </GlowButton>
+          </Box>
+        </SectionCard>
+      )}
 
       {/* Next best action — the single highest-priority thing to do right
           now; differentiated from the softer nudge card below by icon
           weight (solid dark badge here vs. a lighter one there), not a
-          border accent. */}
-      <SectionCard sx={cardHoverSx}>
-        <Box className="flex items-center gap-4">
-          <Box sx={{ width: 40, height: 40, borderRadius: '8px', bgcolor: 'text.primary', color: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <DescriptionOutlinedIcon fontSize="small" />
+          border accent. Disappears once nothing in the comply level is
+          pending, rather than showing stale fixed copy. */}
+      {nextDocument && (
+        <SectionCard sx={cardHoverSx}>
+          <Box className="flex items-center gap-4">
+            <Box sx={{ width: 40, height: 40, borderRadius: '8px', bgcolor: 'text.primary', color: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <DescriptionOutlinedIcon fontSize="small" />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Upload {nextDocument.doc.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Part of the {nextDocument.milestone.name} milestone in {complyLevel?.code} · {complyLevel?.pathway_name}.
+              </Typography>
+            </Box>
+            <GlowButton href="/journey" size="medium">
+              Upload →
+            </GlowButton>
           </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              Upload MoC Registration
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              The first document to verify in L1 · The Launchpad. Required before your company can move to Tax Compliance.
-            </Typography>
-          </Box>
-          <GlowButton href="/journey" size="medium">
-            Upload →
-          </GlowButton>
-        </Box>
-      </SectionCard>
+        </SectionCard>
+      )}
 
       {/* Growth nudge — mirrors the owner concept's ADMIT upsell, which only
           appears after 14 days of zero progress; shown here as a static

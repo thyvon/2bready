@@ -5,6 +5,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from '@/theme';
 import LocaleProvider from '@/components/LocaleProvider';
+import { ToastProvider } from '@/components/ToastProvider';
 import type { Locale } from '@/store/locale.store';
 
 export default function Providers({
@@ -19,7 +20,7 @@ export default function Providers({
       <AppRouterCacheProvider>
         <ThemeProvider theme={theme} defaultMode="system">
           <CssBaseline />
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
       </AppRouterCacheProvider>
     </LocaleProvider>

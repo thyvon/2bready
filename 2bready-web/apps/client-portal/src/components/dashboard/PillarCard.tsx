@@ -5,15 +5,19 @@ import Typography from '@mui/material/Typography';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import type { Pillar, Tier } from '@/lib/journey-data';
-import { TIER_LABELS, activeLevelCodes } from '@/lib/journey-data';
+import { TIER_LABELS } from '@/lib/journey-data';
 import { RadialMeter } from './RadialMeter';
 
 export interface PillarCardProps {
   pillar: Pillar;
   icon: React.ReactNode;
-  /** Verified document count — 0 for every pillar until real progress exists. */
+  /** Real verified document count for this pillar, computed by the caller from the live journey. */
   verifiedDocs: number;
-  /** Free pillar is always unlocked; pro/enterprise pillars are locked until the company upgrades. */
+  /** Real total document count for this pillar — no longer a fixed field on Pillar itself, since it now comes from the live journey, not a hardcoded taxonomy. */
+  totalDocs: number;
+  /** Real unlocked level codes for this pillar (journey progress), computed by the caller — shown as informational text only, not a gate. */
+  activeLevelCodes: string[];
+  /** Free pillar is always unlocked; pro/enterprise pillars are locked until the company upgrades. Deliberately tier-based, not journey-progress-based — Package.tier doesn't exist yet, so this stays the one honest signal available. */
   unlocked: boolean;
 }
 
@@ -36,9 +40,9 @@ const TIER_ACCENT: Record<Tier, string> = {
 // if the app's own dark-mode toggle is ever used — the owner's actual
 // preference is a light interface, this just gives the light card real
 // presence rather than reaching for a dark "black card" look.
-export function PillarCard({ pillar, icon, verifiedDocs, unlocked }: PillarCardProps) {
-  const pct = pillar.totalDocs === 0 ? 0 : Math.round((verifiedDocs / pillar.totalDocs) * 100);
-  const levels = activeLevelCodes(pillar.id).join(' · ');
+export function PillarCard({ pillar, icon, verifiedDocs, totalDocs, activeLevelCodes, unlocked }: PillarCardProps) {
+  const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+  const levels = activeLevelCodes.join(' · ');
   const accent = TIER_ACCENT[pillar.tier];
 
   return (
@@ -133,7 +137,7 @@ export function PillarCard({ pillar, icon, verifiedDocs, unlocked }: PillarCardP
         </Box>
         <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
           <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-            {verifiedDocs}/{pillar.totalDocs}
+            {verifiedDocs}/{totalDocs}
           </Typography>
         </Box>
         <RadialMeter

@@ -9,8 +9,12 @@ export interface CreateApiClientOptions {
 export function createApiClient(options: CreateApiClientOptions): AxiosInstance {
   const api = axios.create({
     baseURL: options.baseURL,
+    // No hardcoded Content-Type here on purpose — axios sets
+    // 'application/json' automatically for plain object payloads, but a
+    // forced default here would stop it from detecting FormData bodies
+    // (file uploads) and setting the required multipart boundary itself,
+    // silently dropping the file server-side ("the file field is required").
     headers: {
-      'Content-Type': 'application/json',
       Accept: 'application/json',
     },
     withCredentials: false,
