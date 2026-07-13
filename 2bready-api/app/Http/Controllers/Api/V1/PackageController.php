@@ -30,7 +30,7 @@ class PackageController extends Controller
     public function publicIndex(Request $request): JsonResponse
     {
         $query = Package::query()
-            ->with('industry')
+            ->with(['industry', 'journeyLevel'])
             ->where('is_active', true)
             ->orderBy('sort_order');
 
@@ -43,7 +43,7 @@ class PackageController extends Controller
     {
         $this->authorize('viewAny', Package::class);
 
-        $query = Package::query()->with('industry')->orderBy('sort_order');
+        $query = Package::query()->with(['industry', 'journeyLevel'])->orderBy('sort_order');
 
         if (! $request->user()->hasAnyRole(['admin', 'staff', 'finance'])) {
             $query->where('is_active', true);

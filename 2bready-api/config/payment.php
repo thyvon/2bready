@@ -16,7 +16,7 @@ return [
     'bank_transfer' => [
         'bank_name' => env('BANK_TRANSFER_BANK_NAME', 'ABA Bank'),
         'account_name' => env('BANK_TRANSFER_ACCOUNT_NAME', '2bReady Co., Ltd.'),
-        'account_number' => env('BANK_TRANSFER_ACCOUNT_NUMBER', ''),
+        'account_number' => env('BANK_TRANSFER_ACCOUNT_NUMBER', '000 123 456'),
     ],
 
     /*

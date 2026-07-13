@@ -14,7 +14,9 @@ class PackageData extends Data
         public readonly ?string $description,
         public readonly int $price_cents,
         public readonly ?string $industry_id = null,
+        public readonly ?string $journey_level_id = null,
         public readonly string $billing_period = 'monthly',
+        public readonly string $tier = 'free',
         public readonly bool $is_active = true,
         public readonly int $sort_order = 0,
     ) {}

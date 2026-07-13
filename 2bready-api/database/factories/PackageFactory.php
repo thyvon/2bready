@@ -22,6 +22,7 @@ class PackageFactory extends Factory
             'description' => fake()->sentence(),
             'price_cents' => fake()->randomElement([9900, 19900, 49900]),
             'billing_period' => 'monthly',
+            'tier' => 'free',
             'is_active' => true,
             'sort_order' => 0,
         ];

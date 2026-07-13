@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Industry\Models\Industry;
+use App\Domain\Journey\Models\JourneyLevel;
+use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Package\Models\Package;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -157,4 +159,57 @@ it('forbids a company_owner from deleting a package', function () {
     $owner = User::factory()->companyOwner()->create();
 
     $this->actingAs($owner)->deleteJson("/api/v1/packages/{$package->id}")->assertForbidden();
+});
+
+// ─── Tier + journey level linkage ───────────────────────────────────────────
+
+it('lets an admin create a package with a tier and journey level', function () {
+    $fnb = Industry::factory()->create(['code' => 'F&B']);
+    $template = JourneyTemplate::factory()->create(['country_code' => 'KH', 'industry_id' => $fnb->id]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L2']);
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->postJson('/api/v1/packages', [
+        'name' => 'Product Excellence',
+        'price_cents' => 4900,
+        'tier' => 'pro',
+        'journey_level_id' => $level->id,
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.tier', 'pro')
+        ->assertJsonPath('data.journey_level_id', $level->id);
+});
+
+it('rejects a package with an unknown journey_level_id', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/packages', [
+        'name' => 'Growth',
+        'price_cents' => 19900,
+        'journey_level_id' => 'not-a-real-id',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['journey_level_id']);
+});
+
+it('rejects a package with an invalid tier', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/packages', [
+        'name' => 'Growth',
+        'price_cents' => 19900,
+        'tier' => 'gold',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['tier']);
+});
+
+it('nests the real journey level code in the public pricing list', function () {
+    $fnb = Industry::factory()->create(['code' => 'F&B']);
+    $template = JourneyTemplate::factory()->create(['country_code' => 'KH', 'industry_id' => $fnb->id]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1']);
+    Package::factory()->create(['name' => 'Compliance Readiness', 'tier' => 'free', 'journey_level_id' => $level->id]);
+
+    $response = $this->getJson('/api/v1/pricing');
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.tier', 'free')
+        ->assertJsonPath('data.0.journey_level_code', 'L1');
 });

@@ -17,7 +17,9 @@ class UpdatePackageRequest extends FormRequest
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'price_cents' => ['sometimes', 'integer', 'min:0'],
             'industry_id' => ['sometimes', 'nullable', 'string', 'exists:industries,id'],
+            'journey_level_id' => ['sometimes', 'nullable', 'string', 'exists:journey_levels,id'],
             'billing_period' => ['sometimes', 'string', 'in:monthly,yearly,one_time'],
+            'tier' => ['sometimes', 'string', 'in:free,pro,enterprise'],
             'is_active' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];

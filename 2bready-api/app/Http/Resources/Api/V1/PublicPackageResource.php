@@ -27,7 +27,9 @@ class PublicPackageResource extends JsonResource
             'description' => $this->description,
             'price_cents' => $this->price_cents,
             'industry_code' => $this->whenLoaded('industry', fn () => $this->industry?->code),
+            'journey_level_code' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->code),
             'billing_period' => $this->billing_period,
+            'tier' => $this->tier,
             'sort_order' => $this->sort_order,
         ];
     }
