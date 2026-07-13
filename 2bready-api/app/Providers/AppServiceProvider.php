@@ -30,6 +30,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -48,6 +49,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(! $this->app->isProduction());
         JsonResource::withoutWrapping();
+
+        // TLS terminates upstream (Cloudflare Tunnel/aaPanel) — this container's nginx
+        // only ever sees plain HTTP, so generated URLs (signed document preview links,
+        // email verification, etc.) would default to http:// and get blocked as mixed
+        // content on the https:// frontend without this.
+        if ($this->app->isProduction()) {
+            URL::forceScheme('https');
+        }
 
         Gate::policy(Company::class, CompanyPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);
