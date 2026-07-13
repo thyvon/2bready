@@ -109,6 +109,7 @@ export default function AdminCompaniesPage() {
           rows={companies}
           getRowId={(c) => c.id}
           loading={loading}
+          onRowClick={(c) => router.push(`/admin/companies/${c.id}/journey`)}
           emptyTitle={t('admin.no_companies')}
           emptyDescription={t('admin.get_started')}
           emptyAction={

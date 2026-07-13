@@ -12,6 +12,7 @@
 2bready-api/bootstrap/cache/*
 2bready-api/public/hot
 2bready-api/public/storage
+2bready-api/api.json
 
 # Next.js (2bready-web)
 2bready-web/.env.local
@@ -33,6 +34,9 @@ Thumbs.db
 *.swp
 *.swo
 logfile
+
+# Claude Code local settings
+.claude/
 
 2bready-web/next-env.d.ts
 2bready-web/tsconfig.tsbuildinfo
