@@ -6,8 +6,14 @@ namespace App\Providers;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Company\Policies\CompanyPolicy;
+use App\Domain\Document\Events\DocumentVerified;
+use App\Domain\Document\Listeners\CompleteMilestoneOnDocumentVerified;
+use App\Domain\Document\Models\Document;
+use App\Domain\Document\Policies\DocumentPolicy;
 use App\Domain\Industry\Models\Industry;
 use App\Domain\Industry\Policies\IndustryPolicy;
+use App\Domain\Journey\Models\Journey;
+use App\Domain\Journey\Policies\JourneyPolicy;
 use App\Domain\Package\Models\Lead;
 use App\Domain\Package\Models\Package;
 use App\Domain\Package\Policies\LeadPolicy;
@@ -21,6 +27,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -43,11 +50,15 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         Gate::policy(Company::class, CompanyPolicy::class);
+        Gate::policy(Document::class, DocumentPolicy::class);
         Gate::policy(Industry::class, IndustryPolicy::class);
+        Gate::policy(Journey::class, JourneyPolicy::class);
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(Subscription::class, SubscriptionPolicy::class);
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(Lead::class, LeadPolicy::class);
+
+        Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
 
         // Keyed by email+IP so an attacker can't route around the limit from multiple
         // IPs against a single account, nor mass-guess many accounts from one IP.
