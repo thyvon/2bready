@@ -13,17 +13,12 @@ import MuiLink from '@mui/material/Link';
 import { GlowButton } from '@2bready/ui-core';
 import { getApiError } from '@2bready/api-client';
 import { BrandMark } from '@/components/layout/BrandMark';
+import AuroraBackground from '@/components/layout/AuroraBackground';
 import { registerSchema, registerDefaults, type RegisterInput } from '@/lib/register-schema';
 import { registerOwner } from '@/lib/auth-api';
 import { useAuthStore } from '@/store/auth.store';
 import { useLocale } from '@/components/LocaleProvider';
 
-// Standalone account-creation step, deliberately separate from the company
-// setup wizard at /onboarding — the backend lets a company_owner register
-// more than one company over time (RegisterOwnCompanyAction, §0.7 of the MVP
-// proposal), so "create my account" and "create a company" have to stay two
-// independently reusable steps, not one combined form. See onboarding/page.tsx
-// for what happens after this succeeds.
 export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -54,125 +49,174 @@ export default function RegisterPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        position: 'relative',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        px: 2,
-        py: 6,
+        p: { xs: 2, md: 4 },
         bgcolor: 'background.default',
-        overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: 900,
-          height: 900,
-          transform: 'translate(-50%, -50%)',
-          background: 'radial-gradient(circle, color-mix(in srgb, var(--mui-palette-primary-main) 8%, transparent) 0%, transparent 70%)',
-          pointerEvents: 'none',
+          width: '100%',
+          maxWidth: 1040,
+          minHeight: { xs: 'auto', md: 620 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          borderRadius: '24px',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 24px 64px -16px rgba(0,0,0,0.35)',
         }}
-      />
-
-      <Box sx={{ width: '100%', maxWidth: 420, position: 'relative' }}>
-        <Box className="flex flex-col items-center" sx={{ mb: 4, textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '16px',
-              bgcolor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              boxShadow:
-                '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent)',
-            }}
-          >
-            <BrandMark size={28} />
-          </Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mt: 2.5 }}>
-            Create your account
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 340 }}>
-            Then set up your company profile to enter your Trust Journey.
-          </Typography>
-        </Box>
-
+      >
+        {/* Left: brand / aurora panel — desktop only */}
         <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
           sx={{
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: '16px',
-            bgcolor: 'background.paper',
-            boxShadow: '0 12px 40px -12px rgba(0, 0, 0, 0.12)',
-            p: { xs: 3, sm: 4 },
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2.5,
+            display: { xs: 'none', md: 'flex' },
+            position: 'relative',
+            overflow: 'hidden',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: '#050810',
           }}
         >
-          {serverError && <Alert severity="error">{serverError}</Alert>}
+          <AuroraBackground />
+          <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', px: 6, maxWidth: 380 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                mx: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '16px',
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow:
+                  '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent)',
+                mb: 3,
+              }}
+            >
+              <BrandMark size={28} />
+            </Box>
+            <Typography
+              sx={{
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: 'text.secondary',
+                mb: 2,
+              }}
+            >
+              Comply. Scale. Lead.
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 2, color: '#fff' }}>
+              The Digital Trust Engine for ASEAN.
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              Join ASEAN SMEs building verified trust with customers, banks, and investors.
+            </Typography>
+          </Box>
+        </Box>
 
-          <TextField
-            label="Your Name"
-            required
-            autoFocus
-            fullWidth
-            error={!!errors.name}
-            helperText={errors.name?.message}
-            {...register('name')}
-          />
-          <TextField
-            label="Email"
-            type="email"
-            required
-            fullWidth
-            autoComplete="email"
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            {...register('email')}
-          />
-          <TextField
-            label="Password"
-            type="password"
-            required
-            fullWidth
-            autoComplete="new-password"
-            error={!!errors.password}
-            helperText={errors.password?.message ?? 'At least 8 characters, with upper, lower, and a number.'}
-            {...register('password')}
-          />
-          <TextField
-            label="Confirm Password"
-            type="password"
-            required
-            fullWidth
-            autoComplete="new-password"
-            error={!!errors.password_confirmation}
-            helperText={errors.password_confirmation?.message}
-            {...register('password_confirmation')}
-          />
+        {/* Right: form panel */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: { xs: 3, sm: 5, md: 6 },
+            py: { xs: 5, md: 6 },
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Box sx={{ width: '100%', maxWidth: 360 }}>
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+              <BrandMark size={28} />
+            </Box>
 
-          <GlowButton type="submit" size="medium" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating account…' : 'Continue'}
-          </GlowButton>
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
+                Create your account
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Start your Trust Journey by creating a secure account and building your organization&apos;s digital trust profile.
+              </Typography>
+            </Box>
 
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Already have an account?{' '}
-            <MuiLink component={Link} href="/login" underline="hover" sx={{ fontWeight: 500, color: 'text.primary' }}>
-              Sign in
-            </MuiLink>
-          </Typography>
+            <Box
+              component="form"
+              onSubmit={handleSubmit(onSubmit)}
+              noValidate
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+            >
+              {serverError && <Alert severity="error">{serverError}</Alert>}
+
+              <TextField
+                label="Full Name"
+                required
+                autoFocus
+                fullWidth
+                placeholder="John Smith"
+                error={!!errors.name}
+                helperText={errors.name?.message}
+                {...register('name')}
+              />
+              <TextField
+                label="Business Email"
+                type="email"
+                required
+                fullWidth
+                autoComplete="email"
+                placeholder="name@company.com"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                {...register('email')}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                required
+                fullWidth
+                autoComplete="new-password"
+                placeholder="Enter your password"
+                error={!!errors.password}
+                helperText={errors.password?.message ?? 'Use at least 8 characters with uppercase, lowercase, and a number.'}
+                {...register('password')}
+              />
+              <TextField
+                label="Confirm Password"
+                type="password"
+                required
+                fullWidth
+                autoComplete="new-password"
+                placeholder="Confirm your password"
+                error={!!errors.password_confirmation}
+                helperText={errors.password_confirmation?.message}
+                {...register('password_confirmation')}
+              />
+
+              <GlowButton type="submit" size="medium" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating account…' : 'Create Account'}
+              </GlowButton>
+
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                Already have an account?{' '}
+                <MuiLink component={Link} href="/login" underline="hover" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                  Sign In
+                </MuiLink>
+              </Typography>
+            </Box>
+
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 3 }}>
+              Your information is encrypted and securely protected.
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </Box>

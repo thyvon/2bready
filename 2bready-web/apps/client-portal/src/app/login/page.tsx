@@ -13,6 +13,7 @@ import MuiLink from '@mui/material/Link';
 import { GlowButton } from '@2bready/ui-core';
 import { getApiError } from '@2bready/api-client';
 import { BrandMark } from '@/components/layout/BrandMark';
+import AuroraBackground from '@/components/layout/AuroraBackground';
 import { loginSchema, loginDefaults, type LoginInput } from '@/lib/login-schema';
 import { login } from '@/lib/auth-api';
 import { useAuthStore } from '@/store/auth.store';
@@ -36,8 +37,6 @@ export default function LoginPage() {
     try {
       const { user, token } = await login(data);
       setAuth(user, token);
-      // A returning owner with no company yet (e.g. they left mid-onboarding)
-      // goes back to finish that instead of into a portal with nothing to show.
       router.push(user.current_company_id ? '/' : '/onboarding');
     } catch (err) {
       setServerError(getApiError(err).message);
@@ -48,107 +47,167 @@ export default function LoginPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        position: 'relative',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        px: 2,
-        py: 6,
+        p: { xs: 2, md: 4 },
         bgcolor: 'background.default',
-        overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: 900,
-          height: 900,
-          transform: 'translate(-50%, -50%)',
-          background: 'radial-gradient(circle, color-mix(in srgb, var(--mui-palette-primary-main) 8%, transparent) 0%, transparent 70%)',
-          pointerEvents: 'none',
+          width: '100%',
+          maxWidth: 1040,
+          minHeight: { xs: 'auto', md: 620 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          borderRadius: '24px',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 24px 64px -16px rgba(0,0,0,0.35)',
         }}
-      />
-
-      <Box sx={{ width: '100%', maxWidth: 420, position: 'relative' }}>
-        <Box className="flex flex-col items-center" sx={{ mb: 4, textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '16px',
-              bgcolor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              boxShadow:
-                '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent)',
-            }}
-          >
-            <BrandMark size={28} />
-          </Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mt: 2.5 }}>
-            Welcome back
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 340 }}>
-            Sign in to continue your Trust Journey.
-          </Typography>
-        </Box>
-
+      >
+        {/* Left: brand / aurora panel — desktop only */}
         <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
           sx={{
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: '16px',
-            bgcolor: 'background.paper',
-            boxShadow: '0 12px 40px -12px rgba(0, 0, 0, 0.12)',
-            p: { xs: 3, sm: 4 },
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2.5,
+            display: { xs: 'none', md: 'flex' },
+            position: 'relative',
+            overflow: 'hidden',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: '#050810',
           }}
         >
-          {serverError && <Alert severity="error">{serverError}</Alert>}
+          <AuroraBackground />
+          <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', px: 6, maxWidth: 380 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                mx: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '16px',
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow:
+                  '0 0 0 1px color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--mui-palette-primary-main) 35%, transparent)',
+                mb: 3,
+              }}
+            >
+              <BrandMark size={28} />
+            </Box>
+            <Typography
+              sx={{
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: 'text.secondary',
+                mb: 2,
+              }}
+            >
+              Comply. Scale. Lead.
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 2, color: '#fff' }}>
+              The Digital Trust Engine for ASEAN.
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              Continue building verifiable trust with customers, banks, and investors.
+            </Typography>
+          </Box>
+        </Box>
 
-          <TextField
-            label="Email"
-            type="email"
-            required
-            autoFocus
-            fullWidth
-            autoComplete="email"
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            {...register('email')}
-          />
-          <TextField
-            label="Password"
-            type="password"
-            required
-            fullWidth
-            autoComplete="current-password"
-            error={!!errors.password}
-            helperText={errors.password?.message}
-            {...register('password')}
-          />
+        {/* Right: form panel */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: { xs: 3, sm: 5, md: 6 },
+            py: { xs: 5, md: 6 },
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Box sx={{ width: '100%', maxWidth: 360 }}>
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+              <BrandMark size={28} />
+            </Box>
 
-          <GlowButton type="submit" size="medium" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in…' : 'Sign In'}
-          </GlowButton>
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
+                Welcome back
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Continue your Trust Journey by securely accessing your 2bReady workspace.
+              </Typography>
+            </Box>
 
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Don&apos;t have an account?{' '}
-            <MuiLink component={Link} href="/register" underline="hover" sx={{ fontWeight: 500, color: 'text.primary' }}>
-              Sign up
-            </MuiLink>
-          </Typography>
+            <Box
+              component="form"
+              onSubmit={handleSubmit(onSubmit)}
+              noValidate
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+            >
+              {serverError && <Alert severity="error">{serverError}</Alert>}
+
+              <TextField
+                label="Business Email"
+                type="email"
+                required
+                autoFocus
+                fullWidth
+                autoComplete="email"
+                placeholder="name@company.com"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                {...register('email')}
+              />
+              <Box>
+                <TextField
+                  label="Password"
+                  type="password"
+                  required
+                  fullWidth
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  {...register('password')}
+                />
+                <Box sx={{ textAlign: 'right', mt: 0.75 }}>
+                  <MuiLink
+                    component={Link}
+                    href="/forgot-password"
+                    underline="hover"
+                    variant="body2"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    Forgot your password?
+                  </MuiLink>
+                </Box>
+              </Box>
+
+              <GlowButton type="submit" size="medium" disabled={isSubmitting}>
+                {isSubmitting ? 'Signing in…' : 'Sign In'}
+              </GlowButton>
+
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                Don&apos;t have an account?{' '}
+                <MuiLink component={Link} href="/register" underline="hover" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                  Create one
+                </MuiLink>
+              </Typography>
+            </Box>
+
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 3 }}>
+              Your information is encrypted and securely protected.
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </Box>
