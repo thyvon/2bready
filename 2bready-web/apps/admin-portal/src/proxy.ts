@@ -18,7 +18,7 @@ const REDIRECT_IF_AUTHENTICATED_PATHS = [
 // that let them finish logging in, trapping them in a redirect loop.
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, basePath } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
   // auth_full is set only once 2FA (or a no-2FA login) fully completes — see
   // syncTokenCookie in auth.store.ts. auth_token alone is not enough here: a
@@ -27,22 +27,48 @@ export function proxy(request: NextRequest) {
   // can't actually render (isAuthenticated is still false there), looping.
   const isFullyAuthenticated = request.cookies.get('auth_full')?.value === '1';
 
+  // `new URL(path, request.url)` does NOT reapply `basePath` (production
+  // only — see next.config.ts) the way `next/link`/`router.push()` do from
+  // client components — middleware sits below that layer. Without manually
+  // prepending it here, every redirect below sent a browser to a bare
+  // `/login`/`/dashboard` at the domain root, which nginx routes to the
+  // marketing site (404), not admin-portal — a real, live production bug
+  // (masked day-to-day because normal in-app navigation never hits these
+  // redirects, only a direct/refreshed visit to a protected URL while
+  // logged out does).
+  const redirectTo = (path: string) => NextResponse.redirect(new URL(`${basePath}${path}`, request.url));
+
   const redirectIfAuthenticated = REDIRECT_IF_AUTHENTICATED_PATHS.some((p) => pathname.startsWith(p));
   const isDashboard = ['/dashboard', '/admin', '/auditor'].some((p) => pathname.startsWith(p));
 
+  // `basePath` is stripped from `pathname` before middleware ever sees it,
+  // so the app's true root URL (bare "/admin" in production, "/" in local
+  // dev where basePath is unset) arrives here as "/" — matching none of the
+  // prefixes above and falling through to a real 404, since no page.tsx
+  // exists at the literal root.
+  if (pathname === '/') {
+    return redirectTo(isFullyAuthenticated ? '/dashboard' : '/login');
+  }
+
   // Redirect fully-authenticated users away from auth pages
   if (redirectIfAuthenticated && isFullyAuthenticated) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return redirectTo('/dashboard');
   }
 
   // Redirect unauthenticated users away from protected pages
   if (isDashboard && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return redirectTo('/login');
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public).*)'],
+  // The bare "/" entry matters on its own: a request for exactly the app's
+  // basePath with nothing after it (bare "/admin" in production) doesn't
+  // match the catch-all pattern below — Next requires at least a leading
+  // "/" in what's left after basePath-stripping, and this case strips to
+  // nothing at all — so without this explicit entry the middleware never
+  // runs for it and it falls through to a real 404 (no page.tsx at "/").
+  matcher: ['/', '/((?!api|_next/static|_next/image|favicon.ico|public).*)'],
 };
