@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property BillingPeriod $billing_period
  * @property Tier $tier
  * @property bool $is_active
+ * @property-read JourneyLevel|null $journeyLevel
  *
  * @use HasFactory<PackageFactory>
  */

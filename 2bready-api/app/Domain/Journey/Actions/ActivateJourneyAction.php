@@ -11,10 +11,11 @@ use App\Domain\Journey\Models\JourneyTemplate;
 
 /**
  * Fired when a company is created — matches its (country_code, industry_id)
- * against a JourneyTemplate and instantiates the company's Journey. No
- * package-tier gating yet ("journey activation by plan" per the proposal) —
- * Package doesn't have a tier column to gate against yet, so every company
- * gets its full matching journey unconditionally for now.
+ * against a JourneyTemplate and instantiates the company's Journey. Every
+ * matching company gets a Journey row unconditionally; "journey activation
+ * by plan" (per the proposal) is enforced one layer up, in
+ * JourneyProgressService::unlockedLevelCodes(), which caps which levels
+ * actually surface as unlocked based on the company's active subscription.
  */
 class ActivateJourneyAction
 {

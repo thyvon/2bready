@@ -12,6 +12,9 @@ use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Journey\Models\Milestone;
 use App\Domain\Journey\Models\MilestoneCompletion;
+use App\Domain\Package\Enums\Tier;
+use App\Domain\Package\Models\Package;
+use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,6 +60,69 @@ it('lets a company_owner view their own journey', function () {
 
 it('requires authentication to view a journey', function () {
     $this->getJson('/api/v1/journey')->assertUnauthorized();
+});
+
+// ─── Plan-based unlocking (journey activation by plan) ──────────────────────
+
+it('caps unlocked levels to the industry\'s free package when the company has no active subscription', function () {
+    Package::factory()->create([
+        'industry_id' => $this->industry->id,
+        'tier' => Tier::Free,
+        'journey_level_id' => $this->l1->id,
+    ]);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    // Without this Free package, L2 would already unlock as the first level
+    // of its own pillar (see the unconfigured-industry test above) — the
+    // plan cap is what pins it back to just L1 here.
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    expect($levels['L1']['unlocked'])->toBeTrue();
+    expect($levels['L2']['unlocked'])->toBeFalse();
+});
+
+it('unlocks levels up to what the company\'s active subscription package entitles them to', function () {
+    $package = Package::factory()->create([
+        'industry_id' => $this->industry->id,
+        'tier' => Tier::Pro,
+        'journey_level_id' => $this->l2->id,
+    ]);
+    $subscription = Subscription::factory()->active()->create([
+        'company_id' => $this->company->id,
+        'package_id' => $package->id,
+    ]);
+    $this->company->update(['active_subscription_id' => $subscription->id]);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    expect($levels['L1']['unlocked'])->toBeTrue();
+    expect($levels['L2']['unlocked'])->toBeTrue();
+    expect($levels['L3']['unlocked'])->toBeFalse();
+});
+
+it('still requires milestone completion within the subscription-capped range', function () {
+    $package = Package::factory()->create([
+        'industry_id' => $this->industry->id,
+        'tier' => Tier::Pro,
+        'journey_level_id' => $this->l3->id,
+    ]);
+    $subscription = Subscription::factory()->active()->create([
+        'company_id' => $this->company->id,
+        'package_id' => $package->id,
+    ]);
+    $this->company->update(['active_subscription_id' => $subscription->id]);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+
+    // Subscription entitles the company up to L3, but L2's milestones were
+    // never completed — the milestone chain must still gate L3.
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    expect($levels['L2']['unlocked'])->toBeTrue();
+    expect($levels['L3']['unlocked'])->toBeFalse();
 });
 
 it('returns 404 when the current company has no journey yet', function () {
