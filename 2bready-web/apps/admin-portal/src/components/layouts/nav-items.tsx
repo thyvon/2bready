@@ -33,17 +33,24 @@ const AUDITOR_NAV: NavItemDef[] = [
   { labelKey: 'nav.support',   href: '/auditor/support', icon: <SupportIcon fontSize="small" /> },
 ];
 
+// Hrefs here are internal app routes (relative to this app's own root), NOT
+// external URLs — next/link and router.push() both auto-prepend `basePath`
+// (/admin in production, see next.config.ts) when resolving them. Writing
+// "/admin" as a literal prefix in any of these was the actual bug behind the
+// /admin/admin/* doubling: it manually duplicated what basePath already
+// adds. The route folder structure under src/app/(dashboard)/ was renamed
+// to match (no more redundant "admin" segment) — keep the two in sync.
 const ADMIN_NAV: NavItemDef[] = [
-  { labelKey: 'nav.dashboard',  href: '/admin',              icon: <DashboardIcon fontSize="small" /> },
-  { labelKey: 'nav.companies',  href: '/admin/companies',    icon: <BusinessIcon fontSize="small" /> },
-  { labelKey: 'nav.users',      href: '/admin/users',        icon: <PeopleIcon fontSize="small" /> },
-  { labelKey: 'nav.packages',   href: '/admin/packages',     icon: <PaymentIcon fontSize="small" /> },
-  { labelKey: 'nav.payments',   href: '/admin/payments',     icon: <ReceiptLongIcon fontSize="small" /> },
-  { labelKey: 'nav.audits',     href: '/admin/audits',       icon: <AssignmentIcon fontSize="small" /> },
-  { labelKey: 'nav.documents',  href: '/admin/documents',    icon: <DescriptionIcon fontSize="small" /> },
-  { labelKey: 'nav.journey',    href: '/admin/journey',      icon: <RouteIcon fontSize="small" /> },
-  { labelKey: 'nav.support',    href: '/admin/support',      icon: <SupportIcon fontSize="small" /> },
-  { labelKey: 'nav.settings',   href: '/admin/settings',     icon: <SettingsIcon fontSize="small" /> },
+  { labelKey: 'nav.dashboard',  href: '/',            icon: <DashboardIcon fontSize="small" /> },
+  { labelKey: 'nav.companies',  href: '/companies',   icon: <BusinessIcon fontSize="small" /> },
+  { labelKey: 'nav.users',      href: '/users',       icon: <PeopleIcon fontSize="small" /> },
+  { labelKey: 'nav.packages',   href: '/packages',    icon: <PaymentIcon fontSize="small" /> },
+  { labelKey: 'nav.payments',   href: '/payments',    icon: <ReceiptLongIcon fontSize="small" /> },
+  { labelKey: 'nav.audits',     href: '/audits',      icon: <AssignmentIcon fontSize="small" /> },
+  { labelKey: 'nav.documents',  href: '/documents',   icon: <DescriptionIcon fontSize="small" /> },
+  { labelKey: 'nav.journey',    href: '/journey',     icon: <RouteIcon fontSize="small" /> },
+  { labelKey: 'nav.support',    href: '/support',     icon: <SupportIcon fontSize="small" /> },
+  { labelKey: 'nav.settings',   href: '/settings',    icon: <SettingsIcon fontSize="small" /> },
 ];
 
 // This app is back-office only (admin/staff/finance/auditor) — company_owner/
@@ -64,6 +71,6 @@ export function useNavItems(): NavItem[] {
 }
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {
-  const isSectionRoot = item.href === '/admin' || item.href === '/auditor';
+  const isSectionRoot = item.href === '/' || item.href === '/auditor';
   return pathname === item.href || (!isSectionRoot && pathname.startsWith(item.href));
 }

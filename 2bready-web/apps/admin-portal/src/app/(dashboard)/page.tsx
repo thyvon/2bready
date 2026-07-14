@@ -8,7 +8,7 @@ export default function AdminIndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/admin/companies');
+    router.replace('/companies');
   }, [router]);
 
   return null;

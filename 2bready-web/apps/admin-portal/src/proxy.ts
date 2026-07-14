@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// The only routes reachable without a session. Everything else in this app
+// is protected by default (see isPublicPath below) — deny-by-default rather
+// than an allow-list of protected prefixes, which is what silently broke the
+// moment the admin/* route folders were renamed (removing the shared
+// "/admin" prefix those protected-path checks used to key off). Deny-by-
+// default means a newly added page under (dashboard)/ is protected
+// automatically, with nothing to remember to add here.
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/verify-email', '/totp'];
+
 // Pages that make no sense to show someone who already holds a fully-authenticated
 // session — redirect them to the dashboard instead. No /register here — this app
 // is back-office only (admin/staff/finance/auditor); company signup happens in
@@ -38,25 +47,20 @@ export function proxy(request: NextRequest) {
   // logged out does).
   const redirectTo = (path: string) => NextResponse.redirect(new URL(`${basePath}${path}`, request.url));
 
+  const isPublicPath = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const redirectIfAuthenticated = REDIRECT_IF_AUTHENTICATED_PATHS.some((p) => pathname.startsWith(p));
-  const isDashboard = ['/dashboard', '/admin', '/auditor'].some((p) => pathname.startsWith(p));
-
-  // `basePath` is stripped from `pathname` before middleware ever sees it,
-  // so the app's true root URL (bare "/admin" in production, "/" in local
-  // dev where basePath is unset) arrives here as "/" — matching none of the
-  // prefixes above and falling through to a real 404, since no page.tsx
-  // exists at the literal root.
-  if (pathname === '/') {
-    return redirectTo(isFullyAuthenticated ? '/dashboard' : '/login');
-  }
 
   // Redirect fully-authenticated users away from auth pages
   if (redirectIfAuthenticated && isFullyAuthenticated) {
     return redirectTo('/dashboard');
   }
 
-  // Redirect unauthenticated users away from protected pages
-  if (isDashboard && !token) {
+  // Redirect unauthenticated users away from every protected page, including
+  // the app's own true root — `basePath` is stripped from `pathname` before
+  // middleware ever sees it, so a bare visit to the app's basePath in
+  // production (or "/" in local dev, where basePath is unset) arrives here
+  // as exactly "/", which is protected like any other page under (dashboard)/.
+  if (!isPublicPath && !token) {
     return redirectTo('/login');
   }
 

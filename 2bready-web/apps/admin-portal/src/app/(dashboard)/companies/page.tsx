@@ -69,7 +69,7 @@ export default function AdminCompaniesPage() {
       <PageHeader
         title={t('admin.companies_title')}
         action={
-          <Button component={Link} href="/admin/companies/new" variant="contained" startIcon={<AddIcon />}>
+          <Button component={Link} href="/companies/new" variant="contained" startIcon={<AddIcon />}>
             {t('admin.new_company')}
           </Button>
         }
@@ -109,11 +109,11 @@ export default function AdminCompaniesPage() {
           rows={companies}
           getRowId={(c) => c.id}
           loading={loading}
-          onRowClick={(c) => router.push(`/admin/companies/${c.id}/journey`)}
+          onRowClick={(c) => router.push(`/companies/${c.id}/journey`)}
           emptyTitle={t('admin.no_companies')}
           emptyDescription={t('admin.get_started')}
           emptyAction={
-            <Button component={Link} href="/admin/companies/new" variant="outlined" startIcon={<AddIcon />}>
+            <Button component={Link} href="/companies/new" variant="outlined" startIcon={<AddIcon />}>
               {t('admin.new_company')}
             </Button>
           }

@@ -33,7 +33,7 @@ export default function NewCompanyPage() {
       default_locale: data.default_locale,
     });
     toast.success(`${company.name} was created.`);
-    router.push('/admin/companies');
+    router.push('/companies');
   };
 
   return (

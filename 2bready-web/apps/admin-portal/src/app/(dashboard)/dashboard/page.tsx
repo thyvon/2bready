@@ -16,7 +16,7 @@ export default function DashboardRedirectPage() {
 
   useEffect(() => {
     if (hasAnyRole(['admin', 'staff', 'finance'])) {
-      router.replace('/admin');
+      router.replace('/');
     } else if (hasAnyRole(['auditor'])) {
       router.replace('/auditor');
     } else {
