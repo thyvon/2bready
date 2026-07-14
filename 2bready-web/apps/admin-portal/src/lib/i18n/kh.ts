@@ -199,6 +199,19 @@ const kh: Record<keyof typeof en, string> = {
   'admin.payment_rejected': 'ការទូទាត់ត្រូវបានបដិសេធ។',
   'admin.no_payments': 'គ្មានការទូទាត់នៅទីនេះ',
   'admin.no_payments_desc': 'ការទូទាត់ដែលត្រូវនឹងតម្រងនេះនឹងបង្ហាញនៅទីនេះ។',
+  'admin.documents_title': 'ឯកសារ',
+  'admin.company_col': 'ក្រុមហ៊ុន',
+  'admin.document_col': 'ឯកសារ',
+  'admin.uploaded_col': 'បានផ្ទុកឡើង',
+  'admin.preview': 'មើលជាមុន',
+  'admin.verify': 'ផ្ទៀងផ្ទាត់',
+  'admin.reject_document_title': 'បដិសេធឯកសារ',
+  'admin.reject_document_reason_label': 'មូលហេតុ',
+  'admin.reject_document_reason_placeholder': 'ពន្យល់ពីបញ្ហា ដើម្បីឱ្យក្រុមហ៊ុនដឹងអ្វីត្រូវកែតម្រូវ។',
+  'admin.document_verified': 'ឯកសារត្រូវបានផ្ទៀងផ្ទាត់។',
+  'admin.document_rejected': 'ឯកសារត្រូវបានបដិសេធ។',
+  'admin.no_documents': 'គ្មានឯកសារនៅទីនេះ',
+  'admin.no_documents_desc': 'ឯកសារដែលត្រូវនឹងតម្រងនេះនឹងបង្ហាញនៅទីនេះ។',
 
   // ─── Nav menu dialog ─────────────────────────────────────────────────────
   'menu.title': 'ម៉ឺនុយ',
@@ -283,6 +296,10 @@ const kh: Record<keyof typeof en, string> = {
   'status.inactive': 'អសកម្ម',
   'status.awaiting_confirmation': 'កំពុងរង់ចាំការបញ្ជាក់',
   'status.confirmed': 'បានបញ្ជាក់',
+  'status.pending_scan': 'កំពុងស្កេន',
+  'status.scan_failed': 'ការស្កេនបរាជ័យ',
+  'status.review': 'រង់ចាំពិនិត្យ',
+  'status.verified': 'បានផ្ទៀងផ្ទាត់',
 };
 
 export default kh;

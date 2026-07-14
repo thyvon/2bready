@@ -195,6 +195,19 @@ const en = {
   'admin.payment_rejected': 'Payment rejected.',
   'admin.no_payments': 'No payments here',
   'admin.no_payments_desc': 'Payments matching this filter will appear here.',
+  'admin.documents_title': 'Documents',
+  'admin.company_col': 'Company',
+  'admin.document_col': 'Document',
+  'admin.uploaded_col': 'Uploaded',
+  'admin.preview': 'Preview',
+  'admin.verify': 'Verify',
+  'admin.reject_document_title': 'Reject document',
+  'admin.reject_document_reason_label': 'Reason',
+  'admin.reject_document_reason_placeholder': 'Explain what\'s wrong so the company knows what to fix.',
+  'admin.document_verified': 'Document verified.',
+  'admin.document_rejected': 'Document rejected.',
+  'admin.no_documents': 'No documents here',
+  'admin.no_documents_desc': 'Documents matching this filter will appear here.',
 
   // ─── Nav menu dialog ─────────────────────────────────────────────────────
   'menu.title': 'Menu',
@@ -279,6 +292,10 @@ const en = {
   'status.inactive': 'Inactive',
   'status.awaiting_confirmation': 'Awaiting Confirmation',
   'status.confirmed': 'Confirmed',
+  'status.pending_scan': 'Scanning',
+  'status.scan_failed': 'Scan Failed',
+  'status.review': 'Pending Review',
+  'status.verified': 'Verified',
 } as const;
 
 export default en;

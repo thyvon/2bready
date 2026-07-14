@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Domain\Company\Models\Company;
 use App\Domain\Document\Models\Document;
+use App\Domain\Document\Models\DocumentTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -31,6 +33,21 @@ class DocumentResource extends JsonResource
             'verified_at' => $this->verified_at,
             'expires_at' => $this->expires_at,
             'created_at' => $this->created_at,
+            // Only present when eager-loaded (the back-office review queue) —
+            // a company viewing its own upload already knows which company
+            // and template it is, so this stays absent from that response.
+            'company' => $this->whenLoaded('company', function () {
+                /** @var Company $company */
+                $company = $this->company;
+
+                return ['id' => $company->id, 'name' => $company->name];
+            }),
+            'document_template' => $this->whenLoaded('documentTemplate', function () {
+                /** @var DocumentTemplate $template */
+                $template = $this->documentTemplate;
+
+                return ['id' => $template->id, 'name' => $template->name];
+            }),
         ];
     }
 }

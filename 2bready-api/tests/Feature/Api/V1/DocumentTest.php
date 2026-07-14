@@ -30,6 +30,52 @@ beforeEach(function () {
     $this->company = Company::factory()->create();
 });
 
+// ─── Back-office review queue ───────────────────────────────────────────────
+
+it('lets an admin list documents across every company', function () {
+    $otherCompany = Company::factory()->create();
+    $doc1 = Document::factory()->create(['company_id' => $this->company->id, 'document_template_id' => $this->docTemplate->id, 'status' => 'review']);
+    $doc2 = Document::factory()->create(['company_id' => $otherCompany->id, 'document_template_id' => $this->docTemplate->id, 'status' => 'review']);
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/documents');
+
+    $response->assertOk();
+    $ids = collect($response->json('data'))->pluck('id');
+    expect($ids)->toContain($doc1->id, $doc2->id);
+
+    $listed = collect($response->json('data'))->firstWhere('id', $doc1->id);
+    expect($listed['company']['id'])->toBe($this->company->id);
+    expect($listed['document_template']['name'])->toBe('MoC Registration');
+});
+
+it('filters the admin document list by status', function () {
+    Document::factory()->create(['company_id' => $this->company->id, 'document_template_id' => $this->docTemplate->id, 'status' => 'review']);
+    Document::factory()->create(['company_id' => $this->company->id, 'document_template_id' => $this->docTemplate->id, 'status' => 'verified']);
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/documents?status=review');
+
+    $statuses = collect($response->json('data'))->pluck('status');
+    expect($statuses->unique()->all())->toBe(['review']);
+});
+
+it('only shows a company_owner their own documents when listing', function () {
+    $otherCompany = Company::factory()->create();
+    Document::factory()->create(['company_id' => $otherCompany->id, 'document_template_id' => $this->docTemplate->id]);
+    $ownDocument = Document::factory()->create(['company_id' => $this->company->id, 'document_template_id' => $this->docTemplate->id]);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/documents');
+
+    $ids = collect($response->json('data'))->pluck('id');
+    expect($ids->all())->toBe([$ownDocument->id]);
+});
+
+it('requires authentication to list documents', function () {
+    $this->getJson('/api/v1/documents')->assertUnauthorized();
+});
+
 // ─── Templates ───────────────────────────────────────────────────────────────
 
 it('lists document templates with the current company\'s latest document nested', function () {

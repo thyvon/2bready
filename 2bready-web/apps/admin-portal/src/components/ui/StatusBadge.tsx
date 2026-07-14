@@ -11,7 +11,8 @@ type StatusKey =
   | 'expired'
   | 'open' | 'in_progress'
   | 'resolved' | 'closed'
-  | 'draft';
+  | 'draft'
+  | 'pending_scan' | 'scan_failed' | 'review' | 'verified';
 
 const STATUS_COLOR: Record<StatusKey, 'success' | 'error' | 'warning' | 'default' | 'info' | 'primary'> = {
   active: 'success',
@@ -20,12 +21,15 @@ const STATUS_COLOR: Record<StatusKey, 'success' | 'error' | 'warning' | 'default
   published: 'success',
   resolved: 'success',
   confirmed: 'success',
+  verified: 'success',
   closed: 'default',
 
   pending: 'warning',
   pending_review: 'warning',
   awaiting_confirmation: 'warning',
   in_progress: 'warning',
+  pending_scan: 'warning',
+  review: 'warning',
   open: 'info',
   draft: 'default',
 
@@ -34,6 +38,7 @@ const STATUS_COLOR: Record<StatusKey, 'success' | 'error' | 'warning' | 'default
   suspended: 'error',
   cancelled: 'error',
   expired: 'error',
+  scan_failed: 'error',
   inactive: 'default',
 };
 

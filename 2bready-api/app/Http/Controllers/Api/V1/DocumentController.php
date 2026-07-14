@@ -22,6 +22,23 @@ use Illuminate\Http\Request;
 
 class DocumentController extends Controller
 {
+    // Back-office review queue — BelongsToCompany's global scope already
+    // bypasses to all companies for admin/staff/finance (Rule #1), so this
+    // one query naturally becomes "every company's documents" for them and
+    // "just my own" for anyone else, same pattern as PaymentController::index.
+    public function index(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Document::class);
+
+        $query = Document::query()->with(['company', 'documentTemplate'])->latest();
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        return ApiResponse::success(DocumentResource::collection($query->get()));
+    }
+
     // Every required document across the whole journey, each showing the
     // caller's own company's latest upload for it (or null — nothing
     // uploaded yet). One list, not paginated per level/milestone, since the
