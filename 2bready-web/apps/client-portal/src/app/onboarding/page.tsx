@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import { BrandMark } from '@/components/layout/BrandMark';
+import AuroraBackground from '@/components/layout/AuroraBackground';
 import { CompanySetupWizard } from '@/components/onboarding/CompanySetupWizard';
 import type { CompanySetupOutput } from '@/lib/company-setup-schema';
 import { registerOwnCompany } from '@/lib/company-api';
@@ -62,28 +63,13 @@ export default function OnboardingPage() {
         justifyContent: 'center',
         px: 2,
         py: 6,
-        bgcolor: 'background.default',
+        bgcolor: '#050810',
         overflow: 'hidden',
       }}
     >
-      {/* A quiet radial glow behind the card, same blue as every other glow
-          accent in the app (GlowButton, unlocked JourneyTree nodes) — this is
-          the very first screen a company sees, so it should already look
-          like the product, not a bare form on a gray background. */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: 900,
-          height: 900,
-          transform: 'translate(-50%, -50%)',
-          background: 'radial-gradient(circle, color-mix(in srgb, var(--mui-palette-primary-main) 8%, transparent) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }}
-      />
+      <AuroraBackground />
 
-      <Box sx={{ width: '100%', maxWidth: 480, position: 'relative' }}>
+      <Box sx={{ width: '100%', maxWidth: 560, position: 'relative', zIndex: 1 }}>
         <Box className="flex flex-col items-center" sx={{ mb: 4, textAlign: 'center' }}>
           <Box
             sx={{
@@ -102,10 +88,10 @@ export default function OnboardingPage() {
           >
             <BrandMark size={28} />
           </Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mt: 2.5 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mt: 2.5, color: '#fff' }}>
             Set up your company profile
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 360 }}>
+          <Typography variant="body2" sx={{ mt: 0.5, maxWidth: 380, color: 'rgba(255,255,255,0.7)' }}>
             A few basics before you enter your Trust Journey — this determines which compliance pathway applies to
             your company.
           </Typography>
@@ -117,7 +103,7 @@ export default function OnboardingPage() {
             borderColor: 'divider',
             borderRadius: '16px',
             bgcolor: 'background.paper',
-            boxShadow: '0 12px 40px -12px rgba(0, 0, 0, 0.12)',
+            boxShadow: '0 12px 40px -12px rgba(0, 0, 0, 0.4)',
             p: { xs: 3, sm: 4 },
           }}
         >

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+
 // client-portal has no auth/API wiring at all yet (onboarding runs before any
 // real session exists here) — this hits the one industry endpoint that's
 // genuinely public (see IndustryController::publicIndex on the backend) so
@@ -28,7 +30,7 @@ export function useIndustries() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/industry-options`)
+    fetch(`${apiUrl}/api/v1/industry-options`)
       .then((res) => {
         if (!res.ok) throw new Error(`Unexpected status ${res.status}`);
         return res.json() as Promise<ApiResponseShape<IndustryOption[]>>;

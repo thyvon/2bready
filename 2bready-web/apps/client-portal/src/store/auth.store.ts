@@ -37,11 +37,22 @@ export const useAuthStore = create<AuthState>()(
     {
       name: '2bready-client-auth',
       partialize: (s) => ({ user: s.user, token: s.token, isAuthenticated: s.isAuthenticated }),
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        ...(persistedState as Partial<AuthState>),
-        hasHydrated: true,
-      }),
+      merge: (persistedState, currentState) => {
+        const savedState = persistedState as Partial<AuthState>;
+
+        // Hydration runs asynchronously. If somebody registers or logs in
+        // before it finishes, the saved anonymous state must not replace the
+        // fresh authenticated session while routing to onboarding.
+        if (currentState.isAuthenticated) {
+          return { ...currentState, hasHydrated: true };
+        }
+
+        return {
+          ...currentState,
+          ...savedState,
+          hasHydrated: true,
+        };
+      },
     }
   )
 );

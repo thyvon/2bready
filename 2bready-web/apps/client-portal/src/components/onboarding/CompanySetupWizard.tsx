@@ -10,7 +10,6 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
@@ -118,6 +117,33 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ReviewSection({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '12px', overflow: 'hidden' }}>
+      <Box className="flex items-center justify-between" sx={{ px: 2.5, py: 1.25, bgcolor: 'action.hover' }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'text.secondary' }}
+        >
+          {title}
+        </Typography>
+        <Button size="small" onClick={onEdit} sx={{ minWidth: 0, py: 0.25, fontSize: '0.75rem', fontWeight: 600 }}>
+          Edit
+        </Button>
+      </Box>
+      {children}
+    </Box>
+  );
+}
+
 // onComplete calls the real registerOwnCompany endpoint (see onboarding/page.tsx)
 // — errors (e.g. a transient network failure) surface back here so the user
 // doesn't lose their entered data and can just retry from the review step.
@@ -142,6 +168,11 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
 
   const values = watch();
   const isLastStep = step === COMPANY_SETUP_STEPS.length - 1;
+
+  const goToStep = (index: number) => {
+    setDirection(-1);
+    setStep(index);
+  };
 
   const handleNext = async () => {
     const fields = COMPANY_SETUP_STEPS[step].fields;
@@ -169,7 +200,36 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
     <Box component="form" onSubmit={handleSubmit(submit)} noValidate>
       <StepIndicator step={step} />
 
-      {serverError && <Alert severity="error" sx={{ mb: 3 }}>{serverError}</Alert>}
+      {serverError && (
+        <Box
+          className="flex items-start gap-3"
+          sx={{
+            mb: 3,
+            p: 2,
+            borderRadius: '12px',
+            border: '1px solid',
+            borderColor: 'error.main',
+            bgcolor: 'color-mix(in srgb, var(--mui-palette-error-main) 8%, transparent)',
+          }}
+        >
+          <Box
+            className="flex items-center justify-center"
+            sx={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              bgcolor: 'error.main',
+              flexShrink: 0,
+              mt: '2px',
+            }}
+          >
+            <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700, lineHeight: 1 }}>!</Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: 'error.main' }}>
+            {serverError}
+          </Typography>
+        </Box>
+      )}
 
       {/* pt here (not on the inner step boxes) matters: overflow:hidden clips
           anything outside this box's own padding box, and MUI's outlined
@@ -279,10 +339,14 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                 <Typography variant="body2" color="text.secondary">
                   Review your details before continuing to your dashboard.
                 </Typography>
-                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '12px', overflow: 'hidden' }}>
+
+                <ReviewSection title="Company Identity" onEdit={() => goToStep(0)}>
                   <ReviewRow label="Company Name" value={values.name || '—'} />
                   <ReviewRow label="Khmer Name" value={values.name_kh || '—'} />
                   <ReviewRow label="Registration No." value={values.registration_no || '—'} />
+                </ReviewSection>
+
+                <ReviewSection title="Business Profile" onEdit={() => goToStep(1)}>
                   <ReviewRow
                     label="Industry"
                     value={(() => {
@@ -292,7 +356,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                     })()}
                   />
                   <ReviewRow label="Country" value={optionLabel(COUNTRY_OPTIONS, values.country_code)} />
-                </Box>
+                </ReviewSection>
               </Box>
             )}
           </motion.div>
