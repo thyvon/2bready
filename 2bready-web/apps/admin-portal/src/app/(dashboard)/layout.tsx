@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Box from '@mui/material/Box';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -15,7 +15,6 @@ import { fadeIn, pageTransition } from '@/lib/motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { isAuthenticated, hasHydrated } = useAuthStore();
   const { navOrientation } = useLayoutStore();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -35,6 +34,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!hasHydrated || !isAuthenticated) return null;
 
+  // No `key={pathname}` on the motion.div below (there used to be one) — that
+  // forced every nested layout under here to fully unmount/remount on every
+  // single navigation, including ones that only change a sibling page under
+  // an otherwise-persistent layout (e.g. switching tabs inside a company's
+  // workspace, companies/[id]/layout.tsx). That layout's own company fetch
+  // and tab badge counts were re-running from scratch on every tab click as
+  // a result — a real, user-visible "whole page reloads" bug, not just a
+  // lost animation. The one-time mount transition below still plays; it just
+  // doesn't replay on every route change anymore.
   if (navOrientation === 'horizontal' && !isMobile) {
     return (
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -42,7 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <DashboardNavHorizontal />
         </motion.div>
         <Box component="main" sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
-          <motion.div key={pathname} initial="initial" animate="animate" variants={pageTransition}>
+          <motion.div initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>
         </Box>
@@ -58,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <DashboardHeader onMenuClick={() => setMobileNavOpen(true)} />
         <Box component="main" sx={{ flex: 1, p: { xs: 1.5, sm: 2, md: 2.5 } }}>
-          <motion.div key={pathname} initial="initial" animate="animate" variants={pageTransition}>
+          <motion.div initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>
         </Box>
