@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import DashboardIcon from '@mui/icons-material/GridViewOutlined';
 import BusinessIcon from '@mui/icons-material/BusinessOutlined';
 import DescriptionIcon from '@mui/icons-material/DescriptionOutlined';
-import RouteIcon from '@mui/icons-material/RouteOutlined';
 import PaymentIcon from '@mui/icons-material/CreditCardOutlined';
 import SupportIcon from '@mui/icons-material/HelpOutlineOutlined';
 import AssignmentIcon from '@mui/icons-material/AssignmentOutlined';
@@ -48,7 +47,6 @@ const ADMIN_NAV: NavItemDef[] = [
   { labelKey: 'nav.payments',   href: '/payments',    icon: <ReceiptLongIcon fontSize="small" /> },
   { labelKey: 'nav.audits',     href: '/audits',      icon: <AssignmentIcon fontSize="small" /> },
   { labelKey: 'nav.documents',  href: '/documents',   icon: <DescriptionIcon fontSize="small" /> },
-  { labelKey: 'nav.journey',    href: '/journey',     icon: <RouteIcon fontSize="small" /> },
   { labelKey: 'nav.support',    href: '/support',     icon: <SupportIcon fontSize="small" /> },
   { labelKey: 'nav.settings',   href: '/settings',    icon: <SettingsIcon fontSize="small" /> },
 ];

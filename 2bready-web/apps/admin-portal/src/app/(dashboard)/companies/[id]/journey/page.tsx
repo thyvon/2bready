@@ -1,49 +1,49 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
-import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
-import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import { useAuthStore } from '@/store/auth.store';
+import StatusBadge from '@/components/ui/StatusBadge';
 import { useToast } from '@/components/feedback/ToastProvider';
-import { getCompany } from '@/domains/company/api';
-import type { Company } from '@/domains/company/types';
 import { getCompanyJourney, completeMilestone } from '@/domains/journey/api';
+import { JourneyTree, type JourneyDocument } from '@/domains/journey/components/JourneyTree';
 import type { Journey } from '@/domains/journey/types';
+import { verifyDocument, rejectDocument, getPreviewUrl } from '@/domains/document/api';
+import { DocumentPreviewDialog } from '@/domains/document/components/DocumentPreviewDialog';
 import { getApiError } from '@/lib/utils';
-import { useTranslation } from '@/lib/i18n';
+import { useCompanyWorkspace } from '@/domains/company/workspace-context';
 
-const PILLAR_LABEL: Record<string, string> = {
-  comply: 'Comply',
-  scale: 'Scale',
-  lead: 'Lead',
-};
+interface PreviewState {
+  documentId: string;
+  title: string;
+  status: string;
+  url: string | null;
+  mimeType: string | null;
+  loading: boolean;
+  error: string | null;
+}
 
 export default function CompanyJourneyPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const { hasAnyRole } = useAuthStore();
+  const { company, refreshCounts } = useCompanyWorkspace();
   const toast = useToast();
-  const { t } = useTranslation();
 
-  const [company, setCompany] = useState<Company | null>(null);
   const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [signingOff, setSigningOff] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  useEffect(() => {
-    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
-  }, [hasAnyRole, router]);
+  const [acting, setActing] = useState(false);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,20 +52,14 @@ export default function CompanyJourneyPage() {
       setLoading(true);
       setLoadError('');
       try {
-        const [companyData, journeyData] = await Promise.all([
-          getCompany(params.id),
-          getCompanyJourney(params.id).catch((err) => {
-            // A 404 here just means this company has no matching journey
-            // template yet (e.g. no industry configured for its country) —
-            // that's an expected state, not a load failure.
-            if (getApiError(err).message.includes('No journey found')) return null;
-            throw err;
-          }),
-        ]);
-        if (!cancelled) {
-          setCompany(companyData);
-          setJourney(journeyData);
-        }
+        const journeyData = await getCompanyJourney(params.id).catch((err) => {
+          // A 404 here just means this company has no matching journey
+          // template yet (e.g. no industry configured for its country) —
+          // that's an expected state, not a load failure.
+          if (getApiError(err).message.includes('No journey found')) return null;
+          throw err;
+        });
+        if (!cancelled) setJourney(journeyData);
       } catch (err) {
         if (!cancelled) setLoadError(getApiError(err).message);
       } finally {
@@ -93,6 +87,66 @@ export default function CompanyJourneyPage() {
     }
   };
 
+  const handlePreview = async (doc: JourneyDocument) => {
+    if (!doc.document_id) return;
+    const documentId = doc.document_id;
+    setPreview({ documentId, title: doc.name, status: doc.status, url: null, mimeType: null, loading: true, error: null });
+    try {
+      const result = await getPreviewUrl(documentId);
+      setPreview((prev) => (prev && prev.documentId === documentId ? { ...prev, url: result.url, mimeType: result.mime_type, loading: false } : prev));
+    } catch (err) {
+      setPreview((prev) => (prev && prev.documentId === documentId ? { ...prev, loading: false, error: getApiError(err).message } : prev));
+    }
+  };
+
+  // A verified/rejected document can auto-complete its milestone (see
+  // CompleteMilestoneOnDocumentVerified) — reload the whole tree so that
+  // shows up immediately, not just the one document's own status.
+  const handleVerify = async () => {
+    if (!preview) return;
+    setActing(true);
+    try {
+      await verifyDocument(preview.documentId);
+      toast.success('Document verified.');
+      setPreview(null);
+      setReloadKey((k) => k + 1);
+      refreshCounts();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!preview) return;
+    setActing(true);
+    try {
+      await rejectDocument(preview.documentId, reason);
+      toast.success('Document rejected.');
+      setPreview(null);
+      setReloadKey((k) => k + 1);
+      refreshCounts();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const renderDocAction = (doc: JourneyDocument) => (
+    <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
+      <StatusBadge status={doc.status} />
+      {doc.document_id && (
+        <Tooltip title="Preview">
+          <IconButton size="small" onClick={() => handlePreview(doc)}>
+            <VisibilityOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Box>
+  );
+
   if (loading) {
     return (
       <Box className="flex justify-center py-16">
@@ -101,77 +155,45 @@ export default function CompanyJourneyPage() {
     );
   }
 
-  if (loadError || !company) {
+  if (loadError) {
+    return <Alert severity="error">{loadError}</Alert>;
+  }
+
+  if (!journey) {
     return (
-      <>
-        <PageHeader title={t('admin.companies_title')} />
-        <Alert severity="error">{loadError || 'Company not found.'}</Alert>
-      </>
+      <SectionCard>
+        <Typography color="text.secondary">
+          No journey template matches {company.name}&apos;s country/industry yet.
+        </Typography>
+      </SectionCard>
     );
   }
 
   return (
     <>
-      <PageHeader title={`${company.name} — Journey`} />
+      <SectionCard>
+        <JourneyTree
+          levels={journey.levels}
+          onSignOff={handleSignOff}
+          signingOffId={signingOff}
+          renderDocAction={renderDocAction}
+        />
+      </SectionCard>
 
-      {!journey ? (
-        <SectionCard>
-          <Typography color="text.secondary">
-            No journey template matches this company&apos;s country/industry yet.
-          </Typography>
-        </SectionCard>
-      ) : (
-        <Box className="flex flex-col gap-4">
-          {journey.levels.map((level) => (
-            <SectionCard key={level.id}>
-              <Box className="flex items-center justify-between gap-2" sx={{ mb: 2 }}>
-                <Box className="flex items-center gap-1.5">
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    {level.code} · {level.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {level.pathway_name}
-                  </Typography>
-                </Box>
-                <Box className="flex items-center gap-1">
-                  <Chip size="small" label={PILLAR_LABEL[level.pillar] ?? level.pillar} />
-                  {!level.unlocked && (
-                    <Chip
-                      size="small"
-                      icon={<LockOutlinedIcon sx={{ fontSize: '0.875rem' }} />}
-                      label="Locked"
-                      color="default"
-                    />
-                  )}
-                </Box>
-              </Box>
-
-              <Box className="flex flex-col gap-1">
-                {level.milestones.map((milestone) => (
-                  <Box
-                    key={milestone.id}
-                    className="flex items-center gap-1.5"
-                    sx={{ opacity: level.unlocked ? 1 : 0.5 }}
-                  >
-                    <Checkbox
-                      checked={milestone.completed}
-                      disabled={!level.unlocked || milestone.completed || signingOff === milestone.id}
-                      onChange={() => handleSignOff(milestone.id)}
-                      size="small"
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ textDecoration: milestone.completed ? 'line-through' : 'none' }}
-                    >
-                      {milestone.name}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </SectionCard>
-          ))}
-        </Box>
-      )}
+      <DocumentPreviewDialog
+        key={preview?.documentId ?? 'none'}
+        open={preview !== null}
+        onClose={() => setPreview(null)}
+        title={preview?.title ?? ''}
+        url={preview?.url ?? null}
+        mimeType={preview?.mimeType ?? null}
+        loading={preview?.loading ?? false}
+        error={preview?.error ?? null}
+        status={preview?.status}
+        onVerify={handleVerify}
+        onReject={handleReject}
+        acting={acting}
+      />
     </>
   );
 }

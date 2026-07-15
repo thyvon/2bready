@@ -36,6 +36,13 @@ class DocumentController extends Controller
             $query->where('status', $status);
         }
 
+        // Explicit narrowing for the back-office "this one company's documents"
+        // view (companies/{id} workspace tab) — deliberate filter on top of the
+        // already-bypassed tenant scope, same pattern as PaymentController::index.
+        if ($companyId = $request->query('company_id')) {
+            $query->where('company_id', $companyId);
+        }
+
         return ApiResponse::success(DocumentResource::collection($query->get()));
     }
 

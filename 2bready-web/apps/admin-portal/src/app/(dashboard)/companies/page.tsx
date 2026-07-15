@@ -16,6 +16,8 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import FormSelect from '@/components/forms/FormSelect';
 import { useAuthStore } from '@/store/auth.store';
 import { listCompanies } from '@/domains/company/api';
+import { useIndustries } from '@/domains/company/hooks';
+import { industryLabel } from '@/domains/company/constants';
 import type { Company, CompanyListFilters } from '@/domains/company/types';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -23,15 +25,26 @@ import { useTranslation } from '@/lib/i18n';
 export default function AdminCompaniesPage() {
   const router = useRouter();
   const { hasAnyRole } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState<CompanyListFilters>({});
+  const { industries } = useIndustries();
 
   const columns: Column<Company>[] = [
     { key: 'name', label: t('admin.name_col'), render: (c) => c.name },
-    { key: 'industry_code', label: t('admin.industry_col') },
+    {
+      key: 'industry_id',
+      label: t('admin.industry_col'),
+      // industry_code (the old free-text field) was dropped from CompanyResource —
+      // this used to render blank for every row until it was resolved via the
+      // real Industry lookup instead.
+      render: (c) => {
+        const industry = industries.find((i) => i.id === c.industry_id);
+        return industry ? industryLabel(industry, locale) : '—';
+      },
+    },
     { key: 'country_code', label: t('admin.country_col') },
     { key: 'employee_count', label: t('admin.employees_col'), render: (c) => (c.employee_count != null ? String(c.employee_count) : '—') },
     { key: 'status', label: t('admin.status_col'), render: (c) => <StatusBadge status={c.status} /> },
@@ -109,7 +122,7 @@ export default function AdminCompaniesPage() {
           rows={companies}
           getRowId={(c) => c.id}
           loading={loading}
-          onRowClick={(c) => router.push(`/companies/${c.id}/journey`)}
+          onRowClick={(c) => router.push(`/companies/${c.id}`)}
           emptyTitle={t('admin.no_companies')}
           emptyDescription={t('admin.get_started')}
           emptyAction={

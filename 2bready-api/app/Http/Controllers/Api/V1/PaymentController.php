@@ -28,6 +28,14 @@ class PaymentController extends Controller
             $query->where('status', $status);
         }
 
+        // Explicit narrowing for the back-office "this one company's payments"
+        // view (companies/{id} workspace tab) — the internal-role bypass above
+        // already lifted the tenant scope, so this is a deliberate filter, not
+        // the tenant boundary itself. Same pattern as JourneyController::showForCompany.
+        if ($companyId = $request->query('company_id')) {
+            $query->where('company_id', $companyId);
+        }
+
         return ApiResponse::success(PaymentResource::collection($query->get()));
     }
 

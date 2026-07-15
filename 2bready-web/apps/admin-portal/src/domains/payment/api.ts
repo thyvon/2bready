@@ -4,8 +4,10 @@ import type { Lead, LeadPayload, Payment } from './types';
 // Subscribing/submitting a payment is company-side self-service (client-portal's
 // responsibility) — this app only confirms/rejects on 2bReady's behalf below.
 
-export async function listPayments(status?: string): Promise<Payment[]> {
-  const res = await api.get<{ data: Payment[] }>('/payments', { params: status ? { status } : undefined });
+export async function listPayments(status?: string, companyId?: string): Promise<Payment[]> {
+  const res = await api.get<{ data: Payment[] }>('/payments', {
+    params: { status: status || undefined, company_id: companyId || undefined },
+  });
   return res.data.data;
 }
 

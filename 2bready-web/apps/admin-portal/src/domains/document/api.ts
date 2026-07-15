@@ -4,8 +4,10 @@ import type { Document } from './types';
 // Uploading is company-side self-service (client-portal's responsibility) —
 // this app only reviews (verifies/rejects) on 2bReady's behalf below.
 
-export async function listDocuments(status?: string): Promise<Document[]> {
-  const res = await api.get<{ data: Document[] }>('/documents', { params: status ? { status } : undefined });
+export async function listDocuments(status?: string, companyId?: string): Promise<Document[]> {
+  const res = await api.get<{ data: Document[] }>('/documents', {
+    params: { status: status || undefined, company_id: companyId || undefined },
+  });
   return res.data.data;
 }
 
