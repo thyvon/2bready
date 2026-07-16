@@ -17,7 +17,7 @@ export interface PillarCardProps {
   totalDocs: number;
   /** Real unlocked level codes for this pillar (journey progress), computed by the caller — shown as informational text only, not a gate. */
   activeLevelCodes: string[];
-  /** Free pillar is always unlocked; pro/enterprise pillars are locked until the company upgrades. Deliberately tier-based, not journey-progress-based — Package.tier doesn't exist yet, so this stays the one honest signal available. */
+  /** Whether the company's paid subscription (+ milestone progress) has unlocked at least one level in this pillar — computed by the caller from the real `level.unlocked` field, not a static tier lookup. */
   unlocked: boolean;
 }
 
@@ -54,6 +54,7 @@ export function PillarCard({ pillar, icon, verifiedDocs, totalDocs, activeLevelC
         // radius token across every card-shaped surface, not a one-off value.
         borderRadius: '8px',
         p: 2.5,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,

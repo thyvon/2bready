@@ -3,9 +3,10 @@
 // journey_templates/journey_levels/milestones/document_templates, served via
 // GET /api/v1/journey (see lib/journey-api.ts). Per explicit owner
 // direction, that taxonomy is never to be hardcoded outside the database
-// again. What's left here is genuinely local: subscription-tier labels/
-// pricing and pillar marketing copy, neither of which has a backend column
-// (Package.tier doesn't exist yet — see project memory).
+// again. What's left here is genuinely local: subscription-tier labels and
+// pillar marketing copy — display-only text with no backend column, unlike
+// the actual unlock decision, which reads the real Package.tier/level.unlocked
+// data (see project memory).
 export type Tier = 'free' | 'pro' | 'enterprise';
 
 export const TIER_LABELS: Record<Tier, string> = {

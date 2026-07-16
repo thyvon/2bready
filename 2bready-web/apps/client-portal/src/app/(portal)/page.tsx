@@ -137,23 +137,23 @@ export default function OverviewPage() {
       </Box>
 
       {/* 3 pillars — Comply (free, always unlocked), Scale (pro), Lead (enterprise).
-          `unlocked` stays tier-gated (pillar.tier === 'free'), not journey
-          progress — real subscription tiers don't exist yet (Package.tier is
-          still missing), so this deliberately isn't wired to `level.unlocked`. */}
+          `unlocked` reflects the real per-level `level.unlocked` from the API
+          (subscription tier + milestone-progress chain, see
+          JourneyProgressService) — a pillar shows unlocked once its first
+          level does, same signal activeLevelCodes below already uses. */}
       <motion.div variants={cardGridContainer} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {PILLARS.map((pillar) => {
           const docs = pillarDocuments(journey, pillar.id);
+          const levels = pillarLevels(journey, pillar.id);
           return (
-            <motion.div key={pillar.id} variants={cardGridItem}>
+            <motion.div key={pillar.id} variants={cardGridItem} style={{ height: '100%' }}>
               <PillarCard
                 pillar={pillar}
                 icon={PILLAR_ICONS[pillar.id]}
                 verifiedDocs={countVerified(docs)}
                 totalDocs={docs.length}
-                activeLevelCodes={pillarLevels(journey, pillar.id)
-                  .filter((level) => level.unlocked)
-                  .map((level) => level.code)}
-                unlocked={pillar.tier === 'free'}
+                activeLevelCodes={levels.filter((level) => level.unlocked).map((level) => level.code)}
+                unlocked={levels.some((level) => level.unlocked)}
               />
             </motion.div>
           );

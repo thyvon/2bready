@@ -127,7 +127,7 @@ export default function JourneyPage() {
 
   const renderDocAction: RenderDocAction = (doc, ctx) => {
     const status = toDocStatus(doc.status);
-    const levelUnlocked = tierMap[ctx.level.code] === 'free';
+    const levelUnlocked = ctx.level.unlocked;
 
     if (!levelUnlocked) {
       return (
@@ -405,7 +405,7 @@ export default function JourneyPage() {
           ) : (
             <JourneyTree
               levels={filteredLevels}
-              isUnlocked={(level) => tierMap[level.code] === 'free'}
+              isUnlocked={(level) => level.unlocked}
               tierFor={(level) => tierMap[level.code]}
               defaultMilestonesOpen={isFiltering}
               renderDocAction={renderDocAction}
