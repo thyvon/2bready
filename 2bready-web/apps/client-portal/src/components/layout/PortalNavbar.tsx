@@ -22,6 +22,8 @@ import { RadialMeter } from '@/components/dashboard/RadialMeter';
 import { UserMenu } from './UserMenu';
 import { useNavItems, isNavItemActive } from './nav-items';
 import { useTranslation } from '@/lib/i18n';
+import { useJourney } from '@/components/JourneyProvider';
+import { allDocuments, countVerified } from '@/lib/journey-api';
 
 // Delay before closing on mouse-leave — long enough that moving the cursor
 // from the trigger down into the panel (crossing the small gap between them)
@@ -116,6 +118,9 @@ export function PortalNavbar() {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { primary, secondary, all } = useNavItems();
+  const { journey } = useJourney();
+  const documents = allDocuments(journey);
+  const overallPct = documents.length === 0 ? 0 : Math.round((countVerified(documents) / documents.length) * 100);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreAnchorRef = useRef<HTMLDivElement>(null);
@@ -269,11 +274,12 @@ export function PortalNavbar() {
             reasonable follow-up, not assumed here. */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
           <CompanySwitcher />
-          {/* Same "honest zero" as everywhere else — no verification tracking
-              exists yet, so this reads 0% until real per-document status does. */}
+          {/* Same verified/total ratio as the Overview hero (allDocuments +
+              countVerified over the real journey) — was a hardcoded 0% here
+              before real per-document status existed; that's no longer true. */}
           <Tooltip title="Audit Ready">
             <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
-              <RadialMeter percent={0} size={32} strokeWidth={4} fillColor="var(--mui-palette-primary-main)" />
+              <RadialMeter percent={overallPct} size={32} strokeWidth={4} fillColor="var(--mui-palette-primary-main)" />
             </Box>
           </Tooltip>
         </Box>
