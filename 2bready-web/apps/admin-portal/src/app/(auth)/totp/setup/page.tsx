@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
@@ -19,6 +18,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormTextField from '@/components/forms/FormTextField';
 import type { TotpSetupResponse } from '@/domains/auth/types';
 
 export default function TotpSetupPage() {
@@ -108,7 +108,7 @@ export default function TotpSetupPage() {
 
           <Box>
             <FieldLabel>{t('auth.totp_code_label')}</FieldLabel>
-            <TextField
+            <FormTextField
               placeholder="123456"
               inputMode="numeric"
               autoComplete="one-time-code"

@@ -5,7 +5,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -22,6 +21,7 @@ import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
+import FormTextField from '@/components/forms/FormTextField';
 
 interface CompanyFormWizardProps {
   onSubmit: (data: CompanyFormOutput) => Promise<void>;
@@ -130,7 +130,7 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
               <Box className="flex flex-col gap-5">
                 <Box>
                   <FieldLabel>{t('company.name')}</FieldLabel>
-                  <TextField
+                  <FormTextField
                     placeholder="e.g. Sabay Bakery Co., Ltd."
                     autoFocus
                     fullWidth
@@ -141,7 +141,7 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
                 </Box>
                 <Box>
                   <FieldLabel>{t('company.name_kh')}</FieldLabel>
-                  <TextField
+                  <FormTextField
                     placeholder="ឈ្មោះក្រុមហ៊ុន"
                     fullWidth
                     error={!!errors.name_kh}
@@ -151,7 +151,7 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
                 </Box>
                 <Box>
                   <FieldLabel>{t('company.registration_no')}</FieldLabel>
-                  <TextField
+                  <FormTextField
                     placeholder="e.g. 00012345"
                     fullWidth
                     error={!!errors.registration_no}
@@ -194,7 +194,7 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
                 </Box>
                 <Box>
                   <FieldLabel>{t('company.employee_count')}</FieldLabel>
-                  <TextField
+                  <FormTextField
                     placeholder="e.g. 12"
                     type="number"
                     fullWidth

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
@@ -16,6 +15,7 @@ import { forgotPassword } from '@/domains/auth/api';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormTextField from '@/components/forms/FormTextField';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
 
         <Box>
           <FieldLabel>{t('auth.email_address')}</FieldLabel>
-          <TextField
+          <FormTextField
             placeholder="you@company.com"
             type="email"
             autoComplete="email"

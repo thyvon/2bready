@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -16,6 +15,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormTextField from '@/components/forms/FormTextField';
 
 export default function TotpChallengePage() {
   const router = useRouter();
@@ -60,7 +60,7 @@ export default function TotpChallengePage() {
 
         <Box>
           <FieldLabel>{t('auth.totp_auth_code')}</FieldLabel>
-          <TextField
+          <FormTextField
             placeholder="123456"
             inputMode="numeric"
             autoComplete="one-time-code"

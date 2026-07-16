@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,6 +13,7 @@ import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FormSelect from '@/components/forms/FormSelect';
+import FormTextField from '@/components/forms/FormTextField';
 import { useAuthStore } from '@/store/auth.store';
 import { listCompanies } from '@/domains/company/api';
 import { useIndustries } from '@/domains/company/hooks';
@@ -90,7 +90,7 @@ export default function AdminCompaniesPage() {
 
       <SectionCard noPadding>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, p: 2 }}>
-          <TextField
+          <FormTextField
             label={t('common.search')}
             size="small"
             value={filters.search ?? ''}

@@ -10,9 +10,9 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from '@/lib/i18n';
+import FormTextField from '@/components/forms/FormTextField';
 
 export interface DocumentPreviewDialogProps {
   open: boolean;
@@ -110,7 +110,7 @@ export function DocumentPreviewDialog({
         <DialogActions sx={{ px: 3, py: 2, flexDirection: 'column', alignItems: 'stretch', gap: 1.5 }}>
           {rejecting ? (
             <>
-              <TextField
+              <FormTextField
                 autoFocus
                 multiline
                 minRows={2}

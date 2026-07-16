@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
@@ -18,6 +17,7 @@ import { resetPassword } from '@/domains/auth/api';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormTextField from '@/components/forms/FormTextField';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -62,7 +62,7 @@ function ResetPasswordForm() {
 
       <Box>
         <FieldLabel>{t('auth.new_password')}</FieldLabel>
-        <TextField
+        <FormTextField
           placeholder="••••••••"
           type="password"
           autoComplete="new-password"
@@ -76,7 +76,7 @@ function ResetPasswordForm() {
 
       <Box>
         <FieldLabel>{t('auth.confirm_new_password')}</FieldLabel>
-        <TextField
+        <FormTextField
           placeholder="••••••••"
           type="password"
           autoComplete="new-password"

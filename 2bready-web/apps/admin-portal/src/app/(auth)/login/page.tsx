@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import MuiLink from '@mui/material/Link';
@@ -18,6 +17,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
+import FormTextField from '@/components/forms/FormTextField';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function LoginPage() {
 
           <Box>
             <FieldLabel>{t('auth.email_address')}</FieldLabel>
-            <TextField
+            <FormTextField
               type="email"
               placeholder="you@company.com"
               autoComplete="email"
@@ -92,7 +92,7 @@ export default function LoginPage() {
             >
               {t('auth.password')}
             </FieldLabel>
-            <TextField
+            <FormTextField
               type="password"
               placeholder="••••••••"
               autoComplete="current-password"

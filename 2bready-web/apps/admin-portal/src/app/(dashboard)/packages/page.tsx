@@ -10,7 +10,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
@@ -25,6 +24,7 @@ import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
+import FormTextField from '@/components/forms/FormTextField';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listPackages, createPackage, updatePackage, deletePackage } from '@/domains/package/api';
@@ -202,7 +202,7 @@ export default function AdminPackagesPage() {
 
             <Box>
               <FieldLabel>{t('package.name')}</FieldLabel>
-              <TextField
+              <FormTextField
                 placeholder="e.g. Growth"
                 fullWidth
                 autoFocus
@@ -214,12 +214,12 @@ export default function AdminPackagesPage() {
 
             <Box>
               <FieldLabel>{t('package.name_kh')}</FieldLabel>
-              <TextField placeholder="ឈ្មោះកញ្ចប់" fullWidth error={!!errors.name_kh} helperText={errors.name_kh?.message} {...register('name_kh')} />
+              <FormTextField placeholder="ឈ្មោះកញ្ចប់" fullWidth error={!!errors.name_kh} helperText={errors.name_kh?.message} {...register('name_kh')} />
             </Box>
 
             <Box>
               <FieldLabel>{t('package.description')}</FieldLabel>
-              <TextField
+              <FormTextField
                 placeholder={t('package.description_placeholder')}
                 fullWidth
                 multiline
@@ -233,7 +233,7 @@ export default function AdminPackagesPage() {
             <Box className="flex gap-4">
               <Box className="flex-1">
                 <FieldLabel>{t('package.price')}</FieldLabel>
-                <TextField
+                <FormTextField
                   type="number"
                   placeholder="199.00"
                   fullWidth
