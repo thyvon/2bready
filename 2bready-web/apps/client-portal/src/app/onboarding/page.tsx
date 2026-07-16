@@ -23,7 +23,7 @@ import { useAuthStore } from '@/store/auth.store';
 // "create a company" have to stay independently reusable steps).
 export default function OnboardingPage() {
   const router = useRouter();
-  const { isAuthenticated, hasHydrated } = useAuthStore();
+  const { isAuthenticated, hasHydrated, token, setAuth } = useAuthStore();
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
@@ -32,13 +32,20 @@ export default function OnboardingPage() {
   }, [hasHydrated, isAuthenticated, router]);
 
   const handleComplete = async (data: CompanySetupOutput) => {
-    await registerOwnCompany({
+    const { user } = await registerOwnCompany({
       name: data.name,
       name_kh: data.name_kh || undefined,
       registration_no: data.registration_no || undefined,
       industry_id: data.industry_id,
       country_code: data.country_code,
     });
+    // The response already carries the fresh user (with the new company and
+    // current_company_id set) — same pattern CompanySwitcher's own
+    // switchActiveCompany uses. Without this, the navbar's CompanySwitcher
+    // kept reading the pre-onboarding user (companies: []) until the next
+    // full login re-fetched it, so the company name silently didn't show up
+    // on this first visit to "/".
+    if (token) setAuth(user, token);
     router.push('/');
   };
 
