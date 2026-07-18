@@ -6,7 +6,10 @@ import Link from 'next/link';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
+import InputAdornment from '@mui/material/InputAdornment';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
+import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
@@ -96,6 +99,7 @@ export default function AdminCompaniesPage() {
             value={filters.search ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value || undefined }))}
             sx={{ width: { xs: '100%', sm: 220 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           />
           <FormSelect
             label={t('common.status')}
@@ -103,6 +107,7 @@ export default function AdminCompaniesPage() {
             value={filters.status ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, status: (e.target.value || undefined) as CompanyListFilters['status'] }))}
             sx={{ width: { xs: '100%', sm: 160 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><FilterListIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           >
             <MenuItem value="">{t('common.all')}</MenuItem>
             <MenuItem value="active">{t('common.active')}</MenuItem>

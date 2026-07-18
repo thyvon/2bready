@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
+import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
@@ -93,6 +96,7 @@ export default function AuditLogsPage() {
             value={filters.action ?? ''}
             onChange={(e) => updateFilters({ action: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 220 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><FilterListIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           />
           <FormTextField
             label={t('audit_log.filter_actor')}
@@ -100,6 +104,7 @@ export default function AuditLogsPage() {
             value={filters.search ?? ''}
             onChange={(e) => updateFilters({ search: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 220 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           />
           <FormTextField
             label={t('audit_log.filter_from')}

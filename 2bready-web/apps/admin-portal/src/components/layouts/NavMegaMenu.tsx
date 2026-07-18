@@ -74,7 +74,7 @@ export default function NavMegaMenu({ group }: NavMegaMenuProps) {
             sx={{
               minWidth: 320,
               p: 1,
-              borderRadius: 3,
+              borderRadius: '8px', // matches MuiMenu's paper token — this is a dropdown panel
               border: '1px solid',
               borderColor: 'divider',
               boxShadow: '0 16px 40px -12px rgba(0,0,0,0.18)',
@@ -95,7 +95,7 @@ export default function NavMegaMenu({ group }: NavMegaMenuProps) {
                     alignItems: 'flex-start',
                     gap: 1.5,
                     p: 1.25,
-                    borderRadius: 2,
+                    borderRadius: '6px', // theme.shape.borderRadius base token
                     textDecoration: 'none',
                     bgcolor: active ? 'var(--2br-nav-active-bg)' : 'transparent',
                     '&:hover': { bgcolor: 'var(--2br-overlay-hover)' },
@@ -108,7 +108,7 @@ export default function NavMegaMenu({ group }: NavMegaMenuProps) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderRadius: 1.5,
+                      borderRadius: '6px', // theme.shape.borderRadius base token
                       border: '1px solid',
                       borderColor: 'divider',
                       color: active ? 'text.primary' : 'text.secondary',

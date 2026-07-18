@@ -8,6 +8,7 @@ const kh: Record<keyof typeof en, string> = {
   'common.cancel': 'បោះបង់',
   'common.delete': 'លុប',
   'common.edit': 'កែសម្រួល',
+  'common.view': 'មើល',
   'common.back': 'ថយក្រោយ',
   'common.next': 'បន្ទាប់',
   'common.loading': 'កំពុងផ្ទុក...',
@@ -374,6 +375,9 @@ const kh: Record<keyof typeof en, string> = {
   'users.cannot_change_own_status': 'អ្នកមិនអាចផ្លាស់ប្តូរស្ថានភាពគណនីខ្លួនឯងបានទេ។',
   'users.no_users': 'មិនទាន់មានអ្នកប្រើប្រាស់ទេ',
   'users.no_users_desc': 'គណនីបុគ្គលិក ហិរញ្ញវត្ថុ និងអ្នកសវនកម្មដែលអ្នកបង្កើតនឹងបង្ហាញនៅទីនេះ។',
+  'users.confirm_grant_admin_title': 'ផ្តល់សិទ្ធិអ្នកគ្រប់គ្រង?',
+  'users.confirm_grant_admin_desc': 'នេះនឹងផ្តល់សិទ្ធិចូលប្រើពេញលេញលើវេទិកា រួមទាំងការគ្រប់គ្រងអ្នកប្រើប្រាស់ផ្សេងទៀត និងតួនាទីរបស់ពួកគេ។ សូមប្រាកដថានេះជាចេតនា។',
+  'users.confirm_grant_admin_action': 'ផ្តល់សិទ្ធិអ្នកគ្រប់គ្រង',
 
   // ─── Roles ────────────────────────────────────────────────────────────────
   'roles.title': 'តួនាទី',

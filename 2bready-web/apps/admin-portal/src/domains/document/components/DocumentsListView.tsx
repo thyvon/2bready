@@ -5,7 +5,9 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
+import InputAdornment from '@mui/material/InputAdornment';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -142,7 +144,14 @@ export default function DocumentsListView() {
     <>
       <SectionCard noPadding>
         <Box sx={{ p: 2 }}>
-          <FormSelect label={t('common.status')} size="small" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 220 }}>
+          <FormSelect
+            label={t('common.status')}
+            size="small"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            sx={{ minWidth: 220 }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><FilterListIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
+          >
             <MenuItem value="">{t('common.all')}</MenuItem>
             <MenuItem value="review">{t('status.review')}</MenuItem>
             <MenuItem value="verified">{t('status.verified')}</MenuItem>

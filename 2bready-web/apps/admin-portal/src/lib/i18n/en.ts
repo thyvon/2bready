@@ -4,6 +4,7 @@ const en = {
   'common.cancel': 'Cancel',
   'common.delete': 'Delete',
   'common.edit': 'Edit',
+  'common.view': 'View',
   'common.back': 'Back',
   'common.next': 'Next',
   'common.loading': 'Loading...',
@@ -370,6 +371,9 @@ const en = {
   'users.cannot_change_own_status': "You can't change your own account status.",
   'users.no_users': 'No users yet',
   'users.no_users_desc': 'Staff, finance, and auditor accounts you create will appear here.',
+  'users.confirm_grant_admin_title': 'Grant admin access?',
+  'users.confirm_grant_admin_desc': 'This gives full platform access, including managing other users and their roles. Make sure this is intentional.',
+  'users.confirm_grant_admin_action': 'Grant admin',
 
   // ─── Roles ────────────────────────────────────────────────────────────────
   'roles.title': 'Roles',

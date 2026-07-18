@@ -16,13 +16,17 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
+import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import FormTextField from '@/components/forms/FormTextField';
@@ -53,6 +57,11 @@ export default function UsersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [serverError, setServerError] = useState('');
+  // Set only when a submitted edit would newly grant the admin role (wasn't
+  // already held) — holds the submission until the user explicitly confirms,
+  // rather than letting a checkbox misclick silently grant full platform
+  // access. Edits that don't touch admin membership skip this entirely.
+  const [pendingAdminGrant, setPendingAdminGrant] = useState<UpdateUserInput | null>(null);
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
@@ -127,17 +136,27 @@ export default function UsersPage() {
     }
   };
 
-  const onEditSubmit = async (data: UpdateUserInput) => {
+  const submitEdit = async (data: UpdateUserInput) => {
     if (!editing) return;
     setServerError('');
     try {
       await updateUser(editing.id, data);
       toast.success(t('users.update_success'));
       setEditing(null);
+      setPendingAdminGrant(null);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       setServerError(getApiError(err).message);
     }
+  };
+
+  const onEditSubmit = async (data: UpdateUserInput) => {
+    const grantingAdmin = !editing?.roles.includes('admin') && data.roles.includes('admin');
+    if (grantingAdmin) {
+      setPendingAdminGrant(data);
+      return;
+    }
+    await submitEdit(data);
   };
 
   const columns: Column<User>[] = [
@@ -203,6 +222,7 @@ export default function UsersPage() {
             value={filters.search ?? ''}
             onChange={(e) => updateFilters({ search: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 220 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           />
           <FormSelect
             label={t('users.role_col')}
@@ -210,6 +230,7 @@ export default function UsersPage() {
             value={filters.role ?? ''}
             onChange={(e) => updateFilters({ role: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 160 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><FilterListIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           >
             <MenuItem value="">{t('common.all')}</MenuItem>
             {INTERNAL_ROLES.map((role) => (
@@ -222,6 +243,7 @@ export default function UsersPage() {
             value={filters.status ?? ''}
             onChange={(e) => updateFilters({ status: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 160 } }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><FilterListIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           >
             <MenuItem value="">{t('common.all')}</MenuItem>
             <MenuItem value="active">{t('common.active')}</MenuItem>
@@ -334,6 +356,19 @@ export default function UsersPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!pendingAdminGrant}
+        title={t('users.confirm_grant_admin_title')}
+        description={t('users.confirm_grant_admin_desc')}
+        confirmLabel={t('users.confirm_grant_admin_action')}
+        danger
+        loading={editForm.formState.isSubmitting}
+        onCancel={() => setPendingAdminGrant(null)}
+        onConfirm={() => {
+          if (pendingAdminGrant) submitEdit(pendingAdminGrant);
+        }}
+      />
     </>
   );
 }

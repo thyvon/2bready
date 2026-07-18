@@ -58,7 +58,7 @@ export default function LayoutSwitcher() {
               textTransform: 'none',
               border: '1px solid',
               borderColor: 'divider',
-              borderRadius: 2,
+              borderRadius: '8px', // matches SectionCard/MuiCard — see that file's comment
               '&.Mui-selected': {
                 borderColor: 'primary.main',
                 bgcolor: 'var(--2br-nav-active-bg)',

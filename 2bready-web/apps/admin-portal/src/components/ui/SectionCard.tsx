@@ -19,7 +19,13 @@ export default function SectionCard({ children, title, subtitle, action, noPaddi
       sx={{
         border: '1px solid',
         borderColor: 'divider',
-        borderRadius: 2,
+        // Literal px, not the sx numeric shorthand (which multiplies by
+        // theme.shape.borderRadius, i.e. `2` here would silently mean 12px, not
+        // 2px) — matches MuiCard's own borderRadius token exactly, since this is
+        // the app's de facto card component used everywhere. Always check
+        // theme/index.ts's actual component override before picking a radius
+        // for a new surface; don't eyeball a number that looks fine in isolation.
+        borderRadius: '8px',
         bgcolor: 'background.paper',
         overflow: 'hidden',
         // Matches the smooth theme-switch transition MuiPaper/MuiCard already get

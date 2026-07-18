@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
+import DataTable, { type Column } from '@/components/ui/DataTable';
+import RoleDetailsDialog from '@/domains/user/components/RoleDetailsDialog';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listRoles } from '@/domains/user/api';
@@ -28,6 +28,7 @@ export default function RolesPage() {
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Role | null>(null);
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
@@ -56,33 +57,30 @@ export default function RolesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const columns: Column<Role>[] = [
+    { key: 'name', label: t('users.role_col') },
+    { key: 'permissions', label: t('roles.permissions_label'), render: (r) => r.permissions.length },
+    {
+      key: 'actions',
+      label: '',
+      align: 'right',
+      render: (r) => (
+        <IconButton size="small" onClick={() => setSelected(r)} aria-label={t('common.view')}>
+          <VisibilityOutlinedIcon fontSize="small" />
+        </IconButton>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHeader title={t('roles.title')} />
 
-      {loading ? (
-        <Box className="flex justify-center py-16">
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box className="flex flex-col gap-4">
-          {roles.map((role) => (
-            <SectionCard key={role.name} title={role.name}>
-              {role.permissions.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  {t('roles.no_permissions')}
-                </Typography>
-              ) : (
-                <Box className="flex flex-wrap gap-1">
-                  {role.permissions.map((permission) => (
-                    <Chip key={permission} label={permission} size="small" variant="outlined" />
-                  ))}
-                </Box>
-              )}
-            </SectionCard>
-          ))}
-        </Box>
-      )}
+      <SectionCard noPadding>
+        <DataTable columns={columns} rows={roles} getRowId={(r) => r.name} loading={loading} onRowClick={(r) => setSelected(r)} />
+      </SectionCard>
+
+      <RoleDetailsDialog role={selected} onClose={() => setSelected(null)} />
     </>
   );
 }

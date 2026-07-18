@@ -225,7 +225,7 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
 
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>{t('company.review')}</Typography>
-                  <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
+                  <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '8px', overflow: 'hidden', bgcolor: 'background.paper' }}>
                     <ReviewRow label={t('company.name')} value={values.name || '—'} />
                     <ReviewRow label={t('company.name_kh')} value={values.name_kh || '—'} />
                     <ReviewRow label={t('company.registration_no')} value={values.registration_no || '—'} />

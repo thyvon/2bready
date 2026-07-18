@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
+import InputAdornment from '@mui/material/InputAdornment';
+import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
@@ -123,7 +125,14 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
   return (
     <SectionCard noPadding>
       <Box sx={{ p: 2 }}>
-        <FormSelect label={t('common.status')} size="small" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 220 }}>
+        <FormSelect
+          label={t('common.status')}
+          size="small"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          sx={{ minWidth: 220 }}
+          slotProps={{ input: { startAdornment: <InputAdornment position="start"><FilterListIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
+        >
           <MenuItem value="">{t('common.all')}</MenuItem>
           <MenuItem value="awaiting_confirmation">{t('status.awaiting_confirmation')}</MenuItem>
           <MenuItem value="pending">{t('status.pending')}</MenuItem>

@@ -207,7 +207,12 @@ const theme = createTheme({
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             color: 'var(--mui-palette-text-secondary)',
-            backgroundColor: 'var(--mui-palette-background-paper)',
+            // background.default, not .paper — cards/table bodies sit on .paper
+            // (white), so using the same tone here made the header blend into the
+            // body instead of reading as a distinct header row. .default is the
+            // page's own subtle off-white/black, already used elsewhere for
+            // exactly this kind of "one step off the card surface" contrast.
+            backgroundColor: 'var(--mui-palette-background-default)',
             borderBottom: '1px solid var(--mui-palette-divider)',
             padding: '8px 16px',
           },
