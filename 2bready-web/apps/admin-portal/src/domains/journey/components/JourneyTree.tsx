@@ -81,6 +81,7 @@ function DefaultDocAction(doc: JourneyDocument) {
 
 interface DocumentRowProps {
   doc: JourneyDocument;
+  index: number;
   depth: number;
   level: JourneyLevel;
   milestone: JourneyMilestone;
@@ -94,7 +95,7 @@ interface DocumentRowProps {
 // flattened. Edit/delete only render for this company's own extras
 // (company_id set): a global node's identity here means "shared taxonomy,"
 // only editable from the abstract editor, not this per-company view.
-function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, isLastSibling }: DocumentRowProps) {
+function DocumentRow({ doc, index, depth, level, milestone, renderDocAction, extras, isLastSibling }: DocumentRowProps) {
   const children = [...doc.children].sort((a, b) => a.id.localeCompare(b.id));
   const isExtra = doc.company_id !== null;
 
@@ -102,7 +103,16 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
     <Box sx={{ pl: depth * 2.5 }}>
       <Box
         className="flex items-center gap-3"
-        sx={{ py: 1, borderBottom: depth === 0 && isLastSibling && children.length === 0 ? 'none' : '1px solid', borderColor: 'divider' }}
+        sx={{
+          py: 1,
+          mx: -1,
+          px: 1,
+          borderBottom: depth === 0 && isLastSibling && children.length === 0 ? 'none' : '1px solid',
+          borderColor: 'divider',
+          transition: 'background-color 0.1s ease',
+          bgcolor: index % 2 === 1 ? 'var(--2br-row-stripe)' : 'transparent',
+          '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
+        }}
       >
         {doc.document_id ? (
           <InsertDriveFileIcon fontSize="small" sx={{ color: 'primary.main', flexShrink: 0 }} />
@@ -135,6 +145,7 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
         <DocumentRow
           key={child.id}
           doc={child}
+          index={i}
           depth={depth + 1}
           level={level}
           milestone={milestone}
@@ -219,6 +230,7 @@ function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOf
                 <DocumentRow
                   key={doc.id}
                   doc={doc}
+                  index={i}
                   depth={0}
                   level={level}
                   milestone={milestone}

@@ -24,13 +24,14 @@ export interface DocumentDragData {
 
 interface DocumentTemplateNodeProps {
   doc: DocumentTemplate;
+  index: number;
   dragData: DocumentDragData;
   onAdd: (parentId: string) => void;
   onEdit: (doc: DocumentTemplate) => void;
   onDelete: (doc: DocumentTemplate) => void;
 }
 
-function DocumentTemplateNode({ doc, dragData, onAdd, onEdit, onDelete }: DocumentTemplateNodeProps) {
+function DocumentTemplateNode({ doc, index, dragData, onAdd, onEdit, onDelete }: DocumentTemplateNodeProps) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: doc.id,
@@ -41,7 +42,18 @@ function DocumentTemplateNode({ doc, dragData, onAdd, onEdit, onDelete }: Docume
 
   return (
     <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} sx={{ opacity: isDragging ? 0.5 : 1 }}>
-      <Box className="flex items-center gap-2 py-0.5">
+      <Box
+        className="flex items-center gap-2 py-0.5"
+        sx={{
+          mx: -1,
+          px: 1,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          transition: 'background-color 0.1s ease',
+          bgcolor: index % 2 === 1 ? 'var(--2br-row-stripe)' : 'transparent',
+          '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
+        }}
+      >
         <Box
           {...attributes}
           {...listeners}
@@ -103,8 +115,16 @@ export default function DocumentTemplateTree({ documents, milestoneId, parentId,
 
   return (
     <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-      {sorted.map((doc) => (
-        <DocumentTemplateNode key={doc.id} doc={doc} dragData={{ milestoneId, parentId }} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} />
+      {sorted.map((doc, index) => (
+        <DocumentTemplateNode
+          key={doc.id}
+          doc={doc}
+          index={index}
+          dragData={{ milestoneId, parentId }}
+          onAdd={onAdd}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </SortableContext>
   );
