@@ -14,6 +14,8 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 
 import StatusBadge from '@/components/ui/StatusBadge';
 import { cardGridContainer, cardGridItem, easeOutExpo } from '@/lib/motion';
@@ -102,6 +104,11 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
         className="flex items-center gap-3"
         sx={{ py: 1, borderBottom: depth === 0 && isLastSibling && children.length === 0 ? 'none' : '1px solid', borderColor: 'divider' }}
       >
+        {doc.document_id ? (
+          <InsertDriveFileIcon fontSize="small" sx={{ color: 'primary.main', flexShrink: 0 }} />
+        ) : (
+          <InsertDriveFileOutlinedIcon fontSize="small" sx={{ color: 'text.disabled', flexShrink: 0 }} />
+        )}
         <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
           {doc.name}
           {!doc.is_required && ' (optional)'}

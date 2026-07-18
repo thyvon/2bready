@@ -8,6 +8,8 @@ import { motion } from 'framer-motion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 import { GlowButton, StatusBadge, cardGridContainer, cardGridItem, easeOutExpo } from '@2bready/ui-core';
 import { TIER_LABELS, type Tier } from '@/lib/journey-data';
 import {
@@ -91,6 +93,11 @@ function DocumentRow({
         className="flex items-center gap-3"
         sx={{ py: depth === 0 ? 1 : 0.75, borderBottom: depth === 0 && isLastSibling && doc.children.length === 0 ? 'none' : '1px solid', borderColor: 'divider' }}
       >
+        {doc.document_id ? (
+          <InsertDriveFileIcon fontSize="small" sx={{ color: 'primary.main', flexShrink: 0 }} />
+        ) : (
+          <InsertDriveFileOutlinedIcon fontSize="small" sx={{ color: 'text.disabled', flexShrink: 0 }} />
+        )}
         <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
           {doc.name}
         </Typography>
