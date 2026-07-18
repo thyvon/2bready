@@ -68,6 +68,49 @@ function DefaultDocAction(doc: JourneyDocument) {
   return <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />;
 }
 
+// Sub-documents render indented under their parent, same relationship staff
+// set up in the admin taxonomy editor — not flattened into one plain list.
+function DocumentRow({
+  doc,
+  depth,
+  level,
+  milestone,
+  renderDocAction,
+  isLastSibling,
+}: {
+  doc: JourneyDocument;
+  depth: number;
+  level: JourneyLevel;
+  milestone: JourneyMilestone;
+  renderDocAction: RenderDocAction;
+  isLastSibling: boolean;
+}) {
+  return (
+    <Box sx={{ pl: depth * 2.5 }}>
+      <Box
+        className="flex items-center gap-3"
+        sx={{ py: depth === 0 ? 1 : 0.75, borderBottom: depth === 0 && isLastSibling && doc.children.length === 0 ? 'none' : '1px solid', borderColor: 'divider' }}
+      >
+        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+          {doc.name}
+        </Typography>
+        {renderDocAction(doc, { level, milestone })}
+      </Box>
+      {doc.children.map((child, i) => (
+        <DocumentRow
+          key={child.id}
+          doc={child}
+          depth={depth + 1}
+          level={level}
+          milestone={milestone}
+          renderDocAction={renderDocAction}
+          isLastSibling={i === doc.children.length - 1}
+        />
+      ))}
+    </Box>
+  );
+}
+
 function MilestoneNode({
   milestone,
   level,
@@ -138,20 +181,15 @@ function MilestoneNode({
       <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
         <Box sx={{ pl: 2.5, py: 0.5, display: 'flex', flexDirection: 'column' }}>
           {milestone.documents.map((doc, i) => (
-            <Box
+            <DocumentRow
               key={doc.id}
-              className="flex items-center gap-3"
-              sx={{
-                py: 1,
-                borderBottom: i === milestone.documents.length - 1 ? 'none' : '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                {doc.name}
-              </Typography>
-              {renderDocAction(doc, { level, milestone })}
-            </Box>
+              doc={doc}
+              depth={0}
+              level={level}
+              milestone={milestone}
+              renderDocAction={renderDocAction}
+              isLastSibling={i === milestone.documents.length - 1}
+            />
           ))}
         </Box>
       </Collapse>
@@ -199,13 +237,16 @@ function MobileMilestoneRow({
       </Box>
       <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', pb: 1 }}>
-          {milestone.documents.map((doc) => (
-            <Box key={doc.id} className="flex items-center gap-3" sx={{ py: 0.75 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                {doc.name}
-              </Typography>
-              {renderDocAction(doc, { level, milestone })}
-            </Box>
+          {milestone.documents.map((doc, i) => (
+            <DocumentRow
+              key={doc.id}
+              doc={doc}
+              depth={0}
+              level={level}
+              milestone={milestone}
+              renderDocAction={renderDocAction}
+              isLastSibling={i === milestone.documents.length - 1}
+            />
           ))}
         </Box>
       </Collapse>

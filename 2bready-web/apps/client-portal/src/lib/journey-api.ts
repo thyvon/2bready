@@ -2,10 +2,27 @@ import api from '@/lib/api';
 import type { components } from '@2bready/api-client';
 import type { Pillar } from '@/lib/journey-data';
 
-export type Journey = components['schemas']['JourneyResource'];
-export type JourneyLevel = Journey['levels'][number];
-export type JourneyMilestone = JourneyLevel['milestones'][number];
-export type JourneyDocument = JourneyMilestone['documents'][number];
+// JourneyResource.mapDocument() builds `children` as a plain recursive PHP
+// array (not a JsonResource::collection call), which Scramble can't trace
+// into a precise recursive type — it comes back as `{ [key: string]: unknown
+// }[]`. Hand-declared here instead, same shape the backend actually returns.
+export interface JourneyDocument {
+  id: string;
+  document_id: string | null;
+  name: string;
+  is_required: boolean;
+  status: string;
+  company_id: string | null;
+  children: JourneyDocument[];
+}
+
+type RawJourney = components['schemas']['JourneyResource'];
+type RawLevel = RawJourney['levels'][number];
+type RawMilestone = RawLevel['milestones'][number];
+
+export type JourneyMilestone = Omit<RawMilestone, 'documents'> & { documents: JourneyDocument[] };
+export type JourneyLevel = Omit<RawLevel, 'milestones'> & { milestones: JourneyMilestone[] };
+export type Journey = Omit<RawJourney, 'levels'> & { levels: JourneyLevel[] };
 
 // 404s when the current company's industry/country has no matching
 // JourneyTemplate yet — that's a valid "no journey" state, not an error, so
@@ -47,8 +64,17 @@ export const LEVEL_EMOJI: Record<string, string> = {
   L4: '💎',
 };
 
+// Flattens a document and every one of its sub-documents (to any depth) —
+// counts/progress below need every required document, not just the
+// top-level ones, or totals would silently under-count once sub-documents
+// exist. Display components still walk `doc.children` directly to keep the
+// nesting visible; this is only for aggregation.
+export function flattenDocuments(docs: JourneyDocument[]): JourneyDocument[] {
+  return docs.flatMap((doc) => [doc, ...flattenDocuments(doc.children)]);
+}
+
 export function levelDocuments(level: JourneyLevel): JourneyDocument[] {
-  return level.milestones.flatMap((milestone) => milestone.documents);
+  return flattenDocuments(level.milestones.flatMap((milestone) => milestone.documents));
 }
 
 export function levelTotalDocs(level: JourneyLevel): number {
