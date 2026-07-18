@@ -201,6 +201,32 @@ it('rejects a package with an invalid tier', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors(['tier']);
 });
 
+// ─── Journey levels (dropdown for the package form) ─────────────────────────
+
+it('lets an admin list journey levels ordered by sort_order', function () {
+    $admin = User::factory()->admin()->create();
+    $template = JourneyTemplate::factory()->create();
+    JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L2', 'sort_order' => 2]);
+    JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'sort_order' => 1]);
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/journey-levels');
+
+    $response->assertOk();
+    // Order matters — this is what populates a select dropdown, so it must
+    // come back in display order regardless of creation order.
+    expect(collect($response->json('data'))->pluck('code')->all())->toBe(['L1', 'L2']);
+});
+
+it('lets finance list journey levels despite finance lacking journey.view', function () {
+    $finance = User::factory()->withRole('finance')->create();
+
+    $this->actingAs($finance)->getJson('/api/v1/journey-levels')->assertOk();
+});
+
+it('requires authentication to list journey levels', function () {
+    $this->getJson('/api/v1/journey-levels')->assertUnauthorized();
+});
+
 it('nests the real journey level code in the public pricing list', function () {
     $fnb = Industry::factory()->create(['code' => 'F&B']);
     $template = JourneyTemplate::factory()->create(['country_code' => 'KH', 'industry_id' => $fnb->id]);

@@ -452,6 +452,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/journey-levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["journeyLevel.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/leads": {
         parameters: {
             query?: never;
@@ -796,6 +812,14 @@ export interface components {
             created_at: string | null;
             /** Format: date-time */
             updated_at: string | null;
+        };
+        /** JourneyLevelResource */
+        JourneyLevelResource: {
+            id: string;
+            code: string;
+            name: string;
+            pillar: components["schemas"]["JourneyPillar"];
+            sort_order: number;
         };
         /**
          * JourneyPillar
@@ -2244,6 +2268,30 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "journeyLevel.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyLevelResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
         };
     };
     "lead.index": {
