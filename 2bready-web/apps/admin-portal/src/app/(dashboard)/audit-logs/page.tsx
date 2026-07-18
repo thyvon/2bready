@@ -11,7 +11,7 @@ import FormTextField from '@/components/forms/FormTextField';
 import { useAuthStore } from '@/store/auth.store';
 import { listAuditLogs } from '@/domains/audit-log/api';
 import AuditLogDetailsDialog from '@/domains/audit-log/components/AuditLogDetailsDialog';
-import type { AuditLog, AuditLogListFilters } from '@/domains/audit-log/types';
+import type { AuditLog, AuditLogListFilters, Pagination } from '@/domains/audit-log/types';
 import { getApiError, formatDate } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
@@ -21,10 +21,22 @@ export default function AuditLogsPage() {
   const { t } = useTranslation();
 
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState<AuditLogListFilters>({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
   const [selected, setSelected] = useState<AuditLog | null>(null);
+
+  // Any filter change invalidates the current page (e.g. page 3 of an
+  // unfiltered list may not exist once a filter narrows the result set) —
+  // update via this instead of setFilters directly so the two always move
+  // together.
+  const updateFilters = (patch: Partial<AuditLogListFilters>) => {
+    setPage(1);
+    setFilters((f) => ({ ...f, ...patch }));
+  };
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
@@ -37,8 +49,11 @@ export default function AuditLogsPage() {
       setLoading(true);
       setError('');
       try {
-        const { logs } = await listAuditLogs(filters);
-        if (!cancelled) setLogs(logs);
+        const { logs, pagination } = await listAuditLogs({ ...filters, page, per_page: perPage });
+        if (!cancelled) {
+          setLogs(logs);
+          setPagination(pagination);
+        }
       } catch (err) {
         if (!cancelled) setError(getApiError(err).message);
       } finally {
@@ -51,7 +66,7 @@ export default function AuditLogsPage() {
     return () => {
       cancelled = true;
     };
-  }, [filters]);
+  }, [filters, page, perPage]);
 
   const columns: Column<AuditLog>[] = [
     { key: 'created_at', label: t('audit_log.time'), render: (l) => formatDate(l.created_at) },
@@ -76,14 +91,14 @@ export default function AuditLogsPage() {
             size="small"
             placeholder="company.updated"
             value={filters.action ?? ''}
-            onChange={(e) => setFilters((f) => ({ ...f, action: e.target.value || undefined }))}
+            onChange={(e) => updateFilters({ action: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 220 } }}
           />
           <FormTextField
             label={t('audit_log.filter_actor')}
             size="small"
             value={filters.search ?? ''}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value || undefined }))}
+            onChange={(e) => updateFilters({ search: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 220 } }}
           />
           <FormTextField
@@ -92,7 +107,7 @@ export default function AuditLogsPage() {
             size="small"
             slotProps={{ inputLabel: { shrink: true } }}
             value={filters.from ?? ''}
-            onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value || undefined }))}
+            onChange={(e) => updateFilters({ from: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 170 } }}
           />
           <FormTextField
@@ -101,7 +116,7 @@ export default function AuditLogsPage() {
             size="small"
             slotProps={{ inputLabel: { shrink: true } }}
             value={filters.to ?? ''}
-            onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value || undefined }))}
+            onChange={(e) => updateFilters({ to: e.target.value || undefined })}
             sx={{ width: { xs: '100%', sm: 170 } }}
           />
         </Box>
@@ -120,6 +135,20 @@ export default function AuditLogsPage() {
           onRowClick={(l) => setSelected(l)}
           emptyTitle={t('audit_log.no_logs')}
           emptyDescription={t('audit_log.no_logs_desc')}
+          pagination={
+            pagination
+              ? {
+                  page,
+                  perPage,
+                  total: pagination.total,
+                  onPageChange: setPage,
+                  onPerPageChange: (newPerPage) => {
+                    setPage(1);
+                    setPerPage(newPerPage);
+                  },
+                }
+              : undefined
+          }
         />
       </SectionCard>
 

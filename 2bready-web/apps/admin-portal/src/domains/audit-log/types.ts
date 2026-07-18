@@ -17,6 +17,8 @@ export interface AuditLogListFilters {
   from?: string;
   to?: string;
   search?: string;
+  page?: number;
+  per_page?: number;
 }
 
 export interface Pagination {

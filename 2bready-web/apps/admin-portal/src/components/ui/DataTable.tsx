@@ -7,6 +7,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
 import EmptyState from './EmptyState';
 
 export interface Column<T> {
@@ -15,6 +16,17 @@ export interface Column<T> {
   render?: (row: T) => React.ReactNode;
   width?: string | number;
   align?: 'left' | 'center' | 'right';
+}
+
+export interface DataTablePagination {
+  // 1-indexed, matching Laravel's paginator — converted to/from MUI's
+  // 0-indexed TablePagination internally, never leaked to the caller.
+  page: number;
+  perPage: number;
+  total: number;
+  perPageOptions?: number[];
+  onPageChange: (page: number) => void;
+  onPerPageChange: (perPage: number) => void;
 }
 
 interface DataTableProps<T> {
@@ -26,6 +38,10 @@ interface DataTableProps<T> {
   emptyDescription?: string;
   emptyAction?: React.ReactNode;
   onRowClick?: (row: T) => void;
+  // Omit entirely for pages that don't need it (most callers today) — server-side
+  // only, this never slices `rows` itself, it just renders controls and reports
+  // the requested page/perPage back to the caller's own data-fetching effect.
+  pagination?: DataTablePagination;
 }
 
 export default function DataTable<T>({
@@ -37,6 +53,7 @@ export default function DataTable<T>({
   emptyDescription,
   emptyAction,
   onRowClick,
+  pagination,
 }: DataTableProps<T>) {
   return (
     <TableContainer>
@@ -86,6 +103,17 @@ export default function DataTable<T>({
           )}
         </TableBody>
       </Table>
+      {pagination && rows.length > 0 && (
+        <TablePagination
+          component="div"
+          count={pagination.total}
+          page={pagination.page - 1}
+          rowsPerPage={pagination.perPage}
+          rowsPerPageOptions={pagination.perPageOptions ?? [10, 25, 50, 100]}
+          onPageChange={(_, newPage) => pagination.onPageChange(newPage + 1)}
+          onRowsPerPageChange={(e) => pagination.onPerPageChange(Number(e.target.value))}
+        />
+      )}
     </TableContainer>
   );
 }

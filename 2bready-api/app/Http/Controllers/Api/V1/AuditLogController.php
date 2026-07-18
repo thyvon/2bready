@@ -37,9 +37,13 @@ class AuditLogController extends Controller
             $filters['company_id'] = $user->current_company_id;
         }
 
+        // Clamped, not passed straight through — an unbounded per_page would let
+        // any caller turn this into an unpaginated full-table dump.
+        $perPage = min(100, max(5, (int) $request->input('per_page', 25)));
+
         $logs = AuditLogFilters::apply(AuditLog::query(), $filters)
             ->latest('created_at')
-            ->paginate(25);
+            ->paginate($perPage);
 
         return ApiResponse::success(
             AuditLogResource::collection($logs->items()),

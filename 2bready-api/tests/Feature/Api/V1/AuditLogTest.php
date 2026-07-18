@@ -8,6 +8,7 @@ use App\Domain\Package\Models\Lead;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -59,7 +60,7 @@ it('records a create, update, and delete for an audited model', function () {
 
 it('does not record an update that only touched timestamps', function () {
     $lead = Lead::create(['name' => 'Test Lead', 'email' => 'lead2@example.com', 'phone' => null, 'company_name' => null, 'source' => 'paywall']);
-    AuditLog::query()->delete();
+    DB::table('audit_logs')->truncate();
 
     $lead->touch();
 
@@ -68,7 +69,7 @@ it('does not record an update that only touched timestamps', function () {
 
 it('redacts a hidden field instead of dropping it from the diff', function () {
     $user = User::factory()->create();
-    AuditLog::query()->delete();
+    DB::table('audit_logs')->truncate();
 
     $user->forceFill(['password' => bcrypt('SomeNewPassword1')])->save();
 
@@ -129,7 +130,7 @@ it('lets an admin view audit logs across every company', function () {
     // Setting up the fixtures above (User/Company/Industry factories) already
     // produced their own real audit entries — proof the feature works, but noise
     // for this assertion, which wants an exact count of two specific rows.
-    AuditLog::query()->delete();
+    DB::table('audit_logs')->truncate();
     AuditLog::create(['action' => 'company.updated', 'company_id' => $companyA->id]);
     AuditLog::create(['action' => 'company.updated', 'company_id' => $companyB->id]);
 
@@ -174,4 +175,26 @@ it('forbids a company_member from viewing audit logs', function () {
 
 it('requires authentication to view audit logs', function () {
     $this->getJson('/api/v1/audit-logs')->assertUnauthorized();
+});
+
+it('paginates and clamps per_page within bounds', function () {
+    $admin = User::factory()->admin()->create();
+    DB::table('audit_logs')->truncate();
+    for ($i = 0; $i < 30; $i++) {
+        AuditLog::create(['action' => "test.row_{$i}"]);
+    }
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/audit-logs?per_page=200');
+    $response->assertOk();
+    expect($response->json('meta.pagination.per_page'))->toBe(100);
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/audit-logs?per_page=1');
+    $response->assertOk();
+    expect($response->json('meta.pagination.per_page'))->toBe(5);
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/audit-logs?per_page=10');
+    $response->assertOk();
+    expect($response->json('meta.pagination.per_page'))->toBe(10);
+    expect($response->json('meta.pagination.last_page'))->toBe(3);
+    expect($response->json('data'))->toHaveCount(10);
 });
