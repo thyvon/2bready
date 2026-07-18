@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\AuditLog\Events\AuditableActionOccurred;
+use App\Domain\AuditLog\Listeners\RecordAuditLogListener;
+use App\Domain\AuditLog\Models\AuditLog;
+use App\Domain\AuditLog\Policies\AuditLogPolicy;
 use App\Domain\Company\Models\Company;
 use App\Domain\Company\Policies\CompanyPolicy;
 use App\Domain\Document\Events\DocumentVerified;
@@ -58,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
         Gate::policy(Company::class, CompanyPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);
         Gate::policy(Industry::class, IndustryPolicy::class);
@@ -68,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lead::class, LeadPolicy::class);
 
         Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
+        Event::listen(AuditableActionOccurred::class, RecordAuditLogListener::class);
 
         // Keyed by email+IP so an attacker can't route around the limit from multiple
         // IPs against a single account, nor mass-guess many accounts from one IP.

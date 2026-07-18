@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Journey\Models;
 
 use App\Domain\Industry\Models\Industry;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\JourneyTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class JourneyTemplate extends Model
 {
     /** @use HasFactory<JourneyTemplateFactory> */
-    use HasFactory, HasUlid, SoftDeletes;
+    use Auditable, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<JourneyTemplate> */
     protected static function newFactory(): Factory

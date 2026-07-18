@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Journey\Models;
 
 use App\Domain\Journey\Enums\JourneyPillar;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\JourneyLevelFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class JourneyLevel extends Model
 {
     /** @use HasFactory<JourneyLevelFactory> */
-    use HasFactory, HasUlid, SoftDeletes;
+    use Auditable, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<JourneyLevel> */
     protected static function newFactory(): Factory

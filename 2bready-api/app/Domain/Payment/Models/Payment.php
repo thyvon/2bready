@@ -7,6 +7,7 @@ namespace App\Domain\Payment\Models;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\User\Models\User;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\PaymentFactory;
@@ -25,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
-    use BelongsToCompany, HasFactory, HasUlid;
+    use Auditable, BelongsToCompany, HasFactory, HasUlid;
 
     /** @return Factory<Payment> */
     protected static function newFactory(): Factory

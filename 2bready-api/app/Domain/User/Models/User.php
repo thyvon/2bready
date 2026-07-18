@@ -6,6 +6,7 @@ namespace App\Domain\User\Models;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\User\Enums\UserStatus;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -32,7 +33,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, HasUlid, Notifiable;
+    use Auditable, HasApiTokens, HasFactory, HasRoles, HasUlid, Notifiable;
 
     /** @return Factory<User> */
     protected static function newFactory(): Factory

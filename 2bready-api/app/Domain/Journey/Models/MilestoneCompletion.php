@@ -6,6 +6,7 @@ namespace App\Domain\Journey\Models;
 
 use App\Domain\Journey\Enums\MilestoneCompletionTrigger;
 use App\Domain\User\Models\User;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\MilestoneCompletionFactory;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class MilestoneCompletion extends Model
 {
     /** @use HasFactory<MilestoneCompletionFactory> */
-    use BelongsToCompany, HasFactory, HasUlid, SoftDeletes;
+    use Auditable, BelongsToCompany, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<MilestoneCompletion> */
     protected static function newFactory(): Factory

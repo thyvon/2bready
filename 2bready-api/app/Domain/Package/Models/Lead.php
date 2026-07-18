@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Package\Models;
 
 use App\Domain\Company\Models\Company;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\LeadFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Lead extends Model
 {
     /** @use HasFactory<LeadFactory> */
-    use HasFactory, HasUlid;
+    use Auditable, HasFactory, HasUlid;
 
     /** @return Factory<Lead> */
     protected static function newFactory(): Factory

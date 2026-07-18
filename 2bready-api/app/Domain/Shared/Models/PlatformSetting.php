@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Shared\Models;
 
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 
 class PlatformSetting extends Model
 {
-    use HasUlid;
+    use Auditable, HasUlid;
 
     protected $fillable = [
         'key',

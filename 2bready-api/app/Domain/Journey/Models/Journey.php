@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Journey\Models;
 
 use App\Domain\Journey\Enums\JourneyStatus;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\JourneyFactory;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Journey extends Model
 {
     /** @use HasFactory<JourneyFactory> */
-    use BelongsToCompany, HasFactory, HasUlid, SoftDeletes;
+    use Auditable, BelongsToCompany, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<Journey> */
     protected static function newFactory(): Factory

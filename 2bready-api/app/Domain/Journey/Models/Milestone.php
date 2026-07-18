@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Journey\Models;
 
 use App\Domain\Document\Models\DocumentTemplate;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\MilestoneFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Milestone extends Model
 {
     /** @use HasFactory<MilestoneFactory> */
-    use HasFactory, HasUlid, SoftDeletes;
+    use Auditable, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<Milestone> */
     protected static function newFactory(): Factory

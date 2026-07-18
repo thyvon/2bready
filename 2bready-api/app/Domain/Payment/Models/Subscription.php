@@ -6,6 +6,7 @@ namespace App\Domain\Payment\Models;
 
 use App\Domain\Package\Models\Package;
 use App\Domain\Payment\Enums\SubscriptionStatus;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\SubscriptionFactory;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Subscription extends Model
 {
     /** @use HasFactory<SubscriptionFactory> */
-    use BelongsToCompany, HasFactory, HasUlid;
+    use Auditable, BelongsToCompany, HasFactory, HasUlid;
 
     /** @return Factory<Subscription> */
     protected static function newFactory(): Factory

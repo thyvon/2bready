@@ -8,6 +8,7 @@ use App\Domain\Industry\Models\Industry;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Package\Enums\BillingPeriod;
 use App\Domain\Package\Enums\Tier;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\PackageFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,7 +29,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Package extends Model
 {
     /** @use HasFactory<PackageFactory> */
-    use HasFactory, HasUlid, SoftDeletes;
+    use Auditable, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<Package> */
     protected static function newFactory(): Factory

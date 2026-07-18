@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\AuditLog\Events\AuditableActionOccurred;
 use App\Domain\User\Actions\ConfirmTotpAction;
 use App\Domain\User\Actions\RegisterUserAction;
 use App\Domain\User\Actions\SetupTotpAction;
@@ -70,7 +71,14 @@ class AuthController extends Controller
 
     private function attemptCredentials(LoginRequest $request, string $requiredPermission): User
     {
+        $attemptedEmail = (string) $request->input('email');
+
         if (! Auth::attempt($request->only('email', 'password'))) {
+            event(new AuditableActionOccurred(
+                action: 'auth.login_failed',
+                actorEmail: $attemptedEmail,
+            ));
+
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
             ]);
@@ -82,6 +90,12 @@ class AuthController extends Controller
         if (! $user->isActive()) {
             Auth::logout();
 
+            event(new AuditableActionOccurred(
+                action: 'auth.login_rejected_suspended',
+                actorId: $user->id,
+                actorEmail: $user->email,
+            ));
+
             throw new HttpResponseException(
                 ApiResponse::error('Your account has been suspended.', [], 403),
             );
@@ -89,6 +103,13 @@ class AuthController extends Controller
 
         if (! $user->can($requiredPermission)) {
             Auth::logout();
+
+            event(new AuditableActionOccurred(
+                action: 'auth.login_rejected_wrong_portal',
+                actorId: $user->id,
+                actorEmail: $user->email,
+                metadata: ['required_permission' => $requiredPermission],
+            ));
 
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
@@ -131,6 +152,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('api')->plainTextToken;
 
+        // Only reached here (not the two totp_required branches above) — for a
+        // 2FA account, "login" isn't complete until totpConfirm/totpVerify
+        // upgrades the pending token below, so that's where those dispatch it.
+        event(new AuditableActionOccurred(action: 'auth.login', actorId: $user->id, actorEmail: $user->email));
+
         return ApiResponse::success([
             'user' => new UserResource($user),
             'token' => $token,
@@ -140,7 +166,11 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        /** @var User $user */
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+
+        event(new AuditableActionOccurred(action: 'auth.logout', actorId: $user->id, actorEmail: $user->email));
 
         return ApiResponse::noContent();
     }
@@ -165,6 +195,16 @@ class AuthController extends Controller
             function (User $user, string $password) {
                 $user->forceFill(['password' => $password])->save();
                 $user->tokens()->delete();
+
+                // The password change itself is already captured generically (redacted)
+                // by the Auditable trait's user.updated entry — this adds a clearly-named
+                // event alongside it, since "auth.password_reset_completed" is far more
+                // legible in a history view than a raw user.updated diff.
+                event(new AuditableActionOccurred(
+                    action: 'auth.password_reset_completed',
+                    actorId: $user->id,
+                    actorEmail: $user->email,
+                ));
             },
         );
 
@@ -194,8 +234,18 @@ class AuthController extends Controller
         // that 2FA setup is confirmed — mirrors totpVerify()'s token upgrade below. The
         // frontend must swap to this new token; the old one it had been holding since
         // login can no longer reach business routes.
-        $request->user()->currentAccessToken()->delete();
-        $token = $request->user()->createToken('api')->plainTextToken;
+        /** @var User $user */
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+        $token = $user->createToken('api')->plainTextToken;
+
+        // Two distinct facts, both worth recording: the two_factor_confirmed_at
+        // change itself is already captured generically by the Auditable trait's
+        // user.updated entry (fired inside ConfirmTotpAction's $user->update());
+        // auth.login is dispatched here because this is also the moment this
+        // account's login actually completes — issueTokenResponse() deliberately
+        // didn't fire it for the pending-2FA branch that got them here.
+        event(new AuditableActionOccurred(action: 'auth.login', actorId: $user->id, actorEmail: $user->email));
 
         return ApiResponse::success([
             'token' => $token,
@@ -212,8 +262,15 @@ class AuthController extends Controller
         }
 
         // Revoke the restricted pending token, issue a fully-capable one.
-        $request->user()->currentAccessToken()->delete();
-        $token = $request->user()->createToken('api')->plainTextToken;
+        /** @var User $user */
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+        $token = $user->createToken('api')->plainTextToken;
+
+        // The routine 2FA challenge on every subsequent login — no user.updated
+        // entry accompanies this one (VerifyTotpAction only verifies, doesn't
+        // mutate), so this is the only record of the session starting.
+        event(new AuditableActionOccurred(action: 'auth.login', actorId: $user->id, actorEmail: $user->email));
 
         return ApiResponse::success([
             'token' => $token,

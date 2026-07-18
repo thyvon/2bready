@@ -6,6 +6,7 @@ namespace App\Domain\Industry\Models;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Package\Models\Package;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\IndustryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Industry extends Model
 {
     /** @use HasFactory<IndustryFactory> */
-    use HasFactory, HasUlid, SoftDeletes;
+    use Auditable, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<Industry> */
     protected static function newFactory(): Factory

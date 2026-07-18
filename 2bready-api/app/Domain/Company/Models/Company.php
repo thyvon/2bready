@@ -8,6 +8,7 @@ use App\Domain\Company\Enums\CompanyStatus;
 use App\Domain\Industry\Models\Industry;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
-    use HasFactory, HasUlid, SoftDeletes;
+    use Auditable, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<Company> */
     protected static function newFactory(): Factory

@@ -6,6 +6,7 @@ namespace App\Domain\Document\Models;
 
 use App\Domain\Document\Enums\DocumentStatus;
 use App\Domain\User\Models\User;
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\DocumentFactory;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Document extends Model
 {
     /** @use HasFactory<DocumentFactory> */
-    use BelongsToCompany, HasFactory, HasUlid, SoftDeletes;
+    use Auditable, BelongsToCompany, HasFactory, HasUlid, SoftDeletes;
 
     /** @return Factory<Document> */
     protected static function newFactory(): Factory
