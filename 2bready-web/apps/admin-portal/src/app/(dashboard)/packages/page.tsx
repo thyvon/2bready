@@ -28,8 +28,11 @@ import FormTextField from '@/components/forms/FormTextField';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listPackages, createPackage, updatePackage, deletePackage } from '@/domains/package/api';
+import { useJourneyLevels } from '@/domains/package/hooks';
 import type { Package } from '@/domains/package/types';
 import { packageFormSchema, packageFormDefaults, type PackageFormInput } from '@/domains/package/schemas';
+import { useIndustries } from '@/domains/company/hooks';
+import { industryLabel } from '@/domains/company/constants';
 import { getApiError, formatCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
@@ -37,7 +40,9 @@ export default function AdminPackagesPage() {
   const router = useRouter();
   const { hasAnyRole } = useAuthStore();
   const toast = useToast();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { industries } = useIndustries();
+  const { journeyLevels } = useJourneyLevels();
 
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,8 +110,12 @@ export default function AdminPackagesPage() {
       name_kh: pkg.name_kh ?? '',
       description: pkg.description ?? '',
       price: pkg.price_cents / 100,
+      industry_id: pkg.industry_id ?? '',
+      journey_level_id: pkg.journey_level_id ?? '',
       billing_period: pkg.billing_period,
+      tier: pkg.tier,
       is_active: pkg.is_active,
+      sort_order: pkg.sort_order,
     });
     setServerError('');
     setDialogOpen(true);
@@ -121,8 +130,12 @@ export default function AdminPackagesPage() {
         name_kh: parsed.name_kh || undefined,
         description: parsed.description || undefined,
         price_cents: Math.round(parsed.price * 100),
+        industry_id: parsed.industry_id || undefined,
+        journey_level_id: parsed.journey_level_id || undefined,
         billing_period: parsed.billing_period,
+        tier: parsed.tier,
         is_active: parsed.is_active,
+        sort_order: parsed.sort_order,
       };
 
       if (editing) {
@@ -152,6 +165,15 @@ export default function AdminPackagesPage() {
 
   const columns: Column<Package>[] = [
     { key: 'name', label: t('package.name_col'), render: (p) => p.name },
+    {
+      key: 'industry_id',
+      label: t('package.industry_col'),
+      render: (p) => {
+        const industry = industries.find((i) => i.id === p.industry_id);
+        return industry ? industryLabel(industry, locale) : t('package.all_industries');
+      },
+    },
+    { key: 'tier', label: t('package.tier_col'), render: (p) => t(`package.tier.${p.tier}`) },
     { key: 'price_cents', label: t('package.price_col'), render: (p) => formatCents(p.price_cents) },
     { key: 'billing_period', label: t('package.billing_period_col'), render: (p) => t(`package.billing_period.${p.billing_period}`) },
     { key: 'is_active', label: t('common.status'), render: (p) => <StatusBadge status={p.is_active ? 'active' : 'inactive'} /> },
@@ -255,6 +277,67 @@ export default function AdminPackagesPage() {
                       <MenuItem value="one_time">{t('package.billing_period.one_time')}</MenuItem>
                     </FormSelect>
                   )}
+                />
+              </Box>
+            </Box>
+
+            <Box className="flex gap-4">
+              <Box className="flex-1">
+                <FieldLabel>{t('package.industry_col')}</FieldLabel>
+                <Controller
+                  name="industry_id"
+                  control={control}
+                  render={({ field }) => (
+                    <FormSelect {...field} fullWidth error={!!errors.industry_id} helperText={errors.industry_id?.message}>
+                      <MenuItem value="">{t('package.all_industries')}</MenuItem>
+                      {industries.map((industry) => (
+                        <MenuItem key={industry.id} value={industry.id}>{industryLabel(industry, locale)}</MenuItem>
+                      ))}
+                    </FormSelect>
+                  )}
+                />
+              </Box>
+              <Box className="flex-1">
+                <FieldLabel>{t('package.journey_level_col')}</FieldLabel>
+                <Controller
+                  name="journey_level_id"
+                  control={control}
+                  render={({ field }) => (
+                    <FormSelect {...field} fullWidth error={!!errors.journey_level_id} helperText={errors.journey_level_id?.message}>
+                      <MenuItem value="">{t('package.no_journey_level')}</MenuItem>
+                      {journeyLevels.map((level) => (
+                        <MenuItem key={level.id} value={level.id}>{level.code} — {level.name}</MenuItem>
+                      ))}
+                    </FormSelect>
+                  )}
+                />
+              </Box>
+            </Box>
+
+            <Box className="flex gap-4">
+              <Box className="flex-1">
+                <FieldLabel>{t('package.tier_col')}</FieldLabel>
+                <Controller
+                  name="tier"
+                  control={control}
+                  render={({ field }) => (
+                    <FormSelect {...field} fullWidth error={!!errors.tier} helperText={errors.tier?.message}>
+                      <MenuItem value="free">{t('package.tier.free')}</MenuItem>
+                      <MenuItem value="pro">{t('package.tier.pro')}</MenuItem>
+                      <MenuItem value="enterprise">{t('package.tier.enterprise')}</MenuItem>
+                    </FormSelect>
+                  )}
+                />
+              </Box>
+              <Box className="flex-1">
+                <FieldLabel>{t('package.sort_order')}</FieldLabel>
+                <FormTextField
+                  type="number"
+                  fullWidth
+                  slotProps={{ htmlInput: { step: '1', min: 0 } }}
+                  error={!!errors.sort_order}
+                  helperText={errors.sort_order?.message}
+                  {...register('sort_order')}
                 />
               </Box>
             </Box>
