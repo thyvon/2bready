@@ -25,12 +25,12 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
 
       setAuth: (user, token) => {
-        localStorage.setItem('auth_token', token);
+        localStorage.setItem('client_auth_token', token);
         set({ user, token, isAuthenticated: true });
       },
 
       clearAuth: () => {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('client_auth_token');
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),

@@ -14,7 +14,12 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
 // honestly possible right now.
 const api = createApiClient({
   baseURL: `${apiUrl}/api/v1`,
-  getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null),
+  // Prefixed, not the bare 'auth_token' this used to be — production serves
+  // this app and admin-portal from the same domain (path-mounted, see the
+  // deploy playbook), so they share one localStorage. Both apps used to read
+  // their bearer token from that identical plain key, so logging into one
+  // app silently overwrote the token the other app's next API call read.
+  getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('client_auth_token') : null),
   onUnauthorized: () => {
     useAuthStore.getState().clearAuth();
   },
