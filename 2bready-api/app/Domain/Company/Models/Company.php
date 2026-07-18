@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -61,10 +61,19 @@ class Company extends Model
         ];
     }
 
-    /** @return HasMany<User, $this> */
-    public function users(): HasMany
+    /**
+     * The inverse of User::companies() (§0.7 of the MVP proposal — a user
+     * can belong to more than one company via the company_user pivot).
+     * Was a broken hasMany(User::class) until now — that looks for a
+     * company_id column on users, which was dropped from that table by the
+     * 2026_07_05_000008 migration when membership moved to this pivot;
+     * calling it would have thrown a SQL error. Nothing called it yet.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function users(): BelongsToMany
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'company_user');
     }
 
     /** @return BelongsTo<Subscription, $this> */
