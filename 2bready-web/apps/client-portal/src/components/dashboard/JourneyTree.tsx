@@ -15,7 +15,7 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
-import { GlowButton, StatusBadge, cardGridContainer, cardGridItem } from '@2bready/ui-core';
+import { GlowButton, StatusBadge, cardGridContainer, cardGridItem, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
 import { TIER_LABELS, type Tier } from '@/lib/journey-data';
 import {
   DOC_STATUS_LABEL,
@@ -210,7 +210,17 @@ function LevelAccordion({
     // collapsed locked level.
     <Accordion
       defaultExpanded={unlocked || defaultMilestonesOpen}
-      sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }}
+      sx={{
+        mb: 3,
+        borderRadius: '8px !important',
+        // Resting state: quiet neutral elevation (same recipe as PillarCard).
+        // Hover: swaps to the GlowButton-style colored ring + blurred glow —
+        // matches the app's brand language without every card glowing at once.
+        boxShadow: cardRestShadow,
+        transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': { boxShadow: cardHoverGlow() },
+        '&:before': { display: 'none' },
+      }}
       disableGutters
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>

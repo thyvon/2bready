@@ -23,6 +23,7 @@ import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import StatusBadge from '@/components/ui/StatusBadge';
 import { cardGridContainer, cardGridItem } from '@/lib/motion';
+import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import type { JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
 
 const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
@@ -266,7 +267,21 @@ function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extra
   const pct = totalMilestones === 0 ? 0 : Math.round((completedMilestones / totalMilestones) * 100);
 
   return (
-    <Accordion defaultExpanded sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }} disableGutters>
+    <Accordion
+      defaultExpanded
+      sx={{
+        mb: 3,
+        borderRadius: '8px !important',
+        // Monochrome equivalent of client-portal's glow — this app's theme
+        // deliberately avoids a colored glow (see MuiButton override), so
+        // hover just deepens the same neutral shadow instead.
+        boxShadow: cardRestShadow,
+        transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': { boxShadow: cardHoverShadowNeutral },
+        '&:before': { display: 'none' },
+      }}
+      disableGutters
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box className="flex items-center gap-2 w-full pr-2" sx={{ opacity: level.unlocked ? 1 : 0.6 }}>
           <LevelMedal code={level.code} />

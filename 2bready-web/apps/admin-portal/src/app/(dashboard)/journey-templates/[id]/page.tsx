@@ -33,6 +33,7 @@ import SectionCard from '@/components/ui/SectionCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
+import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import FormTextField from '@/components/forms/FormTextField';
 import DocumentTemplateTree, { type DocumentDragData } from '@/domains/journey-template/components/DocumentTemplateTree';
 import { useAuthStore } from '@/store/auth.store';
@@ -375,7 +376,14 @@ export default function JourneyTemplateDetailPage() {
           <Accordion
             key={level.id}
             defaultExpanded
-            sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }}
+            sx={{
+              mb: 3,
+              borderRadius: '8px !important',
+              boxShadow: cardRestShadow,
+              transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': { boxShadow: cardHoverShadowNeutral },
+              '&:before': { display: 'none' },
+            }}
             disableGutters
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>

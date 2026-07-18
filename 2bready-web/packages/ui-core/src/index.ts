@@ -11,3 +11,4 @@ export { UploadDropzone, type UploadDropzoneProps } from './UploadDropzone';
 export { DocumentPreviewDialog, type DocumentPreviewDialogProps } from './DocumentPreviewDialog';
 export { DocumentUploadPreviewDialog, type DocumentUploadPreviewDialogProps } from './DocumentUploadPreviewDialog';
 export { easeOut, easeOutExpo, pageTransition, fadeIn, cardGridContainer, cardGridItem, stepTransition } from './motion';
+export { cardRestShadow, cardHoverShadowNeutral, cardHoverGlow } from './cardElevation';
