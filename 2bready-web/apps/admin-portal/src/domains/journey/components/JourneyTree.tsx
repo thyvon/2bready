@@ -163,6 +163,7 @@ function MilestoneRow({ milestone, level, onSignOff, signingOffId, renderDocActi
           mx: -1,
           borderBottom: '1px solid',
           borderColor: 'divider',
+          bgcolor: 'background.default',
           transition: 'background-color 0.1s ease',
           '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
         }}
@@ -249,7 +250,7 @@ function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extra
               {level.name} · {level.pathway_name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {PILLAR_LABEL[level.pillar] ?? level.pillar} · {totalMilestones} milestones · {pct}%
+              {PILLAR_LABEL[level.pillar] ?? level.pillar} · {totalMilestones} milestones
             </Typography>
           </Box>
           <Chip

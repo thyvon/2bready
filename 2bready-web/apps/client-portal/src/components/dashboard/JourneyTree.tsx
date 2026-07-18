@@ -82,7 +82,7 @@ function DocumentRow({
           borderBottom: depth === 0 && isLastSibling && doc.children.length === 0 ? 'none' : '1px solid',
           borderColor: 'divider',
           transition: 'background-color 0.1s ease',
-          '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
+          '&:hover': { bgcolor: 'action.hover' },
         }}
       >
         {doc.document_id ? (
@@ -137,8 +137,9 @@ function MilestoneRow({
           mx: -1,
           borderBottom: '1px solid',
           borderColor: 'divider',
+          bgcolor: 'background.default',
           transition: 'background-color 0.1s ease',
-          '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
+          '&:hover': { bgcolor: 'action.hover' },
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
@@ -188,7 +189,16 @@ function LevelAccordion({
   const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
 
   return (
-    <Accordion defaultExpanded sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }} disableGutters>
+    // Locked levels start collapsed — reduces the wall of content on first
+    // load to just what the company can actually act on right now, without
+    // hiding anything (one click reopens it). Search/filter always forces
+    // levels open too, so a matching document never hides inside a
+    // collapsed locked level.
+    <Accordion
+      defaultExpanded={unlocked || defaultMilestonesOpen}
+      sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }}
+      disableGutters
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box className="flex items-center gap-2 w-full pr-2" sx={{ opacity: unlocked ? 1 : 0.6 }}>
           <Chip label={badge.code} size="small" />
@@ -197,7 +207,7 @@ function LevelAccordion({
               {badge.name} · {badge.pathway_name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {PILLAR_LABEL[badge.pillar] ?? badge.pillar} · {badge.milestones.length} milestones · {pct}%
+              {PILLAR_LABEL[badge.pillar] ?? badge.pillar} · {badge.milestones.length} milestones
             </Typography>
           </Box>
           <Chip

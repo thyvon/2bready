@@ -394,6 +394,7 @@ export default function JourneyTemplateDetailPage() {
                         px: 1,
                         borderBottom: '1px solid',
                         borderColor: 'divider',
+                        bgcolor: 'background.default',
                         transition: 'background-color 0.1s ease',
                         '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
                       }}
