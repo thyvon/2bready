@@ -89,6 +89,56 @@ it('returns 403 for suspended user', function () {
     ])->assertForbidden();
 });
 
+// ─── Admin login ─────────────────────────────────────────────────────────────
+
+it('logs in an internal user via admin-login', function () {
+    User::factory()->withRole('admin')->create([
+        'email' => 'admin@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'admin@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk()->assertJsonStructure(['data' => ['user', 'token', 'totp_required']]);
+});
+
+it('rejects a company user via admin-login', function () {
+    User::factory()->withRole('company_owner')->create([
+        'email' => 'owner@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'owner@example.com',
+        'password' => 'Secret1234',
+    ])->assertUnprocessable()->assertJsonValidationErrors('email');
+
+    // No token should have been issued to this account.
+    expect(User::where('email', 'owner@example.com')->first()->tokens()->count())->toBe(0);
+});
+
+it('rejects wrong credentials via admin-login the same as regular login', function () {
+    User::factory()->withRole('admin')->create(['email' => 'admin2@example.com', 'password' => bcrypt('correct')]);
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'admin2@example.com',
+        'password' => 'wrong',
+    ])->assertUnprocessable()->assertJsonValidationErrors('email');
+});
+
+it('still logs in an auditor via admin-login', function () {
+    User::factory()->withRole('auditor')->create([
+        'email' => 'auditor@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'auditor@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk();
+});
+
 // ─── Logout ──────────────────────────────────────────────────────────────────
 
 it('logs out and deletes the token', function () {
@@ -216,13 +266,13 @@ it('returns 401 on TOTP verify without auth', function () {
 
 // ─── 2FA enforcement ─────────────────────────────────────────────────────────
 
-it('login flags totp_required=true for admin without 2FA set up', function () {
+it('admin-login flags totp_required=true for admin without 2FA set up', function () {
     $admin = User::factory()->admin()->create([
         'email' => 'admin@example.com',
         'password' => bcrypt('Secret1234'),
     ]);
 
-    $this->postJson('/api/v1/auth/login', [
+    $this->postJson('/api/v1/auth/admin-login', [
         'email' => 'admin@example.com',
         'password' => 'Secret1234',
     ])->assertOk()
@@ -230,18 +280,30 @@ it('login flags totp_required=true for admin without 2FA set up', function () {
         ->assertJsonPath('data.totp_confirmed', false);
 });
 
-it('login flags totp_confirmed=true for admin with 2FA enabled', function () {
+it('admin-login flags totp_confirmed=true for admin with 2FA enabled', function () {
     $admin = User::factory()->admin()->withTotp()->create([
         'email' => 'admin2@example.com',
         'password' => bcrypt('Secret1234'),
     ]);
 
-    $this->postJson('/api/v1/auth/login', [
+    $this->postJson('/api/v1/auth/admin-login', [
         'email' => 'admin2@example.com',
         'password' => 'Secret1234',
     ])->assertOk()
         ->assertJsonPath('data.totp_required', true)
         ->assertJsonPath('data.totp_confirmed', true);
+});
+
+it('rejects an internal user via the regular (client-portal) login', function () {
+    User::factory()->admin()->create([
+        'email' => 'admin3@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => 'admin3@example.com',
+        'password' => 'Secret1234',
+    ])->assertUnprocessable()->assertJsonValidationErrors('email');
 });
 
 // ─── 2FA token-ability enforcement (pending tokens must not reach business routes) ──

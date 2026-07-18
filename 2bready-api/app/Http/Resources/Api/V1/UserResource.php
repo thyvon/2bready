@@ -27,6 +27,12 @@ class UserResource extends JsonResource
             // a single user, never a collection, so the extra query is a one-off, not N+1.
             'companies' => CompanyResource::collection($this->companies),
             'roles' => $this->getRoleNames(),
+            // Backs each frontend's own belt-and-suspenders route gate (on top of
+            // the real enforcement boundary, AuthController::login/adminLogin) —
+            // lets both apps check one flag instead of re-deriving it from a
+            // hardcoded role list. See User::canAccessAdminPortal/ClientPortal.
+            'can_access_admin_portal' => $this->canAccessAdminPortal(),
+            'can_access_client_portal' => $this->canAccessClientPortal(),
             'email_verified_at' => $this->email_verified_at,
             'totp_enabled' => $this->hasTwoFactorEnabled(),
             'totp_required' => $this->requiresTwoFactor(),

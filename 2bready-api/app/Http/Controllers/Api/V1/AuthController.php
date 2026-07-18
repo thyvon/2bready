@@ -18,6 +18,7 @@ use App\Http\Requests\Api\V1\Auth\ResetPasswordRequest;
 use App\Http\Requests\Api\V1\Auth\TotpVerifyRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Support\ApiResponse;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +40,35 @@ class AuthController extends Controller
         ]);
     }
 
+    // client-portal's login form posts here. Every account authenticates against
+    // the same users table (there is no per-app credential split), so an
+    // admin/staff/finance/auditor account's own valid password would otherwise
+    // work here too — company_id is null for those roles, so they'd land in a
+    // portal with no company to show. Gated on portal.client.access, the mirror
+    // of adminLogin()'s portal.admin.access check below.
     public function login(LoginRequest $request): JsonResponse
+    {
+        $user = $this->attemptCredentials($request, requiredPermission: 'portal.client.access');
+
+        return $this->issueTokenResponse($user);
+    }
+
+    // admin-portal's login form posts here, not login() — see the mirrored comment
+    // there. Gated on portal.client.access there / portal.admin.access here
+    // (RolePermissionSeeder) — both apps reject the other's accounts at the
+    // authentication boundary itself, before any token is issued, rather than
+    // relying on frontend route-gating alone. Same generic invalid-credentials
+    // message as a wrong password (not a distinct "you're not allowed here"
+    // error) so this can't be used to fingerprint which accounts exist and what
+    // they can access.
+    public function adminLogin(LoginRequest $request): JsonResponse
+    {
+        $user = $this->attemptCredentials($request, requiredPermission: 'portal.admin.access');
+
+        return $this->issueTokenResponse($user);
+    }
+
+    private function attemptCredentials(LoginRequest $request, string $requiredPermission): User
     {
         if (! Auth::attempt($request->only('email', 'password'))) {
             throw ValidationException::withMessages([
@@ -53,9 +82,24 @@ class AuthController extends Controller
         if (! $user->isActive()) {
             Auth::logout();
 
-            return ApiResponse::error('Your account has been suspended.', [], 403);
+            throw new HttpResponseException(
+                ApiResponse::error('Your account has been suspended.', [], 403),
+            );
         }
 
+        if (! $user->can($requiredPermission)) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => [__('auth.failed')],
+            ]);
+        }
+
+        return $user;
+    }
+
+    private function issueTokenResponse(User $user): JsonResponse
+    {
         // If 2FA is required but not confirmed, prompt for setup. This token is
         // deliberately scoped to the 'totp-pending' ability only (not the default '*') so
         // it can reach the auth/totp/* + logout endpoints but nothing else — enforced by

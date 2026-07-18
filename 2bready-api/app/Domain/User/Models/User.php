@@ -76,9 +76,33 @@ class User extends Authenticatable implements MustVerifyEmail
         return ! is_null($this->two_factor_confirmed_at);
     }
 
+    // 2FA is mandatory for every role that can reach admin-portal (a
+    // password-only credential must never be enough to reach business data
+    // there) — driven by the same portal.admin.access permission that gates
+    // login itself, not a separately-maintained role list.
     public function requiresTwoFactor(): bool
     {
-        return $this->hasAnyRole(['admin', 'staff', 'finance', 'auditor']);
+        return $this->canAccessAdminPortal();
+    }
+
+    // Whether this account may authenticate into admin-portal vs client-portal
+    // (see AuthController::login/adminLogin). Backed by the portal.admin.access /
+    // portal.client.access permissions (RolePermissionSeeder), not a hardcoded
+    // role array — a role can hold both, neither, or either independently, and
+    // adding a new back-office or company-side role never requires touching this
+    // file. Deliberately distinct from "isInternal"-style tenancy-bypass checks
+    // (BelongsToCompany, CompanyPolicy, PaymentPolicy, SubscriptionPolicy), which
+    // use their own, smaller admin/staff/finance set for a different concern
+    // (does this account see across all companies) — auditors, for example, can
+    // access admin-portal without that bypass.
+    public function canAccessAdminPortal(): bool
+    {
+        return $this->can('portal.admin.access');
+    }
+
+    public function canAccessClientPortal(): bool
+    {
+        return $this->can('portal.client.access');
     }
 
     public function isActive(): bool

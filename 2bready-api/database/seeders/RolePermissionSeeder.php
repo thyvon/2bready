@@ -18,6 +18,15 @@ class RolePermissionSeeder extends Seeder
 
         // ─── Define all permissions ────────────────────────────────────────────
         $permissions = [
+            // Portal access — which frontend app a role may authenticate into
+            // (see AuthController::login/adminLogin). The single source of truth
+            // for "who can use admin-portal vs client-portal"; a new back-office
+            // or company-side role only ever needs adding to the assignment lists
+            // below, never a code change in AuthController, User, or either
+            // frontend's route-gating logic.
+            'portal.admin.access',
+            'portal.client.access',
+
             // Company
             'company.view',
             'company.edit',
@@ -110,11 +119,20 @@ class RolePermissionSeeder extends Seeder
 
         // ─── Assign permissions ────────────────────────────────────────────────
 
-        // Admin — full platform access
+        // Admin — full platform access, but portal.client.access is deliberately
+        // excluded: syncPermissions($permissions) would otherwise grant it too
+        // (it's "full access" to literally everything, including both portal
+        // flags), letting an admin log into client-portal. admin's company_id is
+        // always null, so that session would show a portal with no company —
+        // not a real use case, just an accident of the superuser grant. Every
+        // other back-office role below grants portal.admin.access explicitly,
+        // one at a time, for the same reason.
         $admin->syncPermissions($permissions);
+        $admin->revokePermissionTo('portal.client.access');
 
         // Staff — everything except destructive financial ops & platform settings
         $staff->syncPermissions([
+            'portal.admin.access',
             'company.view', 'company.edit', 'company.create', 'company.list',
             'industry.view', 'industry.manage',
             'user.manage', 'user.invite', 'user.remove',
@@ -136,6 +154,7 @@ class RolePermissionSeeder extends Seeder
 
         // Finance — billing & reporting focus
         $finance->syncPermissions([
+            'portal.admin.access',
             'company.view', 'company.list',
             'package.view', 'package.manage',
             'subscription.view', 'subscription.manage',
@@ -147,6 +166,7 @@ class RolePermissionSeeder extends Seeder
 
         // Company Owner — full control of own company
         $owner->syncPermissions([
+            'portal.client.access',
             'company.view', 'company.edit',
             'industry.view',
             'user.invite', 'user.remove',
@@ -166,6 +186,7 @@ class RolePermissionSeeder extends Seeder
 
         // Company Member — read + contribute within own company
         $member->syncPermissions([
+            'portal.client.access',
             'company.view',
             'industry.view',
             'journey.view', 'journey.complete',
@@ -180,6 +201,7 @@ class RolePermissionSeeder extends Seeder
 
         // Auditor — scoped to assigned companies
         $auditor->syncPermissions([
+            'portal.admin.access',
             'company.view',
             'document.view',
             'audit.view', 'audit.conduct',
