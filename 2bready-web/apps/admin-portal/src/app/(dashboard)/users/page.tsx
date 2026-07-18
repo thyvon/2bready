@@ -1,0 +1,339 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import MenuItem from '@mui/material/MenuItem';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import Checkbox from '@mui/material/Checkbox';
+import Alert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/EditOutlined';
+
+import PageHeader from '@/components/ui/PageHeader';
+import SectionCard from '@/components/ui/SectionCard';
+import DataTable, { type Column } from '@/components/ui/DataTable';
+import StatusBadge from '@/components/ui/StatusBadge';
+import FieldLabel from '@/components/forms/FieldLabel';
+import FormSelect from '@/components/forms/FormSelect';
+import FormTextField from '@/components/forms/FormTextField';
+import { useAuthStore } from '@/store/auth.store';
+import { useToast } from '@/components/feedback/ToastProvider';
+import { listUsers, createUser, updateUser } from '@/domains/user/api';
+import { INTERNAL_ROLES, type User, type UserListFilters, type Pagination } from '@/domains/user/types';
+import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUserInput } from '@/domains/user/schemas';
+import { getApiError, formatDate } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+
+export default function UsersPage() {
+  const router = useRouter();
+  const { hasAnyRole, user: currentUser } = useAuthStore();
+  const toast = useToast();
+  const { t } = useTranslation();
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<UserListFilters>({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  // Bumped after a successful create/edit to trigger the effect below without
+  // ever calling setState synchronously from outside an effect body.
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<User | null>(null);
+  const [serverError, setServerError] = useState('');
+
+  useEffect(() => {
+    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
+  }, [hasAnyRole, router]);
+
+  const updateFilters = (patch: Partial<UserListFilters>) => {
+    setPage(1);
+    setFilters((f) => ({ ...f, ...patch }));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      setLoading(true);
+      try {
+        const { users, pagination } = await listUsers({ ...filters, page, per_page: perPage });
+        if (!cancelled) {
+          setUsers(users);
+          setPagination(pagination);
+        }
+      } catch (err) {
+        if (!cancelled) toast.error(getApiError(err).message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, page, perPage, refreshKey]);
+
+  const createForm = useForm<CreateUserInput>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: { name: '', email: '', password: '', password_confirmation: '', roles: [] },
+  });
+
+  const editForm = useForm<UpdateUserInput>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: { name: '', status: 'active', roles: [] },
+  });
+
+  const openCreate = () => {
+    createForm.reset({ name: '', email: '', password: '', password_confirmation: '', roles: [] });
+    setServerError('');
+    setCreateOpen(true);
+  };
+
+  const openEdit = (u: User) => {
+    setEditing(u);
+    editForm.reset({
+      name: u.name,
+      status: (u.status ?? 'active') as UpdateUserInput['status'],
+      roles: u.roles.filter((r): r is UpdateUserInput['roles'][number] => (INTERNAL_ROLES as readonly string[]).includes(r)),
+    });
+    setServerError('');
+  };
+
+  const onCreateSubmit = async (data: CreateUserInput) => {
+    setServerError('');
+    try {
+      await createUser(data);
+      toast.success(t('users.create_success'));
+      setCreateOpen(false);
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      setServerError(getApiError(err).message);
+    }
+  };
+
+  const onEditSubmit = async (data: UpdateUserInput) => {
+    if (!editing) return;
+    setServerError('');
+    try {
+      await updateUser(editing.id, data);
+      toast.success(t('users.update_success'));
+      setEditing(null);
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      setServerError(getApiError(err).message);
+    }
+  };
+
+  const columns: Column<User>[] = [
+    { key: 'name', label: t('users.name_col') },
+    { key: 'email', label: t('users.email_col') },
+    { key: 'roles', label: t('users.roles_col'), render: (u) => u.roles.join(', ') },
+    { key: 'status', label: t('common.status'), render: (u) => <StatusBadge status={u.status ?? 'active'} /> },
+    { key: 'created_at', label: t('users.created_col'), render: (u) => (u.created_at ? formatDate(u.created_at) : '—') },
+    {
+      key: 'actions',
+      label: '',
+      align: 'right',
+      render: (u) => (
+        <IconButton size="small" onClick={() => openEdit(u)} aria-label={t('common.edit')}>
+          <EditIcon fontSize="small" />
+        </IconButton>
+      ),
+    },
+  ];
+
+  const roleCheckboxes = (control: typeof createForm.control | typeof editForm.control, name: 'roles') => (
+    <Controller
+      name={name}
+      control={control as never}
+      render={({ field }) => (
+        <FormGroup row>
+          {INTERNAL_ROLES.map((role) => (
+            <FormControlLabel
+              key={role}
+              control={
+                <Checkbox
+                  checked={(field.value as string[]).includes(role)}
+                  onChange={(e) => {
+                    const current = field.value as string[];
+                    field.onChange(e.target.checked ? [...current, role] : current.filter((r) => r !== role));
+                  }}
+                />
+              }
+              label={t(`users.role_${role}`)}
+            />
+          ))}
+        </FormGroup>
+      )}
+    />
+  );
+
+  return (
+    <>
+      <PageHeader
+        title={t('users.title')}
+        action={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+            {t('users.new_user')}
+          </Button>
+        }
+      />
+
+      <SectionCard noPadding>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, p: 2 }}>
+          <FormTextField
+            label={t('common.search')}
+            size="small"
+            value={filters.search ?? ''}
+            onChange={(e) => updateFilters({ search: e.target.value || undefined })}
+            sx={{ width: { xs: '100%', sm: 220 } }}
+          />
+          <FormSelect
+            label={t('users.role_col')}
+            size="small"
+            value={filters.role ?? ''}
+            onChange={(e) => updateFilters({ role: e.target.value || undefined })}
+            sx={{ width: { xs: '100%', sm: 160 } }}
+          >
+            <MenuItem value="">{t('common.all')}</MenuItem>
+            {INTERNAL_ROLES.map((role) => (
+              <MenuItem key={role} value={role}>{t(`users.role_${role}`)}</MenuItem>
+            ))}
+          </FormSelect>
+          <FormSelect
+            label={t('common.status')}
+            size="small"
+            value={filters.status ?? ''}
+            onChange={(e) => updateFilters({ status: e.target.value || undefined })}
+            sx={{ width: { xs: '100%', sm: 160 } }}
+          >
+            <MenuItem value="">{t('common.all')}</MenuItem>
+            <MenuItem value="active">{t('common.active')}</MenuItem>
+            <MenuItem value="suspended">{t('common.suspended')}</MenuItem>
+            <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
+          </FormSelect>
+        </Box>
+
+        <DataTable
+          columns={columns}
+          rows={users}
+          getRowId={(u) => u.id}
+          loading={loading}
+          emptyTitle={t('users.no_users')}
+          emptyDescription={t('users.no_users_desc')}
+          pagination={
+            pagination
+              ? {
+                  page,
+                  perPage,
+                  total: pagination.total,
+                  onPageChange: setPage,
+                  onPerPageChange: (newPerPage) => {
+                    setPage(1);
+                    setPerPage(newPerPage);
+                  },
+                }
+              : undefined
+          }
+        />
+      </SectionCard>
+
+      {/* Create dialog */}
+      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+        <Box component="form" onSubmit={createForm.handleSubmit(onCreateSubmit)} noValidate>
+          <DialogTitle>{t('users.new_user')}</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {serverError && <Alert severity="error" sx={{ py: 0.5 }}>{serverError}</Alert>}
+            <Box>
+              <FieldLabel>{t('users.name_col')}</FieldLabel>
+              <FormTextField fullWidth {...createForm.register('name')} error={!!createForm.formState.errors.name} helperText={createForm.formState.errors.name?.message} />
+            </Box>
+            <Box>
+              <FieldLabel>{t('users.email_col')}</FieldLabel>
+              <FormTextField fullWidth type="email" {...createForm.register('email')} error={!!createForm.formState.errors.email} helperText={createForm.formState.errors.email?.message} />
+            </Box>
+            <Box>
+              <FieldLabel>{t('users.password')}</FieldLabel>
+              <FormTextField fullWidth type="password" {...createForm.register('password')} error={!!createForm.formState.errors.password} helperText={createForm.formState.errors.password?.message} />
+            </Box>
+            <Box>
+              <FieldLabel>{t('users.confirm_password')}</FieldLabel>
+              <FormTextField fullWidth type="password" {...createForm.register('password_confirmation')} error={!!createForm.formState.errors.password_confirmation} helperText={createForm.formState.errors.password_confirmation?.message} />
+            </Box>
+            <Box>
+              <FieldLabel>{t('users.roles_col')}</FieldLabel>
+              {roleCheckboxes(createForm.control, 'roles')}
+              {createForm.formState.errors.roles && (
+                <Alert severity="error" sx={{ py: 0.5, mt: 1 }}>{createForm.formState.errors.roles.message}</Alert>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button variant="text" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="contained" loading={createForm.formState.isSubmitting}>{t('common.save')}</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editing} onClose={() => setEditing(null)} maxWidth="xs" fullWidth>
+        <Box component="form" onSubmit={editForm.handleSubmit(onEditSubmit)} noValidate>
+          <DialogTitle>{t('common.edit')}</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {serverError && <Alert severity="error" sx={{ py: 0.5 }}>{serverError}</Alert>}
+            <Box>
+              <FieldLabel>{t('users.name_col')}</FieldLabel>
+              <FormTextField fullWidth {...editForm.register('name')} error={!!editForm.formState.errors.name} helperText={editForm.formState.errors.name?.message} />
+            </Box>
+            <Controller
+              name="status"
+              control={editForm.control}
+              render={({ field }) => (
+                <Box>
+                  <FieldLabel>{t('common.status')}</FieldLabel>
+                  <FormSelect
+                    fullWidth
+                    {...field}
+                    disabled={editing?.id === currentUser?.id}
+                    helperText={editing?.id === currentUser?.id ? t('users.cannot_change_own_status') : undefined}
+                  >
+                    <MenuItem value="active">{t('common.active')}</MenuItem>
+                    <MenuItem value="suspended">{t('common.suspended')}</MenuItem>
+                    <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
+                  </FormSelect>
+                </Box>
+              )}
+            />
+            <Box>
+              <FieldLabel>{t('users.roles_col')}</FieldLabel>
+              {roleCheckboxes(editForm.control, 'roles')}
+              {editForm.formState.errors.roles && (
+                <Alert severity="error" sx={{ py: 0.5, mt: 1 }}>{editForm.formState.errors.roles.message}</Alert>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button variant="text" onClick={() => setEditing(null)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="contained" loading={editForm.formState.isSubmitting}>{t('common.save')}</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+    </>
+  );
+}

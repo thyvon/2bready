@@ -1,24 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 
-import { useNavItems, isNavItemActive } from '@/components/layouts/nav-items';
+import { useNavGroups, isNavItemActive } from '@/components/layouts/nav-items';
+import NavMegaMenu from '@/components/layouts/NavMegaMenu';
 import HeaderActions from '@/components/layouts/HeaderActions';
-import NavMenuPopover from '@/components/layouts/NavMenuPopover';
-import { useTranslation } from '@/lib/i18n';
 
+// Vercel-style top nav: plain top-level links sit directly in the bar, and
+// only the entries that actually cluster into a real category (Access,
+// Billing, Compliance) become a hover mega-menu — see nav-items.tsx's
+// useNavGroups(). Always renders at >= md width (layout.tsx only mounts this
+// when !isMobile, sidebar/drawer covers everything below that), so there's
+// no mobile fallback to design for here.
 export default function DashboardNavHorizontal() {
-  const navItems = useNavItems();
+  const entries = useNavGroups();
   const pathname = usePathname();
-  const { t } = useTranslation();
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-
-  const activeItem = navItems.find((item) => isNavItemActive(pathname, item));
 
   return (
     <Box
@@ -27,7 +27,7 @@ export default function DashboardNavHorizontal() {
         height: 56,
         display: 'flex',
         alignItems: 'center',
-        gap: { xs: 1, sm: 1.5 },
+        gap: 1,
         px: { xs: 1.5, sm: 3 },
         borderBottom: '1px solid',
         borderColor: 'divider',
@@ -37,8 +37,8 @@ export default function DashboardNavHorizontal() {
         zIndex: 10,
       }}
     >
-      {/* Logo — wordmark hidden below sm to leave room for the menu button + actions */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+      {/* Logo */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0, mr: 1.5 }}>
         <Box sx={{ width: 20, height: 20, borderRadius: '5px', bgcolor: 'text.primary', flexShrink: 0 }} />
         <Typography
           sx={{
@@ -54,22 +54,33 @@ export default function DashboardNavHorizontal() {
         </Typography>
       </Box>
 
-      {/* Menu button — opens the nav picker instead of listing every item inline.
-          Label is truncated (not wrapped) since translated/Khmer labels can run long
-          enough to break onto a second line and blow out the topbar's fixed height. */}
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={<MenuOutlinedIcon fontSize="small" />}
-        onClick={(e) => setMenuAnchor(e.currentTarget)}
-        sx={{ color: 'text.primary', borderColor: 'divider', fontWeight: 500, minWidth: 0, maxWidth: { xs: 120, sm: 220 } }}
-      >
-        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {activeItem?.label ?? t('nav.menu')}
-        </Box>
-      </Button>
-
-      <NavMenuPopover anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)} navItems={navItems} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, overflowX: 'auto' }}>
+        {entries.map((entry) =>
+          entry.type === 'group' ? (
+            <NavMegaMenu key={entry.label} group={entry} />
+          ) : (
+            <Button
+              key={entry.href}
+              component={Link}
+              href={entry.href}
+              sx={{
+                color: isNavItemActive(pathname, entry) ? 'text.primary' : 'text.secondary',
+                fontWeight: isNavItemActive(pathname, entry) ? 600 : 500,
+                fontSize: '0.875rem',
+                textTransform: 'none',
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 999,
+                whiteSpace: 'nowrap',
+                bgcolor: isNavItemActive(pathname, entry) ? 'var(--2br-nav-active-bg)' : 'transparent',
+                '&:hover': { bgcolor: 'var(--2br-overlay-hover)', color: 'text.primary' },
+              }}
+            >
+              {entry.label}
+            </Button>
+          )
+        )}
+      </Box>
 
       <Box sx={{ flex: 1 }} />
 

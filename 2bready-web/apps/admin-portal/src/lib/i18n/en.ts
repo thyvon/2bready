@@ -34,12 +34,22 @@ const en = {
   'nav.my_audits': 'My Audits',
   'nav.companies': 'Companies',
   'nav.users': 'Users',
+  'nav.roles': 'Roles',
   'nav.packages': 'Packages',
   'nav.payments': 'Payments',
   'nav.audits': 'Audits',
   'nav.audit_logs': 'Activity Log',
+  'nav.group_access': 'Access',
+  'nav.group_billing': 'Billing',
+  'nav.group_compliance': 'Compliance',
+  'nav.desc_users': 'Staff, finance, and auditor accounts',
+  'nav.desc_roles': 'What each role can do',
+  'nav.desc_packages': 'Plans companies can subscribe to',
+  'nav.desc_payments': 'Review and confirm payments',
+  'nav.desc_documents': 'Verify uploaded compliance documents',
+  'nav.desc_audits': 'Third-party compliance audits',
+  'nav.desc_audit_logs': 'Every change, who made it, and when',
   'nav.settings': 'Settings',
-  'nav.menu': 'Menu',
 
   // ─── Header / Control Center ────────────────────────────────────────────
   'header.profile': 'Profile',
@@ -61,7 +71,6 @@ const en = {
   'header.language': 'Language',
   'header.language_desc': 'Choose your preferred language.',
   'header.open_menu': 'Open navigation menu',
-  'header.close_menu': 'Close menu',
   'header.switch_company': 'Switch company',
   'header.add_company': 'Add another company',
   'header.new_company_short': 'New',
@@ -237,7 +246,6 @@ const en = {
   'admin.no_documents_desc': 'Documents matching this filter will appear here.',
 
   // ─── Nav menu dialog ─────────────────────────────────────────────────────
-  'menu.title': 'Menu',
 
   // ─── Packages (admin management) ────────────────────────────────────────
   'package.title': 'Packages',
@@ -342,6 +350,31 @@ const en = {
   'audit_log.filter_to': 'To',
   'audit_log.no_logs': 'No activity yet',
   'audit_log.no_logs_desc': 'Actions across the platform will appear here as they happen.',
+
+  // ─── Users ────────────────────────────────────────────────────────────────
+  'users.title': 'Users',
+  'users.new_user': 'New User',
+  'users.name_col': 'Name',
+  'users.email_col': 'Email',
+  'users.role_col': 'Role',
+  'users.roles_col': 'Roles',
+  'users.created_col': 'Created',
+  'users.password': 'Password',
+  'users.confirm_password': 'Confirm Password',
+  'users.role_admin': 'Admin',
+  'users.role_staff': 'Staff',
+  'users.role_finance': 'Finance',
+  'users.role_auditor': 'Auditor',
+  'users.create_success': 'User created.',
+  'users.update_success': 'User updated.',
+  'users.cannot_change_own_status': "You can't change your own account status.",
+  'users.no_users': 'No users yet',
+  'users.no_users_desc': 'Staff, finance, and auditor accounts you create will appear here.',
+
+  // ─── Roles ────────────────────────────────────────────────────────────────
+  'roles.title': 'Roles',
+  'roles.permissions_label': 'Permissions',
+  'roles.no_permissions': 'No permissions assigned.',
 } as const;
 
 export default en;

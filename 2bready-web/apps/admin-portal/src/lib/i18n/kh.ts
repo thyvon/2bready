@@ -38,12 +38,22 @@ const kh: Record<keyof typeof en, string> = {
   'nav.my_audits': 'សវនកម្មរបស់ខ្ញុំ',
   'nav.companies': 'ក្រុមហ៊ុន',
   'nav.users': 'អ្នកប្រើប្រាស់',
+  'nav.roles': 'តួនាទី',
   'nav.packages': 'កញ្ចប់',
   'nav.payments': 'ការទូទាត់',
   'nav.audits': 'សវនកម្ម',
   'nav.audit_logs': 'កំណត់ត្រាសកម្មភាព',
+  'nav.group_access': 'ការចូលប្រើ',
+  'nav.group_billing': 'ការទូទាត់',
+  'nav.group_compliance': 'អនុលោមភាព',
+  'nav.desc_users': 'គណនីបុគ្គលិក ហិរញ្ញវត្ថុ និងអ្នកសវនកម្ម',
+  'nav.desc_roles': 'អ្វីដែលតួនាទីនីមួយៗអាចធ្វើបាន',
+  'nav.desc_packages': 'គម្រោងដែលក្រុមហ៊ុនអាចជាវបាន',
+  'nav.desc_payments': 'ពិនិត្យ និងបញ្ជាក់ការទូទាត់',
+  'nav.desc_documents': 'ផ្ទៀងផ្ទាត់ឯកសារអនុលោមភាពដែលបានផ្ទុកឡើង',
+  'nav.desc_audits': 'សវនកម្មអនុលោមភាពពីភាគីទីបី',
+  'nav.desc_audit_logs': 'រាល់ការផ្លាស់ប្តូរ អ្នកធ្វើ និងពេលវេលា',
   'nav.settings': 'ការកំណត់',
-  'nav.menu': 'ម៉ឺនុយ',
 
   // ─── Header / Control Center ────────────────────────────────────────────
   'header.profile': 'ប្រវត្តិរូប',
@@ -65,7 +75,6 @@ const kh: Record<keyof typeof en, string> = {
   'header.language': 'ភាសា',
   'header.language_desc': 'ជ្រើសរើសភាសាដែលអ្នកចង់បាន។',
   'header.open_menu': 'បើកម៉ឺនុយរុករក',
-  'header.close_menu': 'បិទម៉ឺនុយ',
   'header.switch_company': 'ប្តូរក្រុមហ៊ុន',
   'header.add_company': 'បន្ថែមក្រុមហ៊ុនផ្សេងទៀត',
   'header.new_company_short': 'ថ្មី',
@@ -241,7 +250,6 @@ const kh: Record<keyof typeof en, string> = {
   'admin.no_documents_desc': 'ឯកសារដែលត្រូវនឹងតម្រងនេះនឹងបង្ហាញនៅទីនេះ។',
 
   // ─── Nav menu dialog ─────────────────────────────────────────────────────
-  'menu.title': 'ម៉ឺនុយ',
 
   // ─── Packages (admin management) ────────────────────────────────────────
   'package.title': 'កញ្ចប់',
@@ -346,6 +354,31 @@ const kh: Record<keyof typeof en, string> = {
   'audit_log.filter_to': 'ដល់',
   'audit_log.no_logs': 'មិនទាន់មានសកម្មភាពទេ',
   'audit_log.no_logs_desc': 'សកម្មភាពទាំងអស់នៅលើវេទិកានឹងបង្ហាញនៅទីនេះនៅពេលវាកើតឡើង។',
+
+  // ─── Users ────────────────────────────────────────────────────────────────
+  'users.title': 'អ្នកប្រើប្រាស់',
+  'users.new_user': 'អ្នកប្រើប្រាស់ថ្មី',
+  'users.name_col': 'ឈ្មោះ',
+  'users.email_col': 'អ៊ីមែល',
+  'users.role_col': 'តួនាទី',
+  'users.roles_col': 'តួនាទី',
+  'users.created_col': 'បានបង្កើត',
+  'users.password': 'ពាក្យសម្ងាត់',
+  'users.confirm_password': 'បញ្ជាក់ពាក្យសម្ងាត់',
+  'users.role_admin': 'អ្នកគ្រប់គ្រង',
+  'users.role_staff': 'បុគ្គលិក',
+  'users.role_finance': 'ហិរញ្ញវត្ថុ',
+  'users.role_auditor': 'អ្នកសវនកម្ម',
+  'users.create_success': 'អ្នកប្រើប្រាស់ត្រូវបានបង្កើត។',
+  'users.update_success': 'អ្នកប្រើប្រាស់ត្រូវបានធ្វើបច្ចុប្បន្នភាព។',
+  'users.cannot_change_own_status': 'អ្នកមិនអាចផ្លាស់ប្តូរស្ថានភាពគណនីខ្លួនឯងបានទេ។',
+  'users.no_users': 'មិនទាន់មានអ្នកប្រើប្រាស់ទេ',
+  'users.no_users_desc': 'គណនីបុគ្គលិក ហិរញ្ញវត្ថុ និងអ្នកសវនកម្មដែលអ្នកបង្កើតនឹងបង្ហាញនៅទីនេះ។',
+
+  // ─── Roles ────────────────────────────────────────────────────────────────
+  'roles.title': 'តួនាទី',
+  'roles.permissions_label': 'សិទ្ធិអនុញ្ញាត',
+  'roles.no_permissions': 'មិនមានសិទ្ធិអនុញ្ញាតត្រូវបានកំណត់ទេ។',
 };
 
 export default kh;
