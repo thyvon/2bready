@@ -1,5 +1,6 @@
 import api from '@/lib/api';
 import type { Company, CompanyListFilters, Industry, Pagination, StoreCompanyPayload, UpdateCompanyPayload } from './types';
+import type { User } from '@/domains/user/types';
 
 // This app only manages companies on 2bReady's behalf (admin/staff/finance) —
 // self-service registration/switching (registerOwnCompany, switchActiveCompany)
@@ -35,4 +36,22 @@ export async function updateCompany(id: string, data: UpdateCompanyPayload): Pro
 
 export async function deleteCompany(id: string): Promise<void> {
   await api.delete(`/companies/${id}`);
+}
+
+// Staff-side oversight of a company's own team (company_owner/company_member)
+// — distinct from the internal Users page's domains/user/api.ts, which never
+// touches company-side accounts at all.
+export async function listCompanyUsers(companyId: string): Promise<User[]> {
+  const res = await api.get<{ data: User[] }>(`/companies/${companyId}/users`);
+  return res.data.data;
+}
+
+export interface UpdateCompanyUserPayload {
+  status?: 'active' | 'suspended' | 'inactive';
+  role?: 'company_owner' | 'company_member';
+}
+
+export async function updateCompanyUser(companyId: string, userId: string, payload: UpdateCompanyUserPayload): Promise<User> {
+  const res = await api.patch<{ data: User }>(`/companies/${companyId}/users/${userId}`, payload);
+  return res.data.data;
 }

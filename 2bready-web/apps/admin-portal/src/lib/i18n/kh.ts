@@ -383,6 +383,13 @@ const kh: Record<keyof typeof en, string> = {
   'roles.title': 'តួនាទី',
   'roles.permissions_label': 'សិទ្ធិអនុញ្ញាត',
   'roles.no_permissions': 'មិនមានសិទ្ធិអនុញ្ញាតត្រូវបានកំណត់ទេ។',
+
+  // ─── Company Users (per-company team, staff oversight) ─────────────────────
+  'company_users.role_company_owner': 'ម្ចាស់',
+  'company_users.role_company_member': 'សមាជិក',
+  'company_users.update_success': 'បានធ្វើបច្ចុប្បន្នភាព។',
+  'company_users.no_users': 'មិនទាន់មានសមាជិកក្រុមទេ',
+  'company_users.no_users_desc': 'ម្ចាស់ និងសមាជិកនៃក្រុមហ៊ុននេះនឹងបង្ហាញនៅទីនេះ។',
 };
 
 export default kh;

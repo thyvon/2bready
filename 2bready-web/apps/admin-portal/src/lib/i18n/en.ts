@@ -379,6 +379,13 @@ const en = {
   'roles.title': 'Roles',
   'roles.permissions_label': 'Permissions',
   'roles.no_permissions': 'No permissions assigned.',
+
+  // ─── Company Users (per-company team, staff oversight) ─────────────────────
+  'company_users.role_company_owner': 'Owner',
+  'company_users.role_company_member': 'Member',
+  'company_users.update_success': 'Updated.',
+  'company_users.no_users': 'No team members yet',
+  'company_users.no_users_desc': "This company's owner and members will appear here.",
 } as const;
 
 export default en;

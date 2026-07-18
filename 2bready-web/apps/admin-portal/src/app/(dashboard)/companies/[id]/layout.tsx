@@ -131,6 +131,7 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
     // moves here since this is now where that action actually happens.
     { label: <TabLabel text={t('nav.journey')} count={pendingDocuments} />, href: `/companies/${params.id}/journey` },
     { label: <TabLabel text={t('nav.payments')} count={pendingPayments} />, href: `/companies/${params.id}/payments` },
+    { label: t('nav.users'), href: `/companies/${params.id}/users` },
   ];
   // Overview's href is a prefix of every other tab's href, so it needs an
   // exact match; the rest are fine with startsWith (nested routes still
