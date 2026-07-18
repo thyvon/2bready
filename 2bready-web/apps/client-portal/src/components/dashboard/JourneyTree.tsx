@@ -211,7 +211,6 @@ function LevelAccordion({
     <Accordion
       defaultExpanded={unlocked || defaultMilestonesOpen}
       sx={{
-        mb: 3,
         borderRadius: '8px !important',
         // Resting state: quiet neutral elevation (same recipe as PillarCard).
         // Hover: swaps to the GlowButton-style colored ring + blurred glow —
@@ -220,6 +219,12 @@ function LevelAccordion({
         transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': { boxShadow: cardHoverGlow() },
         '&:before': { display: 'none' },
+        // MUI's Accordion default zeroes margin on `&.Mui-expanded:last-of-type`
+        // (unconditional, not disableGutters-gated) — each card is solo inside
+        // its own motion.div wrapper so it always matches :last-of-type,
+        // collapsing any margin-based gap the instant it opens. Spacing comes
+        // from `gap` on the flex container below instead.
+        '&.Mui-expanded': { margin: 0 },
       }}
       disableGutters
     >
@@ -300,7 +305,7 @@ export interface JourneyTreeProps {
 // separate mobile layout to maintain.
 export function JourneyTree({ levels, isUnlocked, tierFor, defaultMilestonesOpen = false, renderDocAction = DefaultDocAction }: JourneyTreeProps) {
   return (
-    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show">
+    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {levels.map((badge) => (
         <Box component={motion.div} key={badge.code} variants={cardGridItem}>
           <LevelAccordion

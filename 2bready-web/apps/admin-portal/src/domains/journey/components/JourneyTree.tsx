@@ -270,7 +270,6 @@ function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extra
     <Accordion
       defaultExpanded
       sx={{
-        mb: 3,
         borderRadius: '8px !important',
         // Monochrome equivalent of client-portal's glow — this app's theme
         // deliberately avoids a colored glow (see MuiButton override), so
@@ -279,6 +278,13 @@ function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extra
         transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': { boxShadow: cardHoverShadowNeutral },
         '&:before': { display: 'none' },
+        // MUI's own Accordion default has an unconditional (not disableGutters-
+        // gated) `&.Mui-expanded:last-of-type { marginBottom: 0 }` rule. Since
+        // each Accordion is solo inside its own motion.div wrapper, it always
+        // matches :last-of-type, so any margin-based gap collapses to 0 the
+        // moment a card opens. Spacing between cards is handled by `gap` on
+        // the flex container instead (see JourneyTree below) — no margin here.
+        '&.Mui-expanded': { margin: 0 },
       }}
       disableGutters
     >
@@ -361,7 +367,7 @@ export interface JourneyTreeProps {
 // checkbox — see MilestoneRow.
 export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction = DefaultDocAction, extras }: JourneyTreeProps) {
   return (
-    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show">
+    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {levels.map((level) => (
         <Box component={motion.div} key={level.id} variants={cardGridItem}>
           <LevelAccordion

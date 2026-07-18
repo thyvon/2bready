@@ -370,6 +370,7 @@ export default function JourneyTemplateDetailPage() {
       )}
 
       <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {levels.map((level) => {
         const milestones = [...(level.milestones ?? [])].sort((a, b) => a.sort_order - b.sort_order);
         return (
@@ -377,12 +378,16 @@ export default function JourneyTemplateDetailPage() {
             key={level.id}
             defaultExpanded
             sx={{
-              mb: 3,
               borderRadius: '8px !important',
               boxShadow: cardRestShadow,
               transition: 'box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': { boxShadow: cardHoverShadowNeutral },
               '&:before': { display: 'none' },
+              // See JourneyTree.tsx for why: MUI's built-in Accordion default
+              // zeroes margin on `&.Mui-expanded:last-of-type`, which can fire
+              // unexpectedly depending on DOM structure — spacing comes from
+              // `gap` on the wrapping flex container instead, not margin here.
+              '&.Mui-expanded': { margin: 0 },
             }}
             disableGutters
           >
@@ -469,6 +474,7 @@ export default function JourneyTemplateDetailPage() {
           </Accordion>
         );
       })}
+      </Box>
       </DndContext>
 
       {/* ─── Level dialog ─── */}
