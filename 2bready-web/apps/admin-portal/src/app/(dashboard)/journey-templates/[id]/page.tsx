@@ -290,6 +290,7 @@ export default function JourneyTemplateDetailPage() {
           return original && original.sort_order !== index ? updateDocumentTemplate(id, { sort_order: index }) : null;
         })
       );
+      toast.success(t('journey_template.reorder_success'));
     } catch (err) {
       toast.error(getApiError(err).message);
       reload();

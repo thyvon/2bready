@@ -340,6 +340,7 @@ const kh: Record<keyof typeof en, string> = {
   'journey_template.expires_in': 'ផុតកំណត់ក្នុង {months} ខែ',
   'journey_template.doc_create_success': 'ឯកសារត្រូវបានបន្ថែម។',
   'journey_template.doc_update_success': 'ឯកសារត្រូវបានធ្វើបច្ចុប្បន្នភាព។',
+  'journey_template.reorder_success': 'លំដាប់ត្រូវបានធ្វើបច្ចុប្បន្នភាព។',
   'journey_template.delete_node_success': 'បានលុប។',
   'journey_template.confirm_delete_node_title': 'លុបវានេះ?',
   'journey_template.confirm_delete_level_desc': 'លុបកម្រិត "{name}"? សកម្មភាពនេះនឹងលុបគ្រប់ចំណុចសំខាន់ និងឯកសារនៅក្នុងវាទាំងអស់។ មិនអាចត្រឡប់វិញបានទេ។',

@@ -336,6 +336,7 @@ const en = {
   'journey_template.expires_in': 'Expires in {months}mo',
   'journey_template.doc_create_success': 'Document added.',
   'journey_template.doc_update_success': 'Document updated.',
+  'journey_template.reorder_success': 'Order updated.',
   'journey_template.delete_node_success': 'Deleted.',
   'journey_template.confirm_delete_node_title': 'Delete this?',
   'journey_template.confirm_delete_level_desc': 'Delete level "{name}"? This also removes every milestone and document template nested under it. This cannot be undone.',
