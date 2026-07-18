@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\JourneyController;
 use App\Http\Controllers\Api\V1\JourneyLevelController;
+use App\Http\Controllers\Api\V1\JourneyTemplateController;
+use App\Http\Controllers\Api\V1\MilestoneController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('journey')->group(function () {
@@ -15,3 +17,18 @@ Route::prefix('journey')->group(function () {
 // Flat taxonomy, not a company's own progress — separate from the group above
 // (same reasoning as packages/industries living outside their "usage" routes).
 Route::get('journey-levels', [JourneyLevelController::class, 'index']);
+
+// ─── Journey taxonomy authoring (admin CRUD) ────────────────────────────────
+Route::prefix('journey-templates')->group(function () {
+    Route::get('/', [JourneyTemplateController::class, 'index']);
+    Route::post('/', [JourneyTemplateController::class, 'store']);
+    Route::get('{journeyTemplate}', [JourneyTemplateController::class, 'show']);
+    Route::patch('{journeyTemplate}', [JourneyTemplateController::class, 'update']);
+    Route::delete('{journeyTemplate}', [JourneyTemplateController::class, 'destroy']);
+    Route::post('{journeyTemplate}/levels', [JourneyLevelController::class, 'store']);
+});
+Route::patch('journey-levels/{journeyLevel}', [JourneyLevelController::class, 'update']);
+Route::delete('journey-levels/{journeyLevel}', [JourneyLevelController::class, 'destroy']);
+Route::post('journey-levels/{journeyLevel}/milestones', [MilestoneController::class, 'store']);
+Route::patch('milestones/{milestone}', [MilestoneController::class, 'update']);
+Route::delete('milestones/{milestone}', [MilestoneController::class, 'destroy']);

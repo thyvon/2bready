@@ -6,8 +6,10 @@ export async function listPackages(): Promise<Package[]> {
   return res.data.data;
 }
 
-// The fixed journey-level taxonomy (L1..L4 today) — populates the package
-// form's journey_level_id dropdown. No CRUD for the taxonomy itself yet.
+// The journey-level taxonomy — populates the package form's journey_level_id
+// dropdown. Full CRUD for the taxonomy itself lives in domains/journey-template
+// (see /journey-templates); this flat list stays here as-is since it's this
+// form's only consumer and gated on package.view, not journey_template.view.
 export async function listJourneyLevels(): Promise<JourneyLevel[]> {
   const res = await api.get<{ data: JourneyLevel[] }>('/journey-levels');
   return res.data.data;

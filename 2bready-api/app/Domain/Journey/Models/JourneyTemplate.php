@@ -58,4 +58,10 @@ class JourneyTemplate extends Model
     {
         return $this->hasMany(JourneyLevel::class)->orderBy('sort_order');
     }
+
+    /** @return HasMany<Journey, $this> */
+    public function journeys(): HasMany
+    {
+        return $this->hasMany(Journey::class);
+    }
 }

@@ -356,6 +356,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/milestones/{milestone}/document-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["documentTemplate.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/document-templates/{documentTemplate}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["documentTemplate.destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["documentTemplate.update"];
+        trace?: never;
+    };
     "/v1/industry-options": {
         parameters: {
             query?: never;
@@ -468,6 +500,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/journey-templates/{journeyTemplate}/levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["journeyLevel.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/journey-levels/{journeyLevel}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["journeyLevel.destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["journeyLevel.update"];
+        trace?: never;
+    };
+    "/v1/journey-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["journeyTemplate.index"];
+        put?: never;
+        post: operations["journeyTemplate.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/journey-templates/{journeyTemplate}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["journeyTemplate.show"];
+        put?: never;
+        post?: never;
+        delete: operations["journeyTemplate.destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["journeyTemplate.update"];
+        trace?: never;
+    };
     "/v1/leads": {
         parameters: {
             query?: never;
@@ -482,6 +578,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/v1/journey-levels/{journeyLevel}/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["milestone.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/milestones/{milestone}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["milestone.destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["milestone.update"];
         trace?: never;
     };
     "/v1/pricing": {
@@ -816,10 +944,13 @@ export interface components {
         /** JourneyLevelResource */
         JourneyLevelResource: {
             id: string;
+            journey_template_id: string;
             code: string;
             name: string;
+            pathway_name: string;
             pillar: components["schemas"]["JourneyPillar"];
             sort_order: number;
+            milestones?: components["schemas"]["MilestoneResource"][];
         };
         /**
          * JourneyPillar
@@ -869,6 +1000,21 @@ export interface components {
          * @enum {string}
          */
         JourneyStatus: "active" | "completed";
+        /** JourneyTemplateResource */
+        JourneyTemplateResource: {
+            id: string;
+            country_code: string;
+            industry_id: string;
+            industry_code?: string;
+            name: string;
+            name_kh: string | null;
+            is_active: boolean;
+            levels?: components["schemas"]["JourneyLevelResource"][];
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
         /** LeadResource */
         LeadResource: {
             id: string;
@@ -892,6 +1038,14 @@ export interface components {
          * @enum {string}
          */
         MilestoneCompletionTrigger: "document_upload" | "audit_approval" | "admin_signoff";
+        /** MilestoneResource */
+        MilestoneResource: {
+            id: string;
+            journey_level_id: string;
+            name: string;
+            sort_order: number;
+            document_templates?: components["schemas"]["DocumentTemplateResource"][];
+        };
         /** PackageResource */
         PackageResource: {
             id: string;
@@ -1017,6 +1171,14 @@ export interface components {
              */
             file: string;
         };
+        /** StoreDocumentTemplateRequest */
+        StoreDocumentTemplateRequest: {
+            name: string;
+            description?: string | null;
+            is_required?: boolean;
+            expiry_months?: number | null;
+            sort_order?: number;
+        };
         /** StoreIndustryRequest */
         StoreIndustryRequest: {
             code: string;
@@ -1024,6 +1186,28 @@ export interface components {
             name_kh?: string | null;
             description?: string | null;
             is_active?: boolean;
+            sort_order?: number;
+        };
+        /** StoreJourneyLevelRequest */
+        StoreJourneyLevelRequest: {
+            code: string;
+            name: string;
+            pathway_name: string;
+            /** @enum {string} */
+            pillar: "comply" | "scale" | "lead";
+            sort_order?: number;
+        };
+        /** StoreJourneyTemplateRequest */
+        StoreJourneyTemplateRequest: {
+            country_code: string;
+            industry_id: string;
+            name: string;
+            name_kh?: string | null;
+            is_active?: boolean;
+        };
+        /** StoreMilestoneRequest */
+        StoreMilestoneRequest: {
+            name: string;
             sort_order?: number;
         };
         /** StorePackageRequest */
@@ -1100,6 +1284,14 @@ export interface components {
             /** @enum {string} */
             role?: "company_owner" | "company_member";
         };
+        /** UpdateDocumentTemplateRequest */
+        UpdateDocumentTemplateRequest: {
+            name?: string;
+            description?: string | null;
+            is_required?: boolean;
+            expiry_months?: number | null;
+            sort_order?: number;
+        };
         /** UpdateIndustryRequest */
         UpdateIndustryRequest: {
             code?: string;
@@ -1107,6 +1299,28 @@ export interface components {
             name_kh?: string | null;
             description?: string | null;
             is_active?: boolean;
+            sort_order?: number;
+        };
+        /** UpdateJourneyLevelRequest */
+        UpdateJourneyLevelRequest: {
+            code?: string;
+            name?: string;
+            pathway_name?: string;
+            /** @enum {string} */
+            pillar?: "comply" | "scale" | "lead";
+            sort_order?: number;
+        };
+        /** UpdateJourneyTemplateRequest */
+        UpdateJourneyTemplateRequest: {
+            country_code?: string;
+            industry_id?: string;
+            name?: string;
+            name_kh?: string | null;
+            is_active?: boolean;
+        };
+        /** UpdateMilestoneRequest */
+        UpdateMilestoneRequest: {
+            name?: string;
             sort_order?: number;
         };
         /** UpdatePackageRequest */
@@ -2010,6 +2224,96 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "documentTemplate.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The milestone ID */
+                milestone: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "documentTemplate.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "documentTemplate.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "industry.publicIndex": {
         parameters: {
             query?: never;
@@ -2294,6 +2598,234 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
+    "journeyLevel.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey template ID */
+                journeyTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreJourneyLevelRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyLevelResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "journeyLevel.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey level ID */
+                journeyLevel: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "journeyLevel.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey level ID */
+                journeyLevel: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateJourneyLevelRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyLevelResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "journeyTemplate.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyTemplateResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "journeyTemplate.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreJourneyTemplateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "journeyTemplate.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey template ID */
+                journeyTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "journeyTemplate.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey template ID */
+                journeyTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "journeyTemplate.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey template ID */
+                journeyTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateJourneyTemplateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "lead.index": {
         parameters: {
             query?: never;
@@ -2342,6 +2874,96 @@ export interface operations {
                     };
                 };
             };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "milestone.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey level ID */
+                journeyLevel: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreMilestoneRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MilestoneResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "milestone.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The milestone ID */
+                milestone: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "milestone.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The milestone ID */
+                milestone: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateMilestoneRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MilestoneResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };

@@ -22,8 +22,13 @@ class DocumentTemplateResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        // getAttributes() (raw array), not getAttribute() — the latter throws
+        // under Model::shouldBeStrict() when the controller never called
+        // setAttribute('latest_document', ...), which is now a real case
+        // (the journey-template admin CRUD endpoints reuse this Resource
+        // without that manual attribute).
         /** @var Document|null $latestDocument */
-        $latestDocument = $this->resource->getAttribute('latest_document');
+        $latestDocument = $this->resource->getAttributes()['latest_document'] ?? null;
 
         return [
             'id' => $this->id,

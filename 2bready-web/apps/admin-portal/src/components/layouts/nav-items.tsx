@@ -12,6 +12,7 @@ import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
 import HistoryIcon from '@mui/icons-material/HistoryOutlined';
 import BadgeIcon from '@mui/icons-material/BadgeOutlined';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 
 import { useAuthStore } from '@/store/auth.store';
 import { useTranslation } from '@/lib/i18n';
@@ -50,6 +51,7 @@ const ADMIN_NAV: NavItemDef[] = [
   { labelKey: 'nav.payments',   href: '/payments',    icon: <ReceiptLongIcon fontSize="small" /> },
   { labelKey: 'nav.audits',     href: '/audits',      icon: <AssignmentIcon fontSize="small" /> },
   { labelKey: 'nav.documents',  href: '/documents',   icon: <DescriptionIcon fontSize="small" /> },
+  { labelKey: 'nav.journey_templates', href: '/journey-templates', icon: <AccountTreeOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.audit_logs', href: '/audit-logs',  icon: <HistoryIcon fontSize="small" /> },
   { labelKey: 'nav.support',    href: '/support',     icon: <SupportIcon fontSize="small" /> },
   { labelKey: 'nav.settings',   href: '/settings',    icon: <SettingsIcon fontSize="small" /> },
@@ -132,6 +134,7 @@ const ADMIN_NAV_ENTRIES: NavEntryDef[] = [
     labelKey: 'nav.group_compliance',
     items: [
       { labelKey: 'nav.documents', descriptionKey: 'nav.desc_documents', href: '/documents', icon: <DescriptionIcon fontSize="small" /> },
+      { labelKey: 'nav.journey_templates', descriptionKey: 'nav.desc_journey_templates', href: '/journey-templates', icon: <AccountTreeOutlinedIcon fontSize="small" /> },
       { labelKey: 'nav.audits', descriptionKey: 'nav.desc_audits', href: '/audits', icon: <AssignmentIcon fontSize="small" /> },
       { labelKey: 'nav.audit_logs', descriptionKey: 'nav.desc_audit_logs', href: '/audit-logs', icon: <HistoryIcon fontSize="small" /> },
     ],

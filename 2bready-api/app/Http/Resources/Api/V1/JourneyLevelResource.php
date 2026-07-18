@@ -16,10 +16,13 @@ class JourneyLevelResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'journey_template_id' => $this->journey_template_id,
             'code' => $this->code,
             'name' => $this->name,
+            'pathway_name' => $this->pathway_name,
             'pillar' => $this->pillar,
             'sort_order' => $this->sort_order,
+            'milestones' => MilestoneResource::collection($this->whenLoaded('milestones')),
         ];
     }
 }

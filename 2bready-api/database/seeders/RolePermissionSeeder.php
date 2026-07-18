@@ -63,11 +63,22 @@ class RolePermissionSeeder extends Seeder
             'journey.complete', // mark milestones done
             'journey.manage',   // create / edit journey templates
 
+            // Journey taxonomy authoring (JourneyTemplate/JourneyLevel/Milestone
+            // CRUD) — deliberately separate from journey.manage above, which
+            // gates milestone sign-off, not editing the taxonomy itself.
+            'journey_template.view',
+            'journey_template.manage',
+
             // Documents
             'document.view',
             'document.upload',
             'document.delete',
             'document.manage',  // admin: view / manage across all companies
+
+            // Document template authoring — separate from document.manage
+            // above, which gates verify/reject of uploaded documents.
+            'document_template.view',
+            'document_template.manage',
 
             // Audit
             'audit.view',
@@ -141,7 +152,9 @@ class RolePermissionSeeder extends Seeder
             'payment.view',
             'lead.view',
             'journey.view', 'journey.complete', 'journey.manage',
+            'journey_template.view', 'journey_template.manage',
             'document.view', 'document.upload', 'document.delete', 'document.manage',
+            'document_template.view', 'document_template.manage',
             'audit.view', 'audit.manage',
             'trust_badge.view', 'trust_badge.manage',
             'data_room.view', 'data_room.manage', 'data_room.share',
