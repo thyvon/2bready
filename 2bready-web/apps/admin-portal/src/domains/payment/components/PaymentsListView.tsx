@@ -10,6 +10,7 @@ import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FormSelect from '@/components/forms/FormSelect';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listPayments, confirmPayment, rejectPayment } from '@/domains/payment/api';
@@ -34,6 +35,7 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('awaiting_confirmation');
   const [actingOn, setActingOn] = useState<string | null>(null);
+  const [pendingReject, setPendingReject] = useState<Payment | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -83,12 +85,13 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
     }
   };
 
-  const handleReject = async (payment: Payment) => {
-    if (!window.confirm(t('admin.confirm_reject_payment'))) return;
-    setActingOn(payment.id);
+  const handleReject = async () => {
+    if (!pendingReject) return;
+    setActingOn(pendingReject.id);
     try {
-      await rejectPayment(payment.id);
+      await rejectPayment(pendingReject.id);
       toast.success(t('admin.payment_rejected'));
+      setPendingReject(null);
       load();
       workspace?.refreshCounts();
     } catch (err) {
@@ -111,7 +114,7 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
       render: (p) =>
         p.status === 'awaiting_confirmation' ? (
           <Box className="flex justify-end gap-2">
-            <Button size="small" variant="outlined" color="error" disabled={actingOn === p.id} onClick={() => handleReject(p)}>
+            <Button size="small" variant="outlined" color="error" disabled={actingOn === p.id} onClick={() => setPendingReject(p)}>
               {t('admin.reject')}
             </Button>
             <Button size="small" variant="contained" loading={actingOn === p.id} onClick={() => handleConfirm(p)}>
@@ -148,6 +151,17 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
         loading={loading}
         emptyTitle={t('admin.no_payments')}
         emptyDescription={t('admin.no_payments_desc')}
+      />
+
+      <ConfirmDialog
+        open={!!pendingReject}
+        title={t('admin.confirm_reject_payment_title')}
+        description={t('admin.confirm_reject_payment')}
+        confirmLabel={t('admin.reject')}
+        danger
+        loading={actingOn === pendingReject?.id}
+        onCancel={() => setPendingReject(null)}
+        onConfirm={handleReject}
       />
     </SectionCard>
   );

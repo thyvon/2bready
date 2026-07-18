@@ -22,6 +22,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import FormTextField from '@/components/forms/FormTextField';
@@ -49,6 +50,8 @@ export default function AdminPackagesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Package | null>(null);
   const [serverError, setServerError] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<Package | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
@@ -152,14 +155,18 @@ export default function AdminPackagesPage() {
     }
   };
 
-  const handleDelete = async (pkg: Package) => {
-    if (!window.confirm(t('package.confirm_archive', { name: pkg.name }))) return;
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
-      await deletePackage(pkg.id);
+      await deletePackage(pendingDelete.id);
       toast.success(t('package.archive_success'));
+      setPendingDelete(null);
       load();
     } catch (err) {
       toast.error(getApiError(err).message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -186,7 +193,7 @@ export default function AdminPackagesPage() {
           <IconButton size="small" onClick={() => openEdit(p)} aria-label={t('common.edit')}>
             <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" onClick={() => handleDelete(p)} aria-label={t('common.delete')}>
+          <IconButton size="small" onClick={() => setPendingDelete(p)} aria-label={t('common.delete')}>
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -359,6 +366,17 @@ export default function AdminPackagesPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title={t('package.confirm_archive_title')}
+        description={pendingDelete ? t('package.confirm_archive', { name: pendingDelete.name }) : ''}
+        confirmLabel={t('common.delete')}
+        danger
+        loading={deleting}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={handleDelete}
+      />
     </>
   );
 }
