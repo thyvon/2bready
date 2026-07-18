@@ -84,7 +84,7 @@ const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPil
         gap: 0.25,
         px: 1.5,
         py: 0.75,
-        borderRadius: '4px',
+        borderRadius: 999,
         fontSize: '0.875rem',
         fontWeight: active ? 600 : 500,
         color: active ? 'text.primary' : 'text.secondary',
@@ -102,7 +102,7 @@ const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPil
           style={{
             position: 'absolute',
             inset: 0,
-            borderRadius: 4,
+            borderRadius: 999,
             background: 'var(--mui-palette-action-selected)',
             zIndex: -1,
           }}
@@ -159,18 +159,17 @@ export function PortalNavbar() {
     <Box
       component="header"
       sx={{
-        height: 64,
+        height: 56,
         display: 'flex',
         alignItems: 'center',
         // On mobile, the flex children are just [logo, spacer, icon-cluster,
         // hamburger] — 40px between each of those on a ~375px screen was
         // enough on its own to push the hamburger button off-screen.
-        gap: { xs: 2, md: 5 },
-        px: { xs: 2, md: 4 },
+        gap: { xs: 2, md: 3 },
+        px: { xs: 1.5, md: 3 },
         borderBottom: '1px solid',
         borderColor: 'divider',
-        bgcolor: 'color-mix(in srgb, var(--mui-palette-background-paper) 80%, transparent)',
-        backdropFilter: 'blur(12px)',
+        bgcolor: 'background.paper',
         position: 'sticky',
         top: 0,
         zIndex: 10,
