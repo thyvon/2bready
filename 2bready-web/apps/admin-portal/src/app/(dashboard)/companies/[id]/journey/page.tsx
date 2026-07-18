@@ -256,15 +256,16 @@ export default function CompanyJourneyPage() {
 
   return (
     <>
-      <SectionCard>
-        <JourneyTree
-          levels={journey.levels}
-          onSignOff={handleSignOff}
-          signingOffId={signingOff}
-          renderDocAction={renderDocAction}
-          extras={{ onAddExtra: openAddExtra, onEditExtra: openEditExtra, onDeleteExtra: setPendingDeleteExtra }}
-        />
-      </SectionCard>
+      {/* No wrapping SectionCard — each level is its own Accordion/card,
+          same as the taxonomy editor, rather than nesting every level
+          inside one shared card. */}
+      <JourneyTree
+        levels={journey.levels}
+        onSignOff={handleSignOff}
+        signingOffId={signingOff}
+        renderDocAction={renderDocAction}
+        extras={{ onAddExtra: openAddExtra, onEditExtra: openEditExtra, onDeleteExtra: setPendingDeleteExtra }}
+      />
 
       <DocumentPreviewDialog
         key={preview?.documentId ?? 'none'}

@@ -400,19 +400,22 @@ export default function JourneyPage() {
             ))}
           </Box>
 
-          {totalMatches === 0 ? (
-            <EmptyState title="No documents match" description="Try a different search term or filter." />
-          ) : (
-            <JourneyTree
-              levels={filteredLevels}
-              isUnlocked={(level) => level.unlocked}
-              tierFor={(level) => tierMap[level.code]}
-              defaultMilestonesOpen={isFiltering}
-              renderDocAction={renderDocAction}
-            />
-          )}
+          {totalMatches === 0 && <EmptyState title="No documents match" description="Try a different search term or filter." />}
         </Box>
       </SectionCard>
+
+      {/* Outside the search/filter card — each level is its own Accordion/
+          card below it, same as the taxonomy editor, rather than nesting
+          every level inside one shared card. */}
+      {totalMatches > 0 && (
+        <JourneyTree
+          levels={filteredLevels}
+          isUnlocked={(level) => level.unlocked}
+          tierFor={(level) => tierMap[level.code]}
+          defaultMilestonesOpen={isFiltering}
+          renderDocAction={renderDocAction}
+        />
+      )}
 
       <DocumentPreviewDialog
         open={preview.open}
