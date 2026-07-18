@@ -383,7 +383,7 @@ export default function JourneyTemplateDetailPage() {
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              {milestones.map((milestone, milestoneIndex) => {
+              {milestones.map((milestone) => {
                 const docs = [...(milestone.document_templates ?? [])].sort((a, b) => a.sort_order - b.sort_order);
                 return (
                   <Box key={milestone.id} sx={{ mb: 2, pl: 1, borderLeft: '2px solid', borderColor: 'divider' }}>
@@ -395,7 +395,6 @@ export default function JourneyTemplateDetailPage() {
                         borderBottom: '1px solid',
                         borderColor: 'divider',
                         transition: 'background-color 0.1s ease',
-                        bgcolor: milestoneIndex % 2 === 1 ? 'var(--2br-row-stripe)' : 'transparent',
                         '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
                       }}
                     >

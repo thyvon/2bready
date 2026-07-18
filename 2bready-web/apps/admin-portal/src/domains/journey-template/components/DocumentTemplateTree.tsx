@@ -24,14 +24,13 @@ export interface DocumentDragData {
 
 interface DocumentTemplateNodeProps {
   doc: DocumentTemplate;
-  index: number;
   dragData: DocumentDragData;
   onAdd: (parentId: string) => void;
   onEdit: (doc: DocumentTemplate) => void;
   onDelete: (doc: DocumentTemplate) => void;
 }
 
-function DocumentTemplateNode({ doc, index, dragData, onAdd, onEdit, onDelete }: DocumentTemplateNodeProps) {
+function DocumentTemplateNode({ doc, dragData, onAdd, onEdit, onDelete }: DocumentTemplateNodeProps) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: doc.id,
@@ -50,7 +49,6 @@ function DocumentTemplateNode({ doc, index, dragData, onAdd, onEdit, onDelete }:
           borderBottom: '1px solid',
           borderColor: 'divider',
           transition: 'background-color 0.1s ease',
-          bgcolor: index % 2 === 1 ? 'var(--2br-row-stripe)' : 'transparent',
           '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
         }}
       >
@@ -115,16 +113,8 @@ export default function DocumentTemplateTree({ documents, milestoneId, parentId,
 
   return (
     <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-      {sorted.map((doc, index) => (
-        <DocumentTemplateNode
-          key={doc.id}
-          doc={doc}
-          index={index}
-          dragData={{ milestoneId, parentId }}
-          onAdd={onAdd}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+      {sorted.map((doc) => (
+        <DocumentTemplateNode key={doc.id} doc={doc} dragData={{ milestoneId, parentId }} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </SortableContext>
   );
