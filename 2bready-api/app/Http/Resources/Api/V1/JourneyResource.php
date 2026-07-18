@@ -96,6 +96,17 @@ class JourneyResource extends JsonResource
             'name' => $template->name,
             'is_required' => $template->is_required,
             'status' => $latestDocument?->status->value ?? 'pending',
+            // Null = shared taxonomy; set = this one company's own extra
+            // requirement. Staff's per-company Journey tab uses this to know
+            // which nodes it may edit/delete here (client-portal ignores it
+            // — extras merge in seamlessly for the company itself).
+            'company_id' => $template->company_id,
+            // Sub-documents stay nested here (not flattened) so the company
+            // sees the same grouping relationship staff set up in the
+            // editor — recurses via nestFlat's in-memory `children`.
+            'children' => $template->relationLoaded('children')
+                ? $template->children->map(fn (DocumentTemplate $child) => $this->mapDocument($child))->values()->all()
+                : [],
         ];
     }
 }

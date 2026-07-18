@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Document\Models\DocumentTemplate;
 use App\Domain\Journey\Actions\CreateJourneyTemplateAction;
 use App\Domain\Journey\Actions\DeleteJourneyTemplateAction;
 use App\Domain\Journey\Actions\UpdateJourneyTemplateAction;
 use App\Domain\Journey\DTOs\JourneyTemplateData;
 use App\Domain\Journey\Models\JourneyTemplate;
+use App\Domain\Journey\Models\Milestone;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Journey\StoreJourneyTemplateRequest;
 use App\Http\Requests\Api\V1\Journey\UpdateJourneyTemplateRequest;
@@ -40,7 +42,19 @@ class JourneyTemplateController extends Controller
     {
         $this->authorize('view', $journeyTemplate);
 
-        $journeyTemplate->load(['industry', 'levels.milestones.documentTemplates']);
+        // Global-only — this editor manages the shared taxonomy and must
+        // never surface any company's own extra requirements (those live on
+        // that company's own Journey tab instead).
+        $journeyTemplate->load([
+            'industry',
+            'levels.milestones.documentTemplates' => fn ($query) => $query->whereNull('company_id')->orderBy('sort_order'),
+        ]);
+
+        $journeyTemplate->levels->each(function ($level) {
+            $level->milestones->each(function (Milestone $milestone) {
+                $milestone->setRelation('documentTemplates', DocumentTemplate::nestFlat($milestone->documentTemplates));
+            });
+        });
 
         return ApiResponse::success(new JourneyTemplateResource($journeyTemplate));
     }

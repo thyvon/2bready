@@ -213,6 +213,47 @@ it('completes the milestone once every required document is verified', function 
         ->toBe('document_upload');
 });
 
+it('does not let one company\'s extra required document block or leak into another company\'s completion', function () {
+    $otherCompany = Company::factory()->create();
+    // An extra requirement added only for $this->company — must not affect
+    // $otherCompany's completion of the same shared milestone.
+    $extraTemplate = DocumentTemplate::factory()->create([
+        'milestone_id' => $this->milestone->id,
+        'company_id' => $this->company->id,
+        'name' => 'Extra Requirement',
+    ]);
+    $admin = User::factory()->admin()->create();
+
+    // otherCompany only has the one shared (global) template to satisfy —
+    // it should complete without ever touching the extra.
+    $otherDoc = Document::factory()->create([
+        'company_id' => $otherCompany->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+    ]);
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$otherDoc->id}/verify")->assertOk();
+
+    expect(MilestoneCompletion::where('company_id', $otherCompany->id)->where('milestone_id', $this->milestone->id)->exists())->toBeTrue();
+
+    // $this->company still needs its own extra verified too — completing
+    // just the shared template must NOT complete it yet.
+    $ownSharedDoc = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+    ]);
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$ownSharedDoc->id}/verify")->assertOk();
+    expect(MilestoneCompletion::where('company_id', $this->company->id)->where('milestone_id', $this->milestone->id)->exists())->toBeFalse();
+
+    $ownExtraDoc = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $extraTemplate->id,
+        'status' => 'review',
+    ]);
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$ownExtraDoc->id}/verify")->assertOk();
+    expect(MilestoneCompletion::where('company_id', $this->company->id)->where('milestone_id', $this->milestone->id)->exists())->toBeTrue();
+});
+
 it('lets an admin reject a document with a reason', function () {
     $admin = User::factory()->admin()->create();
     $document = Document::factory()->create([

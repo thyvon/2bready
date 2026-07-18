@@ -30,9 +30,16 @@ class CompleteMilestoneOnDocumentVerified
         $document = $event->document;
         $milestoneId = $document->documentTemplate->milestone_id;
 
+        // Global docs count toward every company's completion; a company_id
+        // match only counts for that one company — without this, one
+        // company's private extra requirement would block (or count toward)
+        // every other company sharing this milestone. Nested sub-documents
+        // already count correctly with no extra handling here: they retain
+        // their ancestor's milestone_id regardless of nesting depth.
         $requiredTemplateIds = DocumentTemplate::query()
             ->where('milestone_id', $milestoneId)
             ->where('is_required', true)
+            ->where(fn ($query) => $query->whereNull('company_id')->orWhere('company_id', $document->company_id))
             ->pluck('id');
 
         if ($requiredTemplateIds->isEmpty()) {

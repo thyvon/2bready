@@ -56,7 +56,10 @@ class DocumentController extends Controller
 
         $companyId = $request->user()->current_company_id;
 
-        $templates = DocumentTemplate::query()->orderBy('sort_order')->get();
+        $templates = DocumentTemplate::query()
+            ->where(fn ($query) => $query->whereNull('company_id')->orWhere('company_id', $companyId))
+            ->orderBy('sort_order')
+            ->get();
 
         $latestDocuments = Document::query()
             ->where('company_id', $companyId)
@@ -70,7 +73,7 @@ class DocumentController extends Controller
             $template->setAttribute('latest_document', $latestDocuments->get($template->id));
         });
 
-        return ApiResponse::success(DocumentTemplateResource::collection($templates));
+        return ApiResponse::success(DocumentTemplateResource::collection(DocumentTemplate::nestFlat($templates)));
     }
 
     public function store(StoreDocumentRequest $request, UploadDocumentAction $action): JsonResponse

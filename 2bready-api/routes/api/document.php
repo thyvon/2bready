@@ -17,5 +17,11 @@ Route::prefix('documents')->group(function () {
 
 // ─── Document template authoring (admin CRUD, nested under a milestone) ────
 Route::post('milestones/{milestone}/document-templates', [DocumentTemplateController::class, 'store']);
+Route::post('document-templates/{documentTemplate}/children', [DocumentTemplateController::class, 'storeChild']);
 Route::patch('document-templates/{documentTemplate}', [DocumentTemplateController::class, 'update']);
 Route::delete('document-templates/{documentTemplate}', [DocumentTemplateController::class, 'destroy']);
+
+// ─── Company-specific extra requirements (added by staff from a company's
+// own Journey tab, on top of the shared taxonomy above) ─────────────────────
+Route::post('companies/{company}/milestones/{milestone}/document-templates', [DocumentTemplateController::class, 'storeForCompany']);
+Route::post('companies/{company}/document-templates/{documentTemplate}/children', [DocumentTemplateController::class, 'storeChildForCompany']);

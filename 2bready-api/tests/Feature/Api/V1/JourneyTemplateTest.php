@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Company\Models\Company;
 use App\Domain\Document\Models\DocumentTemplate;
 use App\Domain\Industry\Models\Industry;
 use App\Domain\Journey\Models\Journey;
@@ -89,6 +90,20 @@ it('shows a journey template with its nested levels, milestones, and document te
         ->assertJsonPath('data.levels.0.id', $level->id)
         ->assertJsonPath('data.levels.0.milestones.0.id', $milestone->id)
         ->assertJsonCount(1, 'data.levels.0.milestones.0.document_templates');
+});
+
+it('never shows any company\'s extra document requirements in the abstract taxonomy editor', function () {
+    $template = JourneyTemplate::factory()->create();
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id]);
+    $milestone = Milestone::factory()->create(['journey_level_id' => $level->id]);
+    DocumentTemplate::factory()->create(['milestone_id' => $milestone->id, 'name' => 'Global Doc']);
+    DocumentTemplate::factory()->create(['milestone_id' => $milestone->id, 'company_id' => Company::factory()->create()->id, 'name' => 'Company Extra']);
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->getJson("/api/v1/journey-templates/{$template->id}");
+
+    $response->assertOk()->assertJsonCount(1, 'data.levels.0.milestones.0.document_templates');
+    expect($response->json('data.levels.0.milestones.0.document_templates.0.name'))->toBe('Global Doc');
 });
 
 it('lets an admin update a journey template', function () {

@@ -13,6 +13,8 @@ class CreateDocumentTemplateAction
     {
         return DocumentTemplate::create([
             'milestone_id' => $data->milestone_id,
+            'parent_id' => $data->parent_id,
+            'company_id' => $data->company_id,
             'name' => $data->name,
             'description' => $data->description,
             'is_required' => $data->is_required,

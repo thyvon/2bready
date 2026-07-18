@@ -372,6 +372,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/document-templates/{documentTemplate}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["documentTemplate.storeChild"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/document-templates/{documentTemplate}": {
         parameters: {
             query?: never;
@@ -386,6 +402,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["documentTemplate.update"];
+        trace?: never;
+    };
+    "/v1/companies/{company}/milestones/{milestone}/document-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["documentTemplate.storeForCompany"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/document-templates/{documentTemplate}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["documentTemplate.storeChildForCompany"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/industry-options": {
@@ -915,12 +963,15 @@ export interface components {
         DocumentTemplateResource: {
             id: string;
             milestone_id: string;
+            parent_id: string | null;
+            company_id: string | null;
             name: string;
             description: string | null;
             is_required: boolean;
             expiry_months: number | null;
             sort_order: number;
             latest_document: components["schemas"]["DocumentResource"] | null;
+            children?: components["schemas"]["DocumentTemplateResource"][];
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -991,6 +1042,21 @@ export interface components {
                         name: string;
                         is_required: boolean;
                         status: string | "pending";
+                        /**
+                         * @description Null = shared taxonomy; set = this one company's own extra
+                         *     requirement. Staff's per-company Journey tab uses this to know
+                         *     which nodes it may edit/delete here (client-portal ignores it
+                         *     — extras merge in seamlessly for the company itself).
+                         */
+                        company_id: string | null;
+                        /**
+                         * @description Sub-documents stay nested here (not flattened) so the company
+                         *     sees the same grouping relationship staff set up in the
+                         *     editor — recurses via nestFlat's in-memory `children`.
+                         */
+                        children: {
+                            [key: string]: unknown;
+                        }[];
                     }[];
                 }[];
             }[];
@@ -2257,6 +2323,39 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "documentTemplate.storeChild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "documentTemplate.destroy": {
         parameters: {
             query?: never;
@@ -2298,6 +2397,76 @@ export interface operations {
         };
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "documentTemplate.storeForCompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The milestone ID */
+                milestone: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "documentTemplate.storeChildForCompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

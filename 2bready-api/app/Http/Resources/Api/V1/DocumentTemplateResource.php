@@ -33,12 +33,15 @@ class DocumentTemplateResource extends JsonResource
         return [
             'id' => $this->id,
             'milestone_id' => $this->milestone_id,
+            'parent_id' => $this->parent_id,
+            'company_id' => $this->company_id,
             'name' => $this->name,
             'description' => $this->description,
             'is_required' => $this->is_required,
             'expiry_months' => $this->expiry_months,
             'sort_order' => $this->sort_order,
             'latest_document' => $latestDocument ? new DocumentResource($latestDocument) : null,
+            'children' => DocumentTemplateResource::collection($this->whenLoaded('children')),
         ];
     }
 }

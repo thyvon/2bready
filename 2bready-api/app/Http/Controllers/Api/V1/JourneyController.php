@@ -86,8 +86,12 @@ class JourneyController extends Controller
         $milestones = $journey->journeyTemplate->levels->flatMap(fn (JourneyLevel $level) => $level->milestones);
         $milestoneIds = $milestones->pluck('id');
 
+        // Global (company_id null) docs apply to every company on this
+        // journey; a company_id match surfaces only that one company's own
+        // extra requirements — never another company's.
         $templates = DocumentTemplate::query()
             ->whereIn('milestone_id', $milestoneIds)
+            ->where(fn ($query) => $query->whereNull('company_id')->orWhere('company_id', $companyId))
             ->orderBy('sort_order')
             ->get();
 
@@ -109,8 +113,11 @@ class JourneyController extends Controller
             // setRelation (not setAttribute) so Milestone::documentTemplates()'s
             // real HasMany<DocumentTemplate> return type is what the Resource
             // sees — lets Scramble infer the array shape from the relation
-            // itself instead of an untyped dynamic attribute.
-            $milestone->setRelation('documentTemplates', $templatesByMilestone->get($milestone->id, collect()));
+            // itself instead of an untyped dynamic attribute. nestFlat runs
+            // after latest_document is already set on every node above, so
+            // that attribute survives being regrouped into a tree.
+            $flatForMilestone = $templatesByMilestone->get($milestone->id, collect());
+            $milestone->setRelation('documentTemplates', DocumentTemplate::nestFlat($flatForMilestone));
         });
     }
 }

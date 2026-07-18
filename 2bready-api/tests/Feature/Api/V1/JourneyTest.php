@@ -166,6 +166,37 @@ it('nests real document status under each milestone', function () {
     expect($docs['Articles of Incorporation']['status'])->toBe('pending');
 });
 
+it('includes global documents and only this company\'s own extras — never another company\'s', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $otherCompany = Company::factory()->create(['industry_id' => $this->industry->id, 'country_code' => 'KH']);
+
+    DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'name' => 'Global Requirement']);
+    DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'company_id' => $this->company->id, 'name' => 'My Extra']);
+    DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'company_id' => $otherCompany->id, 'name' => 'Their Extra']);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    $docNames = collect($levels['L1']['milestones'][0]['documents'])->pluck('name');
+
+    expect($docNames)->toContain('Global Requirement', 'My Extra');
+    expect($docNames)->not->toContain('Their Extra');
+});
+
+it('nests sub-documents in the company\'s own journey view instead of flattening them', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $root = DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'name' => 'Root Doc']);
+    DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'parent_id' => $root->id, 'name' => 'Sub Doc']);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    $docs = collect($levels['L1']['milestones'][0]['documents'])->keyBy('name');
+
+    expect($docs['Root Doc']['children'])->toHaveCount(1);
+    expect($docs['Root Doc']['children'][0]['name'])->toBe('Sub Doc');
+});
+
 // ─── Show for a specific company (back office) ──────────────────────────────
 
 it('lets an admin view any company\'s journey by id', function () {

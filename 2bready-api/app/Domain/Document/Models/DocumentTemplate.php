@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Document\Models;
 
+use App\Domain\Company\Models\Company;
 use App\Domain\Journey\Models\Milestone;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 /**
  * @property bool $is_required
@@ -33,6 +35,8 @@ class DocumentTemplate extends Model
 
     protected $fillable = [
         'milestone_id',
+        'parent_id',
+        'company_id',
         'name',
         'description',
         'is_required',
@@ -60,5 +64,41 @@ class DocumentTemplate extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
+    }
+
+    /** @return BelongsTo<DocumentTemplate, $this> */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(DocumentTemplate::class, 'parent_id');
+    }
+
+    /** @return HasMany<DocumentTemplate, $this> */
+    public function children(): HasMany
+    {
+        return $this->hasMany(DocumentTemplate::class, 'parent_id')->orderBy('sort_order');
+    }
+
+    /** @return BelongsTo<Company, $this> */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Turns an already-fetched flat collection into a nested tree in memory
+     * (setRelation, not a real query) — supports unlimited depth with zero
+     * extra queries, since the whole flat set for a milestone/company scope
+     * is fetched once by the caller before this runs.
+     *
+     * @param  Collection<int, DocumentTemplate>  $flat
+     * @return Collection<int, DocumentTemplate>
+     */
+    public static function nestFlat(Collection $flat, ?string $parentId = null): Collection
+    {
+        return $flat->where('parent_id', $parentId)->values()->map(function (DocumentTemplate $node) use ($flat) {
+            $node->setRelation('children', static::nestFlat($flat, $node->id));
+
+            return $node;
+        });
     }
 }

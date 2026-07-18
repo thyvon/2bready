@@ -11,6 +11,8 @@ class DocumentTemplateData extends Data
     public function __construct(
         public readonly string $milestone_id,
         public readonly string $name,
+        public readonly ?string $parent_id = null,
+        public readonly ?string $company_id = null,
         public readonly ?string $description = null,
         public readonly bool $is_required = true,
         public readonly ?int $expiry_months = null,
