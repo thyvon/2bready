@@ -152,15 +152,32 @@ export default function JourneyTemplatesPage() {
         <Box className="flex justify-end gap-1">
           <IconButton
             size="small"
-            onClick={() => router.push(`/journey-templates/${jt.id}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/journey-templates/${jt.id}`);
+            }}
             aria-label={t('journey_template.manage_taxonomy')}
           >
             <AccountTreeOutlinedIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" onClick={() => openEdit(jt)} aria-label={t('common.edit')}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEdit(jt);
+            }}
+            aria-label={t('common.edit')}
+          >
             <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" onClick={() => setPendingDelete(jt)} aria-label={t('common.delete')}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPendingDelete(jt);
+            }}
+            aria-label={t('common.delete')}
+          >
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
