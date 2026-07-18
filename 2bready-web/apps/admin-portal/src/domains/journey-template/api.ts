@@ -72,6 +72,11 @@ export async function createDocumentTemplate(milestoneId: string, data: StoreDoc
   return res.data.data;
 }
 
+export async function createDocumentTemplateChild(parentId: string, data: StoreDocumentTemplatePayload): Promise<DocumentTemplate> {
+  const res = await api.post<{ data: DocumentTemplate }>(`/document-templates/${parentId}/children`, data);
+  return res.data.data;
+}
+
 export async function updateDocumentTemplate(id: string, data: UpdateDocumentTemplatePayload): Promise<DocumentTemplate> {
   const res = await api.patch<{ data: DocumentTemplate }>(`/document-templates/${id}`, data);
   return res.data.data;

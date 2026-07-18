@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -12,10 +21,21 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import FieldLabel from '@/components/forms/FieldLabel';
+import FormTextField from '@/components/forms/FormTextField';
 import { useToast } from '@/components/feedback/ToastProvider';
-import { getCompanyJourney, completeMilestone } from '@/domains/journey/api';
-import { JourneyTree, type JourneyDocument } from '@/domains/journey/components/JourneyTree';
-import type { Journey } from '@/domains/journey/types';
+import {
+  getCompanyJourney,
+  completeMilestone,
+  createExtraRequirement,
+  createExtraRequirementChild,
+  updateExtraRequirement,
+  deleteExtraRequirement,
+} from '@/domains/journey/api';
+import { JourneyTree } from '@/domains/journey/components/JourneyTree';
+import type { Journey, JourneyDocument } from '@/domains/journey/types';
+import { documentTemplateFormSchema, documentTemplateFormDefaults, type DocumentTemplateFormInput } from '@/domains/journey-template/schemas';
 import { verifyDocument, rejectDocument, getPreviewUrl } from '@/domains/document/api';
 import { DocumentPreviewDialog } from '@/domains/document/components/DocumentPreviewDialog';
 import { getApiError } from '@/lib/utils';
@@ -44,6 +64,20 @@ export default function CompanyJourneyPage() {
 
   const [acting, setActing] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+
+  const [extraDialog, setExtraDialog] = useState<{
+    milestoneId: string;
+    parentDocumentId: string | null;
+    editing: JourneyDocument | null;
+  } | null>(null);
+  const [pendingDeleteExtra, setPendingDeleteExtra] = useState<JourneyDocument | null>(null);
+  const [deletingExtra, setDeletingExtra] = useState(false);
+  const [extraServerError, setExtraServerError] = useState('');
+
+  const extraForm = useForm<DocumentTemplateFormInput>({
+    resolver: zodResolver(documentTemplateFormSchema),
+    defaultValues: documentTemplateFormDefaults,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -134,6 +168,57 @@ export default function CompanyJourneyPage() {
     }
   };
 
+  const openAddExtra = (milestoneId: string, parentDocumentId: string | null) => {
+    extraForm.reset(documentTemplateFormDefaults);
+    setExtraServerError('');
+    setExtraDialog({ milestoneId, parentDocumentId, editing: null });
+  };
+  const openEditExtra = (doc: JourneyDocument) => {
+    extraForm.reset({
+      name: doc.name,
+      description: '',
+      is_required: doc.is_required,
+      expiry_months: undefined,
+      sort_order: 0,
+    });
+    setExtraServerError('');
+    setExtraDialog({ milestoneId: '', parentDocumentId: null, editing: doc });
+  };
+  const submitExtra = async (data: DocumentTemplateFormInput) => {
+    if (!extraDialog) return;
+    setExtraServerError('');
+    try {
+      const parsed = documentTemplateFormSchema.parse(data);
+      const payload = { ...parsed, description: parsed.description || undefined };
+      if (extraDialog.editing) {
+        await updateExtraRequirement(extraDialog.editing.id, payload);
+      } else if (extraDialog.parentDocumentId) {
+        await createExtraRequirementChild(params.id, extraDialog.parentDocumentId, payload);
+      } else {
+        await createExtraRequirement(params.id, extraDialog.milestoneId, payload);
+      }
+      toast.success(extraDialog.editing ? 'Extra requirement updated.' : 'Extra requirement added.');
+      setExtraDialog(null);
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      setExtraServerError(getApiError(err).message);
+    }
+  };
+  const handleDeleteExtra = async () => {
+    if (!pendingDeleteExtra) return;
+    setDeletingExtra(true);
+    try {
+      await deleteExtraRequirement(pendingDeleteExtra.id);
+      toast.success('Extra requirement deleted.');
+      setPendingDeleteExtra(null);
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setDeletingExtra(false);
+    }
+  };
+
   const renderDocAction = (doc: JourneyDocument) => (
     <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
       <StatusBadge status={doc.status} />
@@ -177,6 +262,7 @@ export default function CompanyJourneyPage() {
           onSignOff={handleSignOff}
           signingOffId={signingOff}
           renderDocAction={renderDocAction}
+          extras={{ onAddExtra: openAddExtra, onEditExtra: openEditExtra, onDeleteExtra: setPendingDeleteExtra }}
         />
       </SectionCard>
 
@@ -193,6 +279,76 @@ export default function CompanyJourneyPage() {
         onVerify={handleVerify}
         onReject={handleReject}
         acting={acting}
+      />
+
+      <Dialog open={!!extraDialog} onClose={() => setExtraDialog(null)} maxWidth="sm" fullWidth>
+        <Box component="form" onSubmit={extraForm.handleSubmit(submitExtra)} noValidate>
+          <DialogTitle>{extraDialog?.editing ? 'Edit Extra Requirement' : 'Add Extra Requirement'}</DialogTitle>
+          <DialogContent className="flex flex-col gap-5" sx={{ pt: '8px !important' }}>
+            {extraServerError && <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>{extraServerError}</Box>}
+            <Box>
+              <FieldLabel>Document name</FieldLabel>
+              <FormTextField
+                fullWidth
+                autoFocus
+                error={!!extraForm.formState.errors.name}
+                helperText={extraForm.formState.errors.name?.message}
+                {...extraForm.register('name')}
+              />
+            </Box>
+            <Box>
+              <FieldLabel>Description</FieldLabel>
+              <FormTextField
+                fullWidth
+                multiline
+                rows={2}
+                error={!!extraForm.formState.errors.description}
+                helperText={extraForm.formState.errors.description?.message}
+                {...extraForm.register('description')}
+              />
+            </Box>
+            <Box>
+              <FieldLabel>Expires after (months)</FieldLabel>
+              <FormTextField
+                type="number"
+                fullWidth
+                placeholder="Leave blank if it never expires"
+                slotProps={{ htmlInput: { step: '1', min: 1 } }}
+                error={!!extraForm.formState.errors.expiry_months}
+                helperText={extraForm.formState.errors.expiry_months?.message}
+                {...extraForm.register('expiry_months')}
+              />
+            </Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={extraForm.watch('is_required')}
+                  onChange={(e) => extraForm.setValue('is_required', e.target.checked)}
+                />
+              }
+              label="Required"
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button variant="text" onClick={() => setExtraDialog(null)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" loading={extraForm.formState.isSubmitting}>
+              Save
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!pendingDeleteExtra}
+        title="Delete extra requirement?"
+        description={`Delete "${pendingDeleteExtra?.name ?? ''}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        loading={deletingExtra}
+        onCancel={() => setPendingDeleteExtra(null)}
+        onConfirm={handleDeleteExtra}
       />
     </>
   );

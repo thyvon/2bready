@@ -57,5 +57,14 @@ export function useJourneyTemplate(id: string) {
     };
   }, [id, reloadKey]);
 
-  return { journeyTemplate, loading, reload: () => setReloadKey((k) => k + 1) };
+  return {
+    journeyTemplate,
+    loading,
+    // Exposed for optimistic local reordering during drag-and-drop — the
+    // caller updates the in-memory tree immediately for a smooth drag
+    // experience, persists via the API, then calls reload() to reconcile
+    // with server truth.
+    setJourneyTemplate,
+    reload: () => setReloadKey((k) => k + 1),
+  };
 }

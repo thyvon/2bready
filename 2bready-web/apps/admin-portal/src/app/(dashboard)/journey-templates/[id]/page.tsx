@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -31,6 +33,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import FormTextField from '@/components/forms/FormTextField';
+import DocumentTemplateTree, { type DocumentDragData } from '@/domains/journey-template/components/DocumentTemplateTree';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useJourneyTemplate } from '@/domains/journey-template/hooks';
@@ -42,6 +45,7 @@ import {
   updateMilestone,
   deleteMilestone,
   createDocumentTemplate,
+  createDocumentTemplateChild,
   updateDocumentTemplate,
   deleteDocumentTemplate,
 } from '@/domains/journey-template/api';
@@ -65,13 +69,22 @@ type PendingDelete =
   | { kind: 'milestone'; item: Milestone }
   | { kind: 'document_template'; item: DocumentTemplate };
 
+function findDocumentById(docs: DocumentTemplate[], id: string): DocumentTemplate | null {
+  for (const doc of docs) {
+    if (doc.id === id) return doc;
+    const found = findDocumentById(doc.children ?? [], id);
+    if (found) return found;
+  }
+  return null;
+}
+
 export default function JourneyTemplateDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { hasAnyRole } = useAuthStore();
   const toast = useToast();
   const { t } = useTranslation();
-  const { journeyTemplate, loading, reload } = useJourneyTemplate(params.id);
+  const { journeyTemplate, loading, setJourneyTemplate, reload } = useJourneyTemplate(params.id);
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff'])) router.replace('/dashboard');
@@ -79,10 +92,16 @@ export default function JourneyTemplateDetailPage() {
 
   const [levelDialog, setLevelDialog] = useState<{ editing: JourneyLevel | null } | null>(null);
   const [milestoneDialog, setMilestoneDialog] = useState<{ levelId: string; editing: Milestone | null } | null>(null);
-  const [docDialog, setDocDialog] = useState<{ milestoneId: string; editing: DocumentTemplate | null } | null>(null);
+  const [docDialog, setDocDialog] = useState<{
+    milestoneId: string;
+    parentDocumentId: string | null;
+    editing: DocumentTemplate | null;
+  } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [serverError, setServerError] = useState('');
+
+  const dragSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const levelForm = useForm<JourneyLevelFormInput>({
     resolver: zodResolver(journeyLevelFormSchema),
@@ -164,7 +183,12 @@ export default function JourneyTemplateDetailPage() {
   const openCreateDoc = (milestoneId: string) => {
     docForm.reset(documentTemplateFormDefaults);
     setServerError('');
-    setDocDialog({ milestoneId, editing: null });
+    setDocDialog({ milestoneId, parentDocumentId: null, editing: null });
+  };
+  const openCreateSubDoc = (milestoneId: string, parentDocumentId: string) => {
+    docForm.reset(documentTemplateFormDefaults);
+    setServerError('');
+    setDocDialog({ milestoneId, parentDocumentId, editing: null });
   };
   const openEditDoc = (milestoneId: string, doc: DocumentTemplate) => {
     docForm.reset({
@@ -175,7 +199,7 @@ export default function JourneyTemplateDetailPage() {
       sort_order: doc.sort_order,
     });
     setServerError('');
-    setDocDialog({ milestoneId, editing: doc });
+    setDocDialog({ milestoneId, parentDocumentId: doc.parent_id, editing: doc });
   };
   const submitDoc = async (data: DocumentTemplateFormInput) => {
     if (!docDialog) return;
@@ -185,6 +209,8 @@ export default function JourneyTemplateDetailPage() {
       const payload = { ...parsed, description: parsed.description || undefined };
       if (docDialog.editing) {
         await updateDocumentTemplate(docDialog.editing.id, payload);
+      } else if (docDialog.parentDocumentId) {
+        await createDocumentTemplateChild(docDialog.parentDocumentId, payload);
       } else {
         await createDocumentTemplate(docDialog.milestoneId, payload);
       }
@@ -193,6 +219,80 @@ export default function JourneyTemplateDetailPage() {
       reload();
     } catch (err) {
       setServerError(getApiError(err).message);
+    }
+  };
+
+  // Reorders one sibling group (identified by milestoneId + parentId) inside
+  // the in-memory tree — optimistic, so the drop feels instant instead of
+  // waiting on a reload(). Recurses through every document node looking for
+  // the one whose children match parentId, since a sibling group can be
+  // nested to any depth.
+  function reorderDocSiblings(docs: DocumentTemplate[], parentId: string | null, orderedIds: string[]): DocumentTemplate[] {
+    if (parentId === null) {
+      const byId = new Map(docs.map((d) => [d.id, d]));
+      return orderedIds.map((id, i) => ({ ...byId.get(id)!, sort_order: i }));
+    }
+    return docs.map((d) => {
+      if (d.id === parentId) {
+        const children = d.children ?? [];
+        const byId = new Map(children.map((c) => [c.id, c]));
+        return { ...d, children: orderedIds.map((id, i) => ({ ...byId.get(id)!, sort_order: i })) };
+      }
+      return { ...d, children: reorderDocSiblings(d.children ?? [], parentId, orderedIds) };
+    });
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !journeyTemplate) return;
+
+    const data = active.data.current as DocumentDragData | undefined;
+    if (!data) return;
+
+    const level = journeyTemplate.levels?.find((l) => l.milestones?.some((m) => m.id === data.milestoneId));
+    const milestone = level?.milestones?.find((m) => m.id === data.milestoneId);
+    if (!level || !milestone) return;
+
+    const siblingDocs =
+      data.parentId === null
+        ? (milestone.document_templates ?? [])
+        : findDocumentById(milestone.document_templates ?? [], data.parentId)?.children ?? [];
+    const sortedSiblings = [...siblingDocs].sort((a, b) => a.sort_order - b.sort_order);
+    const oldIndex = sortedSiblings.findIndex((d) => d.id === active.id);
+    const newIndex = sortedSiblings.findIndex((d) => d.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const orderedIds = arrayMove(sortedSiblings, oldIndex, newIndex).map((d) => d.id);
+
+    setJourneyTemplate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        levels: (prev.levels ?? []).map((l) =>
+          l.id !== level.id
+            ? l
+            : {
+                ...l,
+                milestones: (l.milestones ?? []).map((m) =>
+                  m.id !== milestone.id
+                    ? m
+                    : { ...m, document_templates: reorderDocSiblings(m.document_templates ?? [], data.parentId, orderedIds) }
+                ),
+              }
+        ),
+      };
+    });
+
+    try {
+      await Promise.all(
+        orderedIds.map((id, index) => {
+          const original = sortedSiblings.find((d) => d.id === id);
+          return original && original.sort_order !== index ? updateDocumentTemplate(id, { sort_order: index }) : null;
+        })
+      );
+    } catch (err) {
+      toast.error(getApiError(err).message);
+      reload();
     }
   };
 
@@ -242,6 +342,7 @@ export default function JourneyTemplateDetailPage() {
         </SectionCard>
       )}
 
+      <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       {levels.map((level) => {
         const milestones = [...(level.milestones ?? [])].sort((a, b) => a.sort_order - b.sort_order);
         return (
@@ -300,27 +401,14 @@ export default function JourneyTemplateDetailPage() {
                     </Box>
 
                     <Box sx={{ pl: 3, mt: 0.5 }}>
-                      {docs.map((doc) => (
-                        <Box key={doc.id} className="flex items-center gap-2 py-0.5">
-                          <Typography variant="body2" sx={{ flexGrow: 1 }}>
-                            {doc.name}
-                          </Typography>
-                          {doc.is_required && <Chip label={t('journey_template.required')} size="small" variant="outlined" />}
-                          {doc.expiry_months != null && (
-                            <Chip label={t('journey_template.expires_in', { months: String(doc.expiry_months) })} size="small" variant="outlined" />
-                          )}
-                          <IconButton size="small" onClick={() => openEditDoc(milestone.id, doc)} aria-label={t('common.edit')}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => setPendingDelete({ kind: 'document_template', item: doc })}
-                            aria-label={t('common.delete')}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      ))}
+                      <DocumentTemplateTree
+                        documents={docs}
+                        milestoneId={milestone.id}
+                        parentId={null}
+                        onAdd={(parentId) => openCreateSubDoc(milestone.id, parentId)}
+                        onEdit={(doc) => openEditDoc(milestone.id, doc)}
+                        onDelete={(doc) => setPendingDelete({ kind: 'document_template', item: doc })}
+                      />
                       <Button size="small" startIcon={<AddIcon fontSize="small" />} onClick={() => openCreateDoc(milestone.id)}>
                         {t('journey_template.add_document_template')}
                       </Button>
@@ -335,6 +423,7 @@ export default function JourneyTemplateDetailPage() {
           </Accordion>
         );
       })}
+      </DndContext>
 
       {/* ─── Level dialog ─── */}
       <Dialog open={!!levelDialog} onClose={() => setLevelDialog(null)} maxWidth="sm" fullWidth>
@@ -453,7 +542,13 @@ export default function JourneyTemplateDetailPage() {
       {/* ─── Document template dialog ─── */}
       <Dialog open={!!docDialog} onClose={() => setDocDialog(null)} maxWidth="sm" fullWidth>
         <Box component="form" onSubmit={docForm.handleSubmit(submitDoc)} noValidate>
-          <DialogTitle>{docDialog?.editing ? t('journey_template.edit_document_template') : t('journey_template.add_document_template')}</DialogTitle>
+          <DialogTitle>
+            {docDialog?.editing
+              ? t('journey_template.edit_document_template')
+              : docDialog?.parentDocumentId
+                ? t('journey_template.add_sub_document')
+                : t('journey_template.add_document_template')}
+          </DialogTitle>
           <DialogContent className="flex flex-col gap-5" sx={{ pt: '8px !important' }}>
             {serverError && <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>{serverError}</Box>}
             <Box>

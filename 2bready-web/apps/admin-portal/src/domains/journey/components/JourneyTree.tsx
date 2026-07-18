@@ -5,14 +5,19 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
 import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
 import { motion } from 'framer-motion';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 
 import StatusBadge from '@/components/ui/StatusBadge';
 import { cardGridContainer, cardGridItem, easeOutExpo } from '@/lib/motion';
-import type { JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
+import type { JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
 
 // Same "modern SaaS" easing as every other transition in this app — see
 // lib/motion.ts — expressed as a CSS string here since these are plain sx
@@ -59,11 +64,80 @@ function RollupChip({ milestone }: { milestone: JourneyMilestone }) {
   );
 }
 
-export type JourneyDocument = JourneyMilestone['documents'][number];
+export type { JourneyDocument };
 export type RenderDocAction = (doc: JourneyDocument, ctx: { level: JourneyLevel; milestone: JourneyMilestone }) => React.ReactNode;
+
+export interface ExtraRequirementActions {
+  onAddExtra: (milestoneId: string, parentDocumentId: string | null) => void;
+  onEditExtra: (doc: JourneyDocument) => void;
+  onDeleteExtra: (doc: JourneyDocument) => void;
+}
 
 function DefaultDocAction(doc: JourneyDocument) {
   return <StatusBadge status={doc.status} />;
+}
+
+interface DocumentRowProps {
+  doc: JourneyDocument;
+  depth: number;
+  level: JourneyLevel;
+  milestone: JourneyMilestone;
+  renderDocAction: RenderDocAction;
+  extras?: ExtraRequirementActions;
+  isLastSibling: boolean;
+}
+
+// Recurses into doc.children, indented — same grouping relationship staff
+// set up in the abstract taxonomy editor, kept visible here rather than
+// flattened. Edit/delete only render for this company's own extras
+// (company_id set): a global node's identity here means "shared taxonomy,"
+// only editable from the abstract editor, not this per-company view.
+function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, isLastSibling }: DocumentRowProps) {
+  const children = [...doc.children].sort((a, b) => a.id.localeCompare(b.id));
+  const isExtra = doc.company_id !== null;
+
+  return (
+    <Box sx={{ pl: depth * 2.5 }}>
+      <Box
+        className="flex items-center gap-3"
+        sx={{ py: 1, borderBottom: depth === 0 && isLastSibling && children.length === 0 ? 'none' : '1px solid', borderColor: 'divider' }}
+      >
+        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+          {doc.name}
+          {!doc.is_required && ' (optional)'}
+        </Typography>
+        {isExtra && <Chip label="Extra" size="small" color="info" variant="outlined" />}
+        {extras && (
+          <IconButton size="small" onClick={() => extras.onAddExtra(milestone.id, doc.id)} aria-label="Add extra sub-requirement">
+            <AddIcon fontSize="small" />
+          </IconButton>
+        )}
+        {extras && isExtra && (
+          <>
+            <IconButton size="small" onClick={() => extras.onEditExtra(doc)} aria-label="Edit">
+              <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={() => extras.onDeleteExtra(doc)} aria-label="Delete">
+              <DeleteOutlinedIcon fontSize="small" />
+            </IconButton>
+          </>
+        )}
+        {renderDocAction(doc, { level, milestone })}
+      </Box>
+      {children.map((child, i) => (
+        <DocumentRow
+          key={child.id}
+          doc={child}
+          depth={depth + 1}
+          level={level}
+          milestone={milestone}
+          renderDocAction={renderDocAction}
+          extras={extras}
+          isLastSibling={i === children.length - 1}
+        />
+      ))}
+    </Box>
+  );
 }
 
 interface MilestoneNodeProps {
@@ -74,9 +148,10 @@ interface MilestoneNodeProps {
   onSignOff: (milestoneId: string) => void;
   signingOffId: string | null;
   renderDocAction: RenderDocAction;
+  extras?: ExtraRequirementActions;
 }
 
-function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOffId, renderDocAction }: MilestoneNodeProps) {
+function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOffId, renderDocAction, extras }: MilestoneNodeProps) {
   const [open, setOpen] = useState(milestoneHasActivity(milestone));
   const hasDocuments = milestone.documents.length > 0;
   const unlocked = level.unlocked;
@@ -134,17 +209,16 @@ function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOf
                 Completes automatically once every required document is verified.
               </Typography>
               {milestone.documents.map((doc, i) => (
-                <Box
+                <DocumentRow
                   key={doc.id}
-                  className="flex items-center gap-3"
-                  sx={{ py: 1, borderBottom: i === milestone.documents.length - 1 ? 'none' : '1px solid', borderColor: 'divider' }}
-                >
-                  <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                    {doc.name}
-                    {!doc.is_required && ' (optional)'}
-                  </Typography>
-                  {renderDocAction(doc, { level, milestone })}
-                </Box>
+                  doc={doc}
+                  depth={0}
+                  level={level}
+                  milestone={milestone}
+                  renderDocAction={renderDocAction}
+                  extras={extras}
+                  isLastSibling={i === milestone.documents.length - 1}
+                />
               ))}
             </>
           ) : (
@@ -160,6 +234,16 @@ function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOf
               </Typography>
             </Box>
           )}
+          {extras && (
+            <Box
+              className="flex items-center gap-1 cursor-pointer"
+              sx={{ pt: 0.5, color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+              onClick={() => extras.onAddExtra(milestone.id, null)}
+            >
+              <AddIcon fontSize="small" />
+              <Typography variant="body2">Add extra requirement</Typography>
+            </Box>
+          )}
         </Box>
       </Collapse>
     </Box>
@@ -172,9 +256,10 @@ interface LevelNodeProps {
   onSignOff: (milestoneId: string) => void;
   signingOffId: string | null;
   renderDocAction: RenderDocAction;
+  extras?: ExtraRequirementActions;
 }
 
-function LevelNode({ level, isLast, onSignOff, signingOffId, renderDocAction }: LevelNodeProps) {
+function LevelNode({ level, isLast, onSignOff, signingOffId, renderDocAction, extras }: LevelNodeProps) {
   const totalMilestones = level.milestones.length;
   const completedMilestones = level.milestones.filter((m) => m.completed).length;
   const pct = totalMilestones === 0 ? 0 : Math.round((completedMilestones / totalMilestones) * 100);
@@ -280,6 +365,7 @@ function LevelNode({ level, isLast, onSignOff, signingOffId, renderDocAction }: 
             onSignOff={onSignOff}
             signingOffId={signingOffId}
             renderDocAction={renderDocAction}
+            extras={extras}
           />
         ))}
       </Box>
@@ -295,6 +381,10 @@ export interface JourneyTreeProps {
    * badge; the Journey page overrides this with real Verify/Reject/Preview
    * actions, since documents live here now rather than a separate tab. */
   renderDocAction?: RenderDocAction;
+  /** Add/edit/delete for this company's own extra requirements — omitted
+   * anywhere this tree is read-only (or shown to a company_owner/member, who
+   * never manage extras themselves; they're "added by 2bReady"). */
+  extras?: ExtraRequirementActions;
 }
 
 // A vertical growth path — Comply → Scale → Lead, L1 through L4 — rather than
@@ -306,7 +396,7 @@ export interface JourneyTreeProps {
 // same reason: it's one tree over one set of data, not two pages. A
 // milestone with no documents at all falls back to a manual sign-off
 // checkbox — see MilestoneNode.
-export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction = DefaultDocAction }: JourneyTreeProps) {
+export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction = DefaultDocAction, extras }: JourneyTreeProps) {
   return (
     <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ pt: 1 }}>
       {levels.map((level, i) => (
@@ -317,6 +407,7 @@ export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction =
             onSignOff={onSignOff}
             signingOffId={signingOffId}
             renderDocAction={renderDocAction}
+            extras={extras}
           />
         </Box>
       ))}
