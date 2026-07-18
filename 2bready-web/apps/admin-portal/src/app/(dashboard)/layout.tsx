@@ -11,6 +11,7 @@ import { useLayoutStore } from '@/store/layout.store';
 import DashboardSidebar from '@/components/layouts/DashboardSidebar';
 import DashboardHeader from '@/components/layouts/DashboardHeader';
 import DashboardNavHorizontal from '@/components/layouts/DashboardNavHorizontal';
+import AdminFooter from '@/components/layouts/AdminFooter';
 import { fadeIn, pageTransition } from '@/lib/motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -64,15 +65,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // doesn't replay on every route change anymore.
   if (navOrientation === 'horizontal' && !isMobile) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
         <motion.div key="horizontal-nav" initial="initial" animate="animate" variants={fadeIn}>
           <DashboardNavHorizontal />
         </motion.div>
-        <Box component="main" sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
+        <Box component="main" sx={{ flex: 1, p: { xs: 1.5, sm: 2, md: 2.5 } }}>
           <motion.div initial="initial" animate="animate" variants={pageTransition}>
             {children}
           </motion.div>
         </Box>
+        <AdminFooter />
       </Box>
     );
   }
@@ -89,6 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {children}
           </motion.div>
         </Box>
+        <AdminFooter />
       </Box>
     </Box>
   );
