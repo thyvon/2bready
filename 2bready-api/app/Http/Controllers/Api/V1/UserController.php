@@ -24,8 +24,6 @@ use Illuminate\Http\Request;
  */
 class UserController extends Controller
 {
-    private const INTERNAL_ROLES = ['admin', 'staff', 'finance', 'auditor'];
-
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', User::class);
@@ -34,7 +32,7 @@ class UserController extends Controller
         $filters = $request->only(['role', 'status', 'search']);
 
         $users = UserFilters::apply(
-            User::query()->whereHas('roles', fn ($q) => $q->whereIn('name', self::INTERNAL_ROLES))->with(['roles', 'companies']),
+            User::query()->whereHas('roles', fn ($q) => $q->whereIn('name', User::INTERNAL_ROLES))->with(['roles', 'companies']),
             $filters,
         )->latest()->paginate($perPage);
 
@@ -51,7 +49,7 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
-        abort_unless($user->hasAnyRole(self::INTERNAL_ROLES), 404);
+        abort_unless($user->hasAnyRole(User::INTERNAL_ROLES), 404);
         $this->authorize('view', $user);
 
         return ApiResponse::success(new UserResource($user->load(['roles', 'companies'])));
@@ -68,7 +66,7 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user, UpdateUserAction $action): JsonResponse
     {
-        abort_unless($user->hasAnyRole(self::INTERNAL_ROLES), 404);
+        abort_unless($user->hasAnyRole(User::INTERNAL_ROLES), 404);
         $this->authorize('update', $user);
 
         $user = $action->execute($user, $request->validated());

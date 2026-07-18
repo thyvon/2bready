@@ -35,6 +35,18 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use Auditable, HasApiTokens, HasFactory, HasRoles, HasUlid, Notifiable;
 
+    // Back-office roles admin-portal's User Management page can assign/see —
+    // the single source of truth for that boundary (UserController,
+    // StoreUserRequest, UpdateUserRequest, UpdateUserAction all reference this
+    // instead of repeating the literal array). Never includes company_owner/
+    // company_member: admin-portal never creates or manages those, and an
+    // account holding both an internal role and company_owner (a real
+    // production account does) must never have the company_owner side of it
+    // touched by anything that only knows about this list — see
+    // UpdateUserAction, which syncs roles scoped to this set specifically so
+    // it can't accidentally strip a role outside it.
+    public const INTERNAL_ROLES = ['admin', 'staff', 'finance', 'auditor'];
+
     /** @return Factory<User> */
     protected static function newFactory(): Factory
     {

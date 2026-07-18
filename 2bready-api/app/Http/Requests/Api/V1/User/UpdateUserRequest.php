@@ -21,7 +21,7 @@ class UpdateUserRequest extends FormRequest
             // yet; out of scope for this endpoint.
             'status' => ['sometimes', 'string', 'in:active,suspended,inactive'],
             'roles' => ['sometimes', 'array', 'min:1'],
-            'roles.*' => ['string', Rule::in(['admin', 'staff', 'finance', 'auditor'])],
+            'roles.*' => ['string', Rule::in(User::INTERNAL_ROLES)],
         ];
     }
 

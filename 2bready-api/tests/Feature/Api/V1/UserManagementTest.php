@@ -153,6 +153,27 @@ it('lets an admin change their own name (self-update is not fully blocked, only 
     expect($admin->fresh()->name)->toBe('New Name');
 });
 
+it('preserves a company_owner role when editing a dual-role user\'s internal roles', function () {
+    // A real production account (vunthypro@gmail.com) holds both an internal
+    // role and company_owner simultaneously. The edit form only ever knows
+    // about internal roles — a naive syncRoles($data['roles']) would silently
+    // strip company_owner on every edit, even one that only changes the name.
+    $admin = User::factory()->admin()->create();
+    $dualRoleStaff = User::factory()->withRole('staff')->create();
+    $dualRoleStaff->assignRole('company_owner');
+
+    $this->actingAs($admin)->patchJson("/api/v1/users/{$dualRoleStaff->id}", [
+        'name' => 'Renamed Only',
+        'roles' => ['finance'],
+    ])->assertOk();
+
+    $dualRoleStaff->refresh();
+    expect($dualRoleStaff->name)->toBe('Renamed Only');
+    expect($dualRoleStaff->hasRole('finance'))->toBeTrue();
+    expect($dualRoleStaff->hasRole('staff'))->toBeFalse();
+    expect($dualRoleStaff->hasRole('company_owner'))->toBeTrue();
+});
+
 it('returns 404 updating a company_owner via the internal user endpoint', function () {
     $admin = User::factory()->admin()->create();
     $owner = User::factory()->companyOwner()->create();
