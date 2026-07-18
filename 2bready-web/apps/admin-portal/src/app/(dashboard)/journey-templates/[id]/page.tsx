@@ -26,6 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
@@ -68,6 +69,30 @@ type PendingDelete =
   | { kind: 'level'; item: JourneyLevel }
   | { kind: 'milestone'; item: Milestone }
   | { kind: 'document_template'; item: DocumentTemplate };
+
+// L1-L4 map to Bronze/Silver/Gold/Platinum in the real taxonomy — a colored
+// medal reads faster than the plain code chip alone at a glance.
+const LEVEL_MEDAL_COLOR: Record<string, string> = { L1: '#CD7F32', L2: '#9CA3AF', L3: '#D4AF37', L4: '#60A5FA' };
+
+function LevelMedal({ code }: { code: string }) {
+  const color = LEVEL_MEDAL_COLOR[code] ?? '#9CA3AF';
+  return (
+    <Box
+      sx={{
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        bgcolor: color,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <MilitaryTechIcon sx={{ color: 'white', fontSize: 20 }} />
+    </Box>
+  );
+}
 
 function findDocumentById(docs: DocumentTemplate[], id: string): DocumentTemplate | null {
   for (const doc of docs) {
@@ -355,6 +380,7 @@ export default function JourneyTemplateDetailPage() {
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box className="flex items-center gap-2 w-full pr-2">
+                <LevelMedal code={level.code} />
                 <Chip label={level.code} size="small" />
                 <Typography sx={{ fontWeight: 600, flexGrow: 1 }}>{level.name}</Typography>
                 <Typography variant="body2" color="text.secondary">

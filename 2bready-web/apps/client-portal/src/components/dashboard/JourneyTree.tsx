@@ -14,6 +14,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import { GlowButton, StatusBadge, cardGridContainer, cardGridItem } from '@2bready/ui-core';
 import { TIER_LABELS, type Tier } from '@/lib/journey-data';
 import {
@@ -27,6 +28,19 @@ import {
 } from '@/lib/journey-api';
 
 const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
+
+// L1-L4 map to Bronze/Silver/Gold/Platinum in the real taxonomy — a colored
+// medal reads faster than the plain code chip alone at a glance.
+const LEVEL_MEDAL_COLOR: Record<string, string> = { L1: '#CD7F32', L2: '#9CA3AF', L3: '#D4AF37', L4: '#60A5FA' };
+
+function LevelMedal({ code }: { code: string }) {
+  const color = LEVEL_MEDAL_COLOR[code] ?? '#9CA3AF';
+  return (
+    <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <MilitaryTechIcon sx={{ color: 'white', fontSize: 20 }} />
+    </Box>
+  );
+}
 
 // A milestone with any real progress (something uploaded, even if still
 // under review/rejected — anything past the untouched "pending" state)
@@ -201,6 +215,7 @@ function LevelAccordion({
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box className="flex items-center gap-2 w-full pr-2" sx={{ opacity: unlocked ? 1 : 0.6 }}>
+          <LevelMedal code={badge.code} />
           <Chip label={badge.code} size="small" />
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             <Typography sx={{ fontWeight: 600 }}>
