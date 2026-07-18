@@ -41,6 +41,7 @@ const kh: Record<keyof typeof en, string> = {
   'nav.packages': 'កញ្ចប់',
   'nav.payments': 'ការទូទាត់',
   'nav.audits': 'សវនកម្ម',
+  'nav.audit_logs': 'កំណត់ត្រាសកម្មភាព',
   'nav.settings': 'ការកំណត់',
   'nav.menu': 'ម៉ឺនុយ',
 
@@ -326,6 +327,25 @@ const kh: Record<keyof typeof en, string> = {
   'status.scan_failed': 'ការស្កេនបរាជ័យ',
   'status.review': 'រង់ចាំពិនិត្យ',
   'status.verified': 'បានផ្ទៀងផ្ទាត់',
+
+  // ─── Audit Log ────────────────────────────────────────────────────────────
+  'audit_log.title': 'កំណត់ត្រាសកម្មភាព',
+  'audit_log.action_col': 'សកម្មភាព',
+  'audit_log.actor': 'អ្នកធ្វើសកម្មភាព',
+  'audit_log.system': 'ប្រព័ន្ធ',
+  'audit_log.target': 'គោលដៅ',
+  'audit_log.ip_address': 'អាសយដ្ឋាន IP',
+  'audit_log.time': 'ពេលវេលា',
+  'audit_log.field': 'វាល',
+  'audit_log.before': 'មុន',
+  'audit_log.after': 'ក្រោយ',
+  'audit_log.metadata': 'ព័ត៌មានលម្អិត',
+  'audit_log.filter_action': 'សកម្មភាព',
+  'audit_log.filter_actor': 'អ៊ីមែលអ្នកធ្វើសកម្មភាព',
+  'audit_log.filter_from': 'ពី',
+  'audit_log.filter_to': 'ដល់',
+  'audit_log.no_logs': 'មិនទាន់មានសកម្មភាពទេ',
+  'audit_log.no_logs_desc': 'សកម្មភាពទាំងអស់នៅលើវេទិកានឹងបង្ហាញនៅទីនេះនៅពេលវាកើតឡើង។',
 };
 
 export default kh;

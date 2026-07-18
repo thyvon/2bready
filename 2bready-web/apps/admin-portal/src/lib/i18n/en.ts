@@ -37,6 +37,7 @@ const en = {
   'nav.packages': 'Packages',
   'nav.payments': 'Payments',
   'nav.audits': 'Audits',
+  'nav.audit_logs': 'Activity Log',
   'nav.settings': 'Settings',
   'nav.menu': 'Menu',
 
@@ -322,6 +323,25 @@ const en = {
   'status.scan_failed': 'Scan Failed',
   'status.review': 'Pending Review',
   'status.verified': 'Verified',
+
+  // ─── Audit Log ────────────────────────────────────────────────────────────
+  'audit_log.title': 'Activity Log',
+  'audit_log.action_col': 'Action',
+  'audit_log.actor': 'Actor',
+  'audit_log.system': 'System',
+  'audit_log.target': 'Target',
+  'audit_log.ip_address': 'IP Address',
+  'audit_log.time': 'Time',
+  'audit_log.field': 'Field',
+  'audit_log.before': 'Before',
+  'audit_log.after': 'After',
+  'audit_log.metadata': 'Details',
+  'audit_log.filter_action': 'Action',
+  'audit_log.filter_actor': 'Actor Email',
+  'audit_log.filter_from': 'From',
+  'audit_log.filter_to': 'To',
+  'audit_log.no_logs': 'No activity yet',
+  'audit_log.no_logs_desc': 'Actions across the platform will appear here as they happen.',
 } as const;
 
 export default en;

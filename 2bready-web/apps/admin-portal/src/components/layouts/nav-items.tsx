@@ -10,6 +10,7 @@ import AssignmentIcon from '@mui/icons-material/AssignmentOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
+import HistoryIcon from '@mui/icons-material/HistoryOutlined';
 
 import { useAuthStore } from '@/store/auth.store';
 import { useTranslation } from '@/lib/i18n';
@@ -47,6 +48,7 @@ const ADMIN_NAV: NavItemDef[] = [
   { labelKey: 'nav.payments',   href: '/payments',    icon: <ReceiptLongIcon fontSize="small" /> },
   { labelKey: 'nav.audits',     href: '/audits',      icon: <AssignmentIcon fontSize="small" /> },
   { labelKey: 'nav.documents',  href: '/documents',   icon: <DescriptionIcon fontSize="small" /> },
+  { labelKey: 'nav.audit_logs', href: '/audit-logs',  icon: <HistoryIcon fontSize="small" /> },
   { labelKey: 'nav.support',    href: '/support',     icon: <SupportIcon fontSize="small" /> },
   { labelKey: 'nav.settings',   href: '/settings',    icon: <SettingsIcon fontSize="small" /> },
 ];
