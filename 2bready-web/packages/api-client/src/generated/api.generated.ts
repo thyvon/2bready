@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/admin-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.adminLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/forgot-password": {
         parameters: {
             query?: never;
@@ -973,6 +989,14 @@ export interface components {
              */
             companies: components["schemas"]["CompanyResource"][];
             roles: Record<string, never>;
+            /**
+             * @description Backs each frontend's own belt-and-suspenders route gate (on top of
+             *     the real enforcement boundary, AuthController::login/adminLogin) —
+             *     lets both apps check one flag instead of re-deriving it from a
+             *     hardcoded role list. See User::canAccessAdminPortal/ClientPortal.
+             */
+            can_access_admin_portal: boolean;
+            can_access_client_portal: boolean;
             /** Format: date-time */
             email_verified_at: string | null;
             totp_enabled: boolean;
@@ -1114,15 +1138,42 @@ export interface operations {
                     };
                 };
             };
-            403: {
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "auth.adminLogin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @constant */
-                        message: "Your account has been suspended.";
-                        errors: string[];
+                        data: {
+                            user: components["schemas"]["UserResource"];
+                            token: string;
+                            totp_required: boolean;
+                        };
+                        meta: string[];
+                    } | {
+                        data: {
+                            user: components["schemas"]["UserResource"];
+                            token: string;
+                            totp_required: boolean;
+                            totp_confirmed: boolean;
+                        };
+                        meta: string[];
                     };
                 };
             };

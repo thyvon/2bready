@@ -15,7 +15,7 @@ import { fadeIn, pageTransition } from '@/lib/motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, hasHydrated } = useAuthStore();
+  const { isAuthenticated, hasHydrated, user } = useAuthStore();
   const { navOrientation } = useLayoutStore();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const theme = useTheme();
@@ -24,15 +24,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // only honored at md and above.
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // The actual enforcement boundary is the backend (adminLogin rejects any account
+  // without the portal.admin.access permission before ever issuing a token — see
+  // domains/auth/api.ts). This check is defense-in-depth against a token minted
+  // before that fix, or any future regression: without it, this whole layout
+  // (sidebar/header/nav — the full authenticated shell) used to mount for ANY valid
+  // token, gated only per-page afterward. Reads the same permission-backed flag the
+  // backend used to decide whether to issue the token in the first place
+  // (User::canAccessAdminPortal), not a separately-maintained role list here — a
+  // role gaining/losing admin-portal access only ever needs a RolePermissionSeeder
+  // change, never a frontend edit.
+  const canAccessAdminPortal = user?.can_access_admin_portal ?? false;
+
   useEffect(() => {
     // Wait for the persisted store to rehydrate — otherwise this reads the
     // pre-hydration default (isAuthenticated: false) on every hard reload and
     // redirects a genuinely-authenticated session back to /login.
     if (!hasHydrated) return;
-    if (!isAuthenticated) router.replace('/login');
-  }, [hasHydrated, isAuthenticated, router]);
+    if (!isAuthenticated) {
+      router.replace('/login');
+      return;
+    }
+    if (!canAccessAdminPortal) {
+      useAuthStore.getState().clearAuth();
+      router.replace('/login');
+    }
+  }, [hasHydrated, isAuthenticated, canAccessAdminPortal, router]);
 
-  if (!hasHydrated || !isAuthenticated) return null;
+  if (!hasHydrated || !isAuthenticated || !canAccessAdminPortal) return null;
 
   // No `key={pathname}` on the motion.div below (there used to be one) — that
   // forced every nested layout under here to fully unmount/remount on every

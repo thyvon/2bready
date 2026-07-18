@@ -1,4 +1,5 @@
 import { PortalShell } from '@/components/layout/PortalShell';
+import { PortalAuthGuard } from '@/components/layout/PortalAuthGuard';
 import JourneyProvider from '@/components/JourneyProvider';
 import PackageProvider from '@/components/PackageProvider';
 
@@ -16,10 +17,12 @@ import PackageProvider from '@/components/PackageProvider';
 // every page re-fetching it or falling back to a hardcoded local copy.
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <JourneyProvider>
-      <PackageProvider>
-        <PortalShell>{children}</PortalShell>
-      </PackageProvider>
-    </JourneyProvider>
+    <PortalAuthGuard>
+      <JourneyProvider>
+        <PackageProvider>
+          <PortalShell>{children}</PortalShell>
+        </PackageProvider>
+      </JourneyProvider>
+    </PortalAuthGuard>
   );
 }

@@ -3,7 +3,10 @@ import type { LoginResponse, RegisterResponse, TotpSetupResponse } from './types
 import type { LoginInput, ForgotPasswordInput, ResetPasswordInput, TotpCodeInput } from './schemas';
 
 export async function login(data: LoginInput): Promise<LoginResponse> {
-  const res = await api.post<{ data: LoginResponse }>('/auth/login', data);
+  // admin-login, not the generic login every other app shares — the backend rejects
+  // non-internal (company_owner/company_member) credentials here before issuing a
+  // token, rather than relying on this app's own post-login role checks alone.
+  const res = await api.post<{ data: LoginResponse }>('/auth/admin-login', data);
   return res.data.data;
 }
 
