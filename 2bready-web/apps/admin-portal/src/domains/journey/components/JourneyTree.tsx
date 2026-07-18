@@ -7,6 +7,9 @@ import Collapse from '@mui/material/Collapse';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 import { motion } from 'framer-motion';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
@@ -18,52 +21,29 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 
 import StatusBadge from '@/components/ui/StatusBadge';
-import { cardGridContainer, cardGridItem, easeOutExpo } from '@/lib/motion';
+import { cardGridContainer, cardGridItem } from '@/lib/motion';
 import type { JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
 
-// Same "modern SaaS" easing as every other transition in this app — see
-// lib/motion.ts — expressed as a CSS string here since these are plain sx
-// transitions, not framer-motion props.
-const EASE_CSS = 'cubic-bezier(0.4, 0, 0.2, 1)';
-
-const LEVEL_EMOJI: Record<string, string> = { L1: '🔶', L2: '🥈', L3: '🥇', L4: '💎' };
 const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
 
 function milestoneHasActivity(milestone: JourneyMilestone): boolean {
   return milestone.completed || milestone.documents.some((doc) => doc.status !== 'pending');
 }
 
-function rollup(milestone: JourneyMilestone): { label: string; bgcolor: string; color: string } {
+function rollup(milestone: JourneyMilestone): { label: string; color: 'success' | 'warning' | 'default' } {
   if (milestone.documents.length === 0) {
-    return milestone.completed
-      ? { label: 'Signed off', bgcolor: 'success.light', color: 'success.dark' }
-      : { label: 'Awaiting sign-off', bgcolor: 'action.selected', color: 'text.secondary' };
+    return milestone.completed ? { label: 'Signed off', color: 'success' } : { label: 'Awaiting sign-off', color: 'default' };
   }
   const total = milestone.documents.length;
   const verified = milestone.documents.filter((doc) => doc.status === 'verified').length;
-  if (verified === total) return { label: 'Complete', bgcolor: 'success.light', color: 'success.dark' };
-  if (verified > 0) return { label: `${verified}/${total} verified`, bgcolor: 'warning.light', color: 'warning.dark' };
-  return { label: `0/${total} verified`, bgcolor: 'action.selected', color: 'text.secondary' };
+  if (verified === total) return { label: 'Complete', color: 'success' };
+  if (verified > 0) return { label: `${verified}/${total} verified`, color: 'warning' };
+  return { label: `0/${total} verified`, color: 'default' };
 }
 
 function RollupChip({ milestone }: { milestone: JourneyMilestone }) {
   const status = rollup(milestone);
-  return (
-    <Box
-      sx={{
-        fontSize: '0.6875rem',
-        fontWeight: 600,
-        px: 1.125,
-        py: 0.25,
-        borderRadius: '9999px',
-        flexShrink: 0,
-        bgcolor: status.bgcolor,
-        color: status.color,
-      }}
-    >
-      {status.label}
-    </Box>
-  );
+  return <Chip label={status.label} size="small" color={status.color} variant="outlined" />;
 }
 
 export type { JourneyDocument };
@@ -103,7 +83,7 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
       <Box
         className="flex items-center gap-3"
         sx={{
-          py: 1,
+          py: 0.75,
           mx: -1,
           px: 1,
           borderBottom: depth === 0 && isLastSibling && children.length === 0 ? 'none' : '1px solid',
@@ -155,41 +135,22 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
   );
 }
 
-interface MilestoneNodeProps {
+interface MilestoneRowProps {
   milestone: JourneyMilestone;
   level: JourneyLevel;
-  isFirst: boolean;
-  isLast: boolean;
   onSignOff: (milestoneId: string) => void;
   signingOffId: string | null;
   renderDocAction: RenderDocAction;
   extras?: ExtraRequirementActions;
 }
 
-function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOffId, renderDocAction, extras }: MilestoneNodeProps) {
+function MilestoneRow({ milestone, level, onSignOff, signingOffId, renderDocAction, extras }: MilestoneRowProps) {
   const [open, setOpen] = useState(milestoneHasActivity(milestone));
   const hasDocuments = milestone.documents.length > 0;
   const unlocked = level.unlocked;
 
   return (
-    <Box sx={{ position: 'relative', pl: 3 }}>
-      {/* Branch connector: a rounded elbow curving from the trunk down to the
-          milestone dot — reads as a drawn line, not two abutting boxes. The
-          first milestone has no incoming vertical, just its own tick. */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 0,
-          top: isFirst ? 14 : -6,
-          width: 16,
-          height: isFirst ? '2px' : 20,
-          ...(isFirst
-            ? { bgcolor: 'divider' }
-            : { borderLeft: '2px solid', borderBottom: '2px solid', borderColor: 'divider', borderBottomLeftRadius: '8px' }),
-        }}
-      />
-      {!isLast && <Box sx={{ position: 'absolute', left: 0, top: 14, bottom: -20, width: '2px', bgcolor: 'divider' }} />}
-
+    <Box sx={{ mb: 1.5 }}>
       <Box
         className="flex items-center gap-2"
         onClick={() => setOpen((v) => !v)}
@@ -200,24 +161,24 @@ function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOf
           py: 0.75,
           px: 1,
           mx: -1,
-          borderRadius: '6px',
-          transition: `background-color 0.15s ${EASE_CSS}, transform 0.15s ${EASE_CSS}`,
-          '&:hover': { bgcolor: 'action.hover', transform: 'translateX(2px)' },
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          transition: 'background-color 0.1s ease',
+          '&:hover': { bgcolor: 'var(--2br-overlay-row-hover)' },
         }}
       >
-        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'text.primary', flexShrink: 0 }} />
         <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
           {milestone.name}
         </Typography>
         <RollupChip milestone={milestone} />
         <ExpandMoreIcon
           fontSize="small"
-          sx={{ color: 'text.secondary', transition: `transform 0.2s ${EASE_CSS}`, transform: open ? 'rotate(180deg)' : 'none' }}
+          sx={{ color: 'text.secondary', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'none' }}
         />
       </Box>
 
-      <Collapse in={open} timeout={220} easing={{ enter: EASE_CSS, exit: EASE_CSS }}>
-        <Box sx={{ pl: 2.5, py: 0.5, display: 'flex', flexDirection: 'column' }}>
+      <Collapse in={open} timeout={180}>
+        <Box sx={{ pl: 1, py: 0.5, display: 'flex', flexDirection: 'column' }}>
           {hasDocuments ? (
             <>
               <Typography variant="caption" color="text.secondary" sx={{ pb: 0.5 }}>
@@ -265,126 +226,72 @@ function MilestoneNode({ milestone, level, isFirst, isLast, onSignOff, signingOf
   );
 }
 
-interface LevelNodeProps {
+interface LevelAccordionProps {
   level: JourneyLevel;
-  isLast: boolean;
   onSignOff: (milestoneId: string) => void;
   signingOffId: string | null;
   renderDocAction: RenderDocAction;
   extras?: ExtraRequirementActions;
 }
 
-function LevelNode({ level, isLast, onSignOff, signingOffId, renderDocAction, extras }: LevelNodeProps) {
+function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extras }: LevelAccordionProps) {
   const totalMilestones = level.milestones.length;
   const completedMilestones = level.milestones.filter((m) => m.completed).length;
   const pct = totalMilestones === 0 ? 0 : Math.round((completedMilestones / totalMilestones) * 100);
-  const emoji = LEVEL_EMOJI[level.code] ?? '🏁';
 
   return (
-    <Box sx={{ position: 'relative', pl: 6, pb: isLast ? 0 : 5 }}>
-      {/* Trunk connector down to the next level node — grows in from the top
-          on mount so the tree reads as drawn/constructed, not a static div. */}
-      {!isLast && (
-        <Box
-          component={motion.div}
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: 1 }}
-          transition={{ ...easeOutExpo, delay: 0.15 }}
-          sx={{ position: 'absolute', left: 19, top: 40, bottom: 0, width: '2px', bgcolor: 'divider', transformOrigin: 'top' }}
-        />
-      )}
-
-      {/* Level node circle, sitting on the trunk — unlocked levels get a soft
-          success-colored glow ring so "unlocked" reads as a real state
-          change, not just a border-color swap. */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.25rem',
-          border: '2px solid',
-          borderColor: level.unlocked ? 'success.main' : 'divider',
-          bgcolor: 'background.paper',
-          zIndex: 1,
-          transition: `box-shadow 0.25s ${EASE_CSS}`,
-          boxShadow: level.unlocked
-            ? '0 0 0 4px color-mix(in srgb, var(--mui-palette-success-main) 15%, transparent), 0 4px 16px -4px color-mix(in srgb, var(--mui-palette-success-main) 45%, transparent)'
-            : 'none',
-        }}
-      >
-        {emoji}
-      </Box>
-
-      <Box className="flex items-center gap-2" sx={{ minHeight: 40 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            {level.code} · {level.name} · {level.pathway_name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {PILLAR_LABEL[level.pillar] ?? level.pillar} · {totalMilestones} milestones
-          </Typography>
-        </Box>
-        <Box
-          className="flex items-center gap-1"
-          sx={{
-            fontSize: '0.6875rem',
-            fontWeight: 700,
-            letterSpacing: '0.03em',
-            px: 1.25,
-            py: 0.375,
-            borderRadius: '9999px',
-            flexShrink: 0,
-            ...(level.unlocked
-              ? { bgcolor: 'success.light', color: 'success.dark' }
-              : { bgcolor: 'action.selected', color: 'text.secondary' }),
-          }}
-        >
-          {level.unlocked ? <CheckCircleOutlinedIcon sx={{ fontSize: '0.875rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '0.875rem' }} />}
-          {level.unlocked ? 'UNLOCKED' : 'LOCKED'}
-        </Box>
-      </Box>
-
-      <Box sx={{ mt: 1 }}>
-        <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
-          <Box
-            sx={{
-              width: `${pct}%`,
-              height: '100%',
-              borderRadius: '4px',
-              bgcolor: level.unlocked ? 'success.main' : 'text.disabled',
-              transition: 'width 0.4s ease',
-            }}
+    <Accordion defaultExpanded sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }} disableGutters>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box className="flex items-center gap-2 w-full pr-2" sx={{ opacity: level.unlocked ? 1 : 0.6 }}>
+          <Chip label={level.code} size="small" />
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 600 }}>
+              {level.name} · {level.pathway_name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {PILLAR_LABEL[level.pillar] ?? level.pillar} · {totalMilestones} milestones · {pct}%
+            </Typography>
+          </Box>
+          <Chip
+            label={level.unlocked ? 'UNLOCKED' : 'LOCKED'}
+            size="small"
+            icon={level.unlocked ? <CheckCircleOutlinedIcon /> : <LockOutlinedIcon />}
+            color={level.unlocked ? 'success' : undefined}
+            variant={level.unlocked ? 'filled' : 'outlined'}
           />
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums', mt: 0.5 }}>
-          <span>{pct}%</span>
-          <span>{completedMilestones}/{totalMilestones} milestones complete</span>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box sx={{ mb: 1.5 }}>
+          <Box sx={{ height: 6, borderRadius: '4px', bgcolor: 'action.selected', overflow: 'hidden' }}>
+            <Box
+              sx={{
+                width: `${pct}%`,
+                height: '100%',
+                borderRadius: '4px',
+                bgcolor: level.unlocked ? 'success.main' : 'text.disabled',
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+            {completedMilestones}/{totalMilestones} milestones complete
+          </Typography>
         </Box>
-      </Box>
 
-      <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        {level.milestones.map((milestone, i) => (
-          <MilestoneNode
+        {level.milestones.map((milestone) => (
+          <MilestoneRow
             key={milestone.id}
             milestone={milestone}
             level={level}
-            isFirst={i === 0}
-            isLast={i === level.milestones.length - 1}
             onSignOff={onSignOff}
             signingOffId={signingOffId}
             renderDocAction={renderDocAction}
             extras={extras}
           />
         ))}
-      </Box>
-    </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -402,23 +309,21 @@ export interface JourneyTreeProps {
   extras?: ExtraRequirementActions;
 }
 
-// A vertical growth path — Comply → Scale → Lead, L1 through L4 — rather than
-// stacked accordion cards, matching client-portal's JourneyTree visual
-// language so the same underlying Journey/Level/Milestone/Document hierarchy
-// reads the same way to both a company and the staff reviewing it. Documents
-// are acted on right here (via renderDocAction) rather than linking out to a
-// separate Documents tab — same merge client-portal already made, for the
-// same reason: it's one tree over one set of data, not two pages. A
+// One Accordion per level, slim indented rows for milestones/documents —
+// same flat, grid-line visual language as the Journey Templates taxonomy
+// editor (journey-templates/[id]/page.tsx), so staff see one consistent
+// tree style whether they're editing the shared taxonomy or reviewing one
+// company's progress against it. Documents are acted on right here (via
+// renderDocAction) rather than linking out to a separate Documents tab. A
 // milestone with no documents at all falls back to a manual sign-off
-// checkbox — see MilestoneNode.
+// checkbox — see MilestoneRow.
 export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction = DefaultDocAction, extras }: JourneyTreeProps) {
   return (
-    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ pt: 1 }}>
-      {levels.map((level, i) => (
+    <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show">
+      {levels.map((level) => (
         <Box component={motion.div} key={level.id} variants={cardGridItem}>
-          <LevelNode
+          <LevelAccordion
             level={level}
-            isLast={i === levels.length - 1}
             onSignOff={onSignOff}
             signingOffId={signingOffId}
             renderDocAction={renderDocAction}
