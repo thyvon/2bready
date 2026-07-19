@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\AuditLog\Events\AuditableActionOccurred;
 use App\Domain\User\Actions\ConfirmTotpAction;
+use App\Domain\User\Actions\IssueAuthTokenAction;
 use App\Domain\User\Actions\RegisterUserAction;
 use App\Domain\User\Actions\SetupTotpAction;
 use App\Domain\User\Actions\VerifyTotpAction;
@@ -47,11 +48,11 @@ class AuthController extends Controller
     // work here too — company_id is null for those roles, so they'd land in a
     // portal with no company to show. Gated on portal.client.access, the mirror
     // of adminLogin()'s portal.admin.access check below.
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, IssueAuthTokenAction $issueToken): JsonResponse
     {
         $user = $this->attemptCredentials($request, requiredPermission: 'portal.client.access');
 
-        return $this->issueTokenResponse($user);
+        return ApiResponse::success($issueToken->execute($user), [], 200);
     }
 
     // admin-portal's login form posts here, not login() — see the mirrored comment
@@ -62,11 +63,11 @@ class AuthController extends Controller
     // message as a wrong password (not a distinct "you're not allowed here"
     // error) so this can't be used to fingerprint which accounts exist and what
     // they can access.
-    public function adminLogin(LoginRequest $request): JsonResponse
+    public function adminLogin(LoginRequest $request, IssueAuthTokenAction $issueToken): JsonResponse
     {
         $user = $this->attemptCredentials($request, requiredPermission: 'portal.admin.access');
 
-        return $this->issueTokenResponse($user);
+        return ApiResponse::success($issueToken->execute($user), [], 200);
     }
 
     private function attemptCredentials(LoginRequest $request, string $requiredPermission): User
@@ -117,51 +118,6 @@ class AuthController extends Controller
         }
 
         return $user;
-    }
-
-    private function issueTokenResponse(User $user): JsonResponse
-    {
-        // If 2FA is required but not confirmed, prompt for setup. This token is
-        // deliberately scoped to the 'totp-pending' ability only (not the default '*') so
-        // it can reach the auth/totp/* + logout endpoints but nothing else — enforced by
-        // the EnsureTwoFactorVerified middleware on every other protected route. A
-        // password-only credential must never be enough to reach business data when the
-        // account requires 2FA.
-        if ($user->requiresTwoFactor() && ! $user->hasTwoFactorEnabled()) {
-            $token = $user->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
-
-            return ApiResponse::success([
-                'user' => new UserResource($user),
-                'token' => $token,
-                'totp_required' => true,
-                'totp_confirmed' => false,
-            ], [], 200);
-        }
-
-        // If 2FA is set up, require the code before issuing a fully-capable token.
-        if ($user->hasTwoFactorEnabled()) {
-            $token = $user->createToken('api-pending-totp', ['totp-pending'])->plainTextToken;
-
-            return ApiResponse::success([
-                'user' => new UserResource($user),
-                'token' => $token,
-                'totp_required' => true,
-                'totp_confirmed' => true,
-            ], [], 200);
-        }
-
-        $token = $user->createToken('api')->plainTextToken;
-
-        // Only reached here (not the two totp_required branches above) — for a
-        // 2FA account, "login" isn't complete until totpConfirm/totpVerify
-        // upgrades the pending token below, so that's where those dispatch it.
-        event(new AuditableActionOccurred(action: 'auth.login', actorId: $user->id, actorEmail: $user->email));
-
-        return ApiResponse::success([
-            'user' => new UserResource($user),
-            'token' => $token,
-            'totp_required' => false,
-        ], [], 200);
     }
 
     public function logout(Request $request): JsonResponse

@@ -436,6 +436,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/email/verify/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["emailVerification.verify"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/email/verify/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["emailVerification.resend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/google/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["googleAuth.status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/google/redirect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["googleAuth.redirect"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["googleAuth.callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/google/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["googleAuth.exchange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/settings/google-oauth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["googleOAuthSetting.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["googleOAuthSetting.update"];
+        trace?: never;
+    };
     "/v1/industry-options": {
         parameters: {
             query?: never;
@@ -1382,6 +1494,13 @@ export interface components {
             status?: "active" | "suspended" | "inactive";
             /** @enum {string} */
             role?: "company_owner" | "company_member";
+            google_auth_enabled?: boolean;
+            /**
+             * @description Tri-state override of User::requiresTwoFactor()'s role-derived default
+             *     (null keeps that default — company_owner/member are never required by
+             *     default; true forces 2FA on for this specific account).
+             */
+            two_factor_required?: boolean | null;
         };
         /** UpdateDocumentTemplateRequest */
         UpdateDocumentTemplateRequest: {
@@ -1390,6 +1509,17 @@ export interface components {
             is_required?: boolean;
             expiry_months?: number | null;
             sort_order?: number;
+        };
+        /** UpdateGoogleOAuthSettingRequest */
+        UpdateGoogleOAuthSettingRequest: {
+            enabled: boolean;
+            client_id: string;
+            /**
+             * @description Omitted/empty means "keep the existing secret" — see
+             *     GoogleOAuthSettingService::save(). Never required, since after the
+             *     first save the frontend never has the real value to resend.
+             */
+            client_secret?: string | null;
         };
         /** UpdateIndustryRequest */
         UpdateIndustryRequest: {
@@ -1452,6 +1582,13 @@ export interface components {
              * @enum {string}
              */
             status?: "active" | "suspended" | "inactive";
+            google_auth_enabled?: boolean;
+            /**
+             * @description Tri-state override of the role-derived 2FA default — see
+             *     User::requiresTwoFactor(). null (send an explicit JSON null, not
+             *     omit the key) resets back to that default.
+             */
+            two_factor_required?: boolean | null;
             roles?: ("admin" | "staff" | "finance" | "auditor")[];
         };
         /** UserResource */
@@ -1482,6 +1619,14 @@ export interface components {
             email_verified_at: string | null;
             totp_enabled: boolean;
             totp_required: boolean;
+            /**
+             * @description The raw tri-state override, distinct from totp_required above (which is
+             *     already resolved against the role-derived default) — the admin Users UI
+             *     needs this to render "Default / Required / Exempt" instead of just the
+             *     effective true/false.
+             */
+            two_factor_required: boolean | null;
+            google_auth_enabled: boolean;
             /** Format: date-time */
             created_at: string | null;
         };
@@ -1508,6 +1653,18 @@ export interface components {
                 };
             };
         };
+        /** @description Not found */
+        ModelNotFoundException: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    /** @description Error overview. */
+                    message: string;
+                };
+            };
+        };
         /** @description Unauthenticated */
         AuthenticationException: {
             headers: {
@@ -1522,18 +1679,6 @@ export interface components {
         };
         /** @description Authorization error */
         AuthorizationException: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": {
-                    /** @description Error overview. */
-                    message: string;
-                };
-            };
-        };
-        /** @description Not found */
-        ModelNotFoundException: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1637,10 +1782,7 @@ export interface operations {
                             user: components["schemas"]["UserResource"];
                             token: string;
                             totp_required: boolean;
-                        };
-                        meta: string[];
-                    } | {
-                        data: {
+                        } | {
                             user: components["schemas"]["UserResource"];
                             token: string;
                             totp_required: boolean;
@@ -1676,10 +1818,7 @@ export interface operations {
                             user: components["schemas"]["UserResource"];
                             token: string;
                             totp_required: boolean;
-                        };
-                        meta: string[];
-                    } | {
-                        data: {
+                        } | {
                             user: components["schemas"]["UserResource"];
                             token: string;
                             totp_required: boolean;
@@ -2513,6 +2652,252 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "emailVerification.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** @constant */
+                            message: "Email verified.";
+                        };
+                        meta: string;
+                    } | {
+                        data: {
+                            /** @constant */
+                            message: "Email already verified.";
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "This verification link is invalid or has expired.";
+                        errors: string[];
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "emailVerification.resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** @constant */
+                            message: "Verification email sent.";
+                        };
+                        meta: string;
+                    } | {
+                        data: {
+                            /** @constant */
+                            message: "Email already verified.";
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "googleAuth.status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            enabled: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+        };
+    };
+    "googleAuth.redirect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "googleAuth.callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "googleAuth.exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            user: components["schemas"]["UserResource"];
+                            token: string;
+                            totp_required: boolean;
+                        } | {
+                            user: components["schemas"]["UserResource"];
+                            token: string;
+                            totp_required: boolean;
+                            totp_confirmed: boolean;
+                        };
+                        meta: string[];
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "This sign-in link has expired. Please try again.";
+                        errors: string[];
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "googleOAuthSetting.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            enabled: boolean;
+                            client_id: string | null;
+                            client_secret_configured: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "googleOAuthSetting.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGoogleOAuthSettingRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            enabled: boolean;
+                            client_id: string | null;
+                            client_secret_configured: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
             422: components["responses"]["ValidationException"];
         };
     };

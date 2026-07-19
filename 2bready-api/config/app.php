@@ -56,6 +56,16 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // client-portal's base URL — this API is API-only (no web routes of its
+    // own), so any user-facing link it generates (email verification, Google
+    // OAuth redirects) must point here, not at app.url.
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3001'),
+
+    // admin-portal's base URL — same reasoning, just the other frontend app.
+    // Only Google OAuth (portal=admin) needs this one; email verification is
+    // always client-portal since admin-created accounts are pre-verified.
+    'admin_frontend_url' => env('ADMIN_FRONTEND_URL', 'http://localhost:3000'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

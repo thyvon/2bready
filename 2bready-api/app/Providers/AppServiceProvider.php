@@ -36,6 +36,8 @@ use App\Domain\Payment\Policies\PaymentPolicy;
 use App\Domain\Payment\Policies\SubscriptionPolicy;
 use App\Domain\User\Models\User;
 use App\Domain\User\Policies\UserPolicy;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -89,6 +91,12 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
         Event::listen(AuditableActionOccurred::class, RecordAuditLogListener::class);
+        // Fires on RegisterUserAction's event(new Registered($user)) — sends the
+        // verification email via User's now-wired MustVerifyEmail trait. Internal
+        // accounts (CreateInternalUserAction) and Google-linked accounts both stamp
+        // email_verified_at at creation time, so this never re-sends to them
+        // (hasVerifiedEmail() short-circuits it).
+        Event::listen(Registered::class, SendEmailVerificationNotification::class);
 
         // Keyed by email+IP so an attacker can't route around the limit from multiple
         // IPs against a single account, nor mass-guess many accounts from one IP.
@@ -102,13 +110,24 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by((string) $request->user()?->id ?: $request->ip());
         });
 
-        // Point email verification links at the frontend (API-only backend has no web routes)
+        // Resend-verification-email — keyed by user, not IP, so it can't be used to
+        // mail-bomb an arbitrary inbox from many IPs (the endpoint always resends to
+        // the authenticated caller's own email, never an arbitrary address).
+        RateLimiter::for('verification.resend', function (Request $request) {
+            return Limit::perMinutes(5, 1)->by((string) $request->user()?->id ?: $request->ip());
+        });
+
+        // Point email verification links at the frontend (API-only backend has no web
+        // routes) — client-portal's verify-email page reads id/hash/expires as query
+        // params (matching admin-portal's own already-built equivalent page, which
+        // this mirrors even though internal accounts never actually receive one —
+        // CreateInternalUserAction never fires the Registered event).
         VerifyEmail::createUrlUsing(function ($notifiable) {
             $hash = sha1($notifiable->getEmailForVerification());
             $expires = now()->addMinutes(60)->unix();
 
             return rtrim(config('app.frontend_url', config('app.url')), '/').
-                "/verify-email/{$notifiable->getKey()}/{$hash}?expires={$expires}";
+                "/verify-email?id={$notifiable->getKey()}&hash={$hash}&expires={$expires}";
         });
     }
 }

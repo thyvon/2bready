@@ -36,6 +36,12 @@ class UserResource extends JsonResource
             'email_verified_at' => $this->email_verified_at,
             'totp_enabled' => $this->hasTwoFactorEnabled(),
             'totp_required' => $this->requiresTwoFactor(),
+            // The raw tri-state override, distinct from totp_required above (which is
+            // already resolved against the role-derived default) — the admin Users UI
+            // needs this to render "Default / Required / Exempt" instead of just the
+            // effective true/false.
+            'two_factor_required' => $this->two_factor_required,
+            'google_auth_enabled' => $this->google_auth_enabled,
             'created_at' => $this->created_at,
         ];
     }

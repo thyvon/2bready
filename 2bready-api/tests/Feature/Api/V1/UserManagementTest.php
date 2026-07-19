@@ -181,6 +181,66 @@ it('returns 404 updating a company_owner via the internal user endpoint', functi
     $this->actingAs($admin)->patchJson("/api/v1/users/{$owner->id}", ['name' => 'X'])->assertNotFound();
 });
 
+// ─── Google auth / 2FA toggles ──────────────────────────────────────────────
+
+it('lets an admin enable Google sign-in for another internal user', function () {
+    $admin = User::factory()->admin()->create();
+    $staff = User::factory()->withRole('staff')->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/users/{$staff->id}", [
+        'google_auth_enabled' => true,
+    ])->assertOk()->assertJsonPath('data.google_auth_enabled', true);
+
+    expect($staff->fresh()->google_auth_enabled)->toBeTrue();
+});
+
+it('lets an admin exempt a staff account from the default 2FA requirement', function () {
+    $admin = User::factory()->admin()->create();
+    $staff = User::factory()->withRole('staff')->create();
+    expect($staff->requiresTwoFactor())->toBeTrue();
+
+    $this->actingAs($admin)->patchJson("/api/v1/users/{$staff->id}", [
+        'two_factor_required' => false,
+    ])->assertOk();
+
+    expect($staff->fresh()->requiresTwoFactor())->toBeFalse();
+});
+
+it('lets an admin reset a user\'s 2FA override back to the role default', function () {
+    $admin = User::factory()->admin()->create();
+    $staff = User::factory()->withRole('staff')->create(['two_factor_required' => false]);
+
+    $this->actingAs($admin)->patchJson("/api/v1/users/{$staff->id}", [
+        'two_factor_required' => null,
+    ])->assertOk();
+
+    expect($staff->fresh()->two_factor_required)->toBeNull();
+    expect($staff->fresh()->requiresTwoFactor())->toBeTrue();
+});
+
+it('blocks an admin from exempting their own account from 2FA', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/users/{$admin->id}", [
+        'two_factor_required' => false,
+    ])->assertUnprocessable()->assertJsonValidationErrors('two_factor_required');
+
+    expect($admin->fresh()->requiresTwoFactor())->toBeTrue();
+});
+
+it('lets an admin force 2FA on for their own account', function () {
+    // Only the false/exempt direction is blocked for self — forcing it ON for
+    // yourself (a no-op today, but meaningful if this account's role ever
+    // changed) is never dangerous.
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/users/{$admin->id}", [
+        'two_factor_required' => true,
+    ])->assertOk();
+
+    expect($admin->fresh()->two_factor_required)->toBeTrue();
+});
+
 // ─── Roles (read-only) ───────────────────────────────────────────────────────
 
 it('lets an admin list all roles with their permissions', function () {

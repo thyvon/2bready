@@ -22,6 +22,11 @@ class UpdateUserRequest extends FormRequest
             'status' => ['sometimes', 'string', 'in:active,suspended,inactive'],
             'roles' => ['sometimes', 'array', 'min:1'],
             'roles.*' => ['string', Rule::in(User::INTERNAL_ROLES)],
+            'google_auth_enabled' => ['sometimes', 'boolean'],
+            // Tri-state override of the role-derived 2FA default — see
+            // User::requiresTwoFactor(). null (send an explicit JSON null, not
+            // omit the key) resets back to that default.
+            'two_factor_required' => ['sometimes', 'nullable', 'boolean'],
         ];
     }
 
@@ -30,16 +35,27 @@ class UpdateUserRequest extends FormRequest
         $validator->after(function (ValidatorContract $validator) {
             /** @var User $target */
             $target = $this->route('user');
+            $isSelf = $target->id === $this->user()?->id;
 
             // No recovery path exists for "an admin locked themselves out" — the
             // account they'd need to fix it is the one that just lost access. Every
             // selectable role here (admin/staff/finance/auditor) grants
             // portal.admin.access, so self-editing roles can't lock someone out of
             // the portal itself the same way — only self-suspension can.
-            if ($target->id === $this->user()?->id
+            if ($isSelf
                 && $this->input('status')
                 && $this->input('status') !== 'active') {
                 $validator->errors()->add('status', 'You cannot change your own account status.');
+            }
+
+            // Same reasoning, same account, different lock: an admin exempting
+            // their own account from 2FA would remove the one thing standing
+            // between a stolen password and full admin access, with nobody else
+            // able to notice or revert it from the outside.
+            if ($isSelf
+                && $this->has('two_factor_required')
+                && $this->input('two_factor_required') === false) {
+                $validator->errors()->add('two_factor_required', 'You cannot exempt your own account from two-factor authentication.');
             }
         });
     }

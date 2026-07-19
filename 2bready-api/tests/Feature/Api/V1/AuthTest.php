@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -294,6 +295,46 @@ it('admin-login flags totp_confirmed=true for admin with 2FA enabled', function 
         ->assertJsonPath('data.totp_confirmed', true);
 });
 
+it('lets a company_owner log in without 2FA by default even with two_factor_required left unset', function () {
+    $owner = User::factory()->companyOwner()->create([
+        'email' => 'owner@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => 'owner@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk()->assertJsonPath('data.totp_required', false);
+});
+
+it('forces 2FA on a company_owner whose two_factor_required override is explicitly true', function () {
+    $owner = User::factory()->companyOwner()->create([
+        'email' => 'owner-2fa@example.com',
+        'password' => bcrypt('Secret1234'),
+        'two_factor_required' => true,
+    ]);
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => 'owner-2fa@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk()
+        ->assertJsonPath('data.totp_required', true)
+        ->assertJsonPath('data.totp_confirmed', false);
+});
+
+it('exempts an admin from 2FA whose two_factor_required override is explicitly false', function () {
+    $admin = User::factory()->admin()->create([
+        'email' => 'exempt-admin@example.com',
+        'password' => bcrypt('Secret1234'),
+        'two_factor_required' => false,
+    ]);
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'exempt-admin@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk()->assertJsonPath('data.totp_required', false);
+});
+
 it('rejects an internal user via the regular (client-portal) login', function () {
     User::factory()->admin()->create([
         'email' => 'admin3@example.com',
@@ -405,4 +446,56 @@ it('throttles repeated totp/verify attempts for the same user', function () {
 
     $this->withToken($token)->postJson('/api/v1/auth/totp/verify', ['code' => '000000'])
         ->assertStatus(429);
+});
+
+// ─── Email verification ─────────────────────────────────────────────────────
+
+it('blocks an unverified company_owner from reaching a business route', function () {
+    $owner = User::factory()->companyOwner()->unverified()->create();
+
+    $this->actingAs($owner)->getJson('/api/v1/companies')->assertForbidden();
+});
+
+it('lets a verified company_owner reach business routes normally', function () {
+    $owner = User::factory()->companyOwner()->create();
+    expect($owner->hasVerifiedEmail())->toBeTrue();
+
+    // company.list is admin/staff-only, but the point here is only that
+    // email.verified doesn't itself reject the request — a 403 from a
+    // different, unrelated gate would still prove this.
+    $response = $this->actingAs($owner)->getJson('/api/v1/companies');
+    $response->assertForbidden();
+    expect($response->json('message'))->not->toBe('Please verify your email address to continue.');
+});
+
+it('verifies email via the signed link and lets the account through afterward', function () {
+    $owner = User::factory()->companyOwner()->unverified()->create();
+    expect($owner->hasVerifiedEmail())->toBeFalse();
+
+    $hash = sha1($owner->getEmailForVerification());
+    $expires = now()->addMinutes(60)->unix();
+
+    $this->postJson("/api/v1/auth/email/verify/{$owner->id}/{$hash}", ['expires' => $expires])
+        ->assertOk();
+
+    expect($owner->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+it('rejects an expired or tampered verification link', function () {
+    $owner = User::factory()->companyOwner()->unverified()->create();
+
+    $this->postJson("/api/v1/auth/email/verify/{$owner->id}/wrong-hash", ['expires' => now()->addMinutes(60)->unix()])
+        ->assertForbidden();
+
+    expect($owner->fresh()->hasVerifiedEmail())->toBeFalse();
+});
+
+it('lets an unverified user resend their own verification email', function () {
+    Notification::fake();
+
+    $owner = User::factory()->companyOwner()->unverified()->create();
+
+    $this->actingAs($owner)->postJson('/api/v1/auth/email/verify/resend')->assertOk();
+
+    Notification::assertSentTo($owner, VerifyEmail::class);
 });

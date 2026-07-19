@@ -14,6 +14,7 @@
         "laravel/pulse": "^1.7",
         "laravel/reverb": "^1.10",
         "laravel/sanctum": "^4.3",
+        "laravel/socialite": "^5.28",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.35",
         "pragmarx/google2fa-laravel": "^3.0",

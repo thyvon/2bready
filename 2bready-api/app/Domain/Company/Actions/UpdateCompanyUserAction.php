@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Company\Actions;
 
+use App\Domain\AuditLog\Events\AuditableActionOccurred;
 use App\Domain\Company\Models\Company;
 use App\Domain\User\Models\User;
 use Illuminate\Validation\ValidationException;
@@ -45,6 +46,31 @@ class UpdateCompanyUserAction
 
         if (array_key_exists('status', $data)) {
             $user->update(['status' => $data['status']]);
+        }
+
+        // Same named-event convention as the internal-user path (UpdateUserAction)
+        // — these two fields are security-relevant enough to deserve their own
+        // legible audit-log label rather than a raw user.updated diff.
+        if (array_key_exists('google_auth_enabled', $data) && $data['google_auth_enabled'] !== $user->google_auth_enabled) {
+            event(new AuditableActionOccurred(
+                action: 'user.google_auth_toggled',
+                auditableType: 'user',
+                auditableId: $user->id,
+                metadata: ['enabled' => $data['google_auth_enabled']],
+            ));
+        }
+
+        if (array_key_exists('two_factor_required', $data) && $data['two_factor_required'] !== $user->two_factor_required) {
+            event(new AuditableActionOccurred(
+                action: 'user.two_factor_requirement_changed',
+                auditableType: 'user',
+                auditableId: $user->id,
+                metadata: ['two_factor_required' => $data['two_factor_required']],
+            ));
+        }
+
+        if (array_key_exists('google_auth_enabled', $data) || array_key_exists('two_factor_required', $data)) {
+            $user->update(array_intersect_key($data, array_flip(['google_auth_enabled', 'two_factor_required'])));
         }
 
         return $user;

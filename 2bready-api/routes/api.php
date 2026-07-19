@@ -31,7 +31,11 @@ Route::prefix('v1')->group(function () {
     // company.active rejects requests from a user whose current company is
     // suspended/inactive (EnsureCompanyIsActive) — a no-op for internal
     // admin/staff/finance/auditor accounts, which never have a current company.
-    Route::middleware(['auth:sanctum', 'totp.verified', 'company.active'])->group(function () {
+    // email.verified rejects a password-registered account that hasn't clicked its
+    // verification link yet — a no-op for internal accounts (CreateInternalUserAction)
+    // and Google-linked accounts (HandleGoogleCallbackAction), both of which stamp
+    // email_verified_at at creation time.
+    Route::middleware(['auth:sanctum', 'totp.verified', 'company.active', 'email.verified'])->group(function () {
         require __DIR__.'/api/company.php';
         require __DIR__.'/api/industry.php';
         require __DIR__.'/api/user.php';

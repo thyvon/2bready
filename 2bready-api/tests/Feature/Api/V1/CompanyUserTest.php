@@ -124,3 +124,30 @@ it('requires authentication to list company users', function () {
 
     $this->getJson("/api/v1/companies/{$company->id}/users")->assertUnauthorized();
 });
+
+// ─── Google auth / 2FA toggles ──────────────────────────────────────────────
+
+it('lets an admin force 2FA on for a company_owner, who never requires it by default', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    expect($owner->requiresTwoFactor())->toBeFalse();
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}/users/{$owner->id}", [
+        'two_factor_required' => true,
+    ])->assertOk();
+
+    expect($owner->fresh()->requiresTwoFactor())->toBeTrue();
+});
+
+it('lets an admin enable Google sign-in for a company member', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $member = User::factory()->withRole('company_member')->withCompany($company)->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}/users/{$member->id}", [
+        'google_auth_enabled' => true,
+    ])->assertOk()->assertJsonPath('data.google_auth_enabled', true);
+
+    expect($member->fresh()->google_auth_enabled)->toBeTrue();
+});
