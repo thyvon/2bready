@@ -8,6 +8,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { BrandMark } from '@/components/layout/BrandMark';
 import AuroraBackground from '@/components/layout/AuroraBackground';
 import { CompanySetupWizard } from '@/components/onboarding/CompanySetupWizard';
+import { EmailVerificationLockoutScreen } from '@/components/layout/EmailVerificationLockoutScreen';
 import type { CompanySetupOutput } from '@/lib/company-setup-schema';
 import { registerOwnCompany } from '@/lib/company-api';
 import { useAuthStore } from '@/store/auth.store';
@@ -23,7 +24,7 @@ import { useAuthStore } from '@/store/auth.store';
 // "create a company" have to stay independently reusable steps).
 export default function OnboardingPage() {
   const router = useRouter();
-  const { isAuthenticated, hasHydrated, token, setAuth } = useAuthStore();
+  const { isAuthenticated, hasHydrated, token, setAuth, user } = useAuthStore();
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
@@ -57,6 +58,14 @@ export default function OnboardingPage() {
         <CircularProgress />
       </Box>
     );
+  }
+
+  // Same gate as PortalAuthGuard (which this page deliberately sits outside
+  // of, see the file-level comment) — a brand-new self-registered account
+  // must verify its email before setting up a company, not just before
+  // reaching the dashboard afterward.
+  if (user && !user.email_verified_at) {
+    return <EmailVerificationLockoutScreen email={user.email} />;
   }
 
   return (

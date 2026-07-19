@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -8,20 +8,29 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import MuiLink from '@mui/material/Link';
+import GoogleIcon from '@mui/icons-material/Google';
 import { GlowButton } from '@2bready/ui-core';
 import { getApiError } from '@2bready/api-client';
 import { BrandMark } from '@/components/layout/BrandMark';
 import AuroraBackground from '@/components/layout/AuroraBackground';
 import { loginSchema, loginDefaults, type LoginInput } from '@/lib/login-schema';
-import { login } from '@/lib/auth-api';
+import { login, googleAuthStatus, googleAuthRedirectUrl } from '@/lib/auth-api';
+import { completeLogin } from '@/lib/complete-login';
 import { useAuthStore } from '@/store/auth.store';
 
 export default function LoginPage() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { setAuth, setPendingTotp } = useAuthStore();
   const [serverError, setServerError] = useState('');
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+
+  useEffect(() => {
+    googleAuthStatus().then(setGoogleEnabled).catch(() => setGoogleEnabled(false));
+  }, []);
 
   const {
     register,
@@ -35,9 +44,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setServerError('');
     try {
-      const { user, token } = await login(data);
-      setAuth(user, token);
-      router.push(user.current_company_id ? '/' : '/onboarding');
+      const res = await login(data);
+      completeLogin(res, router, { setAuth, setPendingTotp });
     } catch (err) {
       setServerError(getApiError(err).message);
     }
@@ -195,6 +203,23 @@ export default function LoginPage() {
               <GlowButton type="submit" size="medium" disabled={isSubmitting}>
                 {isSubmitting ? 'Signing in…' : 'Sign In'}
               </GlowButton>
+
+              {googleEnabled && (
+                <>
+                  <Divider sx={{ my: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">OR</Typography>
+                  </Divider>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    fullWidth
+                    startIcon={<GoogleIcon fontSize="small" />}
+                    onClick={() => { window.location.href = googleAuthRedirectUrl(); }}
+                  >
+                    Continue with Google
+                  </Button>
+                </>
+              )}
 
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
                 Don&apos;t have an account?{' '}

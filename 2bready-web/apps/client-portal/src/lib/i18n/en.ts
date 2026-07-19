@@ -52,6 +52,12 @@ const en = {
   // ─── Company suspended lockout screen ───────────────────────────────────
   'company_suspended.title': 'Account suspended',
   'company_suspended.body': "{company}'s account is currently suspended. You won't be able to access compliance data until this is resolved.",
+
+  // ─── Email verification lockout ─────────────────────────────────────────
+  'email_verification.title': 'Verify your email',
+  'email_verification.body': "We sent a verification link to {email}. Please check your inbox and click the link to continue — you won't be able to access your compliance data until it's verified.",
+  'email_verification.resend': 'Resend verification email',
+  'email_verification.resent': 'Verification email sent.',
 } as const;
 
 export default en;

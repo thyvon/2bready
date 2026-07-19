@@ -57,6 +57,12 @@ const kh: Record<keyof typeof en, string> = {
   // ─── Company suspended lockout screen ───────────────────────────────────
   'company_suspended.title': 'គណនីត្រូវបានផ្អាក',
   'company_suspended.body': 'គណនីរបស់ {company} កំពុងត្រូវបានផ្អាកនាពេលបច្ចុប្បន្ន។ អ្នកនឹងមិនអាចចូលប្រើទិន្នន័យអនុលោមភាពបានទេ រហូតដល់បញ្ហានេះត្រូវបានដោះស្រាយ។',
+
+  // ─── Email verification lockout ─────────────────────────────────────────
+  'email_verification.title': 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក',
+  'email_verification.body': 'យើងបានផ្ញើតំណផ្ទៀងផ្ទាត់ទៅ {email}។ សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក ហើយចុចលើតំណដើម្បីបន្ត — អ្នកនឹងមិនអាចចូលប្រើទិន្នន័យអនុលោមភាពរបស់អ្នកបានទេ រហូតដល់វាត្រូវបានផ្ទៀងផ្ទាត់។',
+  'email_verification.resend': 'ផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្តងទៀត',
+  'email_verification.resent': 'អ៊ីមែលផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើ។',
 };
 
 export default kh;

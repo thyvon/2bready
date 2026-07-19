@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { CompanySuspendedScreen } from './CompanySuspendedScreen';
+import { EmailVerificationLockoutScreen } from './EmailVerificationLockoutScreen';
 
 // Defense-in-depth only — the real enforcement boundary is the backend
 // (AuthController::login rejects any account without the portal.client.access
@@ -29,6 +30,16 @@ export function PortalAuthGuard({ children }: { children: React.ReactNode }) {
   }, [blocked, clearAuth, router]);
 
   if (blocked) return null;
+
+  // Mirrors the backend's own enforcement (EnsureEmailIsVerified middleware) —
+  // gated ahead of the company-status check below since an unverified account
+  // is blocked from every route already, same reasoning: avoid a toast-flood
+  // from JourneyProvider/PackageProvider mounting only to immediately 403.
+  // Google-linked accounts never hit this (email_verified_at is stamped at
+  // creation/link time), so this only ever applies to password registrations.
+  if (hasHydrated && isAuthenticated && user && !user.email_verified_at) {
+    return <EmailVerificationLockoutScreen email={user.email} />;
+  }
 
   // Mirrors the backend's own enforcement (EnsureCompanyIsActive middleware) —
   // a suspended/inactive current company otherwise 403s on the very first API
