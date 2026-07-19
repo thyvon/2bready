@@ -1,5 +1,6 @@
 import type { useTranslation } from '@/lib/i18n';
 import type { Locale } from '@/store/locale.store';
+import type { User } from '@/domains/user/types';
 import type { CompanyStatus, Industry } from './types';
 
 type T = ReturnType<typeof useTranslation>['t'];
@@ -41,4 +42,14 @@ export const STATUS_OPTIONS: { value: CompanyStatus; labelKey: TranslationKey }[
 export function optionLabel(t: T, options: Option[], value: string): string {
   const option = options.find((o) => o.value === value);
   return option ? t(option.labelKey) : value;
+}
+
+// Role is global-per-user (spatie), not scoped per company_user pivot row —
+// this reads whichever of the two company-side roles applies to this user in
+// the context of a specific company's user list. Shared by CompanyUsersListView
+// (Users tab) and the Overview tab's Company Owner card.
+export type CompanyRole = 'company_owner' | 'company_member';
+
+export function companyRoleOf(user: User): CompanyRole {
+  return user.roles.includes('company_owner') ? 'company_owner' : 'company_member';
 }

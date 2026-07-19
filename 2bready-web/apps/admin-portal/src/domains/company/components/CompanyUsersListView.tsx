@@ -19,16 +19,12 @@ import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listCompanyUsers, updateCompanyUser } from '@/domains/company/api';
+import { companyRoleOf, type CompanyRole } from '@/domains/company/constants';
 import type { User } from '@/domains/user/types';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
-const COMPANY_ROLES = ['company_owner', 'company_member'] as const;
-type CompanyRole = (typeof COMPANY_ROLES)[number];
-
-function companyRoleOf(user: User): CompanyRole {
-  return user.roles.includes('company_owner') ? 'company_owner' : 'company_member';
-}
+const COMPANY_ROLES: CompanyRole[] = ['company_owner', 'company_member'];
 
 interface CompanyUsersListViewProps {
   companyId: string;

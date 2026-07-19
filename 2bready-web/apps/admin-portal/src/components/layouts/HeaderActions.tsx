@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
@@ -18,6 +17,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { logout } from '@/domains/auth/api';
 import ControlCenterDrawer from '@/components/layouts/ControlCenterDrawer';
 import LanguageSwitcher from '@/components/layouts/LanguageSwitcher';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { useTranslation } from '@/lib/i18n';
 
 export default function HeaderActions() {
@@ -32,10 +32,6 @@ export default function HeaderActions() {
     clearAuth();
     router.replace('/login');
   };
-
-  const initials = user?.name
-    ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
-    : '?';
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -58,9 +54,7 @@ export default function HeaderActions() {
 
       {/* User avatar */}
       <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>
-        <Avatar sx={{ width: 28, height: 28, fontSize: '0.75rem', bgcolor: 'text.primary', color: 'background.default' }}>
-          {initials}
-        </Avatar>
+        <UserAvatar name={user?.name} />
       </IconButton>
 
       <Menu
