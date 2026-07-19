@@ -4,12 +4,14 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 
-import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { useAuthStore } from '@/store/auth.store';
 import { useTranslation } from '@/lib/i18n';
 
+// This is the Profile tab's content — settings/layout.tsx owns the
+// PageHeader and Tabs shell (visible to any admin-portal user, unlike the
+// admin-only Integrations tab).
 export default function ProfilePage() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -18,8 +20,6 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageHeader title={t('settings.profile_title')} />
-
       <SectionCard>
         <Box className="flex items-center gap-4">
           <UserAvatar name={user.name} size={56} />

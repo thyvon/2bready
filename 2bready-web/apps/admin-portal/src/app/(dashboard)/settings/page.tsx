@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
@@ -10,18 +11,25 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 
-import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 import FormSwitch from '@/components/forms/FormSwitch';
 import { useToast } from '@/components/feedback/ToastProvider';
+import { useAuthStore } from '@/store/auth.store';
 import { getGoogleOAuthSetting, updateGoogleOAuthSetting } from '@/domains/settings/api';
 import { googleOAuthSettingSchema, type GoogleOAuthSettingInput } from '@/domains/settings/schemas';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
+// This is the Integrations tab's content — settings/layout.tsx owns the
+// PageHeader and Tabs shell, and only renders this tab's link for admins
+// (settings.manage is admin-only) — the redirect below is defense-in-depth
+// for a direct URL visit, matching the pattern every other admin-only page
+// in this app already uses.
 export default function SettingsPage() {
+  const router = useRouter();
+  const { hasRole } = useAuthStore();
   const { t } = useTranslation();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
@@ -39,6 +47,10 @@ export default function SettingsPage() {
     resolver: zodResolver(googleOAuthSettingSchema),
     defaultValues: { enabled: false, client_id: '', client_secret: '' },
   });
+
+  useEffect(() => {
+    if (!hasRole('admin')) router.replace('/settings/profile');
+  }, [hasRole, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,8 +104,6 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title={t('nav.settings')} />
-
       <SectionCard
         title={t('settings.google_oauth_title')}
         action={

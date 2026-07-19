@@ -486,6 +486,8 @@ const en = {
   'company_users.no_users_desc': "This company's owner and members will appear here.",
 
   // ─── Settings ────────────────────────────────────────────────────────────
+  'settings.tab_integrations': 'Integrations',
+  'settings.tab_profile': 'Profile',
   'settings.google_oauth_title': 'Google Sign-In',
   'settings.google_oauth_desc': 'Let users sign in with a Google account instead of (or in addition to) a password. Each user must still be individually enabled for it in Users management.',
   'settings.google_oauth_enabled_label': 'Enable Google sign-in',

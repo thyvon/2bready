@@ -490,6 +490,8 @@ const kh: Record<keyof typeof en, string> = {
   'company_users.no_users_desc': 'ម្ចាស់ និងសមាជិកនៃក្រុមហ៊ុននេះនឹងបង្ហាញនៅទីនេះ។',
 
   // ─── Settings ────────────────────────────────────────────────────────────
+  'settings.tab_integrations': 'ការភ្ជាប់',
+  'settings.tab_profile': 'ព័ត៌មានផ្ទាល់ខ្លួន',
   'settings.google_oauth_title': 'ចូលប្រើដោយ Google',
   'settings.google_oauth_desc': 'អនុញ្ញាតឱ្យអ្នកប្រើប្រាស់ចូលប្រើដោយប្រើគណនី Google ជំនួស (ឬបន្ថែមលើ) ពាក្យសម្ងាត់។ អ្នកប្រើប្រាស់និមួយៗត្រូវតែបានបើកដាច់ដោយឡែកនៅក្នុងការគ្រប់គ្រងអ្នកប្រើប្រាស់។',
   'settings.google_oauth_enabled_label': 'បើកការចូលប្រើដោយ Google',
