@@ -21,6 +21,14 @@ services:
       APP_ENV: production
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
+      # This is an explicit allowlist, not env_file — a var only existing in
+      # .env.production is invisible to the container until it's added here
+      # too. Read by AppServiceProvider's VerifyEmail::createUrlUsing and
+      # GoogleAuthController for building user-facing links (this API has no
+      # web routes of its own), so both must point at the real frontend
+      # paths, never the dev-default localhost fallback in config/app.php.
+      FRONTEND_URL: ${FRONTEND_URL}
+      ADMIN_FRONTEND_URL: ${ADMIN_FRONTEND_URL}
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
