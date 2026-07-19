@@ -580,6 +580,22 @@ export interface paths {
         patch: operations["journeyLevel.update"];
         trace?: never;
     };
+    "/v1/journey-levels/{journeyLevel}/medal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["journeyLevel.uploadMedal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/journey-templates": {
         parameters: {
             query?: never;
@@ -1001,6 +1017,12 @@ export interface components {
             pathway_name: string;
             pillar: components["schemas"]["JourneyPillar"];
             sort_order: number;
+            /**
+             * @description Guarded — only sign a URL when an image actually exists,
+             *     rather than an unconditional temporaryUrl() call per level
+             *     per request.
+             */
+            medal_image_url: string | null;
             milestones?: components["schemas"]["MilestoneResource"][];
         };
         /**
@@ -1026,6 +1048,7 @@ export interface components {
                 pathway_name: string;
                 pillar: components["schemas"]["JourneyPillar"];
                 unlocked: boolean;
+                medal_image_url: string | null;
                 milestones: {
                     id: string;
                     name: string;
@@ -1253,6 +1276,16 @@ export interface components {
             description?: string | null;
             is_active?: boolean;
             sort_order?: number;
+        };
+        /** StoreJourneyLevelMedalRequest */
+        StoreJourneyLevelMedalRequest: {
+            /**
+             * Format: binary
+             * @description MIME + size validated here, before the file ever touches
+             *     storage — CLAUDE.md's non-negotiable rule. Tighter than
+             *     Document's 10MB limit since this is a small icon asset.
+             */
+            file: string;
         };
         /** StoreJourneyLevelRequest */
         StoreJourneyLevelRequest: {
@@ -2837,6 +2870,39 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["UpdateJourneyLevelRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JourneyLevelResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "journeyLevel.uploadMedal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The journey level ID */
+                journeyLevel: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["StoreJourneyLevelMedalRequest"];
             };
         };
         responses: {

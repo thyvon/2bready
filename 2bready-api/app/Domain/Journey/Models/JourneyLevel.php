@@ -38,6 +38,7 @@ class JourneyLevel extends Model
         'pathway_name',
         'pillar',
         'sort_order',
+        'medal_image_path',
     ];
 
     /** @return array<string, string> */

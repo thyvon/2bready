@@ -26,7 +26,6 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
@@ -36,6 +35,7 @@ import FormSelect from '@/components/forms/FormSelect';
 import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import FormTextField from '@/components/forms/FormTextField';
 import DocumentTemplateTree, { type DocumentDragData } from '@/domains/journey-template/components/DocumentTemplateTree';
+import { LevelMedal, UploadDropzone } from '@2bready/ui-core';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useJourneyTemplate } from '@/domains/journey-template/hooks';
@@ -43,6 +43,7 @@ import {
   createJourneyLevel,
   updateJourneyLevel,
   deleteJourneyLevel,
+  uploadJourneyLevelMedal,
   createMilestone,
   updateMilestone,
   deleteMilestone,
@@ -70,30 +71,6 @@ type PendingDelete =
   | { kind: 'level'; item: JourneyLevel }
   | { kind: 'milestone'; item: Milestone }
   | { kind: 'document_template'; item: DocumentTemplate };
-
-// L1-L4 map to Bronze/Silver/Gold/Platinum in the real taxonomy — a colored
-// medal reads faster than the plain code chip alone at a glance.
-const LEVEL_MEDAL_COLOR: Record<string, string> = { L1: '#CD7F32', L2: '#9CA3AF', L3: '#D4AF37', L4: '#60A5FA' };
-
-function LevelMedal({ code }: { code: string }) {
-  const color = LEVEL_MEDAL_COLOR[code] ?? '#9CA3AF';
-  return (
-    <Box
-      sx={{
-        width: 32,
-        height: 32,
-        borderRadius: '50%',
-        bgcolor: color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <MilitaryTechIcon sx={{ color: 'white', fontSize: 20 }} />
-    </Box>
-  );
-}
 
 function findDocumentById(docs: DocumentTemplate[], id: string): DocumentTemplate | null {
   for (const doc of docs) {
@@ -126,6 +103,8 @@ export default function JourneyTemplateDetailPage() {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [medalUploadOpen, setMedalUploadOpen] = useState(false);
+  const [medalUploading, setMedalUploading] = useState(false);
 
   const dragSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -173,6 +152,22 @@ export default function JourneyTemplateDetailPage() {
       reload();
     } catch (err) {
       setServerError(getApiError(err).message);
+    }
+  };
+
+  const handleMedalUpload = async (file: File) => {
+    if (!levelDialog?.editing) return;
+    setMedalUploading(true);
+    try {
+      const updated = await uploadJourneyLevelMedal(levelDialog.editing.id, file);
+      setLevelDialog({ editing: updated });
+      toast.success(t('journey_template.medal_upload_success'));
+      setMedalUploadOpen(false);
+      reload();
+    } catch (err) {
+      toast.error(getApiError(err).message || t('journey_template.medal_upload_error'));
+    } finally {
+      setMedalUploading(false);
     }
   };
 
@@ -393,7 +388,7 @@ export default function JourneyTemplateDetailPage() {
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box className="flex items-center gap-2 w-full pr-2">
-                <LevelMedal code={level.code} />
+                <LevelMedal code={level.code} imageUrl={level.medal_image_url} />
                 <Chip label={level.code} size="small" />
                 <Typography sx={{ fontWeight: 600, flexGrow: 1 }}>{level.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -538,6 +533,21 @@ export default function JourneyTemplateDetailPage() {
                 )}
               />
             </Box>
+            <Box>
+              <FieldLabel>{t('journey_template.medal_image')}</FieldLabel>
+              {levelDialog?.editing ? (
+                <Box className="flex items-center gap-3">
+                  <LevelMedal code={levelDialog.editing.code} imageUrl={levelDialog.editing.medal_image_url} size={64} />
+                  <Button size="small" variant="outlined" disabled={medalUploading} onClick={() => setMedalUploadOpen(true)}>
+                    {t('journey_template.upload_medal')}
+                  </Button>
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  {t('journey_template.medal_save_level_first')}
+                </Typography>
+              )}
+            </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button variant="text" onClick={() => setLevelDialog(null)}>
@@ -549,6 +559,15 @@ export default function JourneyTemplateDetailPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      <UploadDropzone
+        open={medalUploadOpen}
+        onClose={() => setMedalUploadOpen(false)}
+        onUpload={(file) => void handleMedalUpload(file)}
+        title={t('journey_template.upload_medal')}
+        accept=".png,.jpg,.jpeg,.webp"
+        maxSizeMB={2}
+      />
 
       {/* ─── Milestone dialog ─── */}
       <Dialog open={!!milestoneDialog} onClose={() => setMilestoneDialog(null)} maxWidth="sm" fullWidth>

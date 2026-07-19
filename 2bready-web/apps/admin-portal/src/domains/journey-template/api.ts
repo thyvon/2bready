@@ -53,6 +53,15 @@ export async function deleteJourneyLevel(id: string): Promise<void> {
   await api.delete(`/journey-levels/${id}`);
 }
 
+// No explicit Content-Type here — axios auto-detects FormData and sets the
+// multipart boundary itself (see @2bready/api-client's client.ts).
+export async function uploadJourneyLevelMedal(id: string, file: File): Promise<JourneyLevel> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await api.post<{ data: JourneyLevel }>(`/journey-levels/${id}/medal`, formData);
+  return res.data.data;
+}
+
 export async function createMilestone(levelId: string, data: StoreMilestonePayload): Promise<Milestone> {
   const res = await api.post<{ data: Milestone }>(`/journey-levels/${levelId}/milestones`, data);
   return res.data.data;

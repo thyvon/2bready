@@ -7,11 +7,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Journey\Actions\CreateJourneyLevelAction;
 use App\Domain\Journey\Actions\DeleteJourneyLevelAction;
 use App\Domain\Journey\Actions\UpdateJourneyLevelAction;
+use App\Domain\Journey\Actions\UploadJourneyLevelMedalAction;
 use App\Domain\Journey\DTOs\JourneyLevelData;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Package\Models\Package;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Journey\StoreJourneyLevelMedalRequest;
 use App\Http\Requests\Api\V1\Journey\StoreJourneyLevelRequest;
 use App\Http\Requests\Api\V1\Journey\UpdateJourneyLevelRequest;
 use App\Http\Resources\Api\V1\JourneyLevelResource;
@@ -25,10 +27,10 @@ use Illuminate\Http\JsonResponse;
  * package.view (not journey_template.view, which finance doesn't hold
  * despite being able to view/manage packages) since that's the only consumer.
  *
- * `store/update/destroy` are the real taxonomy-authoring actions, gated
- * separately via JourneyLevelPolicy (journey_template.manage) — left on this
- * same controller since they operate on the same model, not the same
- * authorization concern as `index`.
+ * `store/update/destroy/uploadMedal` are the real taxonomy-authoring
+ * actions, gated separately via JourneyLevelPolicy (journey_template.manage)
+ * — left on this same controller since they operate on the same model, not
+ * the same authorization concern as `index`.
  */
 class JourneyLevelController extends Controller
 {
@@ -69,5 +71,14 @@ class JourneyLevelController extends Controller
         $action->execute($journeyLevel);
 
         return ApiResponse::noContent();
+    }
+
+    public function uploadMedal(StoreJourneyLevelMedalRequest $request, JourneyLevel $journeyLevel, UploadJourneyLevelMedalAction $action): JsonResponse
+    {
+        $this->authorize('update', $journeyLevel);
+
+        $journeyLevel = $action->execute($journeyLevel, $request->file('file'));
+
+        return ApiResponse::success(new JourneyLevelResource($journeyLevel));
     }
 }

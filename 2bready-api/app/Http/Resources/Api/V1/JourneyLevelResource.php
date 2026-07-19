@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Domain\Journey\Actions\GenerateJourneyLevelMedalUrlAction;
 use App\Domain\Journey\Models\JourneyLevel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,6 +23,12 @@ class JourneyLevelResource extends JsonResource
             'pathway_name' => $this->pathway_name,
             'pillar' => $this->pillar,
             'sort_order' => $this->sort_order,
+            // Guarded — only sign a URL when an image actually exists,
+            // rather than an unconditional temporaryUrl() call per level
+            // per request.
+            'medal_image_url' => $this->medal_image_path
+                ? app(GenerateJourneyLevelMedalUrlAction::class)->execute($this->resource)
+                : null,
             'milestones' => MilestoneResource::collection($this->whenLoaded('milestones')),
         ];
     }

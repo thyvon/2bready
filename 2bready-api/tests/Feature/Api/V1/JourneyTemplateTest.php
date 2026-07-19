@@ -12,11 +12,14 @@ use App\Domain\Journey\Models\Milestone;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
+    Storage::fake('local');
 });
 
 // ─── Journey templates ───────────────────────────────────────────────────────
@@ -190,6 +193,63 @@ it('lets an admin update and delete a journey level', function () {
 
     $this->actingAs($admin)->deleteJson("/api/v1/journey-levels/{$level->id}")->assertNoContent();
     $this->assertSoftDeleted('journey_levels', ['id' => $level->id]);
+});
+
+// ─── Journey level medal image ────────────────────────────────────────────────
+
+it('lets an admin upload a medal image for a journey level', function () {
+    $level = JourneyLevel::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $file = UploadedFile::fake()->create('medal.png', 500, 'image/png');
+
+    $response = $this->actingAs($admin)->postJson("/api/v1/journey-levels/{$level->id}/medal", [
+        'file' => $file,
+    ]);
+
+    $response->assertOk();
+    expect($response->json('data.medal_image_url'))->toBeString()->not->toBeEmpty();
+
+    $level->refresh();
+    Storage::disk('local')->assertExists($level->medal_image_path);
+});
+
+it('rejects a medal upload with a disallowed mime type', function () {
+    $level = JourneyLevel::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $file = UploadedFile::fake()->create('medal.pdf', 100, 'application/pdf');
+
+    $this->actingAs($admin)->postJson("/api/v1/journey-levels/{$level->id}/medal", [
+        'file' => $file,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['file']);
+});
+
+it('rejects an oversized medal upload', function () {
+    $level = JourneyLevel::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $file = UploadedFile::fake()->create('medal.png', 3000, 'image/png');
+
+    $this->actingAs($admin)->postJson("/api/v1/journey-levels/{$level->id}/medal", [
+        'file' => $file,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['file']);
+});
+
+it('forbids finance from uploading a medal image', function () {
+    $level = JourneyLevel::factory()->create();
+    $finance = User::factory()->withRole('finance')->create();
+    $file = UploadedFile::fake()->create('medal.png', 500, 'image/png');
+
+    $this->actingAs($finance)->postJson("/api/v1/journey-levels/{$level->id}/medal", [
+        'file' => $file,
+    ])->assertForbidden();
+});
+
+it('requires authentication to upload a medal image', function () {
+    $level = JourneyLevel::factory()->create();
+    $file = UploadedFile::fake()->create('medal.png', 500, 'image/png');
+
+    $this->postJson("/api/v1/journey-levels/{$level->id}/medal", [
+        'file' => $file,
+    ])->assertUnauthorized();
 });
 
 // ─── Milestones (nested under a level) ───────────────────────────────────────

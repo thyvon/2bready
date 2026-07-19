@@ -29,6 +29,10 @@ Route::prefix('journey-templates')->group(function () {
 });
 Route::patch('journey-levels/{journeyLevel}', [JourneyLevelController::class, 'update']);
 Route::delete('journey-levels/{journeyLevel}', [JourneyLevelController::class, 'destroy']);
+// Separate POST (not folded into `update`) — Laravel doesn't parse
+// multipart bodies on PATCH, so this sidesteps the `_method` spoofing
+// workaround entirely and leaves the plain-JSON update endpoint untouched.
+Route::post('journey-levels/{journeyLevel}/medal', [JourneyLevelController::class, 'uploadMedal']);
 Route::post('journey-levels/{journeyLevel}/milestones', [MilestoneController::class, 'store']);
 Route::patch('milestones/{milestone}', [MilestoneController::class, 'update']);
 Route::delete('milestones/{milestone}', [MilestoneController::class, 'destroy']);

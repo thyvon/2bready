@@ -6,6 +6,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Document\Models\DocumentTemplate;
+use App\Domain\Journey\Actions\GenerateJourneyLevelMedalUrlAction;
 use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\Milestone;
@@ -58,6 +59,9 @@ class JourneyResource extends JsonResource
             'pathway_name' => $level->pathway_name,
             'pillar' => $level->pillar,
             'unlocked' => in_array($level->code, $unlockedLevelCodes, true),
+            'medal_image_url' => $level->medal_image_path
+                ? app(GenerateJourneyLevelMedalUrlAction::class)->execute($level)
+                : null,
             'milestones' => $level->milestones->map(fn (Milestone $milestone) => $this->mapMilestone($milestone))->values()->all(),
         ];
     }

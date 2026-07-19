@@ -8,6 +8,7 @@ export { NavHoverLink, type NavHoverLinkProps } from './NavHoverLink';
 export { GlowButton, type GlowButtonProps } from './GlowButton';
 export { ThemeToggle, type ThemeToggleProps } from './ThemeToggle';
 export { UploadDropzone, type UploadDropzoneProps } from './UploadDropzone';
+export { LevelMedal, type LevelMedalProps } from './LevelMedal';
 export { DocumentPreviewDialog, type DocumentPreviewDialogProps } from './DocumentPreviewDialog';
 export { DocumentUploadPreviewDialog, type DocumentUploadPreviewDialogProps } from './DocumentUploadPreviewDialog';
 export { easeOut, easeOutExpo, pageTransition, fadeIn, cardGridContainer, cardGridItem, stepTransition } from './motion';
