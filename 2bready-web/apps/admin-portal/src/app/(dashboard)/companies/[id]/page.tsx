@@ -5,12 +5,15 @@ import { useParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
 import { motion } from 'framer-motion';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
+import EditIcon from '@mui/icons-material/EditOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
+import CompanyEditDialog from '@/domains/company/components/CompanyEditDialog';
 import { useIndustries } from '@/domains/company/hooks';
 import { industryLabel, optionLabel, COUNTRY_OPTIONS } from '@/domains/company/constants';
 import { formatDate, getApiError } from '@/lib/utils';
@@ -41,12 +44,13 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export default function CompanyOverviewPage() {
   const params = useParams<{ id: string }>();
-  const { company } = useCompanyWorkspace();
+  const { company, reload } = useCompanyWorkspace();
   const { t, locale } = useTranslation();
   const { industries } = useIndustries();
 
   const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,7 +131,14 @@ export default function CompanyOverviewPage() {
         </>
       )}
 
-      <SectionCard title={t('company.details')}>
+      <SectionCard
+        title={t('company.details')}
+        action={
+          <IconButton size="small" onClick={() => setEditOpen(true)} aria-label={t('common.edit')}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+        }
+      >
         <DetailRow label={t('company.name')} value={company.name} />
         {company.name_kh && <DetailRow label={t('company.name_kh')} value={company.name_kh} />}
         <DetailRow label={t('company.registration_no')} value={company.registration_no ?? '—'} />
@@ -137,6 +148,16 @@ export default function CompanyOverviewPage() {
         <DetailRow label={t('company.compliance_score')} value={String(company.compliance_score)} />
         <DetailRow label={t('company.registered_on')} value={company.created_at ? formatDate(company.created_at) : '—'} />
       </SectionCard>
+
+      <CompanyEditDialog
+        open={editOpen}
+        company={company}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => {
+          setEditOpen(false);
+          reload();
+        }}
+      />
     </Box>
   );
 }

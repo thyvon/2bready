@@ -14,6 +14,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useAuthStore } from '@/store/auth.store';
 import { getCompany } from '@/domains/company/api';
+import CompanyStatusAction from '@/domains/company/components/CompanyStatusAction';
 import type { Company } from '@/domains/company/types';
 import { listDocuments } from '@/domains/document/api';
 import { listPayments } from '@/domains/payment/api';
@@ -142,7 +143,12 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
     <CompanyWorkspaceProvider value={{ company, reload, refreshCounts }}>
       <PageHeader
         title={company.name}
-        action={<StatusBadge status={company.status} />}
+        action={
+          <Box className="flex items-center gap-2">
+            <StatusBadge status={company.status} />
+            <CompanyStatusAction company={company} onUpdated={setCompany} />
+          </Box>
+        }
       />
 
       <Tabs value={activeIndex === -1 ? false : activeIndex} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>

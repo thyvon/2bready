@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Company } from './types';
 
 // Empty-string-safe optional number, since a MUI TextField always yields a string.
 const optionalEmployeeCount = z.preprocess((val) => {
@@ -35,3 +36,27 @@ export const companyFormDefaults: CompanyFormInput = {
   employee_count: undefined,
   default_locale: 'en',
 };
+
+// Flat, single-page counterpart to companyFormSchema — editing an existing
+// company is a quick correction, not an onboarding flow, so it skips the
+// wizard's steps. Adds `status`, which only admin/staff/finance (i.e. this
+// app) may ever set — see CompanyEditPayload in types.ts.
+export const companyEditSchema = companyFormSchema.extend({
+  status: z.enum(['active', 'suspended', 'inactive']),
+});
+
+export type CompanyEditInput = z.input<typeof companyEditSchema>;
+export type CompanyEditOutput = z.output<typeof companyEditSchema>;
+
+export function companyEditDefaults(company: Company): CompanyEditInput {
+  return {
+    name: company.name,
+    name_kh: company.name_kh ?? '',
+    registration_no: company.registration_no ?? '',
+    industry_id: company.industry_id,
+    country_code: company.country_code,
+    employee_count: company.employee_count ?? undefined,
+    default_locale: company.default_locale as 'en' | 'kh',
+    status: company.status,
+  };
+}

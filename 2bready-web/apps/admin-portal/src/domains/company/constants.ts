@@ -1,6 +1,6 @@
 import type { useTranslation } from '@/lib/i18n';
 import type { Locale } from '@/store/locale.store';
-import type { Industry } from './types';
+import type { CompanyStatus, Industry } from './types';
 
 type T = ReturnType<typeof useTranslation>['t'];
 type TranslationKey = Parameters<T>[0];
@@ -27,6 +27,15 @@ export const COUNTRY_OPTIONS: Option[] = [
 export const LOCALE_OPTIONS: Option[] = [
   { value: 'en', labelKey: 'company.locale.en' },
   { value: 'kh', labelKey: 'company.locale.kh' },
+];
+
+// Reuses the app-wide common.active/suspended/inactive keys (already the
+// labels StatusBadge and CompanyUsersListView's status select show) rather
+// than a company-specific duplicate set.
+export const STATUS_OPTIONS: { value: CompanyStatus; labelKey: TranslationKey }[] = [
+  { value: 'active', labelKey: 'common.active' },
+  { value: 'suspended', labelKey: 'common.suspended' },
+  { value: 'inactive', labelKey: 'common.inactive' },
 ];
 
 export function optionLabel(t: T, options: Option[], value: string): string {

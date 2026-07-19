@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { Company, CompanyListFilters, Industry, Pagination, StoreCompanyPayload, UpdateCompanyPayload } from './types';
+import type { Company, CompanyEditPayload, CompanyListFilters, Industry, Pagination, StoreCompanyPayload } from './types';
 import type { User } from '@/domains/user/types';
 
 // This app only manages companies on 2bReady's behalf (admin/staff/finance) —
@@ -29,7 +29,7 @@ export async function createCompany(data: StoreCompanyPayload): Promise<Company>
   return res.data.data;
 }
 
-export async function updateCompany(id: string, data: UpdateCompanyPayload): Promise<Company> {
+export async function updateCompany(id: string, data: CompanyEditPayload): Promise<Company> {
   const res = await api.patch<{ data: Company }>(`/companies/${id}`, data);
   return res.data.data;
 }
