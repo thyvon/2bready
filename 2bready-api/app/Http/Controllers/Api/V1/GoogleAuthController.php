@@ -62,8 +62,13 @@ class GoogleAuthController extends Controller
         // a real bearer token in a URL (browser history, referrer headers, server
         // access logs would all see it otherwise) — the frontend immediately
         // exchanges this for the real token via POST /auth/google/exchange.
+        // 5 minutes, not 60s: still single-use (Cache::forget on first read) and
+        // a 64-char random value, but the window has to cover the human time
+        // spent on Google's own consent screen plus (in dev) a possible
+        // on-demand Next.js compile of the callback page on its first hit —
+        // 60s genuinely wasn't enough and produced spurious "expired" errors.
         $code = Str::random(64);
-        Cache::put(self::EXCHANGE_CACHE_PREFIX.$code, $user->id, now()->addSeconds(60));
+        Cache::put(self::EXCHANGE_CACHE_PREFIX.$code, $user->id, now()->addMinutes(5));
 
         return redirect()->away($frontendBase.'/login/google-callback?code='.$code);
     }
