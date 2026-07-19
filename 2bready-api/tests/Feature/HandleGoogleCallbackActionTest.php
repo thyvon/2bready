@@ -7,7 +7,9 @@ use App\Domain\User\Actions\HandleGoogleCallbackAction;
 use App\Domain\User\Exceptions\GoogleAuthRejectedException;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Socialite\Two\User as SocialiteUser;
 
 uses(RefreshDatabase::class);
@@ -49,6 +51,23 @@ it('links an existing account by email on first Google sign-in', function () {
 
     expect($result->id)->toBe($owner->id);
     expect($result->fresh()->google_id)->toBe('g-3');
+});
+
+it('verifies an existing unverified account\'s email on Google sign-in, like Vercel/GitHub-style OAuth does', function () {
+    Notification::fake();
+
+    $owner = User::factory()->companyOwner()->unverified()->create([
+        'email' => 'unverified@example.com',
+        'google_auth_enabled' => true,
+    ]);
+    expect($owner->hasVerifiedEmail())->toBeFalse();
+
+    $result = $this->action->execute(fakeGoogleUser('g-8', 'unverified@example.com'), 'client');
+
+    expect($result->fresh()->hasVerifiedEmail())->toBeTrue();
+    // A successful Google sign-in is itself proof of email ownership — it
+    // must never trigger the usual verification-link email on top of that.
+    Notification::assertNotSentTo($owner, VerifyEmail::class);
 });
 
 it('rejects sign-in for an account that exists but has google_auth_enabled=false', function () {

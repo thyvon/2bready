@@ -63,8 +63,21 @@ class HandleGoogleCallbackAction
             throw new GoogleAuthRejectedException("Google sign-in isn't enabled for this account. Contact your admin.");
         }
 
+        $updates = [];
         if (! $user->google_id) {
-            $user->update(['google_id' => $googleUser->getId()]);
+            $updates['google_id'] = $googleUser->getId();
+        }
+        // Standard OAuth-provider behavior (Vercel, GitHub, etc.): a successful
+        // Google sign-in is itself proof of email ownership, so it satisfies
+        // email verification the same way creating a brand-new Google account
+        // already does above — a company_owner who registered with a password
+        // first, then later signs in with Google, must not still be stuck
+        // behind the email-verification lockout screen after authenticating.
+        if (! $user->email_verified_at) {
+            $updates['email_verified_at'] = now();
+        }
+        if ($updates !== []) {
+            $user->update($updates);
         }
 
         return $user;
