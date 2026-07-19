@@ -28,7 +28,10 @@ Route::prefix('v1')->group(function () {
 
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
     // reaching business routes — pending tokens only carry the 'totp-pending' ability.
-    Route::middleware(['auth:sanctum', 'totp.verified'])->group(function () {
+    // company.active rejects requests from a user whose current company is
+    // suspended/inactive (EnsureCompanyIsActive) — a no-op for internal
+    // admin/staff/finance/auditor accounts, which never have a current company.
+    Route::middleware(['auth:sanctum', 'totp.verified', 'company.active'])->group(function () {
         require __DIR__.'/api/company.php';
         require __DIR__.'/api/industry.php';
         require __DIR__.'/api/user.php';

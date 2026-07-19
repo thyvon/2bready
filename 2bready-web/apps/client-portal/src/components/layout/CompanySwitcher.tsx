@@ -9,8 +9,10 @@ import ListItemText from '@mui/material/ListItemText';
 import CheckIcon from '@mui/icons-material/Check';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
+import { getApiError } from '@2bready/api-client';
 import { useAuthStore } from '@/store/auth.store';
 import { switchActiveCompany } from '@/lib/company-api';
+import { useToast } from '@/components/ToastProvider';
 
 const nameSx = {
   overflow: 'hidden',
@@ -23,6 +25,7 @@ export function CompanySwitcher() {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const toast = useToast();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [switching, setSwitching] = useState(false);
 
@@ -62,6 +65,8 @@ export function CompanySwitcher() {
     try {
       const updatedUser = await switchActiveCompany(companyId);
       setAuth(updatedUser, token);
+    } catch (err) {
+      toast.error(getApiError(err).message || 'Could not switch company.');
     } finally {
       setSwitching(false);
     }

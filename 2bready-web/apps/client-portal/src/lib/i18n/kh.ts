@@ -53,6 +53,10 @@ const kh: Record<keyof typeof en, string> = {
   'header.no_notifications': 'មិនទាន់មានការជូនដំណឹងទេ',
   'header.account': 'គណនី',
   'header.sign_out': 'ចាកចេញ',
+
+  // ─── Company suspended lockout screen ───────────────────────────────────
+  'company_suspended.title': 'គណនីត្រូវបានផ្អាក',
+  'company_suspended.body': 'គណនីរបស់ {company} កំពុងត្រូវបានផ្អាកនាពេលបច្ចុប្បន្ន។ អ្នកនឹងមិនអាចចូលប្រើទិន្នន័យអនុលោមភាពបានទេ រហូតដល់បញ្ហានេះត្រូវបានដោះស្រាយ។',
 };
 
 export default kh;

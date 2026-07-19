@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
+import { CompanySuspendedScreen } from './CompanySuspendedScreen';
 
 // Defense-in-depth only — the real enforcement boundary is the backend
 // (AuthController::login rejects any account without the portal.client.access
@@ -28,6 +29,18 @@ export function PortalAuthGuard({ children }: { children: React.ReactNode }) {
   }, [blocked, clearAuth, router]);
 
   if (blocked) return null;
+
+  // Mirrors the backend's own enforcement (EnsureCompanyIsActive middleware) —
+  // a suspended/inactive current company otherwise 403s on the very first API
+  // call JourneyProvider/PackageProvider make once the shell below mounts, so
+  // check it here and render a lockout screen instead of ever letting the
+  // shell/providers mount at all. Unlike the can_access_client_portal branch
+  // above, this user IS legitimately logged in — don't clear auth or redirect.
+  const companies = user?.companies ?? [];
+  const currentCompany = companies.find((c) => c.id === user?.current_company_id) ?? companies[0];
+  if (hasHydrated && isAuthenticated && currentCompany && currentCompany.status !== 'active') {
+    return <CompanySuspendedScreen companyName={currentCompany.name} />;
+  }
 
   return <>{children}</>;
 }

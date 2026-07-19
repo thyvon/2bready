@@ -35,10 +35,16 @@ class CompanyPolicy
         return $user->hasRole('company_owner');
     }
 
-    /** Switching which of the user's own companies is the active one — see SwitchActiveCompanyAction. */
+    /**
+     * Switching which of the user's own companies is the active one — see
+     * SwitchActiveCompanyAction. Also blocks switching into a suspended/inactive
+     * company: without this, the switch would silently succeed and only the
+     * *next* request would 403 (EnsureCompanyIsActive), which is a confusing
+     * place for the user to first learn their company is suspended.
+     */
     public function switchTo(User $user, Company $company): bool
     {
-        return $this->isMember($user, $company);
+        return $this->isMember($user, $company) && $company->isActive();
     }
 
     public function update(User $user, Company $company): bool

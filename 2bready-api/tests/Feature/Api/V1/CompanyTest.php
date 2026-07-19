@@ -311,3 +311,54 @@ it('forbids a company_owner from deleting a company', function () {
 
     $this->actingAs($owner)->deleteJson("/api/v1/companies/{$company->id}")->assertForbidden();
 });
+
+// ─── Suspension enforcement ─────────────────────────────────────────────────
+
+it('forbids a company_owner whose current company is suspended from an ordinary business route', function () {
+    $company = Company::factory()->suspended()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+
+    $this->actingAs($owner)->getJson("/api/v1/companies/{$company->id}")->assertForbidden();
+});
+
+it('forbids switching into a suspended company', function () {
+    $active = Company::factory()->create();
+    $suspended = Company::factory()->suspended()->create();
+    $owner = User::factory()->companyOwner()->withCompany($active)->create();
+    $owner->companies()->attach($suspended->id);
+
+    $this->actingAs($owner)->postJson("/api/v1/companies/{$suspended->id}/switch")->assertForbidden();
+
+    expect($owner->fresh()->current_company_id)->toBe($active->id);
+});
+
+it('lets a user whose current company is suspended switch away to a different active company', function () {
+    // Regression test: the switch endpoint sits behind the same company.active
+    // middleware as every other business route, which reads the user's *current*
+    // (still-suspended) company — without an explicit exemption, a locked-out
+    // user could never reach this endpoint to escape the lockout.
+    $suspended = Company::factory()->suspended()->create();
+    $active = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($suspended)->create();
+    $owner->companies()->attach($active->id);
+
+    $this->actingAs($owner)->postJson("/api/v1/companies/{$active->id}/switch")
+        ->assertOk()
+        ->assertJsonPath('data.current_company_id', $active->id);
+
+    expect($owner->fresh()->current_company_id)->toBe($active->id);
+});
+
+it('lets a company_owner keep using an active company normally', function () {
+    $company = Company::factory()->create(['status' => 'active']);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+
+    $this->actingAs($owner)->getJson("/api/v1/companies/{$company->id}")->assertOk();
+});
+
+it('does not affect an admin even though some company somewhere is suspended', function () {
+    Company::factory()->suspended()->create();
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->getJson('/api/v1/companies')->assertOk();
+});

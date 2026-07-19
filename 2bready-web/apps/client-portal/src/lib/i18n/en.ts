@@ -48,6 +48,10 @@ const en = {
   'header.no_notifications': 'No notifications yet',
   'header.account': 'Account',
   'header.sign_out': 'Sign out',
+
+  // ─── Company suspended lockout screen ───────────────────────────────────
+  'company_suspended.title': 'Account suspended',
+  'company_suspended.body': "{company}'s account is currently suspended. You won't be able to access compliance data until this is resolved.",
 } as const;
 
 export default en;
