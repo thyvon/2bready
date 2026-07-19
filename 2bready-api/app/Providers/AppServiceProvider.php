@@ -34,6 +34,7 @@ use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\Payment\Policies\PaymentPolicy;
 use App\Domain\Payment\Policies\SubscriptionPolicy;
+use App\Domain\Shared\Services\MailSettingService;
 use App\Domain\User\Models\User;
 use App\Domain\User\Policies\UserPolicy;
 use Illuminate\Auth\Events\Registered;
@@ -45,9 +46,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -72,6 +75,17 @@ class AppServiceProvider extends ServiceProvider
         // content on the https:// frontend without this.
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
+        }
+
+        // Best-effort: this runs on every request AND every artisan command,
+        // including the very first `migrate` on a fresh install before the
+        // platform_settings table exists — swallow rather than crash boot()
+        // if the DB isn't ready yet. A no-op until an admin actually saves
+        // mail settings (see MailSettingService::applyRuntimeConfig()).
+        try {
+            $this->app->make(MailSettingService::class)->applyRuntimeConfig();
+        } catch (Throwable $e) {
+            Log::debug('Skipped applying DB-backed mail settings', ['error' => $e->getMessage()]);
         }
 
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
