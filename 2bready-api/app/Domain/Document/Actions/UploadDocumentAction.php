@@ -17,9 +17,10 @@ class UploadDocumentAction
     {
         // MIME + size are already validated by StoreDocumentRequest before this
         // runs (CLAUDE.md: "validate MIME + size first, antivirus scan before
-        // persisting"). Stored on the private disk — signed URLs only, never
-        // a public bucket.
-        $path = $file->store("documents/{$company->id}", 'local');
+        // persisting"). Stored on config('filesystems.documents_disk') — local
+        // for now (no S3 credentials provisioned yet), s3 once they are —
+        // never a public bucket either way. See config/filesystems.php.
+        $path = $file->store("documents/{$company->id}", config('filesystems.documents_disk'));
 
         $document = Document::create([
             'company_id' => $company->id,

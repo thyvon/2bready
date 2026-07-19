@@ -19,6 +19,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Documents Disk
+    |--------------------------------------------------------------------------
+    |
+    | Which disk stores tenant-uploaded compliance documents (never a public
+    | bucket — see CLAUDE.md's file-upload rule). Defaults to "local" because
+    | no real S3-compatible credentials are provisioned yet; once they are,
+    | flip DOCUMENTS_DISK to "s3" in .env and nothing else needs to change —
+    | Document\Actions\UploadDocumentAction and GeneratePreviewUrlAction both
+    | read this instead of a hardcoded disk name. System assets that aren't
+    | compliance-sensitive (e.g. journey level medal images) intentionally
+    | stay hardcoded to "local" and don't use this — see
+    | Journey\Actions\UploadJourneyLevelMedalAction.
+    |
+    */
+
+    'documents_disk' => env('DOCUMENTS_DISK', 'local'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
