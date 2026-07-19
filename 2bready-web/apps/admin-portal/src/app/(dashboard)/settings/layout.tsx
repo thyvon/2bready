@@ -23,6 +23,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     // never get it, so this tab simply doesn't render for them rather than
     // 403ing after a click.
     ...(hasRole('admin') ? [{ label: t('settings.tab_integrations'), href: '/settings' }] : []),
+    ...(hasRole('admin') ? [{ label: t('settings.tab_email'), href: '/settings/email' }] : []),
     { label: t('settings.tab_profile'), href: '/settings/profile' },
   ];
   // Integrations' href is a prefix of every other tab's href, so it needs an
