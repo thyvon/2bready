@@ -17,6 +17,7 @@ import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
+import FormSwitch from '@/components/forms/FormSwitch';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listCompanyUsers, updateCompanyUser } from '@/domains/company/api';
 import { companyRoleOf, type CompanyRole } from '@/domains/company/constants';
@@ -39,6 +40,8 @@ export default function CompanyUsersListView({ companyId }: CompanyUsersListView
   const [editing, setEditing] = useState<User | null>(null);
   const [status, setStatus] = useState<'active' | 'suspended' | 'inactive'>('active');
   const [role, setRole] = useState<CompanyRole>('company_member');
+  const [googleAuthEnabled, setGoogleAuthEnabled] = useState(false);
+  const [twoFactorRequired, setTwoFactorRequired] = useState<boolean | null>(null);
   const [serverError, setServerError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -69,6 +72,8 @@ export default function CompanyUsersListView({ companyId }: CompanyUsersListView
     setEditing(user);
     setStatus((user.status ?? 'active') as typeof status);
     setRole(companyRoleOf(user));
+    setGoogleAuthEnabled(user.google_auth_enabled);
+    setTwoFactorRequired(user.two_factor_required);
     setServerError('');
   };
 
@@ -77,7 +82,12 @@ export default function CompanyUsersListView({ companyId }: CompanyUsersListView
     setSaving(true);
     setServerError('');
     try {
-      const updated = await updateCompanyUser(companyId, editing.id, { status, role });
+      const updated = await updateCompanyUser(companyId, editing.id, {
+        status,
+        role,
+        google_auth_enabled: googleAuthEnabled,
+        two_factor_required: twoFactorRequired,
+      });
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
       toast.success(t('company_users.update_success'));
       setEditing(null);
@@ -136,6 +146,22 @@ export default function CompanyUsersListView({ companyId }: CompanyUsersListView
               <MenuItem value="active">{t('common.active')}</MenuItem>
               <MenuItem value="suspended">{t('common.suspended')}</MenuItem>
               <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
+            </FormSelect>
+          </Box>
+          <FormSwitch checked={googleAuthEnabled} onChange={setGoogleAuthEnabled} label={t('users.allow_google_auth')} />
+          <Box>
+            <FieldLabel>{t('users.two_factor_requirement')}</FieldLabel>
+            <FormSelect
+              fullWidth
+              value={twoFactorRequired === null ? 'default' : String(twoFactorRequired)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setTwoFactorRequired(v === 'default' ? null : v === 'true');
+              }}
+            >
+              <MenuItem value="default">{t('users.two_factor_default')}</MenuItem>
+              <MenuItem value="true">{t('users.two_factor_forced_on')}</MenuItem>
+              <MenuItem value="false">{t('users.two_factor_exempt')}</MenuItem>
             </FormSelect>
           </Box>
         </DialogContent>

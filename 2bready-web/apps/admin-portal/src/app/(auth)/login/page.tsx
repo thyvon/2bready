@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -9,10 +9,14 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import MuiLink from '@mui/material/Link';
 import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import GoogleIcon from '@mui/icons-material/Google';
 
 import AuthLayout from '@/components/layouts/AuthLayout';
 import { loginSchema, type LoginInput } from '@/domains/auth/schemas';
-import { login } from '@/domains/auth/api';
+import { login, googleAuthStatus, googleAuthRedirectUrl } from '@/domains/auth/api';
+import { completeLogin } from '@/domains/auth/helpers';
 import { useAuthStore } from '@/store/auth.store';
 import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -24,6 +28,11 @@ export default function LoginPage() {
   const { setAuth, setPendingTotp } = useAuthStore();
   const { t } = useTranslation();
   const [serverError, setServerError] = useState('');
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+
+  useEffect(() => {
+    googleAuthStatus().then(setGoogleEnabled).catch(() => setGoogleEnabled(false));
+  }, []);
 
   const {
     register,
@@ -35,22 +44,7 @@ export default function LoginPage() {
     setServerError('');
     try {
       const res = await login(data);
-
-      if (!res.totp_required) {
-        setAuth(res.user, res.token);
-        router.replace('/dashboard');
-        return;
-      }
-
-      const totpConfirmed = 'totp_confirmed' in res ? res.totp_confirmed : false;
-
-      if (!totpConfirmed) {
-        setPendingTotp(res.user, res.token, 'setup_required');
-        router.replace('/totp/setup');
-      } else {
-        setPendingTotp(res.user, res.token, 'challenge');
-        router.replace('/totp/challenge');
-      }
+      completeLogin(res, router, { setAuth, setPendingTotp });
     } catch (err) {
       setServerError(getApiError(err).message);
     }
@@ -106,6 +100,23 @@ export default function LoginPage() {
           <Button type="submit" variant="contained" size="large" fullWidth loading={isSubmitting} sx={{ mt: 0.5 }}>
             {t('auth.continue')}
           </Button>
+
+          {googleEnabled && (
+            <>
+              <Divider sx={{ my: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">{t('auth.or')}</Typography>
+              </Divider>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                startIcon={<GoogleIcon fontSize="small" />}
+                onClick={() => { window.location.href = googleAuthRedirectUrl(); }}
+              >
+                {t('auth.continue_with_google')}
+              </Button>
+            </>
+          )}
         </Box>
       </form>
     </AuthLayout>

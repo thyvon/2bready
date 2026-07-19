@@ -86,6 +86,8 @@ const en = {
   'auth.password': 'Password',
   'auth.forgot_password': 'Forgot password?',
   'auth.continue': 'Continue',
+  'auth.or': 'OR',
+  'auth.continue_with_google': 'Continue with Google',
   'auth.no_account': "Don't have an account?",
   'auth.sign_up': 'Sign up',
   'auth.create_account_title': 'Create your account',
@@ -461,6 +463,15 @@ const en = {
   'users.confirm_grant_admin_title': 'Grant admin access?',
   'users.confirm_grant_admin_desc': 'This gives full platform access, including managing other users and their roles. Make sure this is intentional.',
   'users.confirm_grant_admin_action': 'Grant admin',
+  'users.allow_google_auth': 'Allow Google sign-in',
+  'users.two_factor_requirement': 'Two-factor requirement',
+  'users.two_factor_default': 'Default (based on role)',
+  'users.two_factor_forced_on': 'Required',
+  'users.two_factor_exempt': 'Exempt',
+  'users.cannot_exempt_own_two_factor': "You can't exempt your own account from two-factor authentication.",
+  'users.confirm_two_factor_exempt_title': 'Exempt from two-factor authentication?',
+  'users.confirm_two_factor_exempt_desc': 'This account will no longer be required to use 2FA, even though its role normally requires it. Make sure this is intentional.',
+  'users.confirm_two_factor_exempt_action': 'Exempt from 2FA',
 
   // ─── Roles ────────────────────────────────────────────────────────────────
   'roles.title': 'Roles',
@@ -473,6 +484,22 @@ const en = {
   'company_users.update_success': 'Updated.',
   'company_users.no_users': 'No team members yet',
   'company_users.no_users_desc': "This company's owner and members will appear here.",
+
+  // ─── Settings ────────────────────────────────────────────────────────────
+  'settings.google_oauth_title': 'Google Sign-In',
+  'settings.google_oauth_desc': 'Let users sign in with a Google account instead of (or in addition to) a password. Each user must still be individually enabled for it in Users management.',
+  'settings.google_oauth_enabled_label': 'Enable Google sign-in',
+  'settings.google_oauth_client_id': 'Client ID',
+  'settings.google_oauth_client_secret': 'Client secret',
+  'settings.google_oauth_secret_hint_configured': 'Already configured — leave blank to keep it',
+  'settings.google_oauth_secret_hint_empty': 'Not yet configured',
+  'settings.google_oauth_configured': 'Configured',
+  'settings.google_oauth_not_configured': 'Not configured',
+  'settings.google_oauth_saved': 'Google sign-in settings saved.',
+  'settings.profile_title': 'Your profile',
+  'settings.profile_two_factor': 'Two-factor authentication',
+  'settings.profile_two_factor_on': 'Enabled',
+  'settings.profile_two_factor_off': 'Not enabled',
 } as const;
 
 export default en;

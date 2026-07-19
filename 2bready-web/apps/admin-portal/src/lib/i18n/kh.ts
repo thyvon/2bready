@@ -90,6 +90,8 @@ const kh: Record<keyof typeof en, string> = {
   'auth.password': 'ពាក្យសម្ងាត់',
   'auth.forgot_password': 'ភ្លេចពាក្យសម្ងាត់?',
   'auth.continue': 'បន្ត',
+  'auth.or': 'ឬ',
+  'auth.continue_with_google': 'បន្តជាមួយ Google',
   'auth.no_account': 'មិនទាន់មានគណនី?',
   'auth.sign_up': 'ចុះឈ្មោះ',
   'auth.create_account_title': 'បង្កើតគណនីរបស់អ្នក',
@@ -465,6 +467,15 @@ const kh: Record<keyof typeof en, string> = {
   'users.confirm_grant_admin_title': 'ផ្តល់សិទ្ធិអ្នកគ្រប់គ្រង?',
   'users.confirm_grant_admin_desc': 'នេះនឹងផ្តល់សិទ្ធិចូលប្រើពេញលេញលើវេទិកា រួមទាំងការគ្រប់គ្រងអ្នកប្រើប្រាស់ផ្សេងទៀត និងតួនាទីរបស់ពួកគេ។ សូមប្រាកដថានេះជាចេតនា។',
   'users.confirm_grant_admin_action': 'ផ្តល់សិទ្ធិអ្នកគ្រប់គ្រង',
+  'users.allow_google_auth': 'អនុញ្ញាតការចូលប្រើដោយ Google',
+  'users.two_factor_requirement': 'តម្រូវការផ្ទៀងផ្ទាត់ពីរជាន់',
+  'users.two_factor_default': 'លំនាំដើម (តាមតួនាទី)',
+  'users.two_factor_forced_on': 'តម្រូវឱ្យប្រើ',
+  'users.two_factor_exempt': 'លើកលែង',
+  'users.cannot_exempt_own_two_factor': 'អ្នកមិនអាចលើកលែងគណនីខ្លួនឯងពីការផ្ទៀងផ្ទាត់ពីរជាន់បានទេ។',
+  'users.confirm_two_factor_exempt_title': 'លើកលែងពីការផ្ទៀងផ្ទាត់ពីរជាន់?',
+  'users.confirm_two_factor_exempt_desc': 'គណនីនេះនឹងលែងតម្រូវឱ្យប្រើ 2FA ទៀតហើយ ទោះបីតួនាទីរបស់វាតម្រូវជាធម្មតាក៏ដោយ។ សូមប្រាកដថានេះជាចេតនា។',
+  'users.confirm_two_factor_exempt_action': 'លើកលែងពី 2FA',
 
   // ─── Roles ────────────────────────────────────────────────────────────────
   'roles.title': 'តួនាទី',
@@ -477,6 +488,22 @@ const kh: Record<keyof typeof en, string> = {
   'company_users.update_success': 'បានធ្វើបច្ចុប្បន្នភាព។',
   'company_users.no_users': 'មិនទាន់មានសមាជិកក្រុមទេ',
   'company_users.no_users_desc': 'ម្ចាស់ និងសមាជិកនៃក្រុមហ៊ុននេះនឹងបង្ហាញនៅទីនេះ។',
+
+  // ─── Settings ────────────────────────────────────────────────────────────
+  'settings.google_oauth_title': 'ចូលប្រើដោយ Google',
+  'settings.google_oauth_desc': 'អនុញ្ញាតឱ្យអ្នកប្រើប្រាស់ចូលប្រើដោយប្រើគណនី Google ជំនួស (ឬបន្ថែមលើ) ពាក្យសម្ងាត់។ អ្នកប្រើប្រាស់និមួយៗត្រូវតែបានបើកដាច់ដោយឡែកនៅក្នុងការគ្រប់គ្រងអ្នកប្រើប្រាស់។',
+  'settings.google_oauth_enabled_label': 'បើកការចូលប្រើដោយ Google',
+  'settings.google_oauth_client_id': 'Client ID',
+  'settings.google_oauth_client_secret': 'Client Secret',
+  'settings.google_oauth_secret_hint_configured': 'បានកំណត់រួចហើយ — ទុកចន្លោះទទេដើម្បីរក្សាវា',
+  'settings.google_oauth_secret_hint_empty': 'មិនទាន់បានកំណត់ទេ',
+  'settings.google_oauth_configured': 'បានកំណត់',
+  'settings.google_oauth_not_configured': 'មិនទាន់បានកំណត់',
+  'settings.google_oauth_saved': 'ការកំណត់ការចូលប្រើដោយ Google ត្រូវបានរក្សាទុក។',
+  'settings.profile_title': 'ព័ត៌មានផ្ទាល់ខ្លួនរបស់អ្នក',
+  'settings.profile_two_factor': 'ការផ្ទៀងផ្ទាត់ពីរជាន់',
+  'settings.profile_two_factor_on': 'បានបើក',
+  'settings.profile_two_factor_off': 'មិនទាន់បានបើកទេ',
 };
 
 export default kh;

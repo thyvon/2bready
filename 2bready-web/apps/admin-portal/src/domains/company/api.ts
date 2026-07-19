@@ -49,6 +49,10 @@ export async function listCompanyUsers(companyId: string): Promise<User[]> {
 export interface UpdateCompanyUserPayload {
   status?: 'active' | 'suspended' | 'inactive';
   role?: 'company_owner' | 'company_member';
+  google_auth_enabled?: boolean;
+  // Tri-state override of the role-derived 2FA default — null resets to that
+  // default (never required for company_owner/member), true/false forces it.
+  two_factor_required?: boolean | null;
 }
 
 export async function updateCompanyUser(companyId: string, userId: string, payload: UpdateCompanyUserPayload): Promise<User> {

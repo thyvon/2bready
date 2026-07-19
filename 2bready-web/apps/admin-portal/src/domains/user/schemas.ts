@@ -20,6 +20,9 @@ export const updateUserSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   status: z.enum(['active', 'suspended', 'inactive']),
   roles: z.array(roleEnum).min(1, 'Select at least one role'),
+  google_auth_enabled: z.boolean(),
+  // Tri-state: null keeps the role-derived default, true/false forces it.
+  two_factor_required: z.boolean().nullable(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;

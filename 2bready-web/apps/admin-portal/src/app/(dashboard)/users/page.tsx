@@ -30,6 +30,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import FormTextField from '@/components/forms/FormTextField';
+import FormSwitch from '@/components/forms/FormSwitch';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listUsers, createUser, updateUser } from '@/domains/user/api';
@@ -62,6 +63,10 @@ export default function UsersPage() {
   // rather than letting a checkbox misclick silently grant full platform
   // access. Edits that don't touch admin membership skip this entirely.
   const [pendingAdminGrant, setPendingAdminGrant] = useState<UpdateUserInput | null>(null);
+  // Same holding pattern, different danger: submitting two_factor_required=false
+  // for an account that currently effectively requires 2FA (whether via the
+  // role-derived default or a prior explicit override).
+  const [pendingTwoFactorExempt, setPendingTwoFactorExempt] = useState<UpdateUserInput | null>(null);
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
@@ -105,7 +110,7 @@ export default function UsersPage() {
 
   const editForm = useForm<UpdateUserInput>({
     resolver: zodResolver(updateUserSchema),
-    defaultValues: { name: '', status: 'active', roles: [] },
+    defaultValues: { name: '', status: 'active', roles: [], google_auth_enabled: false, two_factor_required: null },
   });
 
   const openCreate = () => {
@@ -120,6 +125,8 @@ export default function UsersPage() {
       name: u.name,
       status: (u.status ?? 'active') as UpdateUserInput['status'],
       roles: u.roles.filter((r): r is UpdateUserInput['roles'][number] => (INTERNAL_ROLES as readonly string[]).includes(r)),
+      google_auth_enabled: u.google_auth_enabled,
+      two_factor_required: u.two_factor_required,
     });
     setServerError('');
   };
@@ -144,6 +151,7 @@ export default function UsersPage() {
       toast.success(t('users.update_success'));
       setEditing(null);
       setPendingAdminGrant(null);
+      setPendingTwoFactorExempt(null);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       setServerError(getApiError(err).message);
@@ -154,6 +162,15 @@ export default function UsersPage() {
     const grantingAdmin = !editing?.roles.includes('admin') && data.roles.includes('admin');
     if (grantingAdmin) {
       setPendingAdminGrant(data);
+      return;
+    }
+    // editing.totp_required is the already-resolved effective value (role
+    // default or a prior override) — this only needs to confirm the specific
+    // transition into "explicitly exempt," not every save that happens to
+    // touch the field.
+    const exemptingFromTwoFactor = editing?.totp_required && data.two_factor_required === false;
+    if (exemptingFromTwoFactor) {
+      setPendingTwoFactorExempt(data);
       return;
     }
     await submitEdit(data);
@@ -349,6 +366,35 @@ export default function UsersPage() {
                 <Alert severity="error" sx={{ py: 0.5, mt: 1 }}>{editForm.formState.errors.roles.message}</Alert>
               )}
             </Box>
+            <Controller
+              name="google_auth_enabled"
+              control={editForm.control}
+              render={({ field }) => (
+                <FormSwitch checked={field.value} onChange={field.onChange} label={t('users.allow_google_auth')} />
+              )}
+            />
+            <Controller
+              name="two_factor_required"
+              control={editForm.control}
+              render={({ field }) => (
+                <Box>
+                  <FieldLabel>{t('users.two_factor_requirement')}</FieldLabel>
+                  <FormSelect
+                    fullWidth
+                    value={field.value === null ? 'default' : String(field.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      field.onChange(v === 'default' ? null : v === 'true');
+                    }}
+                    helperText={editing?.id === currentUser?.id ? t('users.cannot_exempt_own_two_factor') : undefined}
+                  >
+                    <MenuItem value="default">{t('users.two_factor_default')}</MenuItem>
+                    <MenuItem value="true">{t('users.two_factor_forced_on')}</MenuItem>
+                    <MenuItem value="false" disabled={editing?.id === currentUser?.id}>{t('users.two_factor_exempt')}</MenuItem>
+                  </FormSelect>
+                </Box>
+              )}
+            />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button variant="text" onClick={() => setEditing(null)}>{t('common.cancel')}</Button>
@@ -367,6 +413,19 @@ export default function UsersPage() {
         onCancel={() => setPendingAdminGrant(null)}
         onConfirm={() => {
           if (pendingAdminGrant) submitEdit(pendingAdminGrant);
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!pendingTwoFactorExempt}
+        title={t('users.confirm_two_factor_exempt_title')}
+        description={t('users.confirm_two_factor_exempt_desc')}
+        confirmLabel={t('users.confirm_two_factor_exempt_action')}
+        danger
+        loading={editForm.formState.isSubmitting}
+        onCancel={() => setPendingTwoFactorExempt(null)}
+        onConfirm={() => {
+          if (pendingTwoFactorExempt) submitEdit(pendingTwoFactorExempt);
         }}
       />
     </>

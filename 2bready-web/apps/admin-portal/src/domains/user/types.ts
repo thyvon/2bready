@@ -43,4 +43,9 @@ export interface UpdateUserPayload {
   name?: string;
   status?: 'active' | 'suspended' | 'inactive';
   roles?: InternalRole[];
+  google_auth_enabled?: boolean;
+  // Tri-state override of the role-derived 2FA default — null resets back to
+  // that default, true/false forces it regardless of role. See the backend's
+  // User::requiresTwoFactor().
+  two_factor_required?: boolean | null;
 }

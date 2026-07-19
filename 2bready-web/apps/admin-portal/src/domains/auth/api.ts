@@ -42,3 +42,20 @@ export async function totpVerify(data: TotpCodeInput): Promise<string> {
   const res = await api.post<{ data: { token: string } }>('/auth/totp/verify', data);
   return res.data.data.token;
 }
+
+export async function googleAuthStatus(): Promise<boolean> {
+  const res = await api.get<{ data: { enabled: boolean } }>('/auth/google/status');
+  return res.data.data.enabled;
+}
+
+// A full-page navigation (not an axios call) — the browser needs to actually
+// leave this app for Google's consent screen, then come back to the backend's
+// callback route, which redirects here again with an exchange code.
+export function googleAuthRedirectUrl(): string {
+  return `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google/redirect?portal=admin`;
+}
+
+export async function googleAuthExchange(code: string): Promise<LoginResponse> {
+  const res = await api.post<{ data: LoginResponse }>('/auth/google/exchange', { code });
+  return res.data.data;
+}
