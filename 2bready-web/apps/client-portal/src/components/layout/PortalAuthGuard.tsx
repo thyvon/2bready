@@ -22,14 +22,29 @@ export function PortalAuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hasHydrated, user, clearAuth } = useAuthStore();
   const blocked = hasHydrated && isAuthenticated && !(user?.can_access_client_portal ?? false);
 
+  // A brand-new account that verified its email but never finished (or
+  // abandoned) the CompanySetupWizard has no company yet. register/login/
+  // totp-complete all already redirect to /onboarding at that instant (see
+  // complete-login.ts, totp/setup + totp/challenge pages), but that's a
+  // one-time push, not a standing guard — landing on '/' any other way (back
+  // button, typed URL, a stale tab) would otherwise render the full Overview
+  // shell with JourneyProvider/PackageProvider expecting a current_company_id
+  // that doesn't exist. Gated on email verification too since /onboarding
+  // itself requires a verified email — no point bouncing an unverified user
+  // there just to bounce them back (see the email-verification check below).
+  const needsOnboarding = hasHydrated && isAuthenticated && !!user?.email_verified_at && !user?.current_company_id;
+
   useEffect(() => {
     if (blocked) {
       clearAuth();
       router.replace('/login');
+    } else if (needsOnboarding) {
+      router.replace('/onboarding');
     }
-  }, [blocked, clearAuth, router]);
+  }, [blocked, needsOnboarding, clearAuth, router]);
 
   if (blocked) return null;
+  if (needsOnboarding) return null;
 
   // Mirrors the backend's own enforcement (EnsureEmailIsVerified middleware) —
   // gated ahead of the company-status check below since an unverified account
