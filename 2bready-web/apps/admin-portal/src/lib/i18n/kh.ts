@@ -492,6 +492,7 @@ const kh: Record<keyof typeof en, string> = {
   // ─── Settings ────────────────────────────────────────────────────────────
   'settings.tab_integrations': 'ការភ្ជាប់',
   'settings.tab_email': 'អ៊ីមែល',
+  'settings.tab_security': 'សុវត្ថិភាព',
   'settings.tab_profile': 'ព័ត៌មានផ្ទាល់ខ្លួន',
   'settings.google_oauth_title': 'ចូលប្រើដោយ Google',
   'settings.google_oauth_desc': 'អនុញ្ញាតឱ្យអ្នកប្រើប្រាស់ចូលប្រើដោយប្រើគណនី Google ជំនួស (ឬបន្ថែមលើ) ពាក្យសម្ងាត់។ អ្នកប្រើប្រាស់និមួយៗត្រូវតែបានបើកដាច់ដោយឡែកនៅក្នុងការគ្រប់គ្រងអ្នកប្រើប្រាស់។',
@@ -525,6 +526,13 @@ const kh: Record<keyof typeof en, string> = {
   'settings.profile_two_factor': 'ការផ្ទៀងផ្ទាត់ពីរជាន់',
   'settings.profile_two_factor_on': 'បានបើក',
   'settings.profile_two_factor_off': 'មិនទាន់បានបើកទេ',
+  'settings.two_factor_title': 'ការផ្ទៀងផ្ទាត់ពីរជាន់',
+  'settings.two_factor_desc': 'កំណត់ថាតើការផ្ទៀងផ្ទាត់ពីរជាន់ត្រូវការឬអត់នៅទូទាំងប្រព័ន្ធ។ បិទវានឹងបដិសេធតម្រូវការរបស់គណនីនីមួយៗ រួមទាំងគណនីអ្នកគ្រប់គ្រងដែលបានបើកវារួចហើយ — សម្រាប់ប្រើតែក្នុងបរិយាកាសសាកល្បង (demo) ប៉ុណ្ណោះ។',
+  'settings.two_factor_enabled_label': 'តម្រូវឱ្យមានការផ្ទៀងផ្ទាត់ពីរជាន់',
+  'settings.two_factor_saved': 'ការកំណត់ការផ្ទៀងផ្ទាត់ពីរជាន់ត្រូវបានរក្សាទុក។',
+  'settings.confirm_two_factor_disable_title': 'បិទការផ្ទៀងផ្ទាត់ពីរជាន់?',
+  'settings.confirm_two_factor_disable_desc': 'សកម្មភាពនេះនឹងបិទ 2FA សម្រាប់រាល់គណនីទាំងអស់នៅទូទាំងប្រព័ន្ធ រួមទាំងអ្នកគ្រប់គ្រងដែលបានបើកវារួចហើយ។ ប្រើវាសម្រាប់ការសាកល្បងប៉ុណ្ណោះ — សូមបើកវាឡើងវិញមុននឹងប្រើប្រាស់ជាក់ស្តែង។',
+  'settings.confirm_two_factor_disable_action': 'បិទ 2FA',
 };
 
 export default kh;

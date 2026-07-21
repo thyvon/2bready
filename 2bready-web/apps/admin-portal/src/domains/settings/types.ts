@@ -37,3 +37,7 @@ export interface UpdateMailSettingPayload {
   from_address: string;
   from_name: string;
 }
+
+export interface TwoFactorSetting {
+  enabled: boolean;
+}

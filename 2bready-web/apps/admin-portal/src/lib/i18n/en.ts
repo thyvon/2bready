@@ -488,6 +488,7 @@ const en = {
   // ─── Settings ────────────────────────────────────────────────────────────
   'settings.tab_integrations': 'Integrations',
   'settings.tab_email': 'Email',
+  'settings.tab_security': 'Security',
   'settings.tab_profile': 'Profile',
   'settings.google_oauth_title': 'Google Sign-In',
   'settings.google_oauth_desc': 'Let users sign in with a Google account instead of (or in addition to) a password. Each user must still be individually enabled for it in Users management.',
@@ -521,6 +522,13 @@ const en = {
   'settings.profile_two_factor': 'Two-factor authentication',
   'settings.profile_two_factor_on': 'Enabled',
   'settings.profile_two_factor_off': 'Not enabled',
+  'settings.two_factor_title': 'Two-Factor Authentication',
+  'settings.two_factor_desc': 'Controls whether two-factor authentication is required platform-wide. Turning this off overrides every account\'s own requirement — including admin accounts that already have it set up — and is intended for demo environments only.',
+  'settings.two_factor_enabled_label': 'Require two-factor authentication',
+  'settings.two_factor_saved': 'Two-factor authentication setting saved.',
+  'settings.confirm_two_factor_disable_title': 'Disable two-factor authentication?',
+  'settings.confirm_two_factor_disable_desc': 'This turns 2FA off for every account platform-wide, including admins who already have it set up. Use this only for demos — re-enable it before going back to real use.',
+  'settings.confirm_two_factor_disable_action': 'Disable 2FA',
 } as const;
 
 export default en;

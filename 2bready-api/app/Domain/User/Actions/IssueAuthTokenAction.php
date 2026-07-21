@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\User\Actions;
 
 use App\Domain\AuditLog\Events\AuditableActionOccurred;
+use App\Domain\Shared\Services\PlatformSettingService;
 use App\Domain\User\Models\User;
 use App\Http\Resources\Api\V1\UserResource;
 
@@ -16,9 +17,29 @@ use App\Http\Resources\Api\V1\UserResource;
  */
 class IssueAuthTokenAction
 {
+    public function __construct(private readonly PlatformSettingService $settings) {}
+
     /** @return array{user: UserResource, token: string, totp_required: bool, totp_confirmed?: bool} */
     public function execute(User $user): array
     {
+        // Platform-wide kill switch (settings.manage, Settings > Security) — for
+        // demos, overrides both the role-derived/per-user requiresTwoFactor()
+        // check below AND prior enrollment (hasTwoFactorEnabled()), so a
+        // previously-2FA'd admin also stops being challenged while this is off.
+        // User::requiresTwoFactor()'s own tri-state stays untouched for when
+        // this is switched back on.
+        if (! $this->settings->get('two_factor_globally_enabled', true)) {
+            $token = $user->createToken('api')->plainTextToken;
+
+            event(new AuditableActionOccurred(action: 'auth.login', actorId: $user->id, actorEmail: $user->email));
+
+            return [
+                'user' => new UserResource($user),
+                'token' => $token,
+                'totp_required' => false,
+            ];
+        }
+
         // If 2FA is required but not confirmed, prompt for setup. This token is
         // deliberately scoped to the 'totp-pending' ability only (not the default '*') so
         // it can reach the auth/totp/* + logout endpoints but nothing else — enforced by

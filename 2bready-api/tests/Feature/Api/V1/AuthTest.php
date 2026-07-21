@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Shared\Services\PlatformSettingService;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -333,6 +334,32 @@ it('exempts an admin from 2FA whose two_factor_required override is explicitly f
         'email' => 'exempt-admin@example.com',
         'password' => 'Secret1234',
     ])->assertOk()->assertJsonPath('data.totp_required', false);
+});
+
+it('lets an already-enrolled admin log in without a TOTP challenge when 2FA is globally disabled', function () {
+    $admin = User::factory()->admin()->withTotp()->create([
+        'email' => 'demo-admin@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    app(PlatformSettingService::class)->set('two_factor_globally_enabled', false, 'security');
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'demo-admin@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk()->assertJsonPath('data.totp_required', false);
+});
+
+it('still enforces 2FA when the two_factor_globally_enabled setting is absent (default on)', function () {
+    $admin = User::factory()->admin()->create([
+        'email' => 'default-admin@example.com',
+        'password' => bcrypt('Secret1234'),
+    ]);
+
+    $this->postJson('/api/v1/auth/admin-login', [
+        'email' => 'default-admin@example.com',
+        'password' => 'Secret1234',
+    ])->assertOk()->assertJsonPath('data.totp_required', true);
 });
 
 it('rejects an internal user via the regular (client-portal) login', function () {

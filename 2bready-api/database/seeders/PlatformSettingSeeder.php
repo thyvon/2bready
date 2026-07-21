@@ -12,5 +12,6 @@ class PlatformSettingSeeder extends Seeder
     public function run(PlatformSettingService $settings): void
     {
         $settings->set('bypass_employee_threshold', 8, 'compliance');
+        $settings->set('two_factor_globally_enabled', true, 'security');
     }
 }

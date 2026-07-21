@@ -21,3 +21,10 @@ export const mailSettingSchema = z.object({
 
 export type MailSettingInput = z.input<typeof mailSettingSchema>;
 export type MailSettingOutput = z.output<typeof mailSettingSchema>;
+
+export const twoFactorSettingSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type TwoFactorSettingInput = z.input<typeof twoFactorSettingSchema>;
+export type TwoFactorSettingOutput = z.output<typeof twoFactorSettingSchema>;
