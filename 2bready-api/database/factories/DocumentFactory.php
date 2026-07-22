@@ -27,10 +27,12 @@ class DocumentFactory extends Factory
             'mime_type' => 'application/pdf',
             'size_bytes' => fake()->numberBetween(10_000, 2_000_000),
             'status' => 'pending_scan',
+            'period_key' => null,
             'rejection_reason' => null,
             'verified_by_user_id' => null,
             'verified_at' => null,
             'expires_at' => null,
+            'expiry_reminded_at' => null,
         ];
     }
 
@@ -39,6 +41,26 @@ class DocumentFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => 'verified',
             'verified_at' => now(),
+        ]);
+    }
+
+    /** A verified document already past its expiry window (for ExpireOverdueDocumentsAction). */
+    public function expired(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'verified',
+            'verified_at' => now()->subMonths(13),
+            'expires_at' => now()->subDay(),
+        ]);
+    }
+
+    /** A verified document whose expiry falls inside the reminder window. */
+    public function expiringInDays(int $days): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'verified',
+            'verified_at' => now(),
+            'expires_at' => now()->addDays($days),
         ]);
     }
 

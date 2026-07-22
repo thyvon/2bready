@@ -19,7 +19,14 @@ class JourneyLevelFactory extends Factory
     {
         return [
             'journey_template_id' => JourneyTemplate::factory(),
-            'code' => 'L'.fake()->unique()->numberBetween(1, 4),
+            // Not fake()->unique() — the real constraint (see the migration)
+            // is a composite unique on (journey_template_id, code), not a
+            // global one. fake()->unique() tracks uniqueness for the whole
+            // test process, not per template, so it silently exhausts after
+            // only 4 calls (there are only 4 possible L1-L4 values) the
+            // moment any test creates more than 4 JourneyLevel rows in one
+            // run — a real latent bug, not a style choice.
+            'code' => 'L'.fake()->numberBetween(1, 4),
             'name' => fake()->word(),
             'pathway_name' => fake()->words(2, true),
             'pillar' => fake()->randomElement(['comply', 'scale', 'lead']),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Document\DTOs\PeriodHistoryEntry;
 use App\Domain\Document\Models\DocumentTemplate;
 use App\Domain\Journey\Actions\GenerateJourneyLevelMedalUrlAction;
 use App\Domain\Journey\Models\Journey;
@@ -13,6 +14,7 @@ use App\Domain\Journey\Models\Milestone;
 use App\Domain\Journey\Services\JourneyProgressService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * Shape deliberately mirrors client-portal's journey-data.ts mock (BADGE_LEVELS,
@@ -89,6 +91,8 @@ class JourneyResource extends JsonResource
     private function mapDocument(DocumentTemplate $template): array
     {
         $latestDocument = $template->getAttribute('latest_document');
+        /** @var Collection<int, PeriodHistoryEntry> $history */
+        $history = $template->getAttribute('history_documents') ?? collect();
 
         return [
             'id' => $template->id,
@@ -99,12 +103,28 @@ class JourneyResource extends JsonResource
             'document_id' => $latestDocument?->id,
             'name' => $template->name,
             'is_required' => $template->is_required,
+            // How this requirement recurs — drives whether `history` below
+            // is a flat past-uploads list (rolling/one-time) or a full
+            // calendar-period ledger with possible gaps (periodic).
+            'recurrence_type' => $template->recurrence_type->value,
+            // Only meaningful for 'rolling' — surfaced here so staff's "edit
+            // extra requirement" dialog can preload the real window instead
+            // of silently resetting it.
+            'expiry_months' => $template->expiry_months,
             'status' => $latestDocument?->status->value ?? 'pending',
             // Null = shared taxonomy; set = this one company's own extra
             // requirement. Staff's per-company Journey tab uses this to know
             // which nodes it may edit/delete here (client-portal ignores it
             // — extras merge in seamlessly for the company itself).
             'company_id' => $template->company_id,
+            // Rolling/one-time: every upload that isn't the current one
+            // (rejected attempts, expired windows). Periodic: every calendar
+            // period since the requirement started, filed or missing, incl.
+            // the current one. Both normalized into the same shape by
+            // JourneyController::attachDocumentTemplates() — already
+            // fetched there in the same query as latest_document, so this
+            // costs nothing extra.
+            'history' => DocumentHistoryEntryResource::collection($history),
             // Sub-documents stay nested here (not flattened) so the company
             // sees the same grouping relationship staff set up in the
             // editor — recurses via nestFlat's in-memory `children`.

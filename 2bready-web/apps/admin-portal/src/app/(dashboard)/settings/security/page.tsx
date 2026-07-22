@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 
 import SectionCard from '@/components/ui/SectionCard';
 import FormSwitch from '@/components/forms/FormSwitch';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@2bready/ui-core';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useAuthStore } from '@/store/auth.store';
 import { getTwoFactorSetting, updateTwoFactorSetting } from '@/domains/settings/api';

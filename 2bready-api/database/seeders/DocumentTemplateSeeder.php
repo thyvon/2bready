@@ -16,14 +16,34 @@ use Illuminate\Database\Seeder;
  */
 class DocumentTemplateSeeder extends Seeder
 {
-    /** @var array<int, int> re-verification windows, months — everything else is one-time */
+    /**
+     * Rolling-validity windows, in months — used ONLY by recurrence_type
+     * 'rolling', where any upload newer than this is acceptable. Periodic
+     * (monthly/annual) docs ignore this; their interval comes from the type.
+     *
+     * @var array<int, int>
+     */
     private const EXPIRY_MONTHS = [
-        'Annual Patent Tax' => 6,
         'Lab Report (Lab CoA)' => 6,
         'CBC Credit Reports' => 6,
-        'Hygiene Standard Certificate (GHP/GMP/HACCP)' => 12,
-        'International Standard Certificates (ISO, BRC, Halal)' => 12,
-        'Independent Audited Financial Reports' => 12,
+    ];
+
+    /**
+     * How each recurring document recurs. Anything not listed is one-time.
+     * Real annual filings/certificates are periodic_annual (a specific
+     * year's filing is a slot that's either filled or missing, so a gap is
+     * visible); a lab result's validity window is rolling — it doesn't reset
+     * on the calendar.
+     *
+     * @var array<int, string>
+     */
+    private const RECURRENCE = [
+        'Annual Patent Tax' => 'periodic_annual',
+        'Hygiene Standard Certificate (GHP/GMP/HACCP)' => 'periodic_annual',
+        'International Standard Certificates (ISO, BRC, Halal)' => 'periodic_annual',
+        'Independent Audited Financial Reports' => 'periodic_annual',
+        'Lab Report (Lab CoA)' => 'rolling',
+        'CBC Credit Reports' => 'rolling',
     ];
 
     public function run(): void
@@ -105,6 +125,7 @@ class DocumentTemplateSeeder extends Seeder
                     ['milestone_id' => $milestone->id, 'name' => $name],
                     [
                         'is_required' => true,
+                        'recurrence_type' => self::RECURRENCE[$name] ?? 'one_time',
                         'expiry_months' => self::EXPIRY_MONTHS[$name] ?? null,
                         'sort_order' => $i + 1,
                     ],

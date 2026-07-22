@@ -185,7 +185,7 @@ it('lets an admin verify a document', function () {
 });
 
 it('sets expires_at when verifying a document whose template has an expiry window', function () {
-    $this->docTemplate->update(['expiry_months' => 6]);
+    $this->docTemplate->update(['recurrence_type' => 'rolling', 'expiry_months' => 6]);
     $admin = User::factory()->admin()->create();
     $document = Document::factory()->create([
         'company_id' => $this->company->id,

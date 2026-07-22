@@ -56,18 +56,28 @@ export const milestoneFormDefaults: MilestoneFormInput = {
   sort_order: 0,
 };
 
-export const documentTemplateFormSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
-  description: z.string().max(2000).optional().or(z.literal('')),
-  is_required: z.boolean(),
-  expiry_months: optionalMonths,
-  sort_order: sortOrder,
-});
+export const documentTemplateFormSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required').max(255),
+    description: z.string().max(2000).optional().or(z.literal('')),
+    is_required: z.boolean(),
+    recurrence_type: z.enum(['one_time', 'rolling', 'periodic_monthly', 'periodic_annual']),
+    expiry_months: optionalMonths,
+    sort_order: sortOrder,
+  })
+  // Only 'rolling' has an admin-configurable window — periodic cadences are
+  // fixed (exactly one calendar month/year) and one_time never expires, so
+  // expiry_months is meaningless (and left null) for those.
+  .refine((data) => data.recurrence_type !== 'rolling' || typeof data.expiry_months === 'number', {
+    message: 'Required for a rolling window',
+    path: ['expiry_months'],
+  });
 export type DocumentTemplateFormInput = z.input<typeof documentTemplateFormSchema>;
 export const documentTemplateFormDefaults: DocumentTemplateFormInput = {
   name: '',
   description: '',
   is_required: true,
+  recurrence_type: 'one_time',
   expiry_months: undefined,
   sort_order: 0,
 };

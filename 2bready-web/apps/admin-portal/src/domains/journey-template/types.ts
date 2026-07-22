@@ -34,6 +34,7 @@ export type StoreDocumentTemplatePayload = {
   name: string;
   description?: string;
   is_required?: boolean;
+  recurrence_type?: 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
   expiry_months?: number;
   sort_order?: number;
 };

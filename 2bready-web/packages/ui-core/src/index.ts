@@ -11,5 +11,7 @@ export { UploadDropzone, type UploadDropzoneProps } from './UploadDropzone';
 export { LevelMedal, type LevelMedalProps } from './LevelMedal';
 export { DocumentPreviewDialog, type DocumentPreviewDialogProps } from './DocumentPreviewDialog';
 export { DocumentUploadPreviewDialog, type DocumentUploadPreviewDialogProps } from './DocumentUploadPreviewDialog';
+export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
+export { CopySecretField, type CopySecretFieldProps } from './CopySecretField';
 export { easeOut, easeOutExpo, pageTransition, fadeIn, cardGridContainer, cardGridItem, stepTransition } from './motion';
 export { cardRestShadow, cardHoverShadowNeutral, cardHoverGlow } from './cardElevation';

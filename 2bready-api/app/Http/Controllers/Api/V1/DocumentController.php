@@ -61,10 +61,14 @@ class DocumentController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        // ->latest('id'), not ->latest() (created_at) — that column has no
+        // sub-second precision, so two documents created in the same second
+        // tie and the DB can return either one first (see
+        // CompleteMilestoneOnDocumentVerified's identical fix).
         $latestDocuments = Document::query()
             ->where('company_id', $companyId)
             ->whereIn('document_template_id', $templates->pluck('id'))
-            ->latest()
+            ->latest('id')
             ->get()
             ->groupBy('document_template_id')
             ->map(fn ($docs) => $docs->first());

@@ -12,6 +12,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -21,10 +22,12 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
+import FormSelect from '@/components/forms/FormSelect';
 import { useToast } from '@/components/feedback/ToastProvider';
+import { useTranslation } from '@/lib/i18n';
 import {
   getCompanyJourney,
   completeMilestone,
@@ -36,6 +39,7 @@ import {
 import { JourneyTree } from '@/domains/journey/components/JourneyTree';
 import type { Journey, JourneyDocument } from '@/domains/journey/types';
 import { documentTemplateFormSchema, documentTemplateFormDefaults, type DocumentTemplateFormInput } from '@/domains/journey-template/schemas';
+import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
 import { verifyDocument, rejectDocument, getPreviewUrl } from '@/domains/document/api';
 import { DocumentPreviewDialog } from '@/domains/document/components/DocumentPreviewDialog';
 import { getApiError } from '@/lib/utils';
@@ -55,6 +59,7 @@ export default function CompanyJourneyPage() {
   const params = useParams<{ id: string }>();
   const { company, refreshCounts } = useCompanyWorkspace();
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +78,7 @@ export default function CompanyJourneyPage() {
   const [pendingDeleteExtra, setPendingDeleteExtra] = useState<JourneyDocument | null>(null);
   const [deletingExtra, setDeletingExtra] = useState(false);
   const [extraServerError, setExtraServerError] = useState('');
+  const [extraRecurrenceKind, setExtraRecurrenceKind] = useState<RecurrenceKind>('one_time');
 
   const extraForm = useForm<DocumentTemplateFormInput>({
     resolver: zodResolver(documentTemplateFormSchema),
@@ -170,6 +176,7 @@ export default function CompanyJourneyPage() {
 
   const openAddExtra = (milestoneId: string, parentDocumentId: string | null) => {
     extraForm.reset(documentTemplateFormDefaults);
+    setExtraRecurrenceKind('one_time');
     setExtraServerError('');
     setExtraDialog({ milestoneId, parentDocumentId, editing: null });
   };
@@ -178,9 +185,11 @@ export default function CompanyJourneyPage() {
       name: doc.name,
       description: '',
       is_required: doc.is_required,
-      expiry_months: undefined,
+      recurrence_type: doc.recurrence_type,
+      expiry_months: doc.expiry_months ?? undefined,
       sort_order: 0,
     });
+    setExtraRecurrenceKind(doc.recurrence_type);
     setExtraServerError('');
     setExtraDialog({ milestoneId: '', parentDocumentId: null, editing: doc });
   };
@@ -309,17 +318,40 @@ export default function CompanyJourneyPage() {
               />
             </Box>
             <Box>
-              <FieldLabel>Expires after (months)</FieldLabel>
-              <FormTextField
-                type="number"
+              <FieldLabel>{t('journey_template.recurrence_kind')}</FieldLabel>
+              <FormSelect
                 fullWidth
-                placeholder="Leave blank if it never expires"
-                slotProps={{ htmlInput: { step: '1', min: 1 } }}
-                error={!!extraForm.formState.errors.expiry_months}
-                helperText={extraForm.formState.errors.expiry_months?.message}
-                {...extraForm.register('expiry_months')}
-              />
+                value={extraRecurrenceKind}
+                onChange={(e) => {
+                  const kind = e.target.value as RecurrenceKind;
+                  setExtraRecurrenceKind(kind);
+                  extraForm.setValue('recurrence_type', kind, { shouldValidate: true });
+                  if (!recurrenceKindNeedsMonths(kind)) {
+                    extraForm.setValue('expiry_months', undefined, { shouldValidate: true });
+                  }
+                }}
+              >
+                {RECURRENCE_KINDS.map((kind) => (
+                  <MenuItem key={kind} value={kind}>
+                    {t(`journey_template.recurrence_kind.${kind}`)}
+                  </MenuItem>
+                ))}
+              </FormSelect>
             </Box>
+            {recurrenceKindNeedsMonths(extraRecurrenceKind) && (
+              <Box>
+                <FieldLabel>{t('journey_template.expiry_custom_months')}</FieldLabel>
+                <FormTextField
+                  type="number"
+                  fullWidth
+                  placeholder={t('journey_template.expiry_months_placeholder')}
+                  slotProps={{ htmlInput: { step: '1', min: 1 } }}
+                  error={!!extraForm.formState.errors.expiry_months}
+                  helperText={extraForm.formState.errors.expiry_months?.message}
+                  {...extraForm.register('expiry_months')}
+                />
+              </Box>
+            )}
             <FormControlLabel
               control={
                 <Switch

@@ -166,6 +166,110 @@ it('nests real document status under each milestone', function () {
     expect($docs['Articles of Incorporation']['status'])->toBe('pending');
 });
 
+it('surfaces prior uploads as history without disturbing the current one', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $template = DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'name' => 'MoC Registration']);
+
+    $rejected = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $template->id,
+        'status' => 'rejected',
+        'rejection_reason' => 'Illegible scan.',
+    ]);
+    $current = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $template->id,
+        'status' => 'verified',
+    ]);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    $doc = collect($levels['L1']['milestones'][0]['documents'])->firstWhere('name', 'MoC Registration');
+
+    expect($doc['document_id'])->toBe($current->id);
+    expect($doc['status'])->toBe('verified');
+    expect($doc['history'])->toHaveCount(1);
+    expect($doc['history'][0]['id'])->toBe($rejected->id);
+    expect($doc['history'][0]['status'])->toBe('rejected');
+    expect($doc['history'][0]['rejection_reason'])->toBe('Illegible scan.');
+});
+
+it('exposes a document template\'s expiry_months so recurrence can be preloaded when editing', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'name' => 'Annual Filing', 'expiry_months' => 12]);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    $doc = collect($levels['L1']['milestones'][0]['documents'])->firstWhere('name', 'Annual Filing');
+
+    expect($doc['expiry_months'])->toBe(12);
+});
+
+it('surfaces a gap-aware period ledger for a periodic document, anchored to journey activation', function () {
+    $this->journey->update(['activated_at' => '2024-01-01']);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $template = DocumentTemplate::factory()->create([
+        'milestone_id' => $this->l1MilestoneA->id,
+        'name' => 'Annual Patent Tax',
+        'recurrence_type' => 'periodic_annual',
+        // Predates the journey's 2024 activation, so activation (not the
+        // template's own creation) is the binding anchor being tested here.
+        'created_at' => '2020-01-01',
+    ]);
+    // 2024 and current-year (2026) filed; 2025 deliberately has no upload.
+    Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $template->id,
+        'status' => 'expired',
+        'period_key' => '2024',
+    ]);
+    $current = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $template->id,
+        'status' => 'verified',
+        'period_key' => now()->format('Y'),
+    ]);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    $doc = collect($levels['L1']['milestones'][0]['documents'])->firstWhere('name', 'Annual Patent Tax');
+
+    expect($doc['recurrence_type'])->toBe('periodic_annual');
+    expect($doc['document_id'])->toBe($current->id);
+
+    $history = collect($doc['history'])->keyBy('period_key');
+    expect($history)->toHaveCount(3);
+    expect($history[now()->format('Y')]['is_current'])->toBeTrue();
+    expect($history[now()->format('Y')]['is_missing'])->toBeFalse();
+    expect($history['2025']['is_missing'])->toBeTrue();
+    expect($history['2025']['id'])->toBeNull();
+    expect($history['2024']['is_missing'])->toBeFalse();
+});
+
+it('anchors a periodic document\'s ledger to its own creation date when added after journey activation', function () {
+    $this->journey->update(['activated_at' => '2020-01-01']);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $template = DocumentTemplate::factory()->create([
+        'milestone_id' => $this->l1MilestoneA->id,
+        'name' => 'New Annual Requirement',
+        'recurrence_type' => 'periodic_annual',
+        'created_at' => now()->subYear(),
+    ]);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    $doc = collect($levels['L1']['milestones'][0]['documents'])->firstWhere('name', 'New Annual Requirement');
+
+    // Anchored to the template's own creation (last year), not the journey's
+    // 2020 activation — a requirement that didn't exist yet can't have a
+    // "missing" period before it did.
+    expect($doc['history'])->toHaveCount(2);
+});
+
 it('includes global documents and only this company\'s own extras — never another company\'s', function () {
     $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
     $otherCompany = Company::factory()->create(['industry_id' => $this->industry->id, 'country_code' => 'KH']);

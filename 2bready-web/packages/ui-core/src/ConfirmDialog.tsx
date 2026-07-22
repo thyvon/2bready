@@ -7,7 +7,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
-interface ConfirmDialogProps {
+export interface ConfirmDialogProps {
   open: boolean;
   title: string;
   description: string;
@@ -19,7 +19,11 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-export default function ConfirmDialog({
+// Promoted from admin-portal's local components/ui/ConfirmDialog.tsx (first
+// used there across 8 call sites) once client-portal needed the same
+// generic "are you sure" shape too — the second real consumer, which is
+// this codebase's own threshold for moving something into the shared package.
+export function ConfirmDialog({
   open,
   title,
   description,

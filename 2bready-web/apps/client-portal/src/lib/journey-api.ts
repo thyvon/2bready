@@ -2,6 +2,29 @@ import api from '@/lib/api';
 import type { components } from '@2bready/api-client';
 import type { Pillar } from '@/lib/journey-data';
 
+export type RecurrenceType = 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
+
+// DocumentHistoryEntryResource wraps a PeriodHistoryEntry, not a Document —
+// Scramble can't infer its field types at all (everything comes back a
+// non-nullable `string` in the generated schema, even plain booleans), a
+// dead end tried four different ways backend-side. Hand-declared here
+// instead, matching the real shape confirmed via the actual API response.
+export interface DocumentHistoryEntry {
+  id: string | null;
+  // Set only for a periodic (monthly/annual) entry — "2026-07" / "2026".
+  // Null for a rolling/one-time entry, which has no calendar slot.
+  period_key: string | null;
+  // True only for a periodic entry with no upload at all for that period —
+  // a real gap, not the absence of data.
+  is_missing: boolean;
+  is_current: boolean;
+  status: string | null;
+  verified_at: string | null;
+  expires_at: string | null;
+  rejection_reason: string | null;
+  created_at: string | null;
+}
+
 // JourneyResource.mapDocument() builds `children` as a plain recursive PHP
 // array (not a JsonResource::collection call), which Scramble can't trace
 // into a precise recursive type — it comes back as `{ [key: string]: unknown
@@ -11,8 +34,11 @@ export interface JourneyDocument {
   document_id: string | null;
   name: string;
   is_required: boolean;
+  recurrence_type: RecurrenceType;
+  expiry_months: number | null;
   status: string;
   company_id: string | null;
+  history: DocumentHistoryEntry[];
   children: JourneyDocument[];
 }
 

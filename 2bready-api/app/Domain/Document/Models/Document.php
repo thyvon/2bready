@@ -15,10 +15,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property DocumentStatus $status
  * @property int $size_bytes
+ * @property string|null $period_key
+ * @property Carbon|null $expires_at
+ * @property Carbon|null $expiry_reminded_at
  *
  * @use HasFactory<DocumentFactory>
  */
@@ -42,10 +46,12 @@ class Document extends Model
         'mime_type',
         'size_bytes',
         'status',
+        'period_key',
         'rejection_reason',
         'verified_by_user_id',
         'verified_at',
         'expires_at',
+        'expiry_reminded_at',
     ];
 
     /** @return array<string, string> */
@@ -56,6 +62,7 @@ class Document extends Model
             'size_bytes' => 'integer',
             'verified_at' => 'datetime',
             'expires_at' => 'datetime',
+            'expiry_reminded_at' => 'datetime',
         ];
     }
 

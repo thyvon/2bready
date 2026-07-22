@@ -10,8 +10,10 @@ use App\Domain\AuditLog\Models\AuditLog;
 use App\Domain\AuditLog\Policies\AuditLogPolicy;
 use App\Domain\Company\Models\Company;
 use App\Domain\Company\Policies\CompanyPolicy;
+use App\Domain\Document\Events\DocumentExpired;
 use App\Domain\Document\Events\DocumentVerified;
 use App\Domain\Document\Listeners\CompleteMilestoneOnDocumentVerified;
+use App\Domain\Document\Listeners\RevertMilestoneCompletionOnDocumentExpired;
 use App\Domain\Document\Models\Document;
 use App\Domain\Document\Models\DocumentTemplate;
 use App\Domain\Document\Policies\DocumentPolicy;
@@ -26,6 +28,7 @@ use App\Domain\Journey\Policies\JourneyLevelPolicy;
 use App\Domain\Journey\Policies\JourneyPolicy;
 use App\Domain\Journey\Policies\JourneyTemplatePolicy;
 use App\Domain\Journey\Policies\MilestonePolicy;
+use App\Domain\Notification\Listeners\SendDocumentExpiredNotification;
 use App\Domain\Package\Models\Lead;
 use App\Domain\Package\Models\Package;
 use App\Domain\Package\Policies\LeadPolicy;
@@ -104,6 +107,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lead::class, LeadPolicy::class);
 
         Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
+        Event::listen(DocumentExpired::class, RevertMilestoneCompletionOnDocumentExpired::class);
+        Event::listen(DocumentExpired::class, SendDocumentExpiredNotification::class);
         Event::listen(AuditableActionOccurred::class, RecordAuditLogListener::class);
         // Fires on RegisterUserAction's event(new Registered($user)) — sends the
         // verification email via User's now-wired MustVerifyEmail trait. Internal
@@ -129,6 +134,14 @@ class AppServiceProvider extends ServiceProvider
         // the authenticated caller's own email, never an arbitrary address).
         RateLimiter::for('verification.resend', function (Request $request) {
             return Limit::perMinutes(5, 1)->by((string) $request->user()?->id ?: $request->ip());
+        });
+
+        // Smart Data Room PIN verification — no user id on this public
+        // request, so keyed by token+IP (same compound-key idiom as
+        // 'login') rather than IP alone, so a brute-force sweep across many
+        // links from one IP is still capped per-link, not just globally.
+        RateLimiter::for('data-room.pin', function (Request $request) {
+            return Limit::perMinute(5)->by(((string) $request->route('token')).'|'.$request->ip());
         });
 
         // Point email verification links at the frontend (API-only backend has no web

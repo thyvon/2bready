@@ -39,6 +39,15 @@ function DocumentTemplateNode({ doc, dragData, onAdd, onEdit, onDelete }: Docume
 
   const children = [...(doc.children ?? [])].sort((a, b) => a.sort_order - b.sort_order);
 
+  const recurrenceLabel =
+    doc.recurrence_type === 'periodic_monthly'
+      ? t('journey_template.recurrence_kind.periodic_monthly')
+      : doc.recurrence_type === 'periodic_annual'
+        ? t('journey_template.recurrence_kind.periodic_annual')
+        : doc.recurrence_type === 'rolling'
+          ? t('journey_template.expires_in', { months: String(doc.expiry_months ?? '') })
+          : null;
+
   return (
     <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} sx={{ opacity: isDragging ? 0.5 : 1 }}>
       <Box
@@ -65,9 +74,7 @@ function DocumentTemplateNode({ doc, dragData, onAdd, onEdit, onDelete }: Docume
         </Typography>
         {doc.company_id && <Chip label={t('journey_template.extra')} size="small" color="info" variant="outlined" />}
         {doc.is_required && <Chip label={t('journey_template.required')} size="small" variant="outlined" />}
-        {doc.expiry_months != null && (
-          <Chip label={t('journey_template.expires_in', { months: String(doc.expiry_months) })} size="small" variant="outlined" />
-        )}
+        {recurrenceLabel && <Chip label={recurrenceLabel} size="small" variant="outlined" />}
         <IconButton size="small" onClick={() => onAdd(doc.id)} aria-label={t('journey_template.add_sub_document')}>
           <AddIcon fontSize="small" />
         </IconButton>

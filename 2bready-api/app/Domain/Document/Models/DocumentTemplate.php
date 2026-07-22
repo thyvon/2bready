@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Document\Models;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Document\Enums\RecurrenceType;
 use App\Domain\Journey\Models\Milestone;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
@@ -19,6 +20,8 @@ use Illuminate\Support\Collection;
 
 /**
  * @property bool $is_required
+ * @property RecurrenceType $recurrence_type
+ * @property int|null $expiry_months
  *
  * @use HasFactory<DocumentTemplateFactory>
  */
@@ -40,6 +43,7 @@ class DocumentTemplate extends Model
         'name',
         'description',
         'is_required',
+        'recurrence_type',
         'expiry_months',
         'sort_order',
     ];
@@ -49,6 +53,7 @@ class DocumentTemplate extends Model
     {
         return [
             'is_required' => 'boolean',
+            'recurrence_type' => RecurrenceType::class,
             'expiry_months' => 'integer',
             'sort_order' => 'integer',
         ];

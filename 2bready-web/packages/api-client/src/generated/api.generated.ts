@@ -276,6 +276,22 @@ export interface paths {
         patch: operations["companyUser.update"];
         trace?: never;
     };
+    "/v1/data-room": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dataRoom.show"];
+        put?: never;
+        post: operations["dataRoom.store"];
+        delete: operations["dataRoom.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/documents": {
         parameters: {
             query?: never;
@@ -436,16 +452,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/auth/email/verify/{user}": {
+    "/v1/auth/email/verify/{user}/{hash}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["emailVerification.verify"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["emailVerification.verify"];
         delete?: never;
         options?: never;
         head?: never;
@@ -756,6 +772,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/settings/mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mailSetting.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["mailSetting.update"];
+        trace?: never;
+    };
+    "/v1/settings/mail/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mailSetting.test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/journey-levels/{journeyLevel}/milestones": {
         parameters: {
             query?: never;
@@ -932,6 +980,38 @@ export interface paths {
         patch: operations["platformSetting.update"];
         trace?: never;
     };
+    "/v1/data-room/{token}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publicDataRoom.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/data-room/{token}/documents/{document}/preview-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["publicDataRoom.previewUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/roles": {
         parameters: {
             query?: never;
@@ -1053,6 +1133,31 @@ export interface components {
          * @enum {string}
          */
         CompanyStatus: "active" | "suspended" | "inactive";
+        /** DataRoomLinkResource */
+        DataRoomLinkResource: {
+            token: string;
+            url: string;
+            /** Format: date-time */
+            expires_at: string | null;
+            status: string;
+            pin?: string;
+        };
+        /** DocumentHistoryEntryResource */
+        DocumentHistoryEntryResource: {
+            id: string;
+            /**
+             * @description Null for a rolling/one-time entry (there is no calendar
+             *     slot); set for a periodic entry, filed or missing alike.
+             */
+            period_key: string;
+            is_missing: string;
+            is_current: string;
+            status: string;
+            verified_at: string;
+            expires_at: string;
+            rejection_reason: string;
+            created_at: string;
+        };
         /** DocumentResource */
         DocumentResource: {
             id: string;
@@ -1061,6 +1166,12 @@ export interface components {
             mime_type: string;
             size_bytes: number;
             status: components["schemas"]["DocumentStatus"];
+            /**
+             * @description The compliance period this filing covers, for periodic
+             *     requirements ("2026-07" / "2026"); null for one-time and
+             *     rolling.
+             */
+            period_key: string | null;
             rejection_reason: string | null;
             /** Format: date-time */
             verified_at: string | null;
@@ -1096,6 +1207,7 @@ export interface components {
             name: string;
             description: string | null;
             is_required: boolean;
+            recurrence_type: string;
             expiry_months: number | null;
             sort_order: number;
             latest_document: components["schemas"]["DocumentResource"] | null;
@@ -1176,6 +1288,18 @@ export interface components {
                         document_id: string;
                         name: string;
                         is_required: boolean;
+                        /**
+                         * @description How this requirement recurs — drives whether `history` below
+                         *     is a flat past-uploads list (rolling/one-time) or a full
+                         *     calendar-period ledger with possible gaps (periodic).
+                         */
+                        recurrence_type: string;
+                        /**
+                         * @description Only meaningful for 'rolling' — surfaced here so staff's "edit
+                         *      extra requirement" dialog can preload the real window instead
+                         *     of silently resetting it.
+                         */
+                        expiry_months: number | null;
                         status: string | "pending";
                         /**
                          * @description Null = shared taxonomy; set = this one company's own extra
@@ -1184,6 +1308,16 @@ export interface components {
                          *     — extras merge in seamlessly for the company itself).
                          */
                         company_id: string | null;
+                        /**
+                         * @description Rolling/one-time: every upload that isn't the current one
+                         *     (rejected attempts, expired windows). Periodic: every calendar
+                         *     period since the requirement started, filed or missing, incl.
+                         *     the current one. Both normalized into the same shape by
+                         *     JourneyController::attachDocumentTemplates() — already
+                         *     fetched there in the same query as latest_document, so this
+                         *     costs nothing extra.
+                         */
+                        history: components["schemas"]["DocumentHistoryEntryResource"][];
                         /**
                          * @description Sub-documents stay nested here (not flattened) so the company
                          *     sees the same grouping relationship staff set up in the
@@ -1303,6 +1437,12 @@ export interface components {
             /** Format: date-time */
             updated_at: string | null;
         };
+        /** PublicDataRoomDocumentResource */
+        PublicDataRoomDocumentResource: {
+            id: string;
+            name: string;
+            mime_type: string;
+        };
         /** PublicIndustryResource */
         PublicIndustryResource: {
             id: string;
@@ -1324,6 +1464,12 @@ export interface components {
             tier: components["schemas"]["Tier"];
             sort_order: number;
         };
+        /**
+         * RecurrenceType
+         * @description How a document requirement recurs — the distinction `expiry_months` alone couldn't express: a fixed calendar slot (periodic) vs. a rolling validity window vs. never. - OneTime         proves something that stays true once verified (MoC                   Registration, Shareholder ID). Never expires, no period. - Rolling         valid for a fixed window from the verification date; any                   upload newer than `expiry_months` months is acceptable                   (Lab CoA, CBC Credit Reports). No calendar slot, so there                   is no such thing as a "missing" rolling period — only                   "is there a currently-valid upload." - PeriodicMonthly one filing owed per calendar month. Each verified upload                   satisfies exactly one `period_key` ("2026-07"); a month                   with no upload at all is a real, visible gap. - PeriodicAnnual  one filing owed per calendar year ("2026") — Annual                   Patent Tax, Hygiene/ISO certificates, audited financials.
+         * @enum {string}
+         */
+        RecurrenceType: "one_time" | "rolling" | "periodic_monthly" | "periodic_annual";
         /** RegisterRequest */
         RegisterRequest: {
             name: string;
@@ -1377,6 +1523,7 @@ export interface components {
             name: string;
             description?: string | null;
             is_required?: boolean;
+            recurrence_type?: components["schemas"]["RecurrenceType"];
             expiry_months?: number | null;
             sort_order?: number;
         };
@@ -1507,6 +1654,7 @@ export interface components {
             name?: string;
             description?: string | null;
             is_required?: boolean;
+            recurrence_type?: components["schemas"]["RecurrenceType"];
             expiry_months?: number | null;
             sort_order?: number;
         };
@@ -1546,6 +1694,23 @@ export interface components {
             name?: string;
             name_kh?: string | null;
             is_active?: boolean;
+        };
+        /** UpdateMailSettingRequest */
+        UpdateMailSettingRequest: {
+            host: string;
+            port: number;
+            username?: string | null;
+            /**
+             * @description Omitted/empty means "keep the existing password" — see
+             *     MailSettingService::save(). Never required, since after the
+             *     first save the frontend never has the real value to resend.
+             */
+            password?: string | null;
+            /** @enum {string|null} */
+            encryption?: "tls" | "ssl" | null;
+            /** Format: email */
+            from_address: string;
+            from_name: string;
         };
         /** UpdateMilestoneRequest */
         UpdateMilestoneRequest: {
@@ -1635,6 +1800,10 @@ export interface components {
          * @enum {string}
          */
         UserStatus: "active" | "inactive" | "suspended";
+        /** VerifyDataRoomAccessRequest */
+        VerifyDataRoomAccessRequest: {
+            pin: string;
+        };
     };
     responses: {
         /** @description Validation error */
@@ -2291,6 +2460,76 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "dataRoom.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DataRoomLinkResource"] | null;
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "dataRoom.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DataRoomLinkResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "dataRoom.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DataRoomLinkResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
     "document.index": {
         parameters: {
             query?: never;
@@ -2662,6 +2901,7 @@ export interface operations {
             path: {
                 /** @description The user ID */
                 user: string;
+                hash: string;
             };
             cookie?: never;
         };
@@ -3497,6 +3737,116 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "mailSetting.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            host: string | null;
+                            port: number | null;
+                            username: string | null;
+                            encryption: string | null;
+                            from_address: string | null;
+                            from_name: string | null;
+                            password_configured: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "mailSetting.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMailSettingRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            host: string | null;
+                            port: number | null;
+                            username: string | null;
+                            encryption: string | null;
+                            from_address: string | null;
+                            from_name: string | null;
+                            password_configured: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "mailSetting.test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            message: string;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Save your mail settings before sending a test email.
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "milestone.store": {
         parameters: {
             query?: never;
@@ -3906,6 +4256,103 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "publicDataRoom.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyDataRoomAccessRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            view_session: string;
+                            company_name: string;
+                            documents: components["schemas"]["PublicDataRoomDocumentResource"][];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string[];
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string[];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "publicDataRoom.previewUrl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            url: string;
+                            mime_type: string;
+                            original_filename: string;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "This session has expired. Please re-enter the PIN.";
+                        errors: string[];
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "role.index": {

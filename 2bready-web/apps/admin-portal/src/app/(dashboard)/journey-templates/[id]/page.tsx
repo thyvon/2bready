@@ -29,13 +29,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import FormTextField from '@/components/forms/FormTextField';
 import DocumentTemplateTree, { type DocumentDragData } from '@/domains/journey-template/components/DocumentTemplateTree';
-import { LevelMedal, UploadDropzone } from '@2bready/ui-core';
+import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
+import { ConfirmDialog, LevelMedal, UploadDropzone } from '@2bready/ui-core';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useJourneyTemplate } from '@/domains/journey-template/hooks';
@@ -100,6 +100,7 @@ export default function JourneyTemplateDetailPage() {
     parentDocumentId: string | null;
     editing: DocumentTemplate | null;
   } | null>(null);
+  const [docRecurrenceKind, setDocRecurrenceKind] = useState<RecurrenceKind>('one_time');
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -203,11 +204,13 @@ export default function JourneyTemplateDetailPage() {
 
   const openCreateDoc = (milestoneId: string) => {
     docForm.reset(documentTemplateFormDefaults);
+    setDocRecurrenceKind('one_time');
     setServerError('');
     setDocDialog({ milestoneId, parentDocumentId: null, editing: null });
   };
   const openCreateSubDoc = (milestoneId: string, parentDocumentId: string) => {
     docForm.reset(documentTemplateFormDefaults);
+    setDocRecurrenceKind('one_time');
     setServerError('');
     setDocDialog({ milestoneId, parentDocumentId, editing: null });
   };
@@ -216,9 +219,11 @@ export default function JourneyTemplateDetailPage() {
       name: doc.name,
       description: doc.description ?? '',
       is_required: doc.is_required,
+      recurrence_type: doc.recurrence_type as RecurrenceKind,
       expiry_months: doc.expiry_months ?? undefined,
       sort_order: doc.sort_order,
     });
+    setDocRecurrenceKind(doc.recurrence_type as RecurrenceKind);
     setServerError('');
     setDocDialog({ milestoneId, parentDocumentId: doc.parent_id, editing: doc });
   };
@@ -645,16 +650,25 @@ export default function JourneyTemplateDetailPage() {
             </Box>
             <Box className="flex gap-4">
               <Box className="flex-1">
-                <FieldLabel>{t('journey_template.expiry_months')}</FieldLabel>
-                <FormTextField
-                  type="number"
+                <FieldLabel>{t('journey_template.recurrence_kind')}</FieldLabel>
+                <FormSelect
                   fullWidth
-                  placeholder={t('journey_template.expiry_months_placeholder')}
-                  slotProps={{ htmlInput: { step: '1', min: 1 } }}
-                  error={!!docForm.formState.errors.expiry_months}
-                  helperText={docForm.formState.errors.expiry_months?.message}
-                  {...docForm.register('expiry_months')}
-                />
+                  value={docRecurrenceKind}
+                  onChange={(e) => {
+                    const kind = e.target.value as RecurrenceKind;
+                    setDocRecurrenceKind(kind);
+                    docForm.setValue('recurrence_type', kind, { shouldValidate: true });
+                    if (!recurrenceKindNeedsMonths(kind)) {
+                      docForm.setValue('expiry_months', undefined, { shouldValidate: true });
+                    }
+                  }}
+                >
+                  {RECURRENCE_KINDS.map((kind) => (
+                    <MenuItem key={kind} value={kind}>
+                      {t(`journey_template.recurrence_kind.${kind}`)}
+                    </MenuItem>
+                  ))}
+                </FormSelect>
               </Box>
               <Box className="flex-1">
                 <FieldLabel>{t('journey_template.sort_order')}</FieldLabel>
@@ -668,6 +682,20 @@ export default function JourneyTemplateDetailPage() {
                 />
               </Box>
             </Box>
+            {recurrenceKindNeedsMonths(docRecurrenceKind) && (
+              <Box>
+                <FieldLabel>{t('journey_template.expiry_custom_months')}</FieldLabel>
+                <FormTextField
+                  type="number"
+                  fullWidth
+                  placeholder={t('journey_template.expiry_months_placeholder')}
+                  slotProps={{ htmlInput: { step: '1', min: 1 } }}
+                  error={!!docForm.formState.errors.expiry_months}
+                  helperText={docForm.formState.errors.expiry_months?.message}
+                  {...docForm.register('expiry_months')}
+                />
+              </Box>
+            )}
             <Controller
               name="is_required"
               control={docForm.control}

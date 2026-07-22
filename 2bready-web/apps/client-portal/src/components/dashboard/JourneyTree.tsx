@@ -16,6 +16,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 import { GlowButton, StatusBadge, LevelMedal, cardGridContainer, cardGridItem, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
 import { TIER_LABELS, type Tier } from '@/lib/journey-data';
+import { useTranslation } from '@/lib/i18n';
 import {
   DOC_STATUS_LABEL,
   levelTotalDocs,
@@ -24,6 +25,7 @@ import {
   type JourneyLevel,
   type JourneyMilestone,
   type JourneyDocument,
+  type DocumentHistoryEntry,
 } from '@/lib/journey-api';
 
 const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
@@ -52,6 +54,90 @@ export type RenderDocAction = (doc: JourneyDocument, ctx: { level: JourneyLevel;
 function DefaultDocAction(doc: JourneyDocument) {
   const status = toDocStatus(doc.status);
   return <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />;
+}
+
+// A periodic (monthly/annual) entry's period_key ("2026" / "2026-07") reads
+// better than its raw filing date — a rolling entry has no period_key at
+// all, so it falls back to the plain date exactly as before.
+function HistoryEntryRow({ entry }: { entry: DocumentHistoryEntry }) {
+  const { t } = useTranslation();
+
+  if (entry.is_missing) {
+    return (
+      <Box className="flex items-center gap-2" sx={{ py: 0.5 }}>
+        <Chip label={t('journey.history_missing_label')} size="small" color="error" variant="outlined" />
+        {entry.period_key && (
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            {entry.period_key}
+          </Typography>
+        )}
+        {entry.is_current && <Chip label={t('journey.history_current_label')} size="small" variant="outlined" />}
+        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+          {t('journey.history_missing_caption')}
+        </Typography>
+      </Box>
+    );
+  }
+
+  const status = toDocStatus(entry.status ?? 'pending');
+  const date = entry.verified_at ?? entry.created_at;
+
+  return (
+    <Box className="flex items-center gap-2" sx={{ py: 0.5 }}>
+      <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />
+      {entry.period_key && (
+        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+          {entry.period_key}
+        </Typography>
+      )}
+      {entry.is_current && <Chip label={t('journey.history_current_label')} size="small" variant="outlined" />}
+      {date && (
+        <Typography variant="caption" color="text.secondary">
+          {new Date(date).toLocaleDateString()}
+        </Typography>
+      )}
+      {entry.rejection_reason && (
+        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+          — {entry.rejection_reason}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+// Collapsed by default — a checklist item's history is background context,
+// not something that needs to compete with the current status for
+// attention (see the tree's own "starts collapsed unless there's real
+// progress" convention above).
+function DocumentHistory({ history }: { history: DocumentHistoryEntry[] }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  if (history.length === 0) return null;
+
+  return (
+    <Box sx={{ pl: 4 }}>
+      <Typography
+        component="button"
+        onClick={() => setOpen((v) => !v)}
+        variant="caption"
+        color="text.secondary"
+        sx={{ cursor: 'pointer', bgcolor: 'transparent', border: 'none', p: 0, textDecoration: 'underline' }}
+      >
+        {t('journey.view_history', { count: String(history.length) })}
+      </Typography>
+      <Collapse in={open} timeout={150}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', pt: 0.5 }}>
+          {history.map((entry, i) => (
+            // A missing period entry has no Document, so no `id` — fall
+            // back to its period_key (always present for a periodic entry,
+            // the only kind that can be missing) or the index.
+            <HistoryEntryRow key={entry.id ?? entry.period_key ?? i} entry={entry} />
+          ))}
+        </Box>
+      </Collapse>
+    </Box>
+  );
 }
 
 // Sub-documents render indented under their parent, same relationship staff
@@ -95,6 +181,7 @@ function DocumentRow({
         </Typography>
         {renderDocAction(doc, { level, milestone })}
       </Box>
+      <DocumentHistory history={doc.history} />
       {doc.children.map((child, i) => (
         <DocumentRow
           key={child.id}

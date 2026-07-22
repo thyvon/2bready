@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@2bready/ui-core';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { updateCompany } from '@/domains/company/api';
 import type { Company } from '@/domains/company/types';

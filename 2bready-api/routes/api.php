@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\IndustryController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\PackageController;
+use App\Http\Controllers\Api\V1\PublicDataRoomController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -25,6 +26,15 @@ Route::prefix('v1')->group(function () {
     // routes/api/industry.php (same reasoning as `pricing` vs `packages` above) so
     // the two don't collide on the same URI.
     Route::get('industry-options', [IndustryController::class, 'publicIndex']);
+
+    // Public — a Smart Data Room link's token + PIN IS the credential, there
+    // is no Sanctum token at all on this path (see
+    // VerifyDataRoomAccessAction/PublicDataRoomController). Authenticated
+    // create/show/revoke for the company owner lives in routes/api/data-room.php
+    // instead, inside the protected group below.
+    Route::post('data-room/{token}/verify', [PublicDataRoomController::class, 'verify'])
+        ->middleware('throttle:data-room.pin');
+    Route::get('data-room/{token}/documents/{document}/preview-url', [PublicDataRoomController::class, 'previewUrl']);
 
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
     // reaching business routes — pending tokens only carry the 'totp-pending' ability.

@@ -9,6 +9,8 @@ export interface JourneyDocument {
   document_id: string | null;
   name: string;
   is_required: boolean;
+  recurrence_type: 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
+  expiry_months: number | null;
   status: string;
   company_id: string | null;
   children: JourneyDocument[];

@@ -38,6 +38,7 @@ class DocumentTemplateResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'is_required' => $this->is_required,
+            'recurrence_type' => $this->recurrence_type->value,
             'expiry_months' => $this->expiry_months,
             'sort_order' => $this->sort_order,
             'latest_document' => $latestDocument ? new DocumentResource($latestDocument) : null,

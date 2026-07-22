@@ -38,6 +38,9 @@ logfile
 # Claude Code local settings
 .claude/
 
+# Local review screenshots (verification scaffolding, not source)
+dev-screenshots/
+
 2bready-web/next-env.d.ts
 2bready-web/tsconfig.tsbuildinfo
 2bready-web/.tmp-tsconfig.tsbuildinfo

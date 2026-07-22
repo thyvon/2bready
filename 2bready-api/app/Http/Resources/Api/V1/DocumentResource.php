@@ -29,6 +29,10 @@ class DocumentResource extends JsonResource
             'mime_type' => $this->mime_type,
             'size_bytes' => $this->size_bytes,
             'status' => $this->status,
+            // The compliance period this filing covers, for periodic
+            // requirements ("2026-07" / "2026"); null for one-time and
+            // rolling.
+            'period_key' => $this->period_key,
             'rejection_reason' => $this->rejection_reason,
             'verified_at' => $this->verified_at,
             'expires_at' => $this->expires_at,

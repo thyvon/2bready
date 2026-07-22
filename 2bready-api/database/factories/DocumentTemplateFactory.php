@@ -22,6 +22,7 @@ class DocumentTemplateFactory extends Factory
             'name' => fake()->words(3, true),
             'description' => null,
             'is_required' => true,
+            'recurrence_type' => 'one_time',
             'expiry_months' => null,
             'sort_order' => 0,
         ];

@@ -47,10 +47,16 @@ class CompleteMilestoneOnDocumentVerified
         }
 
         $allVerified = $requiredTemplateIds->every(function (string $templateId) use ($document) {
+            // ->latest('id'), not ->latest() (created_at) — the column has
+            // no sub-second precision, so two documents created in the same
+            // second tie and Postgres can return either row first. ULIDs
+            // are lexicographically sortable at far finer resolution, so
+            // ordering by id is the only way to reliably get the true
+            // latest row.
             $latest = Document::query()
                 ->where('company_id', $document->company_id)
                 ->where('document_template_id', $templateId)
-                ->latest()
+                ->latest('id')
                 ->first();
 
             return $latest?->status === DocumentStatus::Verified;
