@@ -127,10 +127,12 @@ export default function CompanyJourneyPage() {
     }
   };
 
-  const handlePreview = async (doc: JourneyDocument) => {
-    if (!doc.document_id) return;
-    const documentId = doc.document_id;
-    setPreview({ documentId, title: doc.name, status: doc.status, url: null, mimeType: null, loading: true, error: null });
+  // Takes primitives, not a JourneyDocument, so both the current document's
+  // preview button and a past history entry's preview icon (which has no
+  // JourneyDocument of its own, just an id/status) can call the same
+  // function — reused as-is by JourneyTree's onPreviewDocument prop.
+  const handlePreview = async (documentId: string, title: string, status: string) => {
+    setPreview({ documentId, title, status, url: null, mimeType: null, loading: true, error: null });
     try {
       const result = await getPreviewUrl(documentId);
       setPreview((prev) => (prev && prev.documentId === documentId ? { ...prev, url: result.url, mimeType: result.mime_type, loading: false } : prev));
@@ -233,7 +235,7 @@ export default function CompanyJourneyPage() {
       <StatusBadge status={doc.status} />
       {doc.document_id && (
         <Tooltip title="Preview">
-          <IconButton size="small" onClick={() => handlePreview(doc)}>
+          <IconButton size="small" onClick={() => handlePreview(doc.document_id!, doc.name, doc.status)}>
             <VisibilityOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -274,6 +276,7 @@ export default function CompanyJourneyPage() {
         signingOffId={signingOff}
         renderDocAction={renderDocAction}
         extras={{ onAddExtra: openAddExtra, onEditExtra: openEditExtra, onDeleteExtra: setPendingDeleteExtra }}
+        onPreviewDocument={handlePreview}
       />
 
       <DocumentPreviewDialog

@@ -7,6 +7,12 @@ import Collapse from '@mui/material/Collapse';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Table from '@mui/material/Table';
+import TableHead from '@mui/material/TableHead';
+import TableBody from '@mui/material/TableBody';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -19,12 +25,14 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import StatusBadge from '@/components/ui/StatusBadge';
 import { cardGridContainer, cardGridItem } from '@/lib/motion';
 import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import { LevelMedal } from '@2bready/ui-core';
-import type { JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
+import { useTranslation } from '@/lib/i18n';
+import type { DocumentHistoryEntry, JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
 
 const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
 
@@ -48,6 +56,180 @@ function RollupChip({ milestone }: { milestone: JourneyMilestone }) {
   return <Chip label={status.label} size="small" color={status.color} variant="outlined" />;
 }
 
+// Same wording/keys as the templates editor's DocumentTemplateTree.tsx —
+// staff should see one consistent recurrence label whether they're editing
+// the shared taxonomy or reviewing one company's real documents against it.
+function useRecurrenceLabel(doc: JourneyDocument): string | null {
+  const { t } = useTranslation();
+
+  if (doc.recurrence_type === 'periodic_monthly') return t('journey_template.recurrence_kind.periodic_monthly');
+  if (doc.recurrence_type === 'periodic_annual') return t('journey_template.recurrence_kind.periodic_annual');
+  if (doc.recurrence_type === 'rolling') return t('journey_template.expires_in', { months: String(doc.expiry_months ?? '') });
+  return null;
+}
+
+function isPeriodic(doc: JourneyDocument): boolean {
+  return doc.recurrence_type === 'periodic_monthly' || doc.recurrence_type === 'periodic_annual';
+}
+
+function formatHistoryDate(value: string | null): string {
+  return value ? new Date(value).toLocaleDateString() : '—';
+}
+
+// One node per calendar period, newest first (already the array order) —
+// a connected line between nodes, a hollow dot + dashed connector for a
+// period with no filing at all (`is_missing`), matching the approved
+// design draft. Only periodic documents get this; rolling has no calendar
+// slot to be missing from (see HistoryTable below).
+function HistoryTimeline({ history, onPreview }: { history: DocumentHistoryEntry[]; onPreview?: (entry: DocumentHistoryEntry) => void }) {
+  const { t } = useTranslation();
+
+  return (
+    <Box sx={{ pl: 3.5 }}>
+      {history.map((entry, i) => (
+        <Box key={entry.id ?? entry.period_key ?? i} sx={{ position: 'relative', pb: i === history.length - 1 ? 0 : 1.5 }}>
+          {i !== history.length - 1 && (
+            <Box
+              sx={{
+                position: 'absolute',
+                left: 4,
+                top: 14,
+                bottom: -6,
+                width: '1px',
+                bgcolor: 'divider',
+                ...(entry.is_missing && { backgroundImage: 'linear-gradient(divider 60%, transparent 0)', backgroundSize: '1px 5px', backgroundRepeat: 'repeat-y', bgcolor: 'transparent' }),
+              }}
+            />
+          )}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: 4,
+              width: 9,
+              height: 9,
+              borderRadius: '50%',
+              bgcolor: entry.is_missing ? 'background.paper' : 'success.main',
+              boxShadow: (theme) => `0 0 0 2px ${entry.is_missing ? theme.palette.error.main : theme.palette.success.main}`,
+            }}
+          />
+          <Box className="flex items-center justify-between gap-2" sx={{ pl: 2.5 }}>
+            <Box>
+              <Box className="flex items-center gap-1">
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {entry.period_key}
+                </Typography>
+                {entry.is_current && <Chip label={t('journey.history_current_label')} size="small" variant="outlined" />}
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                {entry.is_missing ? t('journey.history_missing_caption') : formatHistoryDate(entry.verified_at ?? entry.created_at)}
+              </Typography>
+            </Box>
+            <Box className="flex items-center gap-1">
+              {entry.is_missing ? (
+                <Chip label={t('journey.history_missing_label')} size="small" color="error" variant="outlined" />
+              ) : (
+                <>
+                  <StatusBadge status={entry.status ?? 'pending'} />
+                  {entry.id && onPreview && (
+                    <Tooltip title="Preview">
+                      <IconButton size="small" onClick={() => onPreview(entry)}>
+                        <VisibilityOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+// Compact table for rolling documents — no calendar slot to label a row
+// with, just consecutive validity windows, newest first. The current
+// window is already excluded from `history` for rolling/one-time (it
+// drives the row's own status badge instead), so every row here is a
+// superseded past window.
+function HistoryTable({ history, onPreview }: { history: DocumentHistoryEntry[]; onPreview?: (entry: DocumentHistoryEntry) => void }) {
+  const { t } = useTranslation();
+
+  return (
+    <Box sx={{ pl: 3.5 }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ py: 0.5 }}>{t('journey.history_col_status')}</TableCell>
+            <TableCell sx={{ py: 0.5 }}>{t('journey.history_col_verified')}</TableCell>
+            <TableCell sx={{ py: 0.5 }}>{t('journey.history_col_expires')}</TableCell>
+            <TableCell sx={{ py: 0.5 }} />
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {history.map((entry, i) => (
+            <TableRow key={entry.id ?? i}>
+              <TableCell sx={{ py: 0.5 }}>
+                <StatusBadge status={entry.status ?? 'pending'} />
+              </TableCell>
+              <TableCell sx={{ py: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {formatHistoryDate(entry.verified_at ?? entry.created_at)}
+                </Typography>
+              </TableCell>
+              <TableCell sx={{ py: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {formatHistoryDate(entry.expires_at)}
+                </Typography>
+              </TableCell>
+              <TableCell sx={{ py: 0.5 }} align="right">
+                {entry.id && onPreview && (
+                  <Tooltip title="Preview">
+                    <IconButton size="small" onClick={() => onPreview(entry)}>
+                      <VisibilityOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
+// Collapsed by default — background context, not something that should
+// compete with the row's own current status for attention.
+function DocumentHistory({ doc, onPreview }: { doc: JourneyDocument; onPreview?: (entry: DocumentHistoryEntry) => void }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  if (doc.history.length === 0) return null;
+
+  return (
+    <Box sx={{ pl: 4 }}>
+      <Typography
+        component="button"
+        onClick={() => setOpen((v) => !v)}
+        variant="caption"
+        color="text.secondary"
+        sx={{ cursor: 'pointer', bgcolor: 'transparent', border: 'none', p: 0, textDecoration: 'underline' }}
+      >
+        {t('journey.view_history', { count: String(doc.history.length) })}
+      </Typography>
+      <Collapse in={open} timeout={150}>
+        {isPeriodic(doc) ? (
+          <HistoryTimeline history={doc.history} onPreview={onPreview} />
+        ) : (
+          <HistoryTable history={doc.history} onPreview={onPreview} />
+        )}
+      </Collapse>
+    </Box>
+  );
+}
+
 export type { JourneyDocument };
 export type RenderDocAction = (doc: JourneyDocument, ctx: { level: JourneyLevel; milestone: JourneyMilestone }) => React.ReactNode;
 
@@ -68,6 +250,7 @@ interface DocumentRowProps {
   milestone: JourneyMilestone;
   renderDocAction: RenderDocAction;
   extras?: ExtraRequirementActions;
+  onPreviewDocument?: (documentId: string, title: string, status: string) => void;
   isLastSibling: boolean;
 }
 
@@ -76,9 +259,10 @@ interface DocumentRowProps {
 // flattened. Edit/delete only render for this company's own extras
 // (company_id set): a global node's identity here means "shared taxonomy,"
 // only editable from the abstract editor, not this per-company view.
-function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, isLastSibling }: DocumentRowProps) {
+function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, onPreviewDocument, isLastSibling }: DocumentRowProps) {
   const children = [...doc.children].sort((a, b) => a.id.localeCompare(b.id));
   const isExtra = doc.company_id !== null;
+  const recurrenceLabel = useRecurrenceLabel(doc);
 
   return (
     <Box sx={{ pl: depth * 2.5 }}>
@@ -104,6 +288,7 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
           {!doc.is_required && ' (optional)'}
         </Typography>
         {isExtra && <Chip label="Extra" size="small" color="info" variant="outlined" />}
+        {recurrenceLabel && <Chip label={recurrenceLabel} size="small" variant="outlined" />}
         {extras && (
           <IconButton size="small" onClick={() => extras.onAddExtra(milestone.id, doc.id)} aria-label="Add extra sub-requirement">
             <AddIcon fontSize="small" />
@@ -121,6 +306,10 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
         )}
         {renderDocAction(doc, { level, milestone })}
       </Box>
+      <DocumentHistory
+        doc={doc}
+        onPreview={onPreviewDocument ? (entry) => entry.id && onPreviewDocument(entry.id, doc.name, entry.status ?? 'expired') : undefined}
+      />
       {children.map((child, i) => (
         <DocumentRow
           key={child.id}
@@ -130,6 +319,7 @@ function DocumentRow({ doc, depth, level, milestone, renderDocAction, extras, is
           milestone={milestone}
           renderDocAction={renderDocAction}
           extras={extras}
+          onPreviewDocument={onPreviewDocument}
           isLastSibling={i === children.length - 1}
         />
       ))}
@@ -144,9 +334,10 @@ interface MilestoneRowProps {
   signingOffId: string | null;
   renderDocAction: RenderDocAction;
   extras?: ExtraRequirementActions;
+  onPreviewDocument?: (documentId: string, title: string, status: string) => void;
 }
 
-function MilestoneRow({ milestone, level, onSignOff, signingOffId, renderDocAction, extras }: MilestoneRowProps) {
+function MilestoneRow({ milestone, level, onSignOff, signingOffId, renderDocAction, extras, onPreviewDocument }: MilestoneRowProps) {
   const [open, setOpen] = useState(milestoneHasActivity(milestone));
   const hasDocuments = milestone.documents.length > 0;
   const unlocked = level.unlocked;
@@ -196,6 +387,7 @@ function MilestoneRow({ milestone, level, onSignOff, signingOffId, renderDocActi
                   milestone={milestone}
                   renderDocAction={renderDocAction}
                   extras={extras}
+                  onPreviewDocument={onPreviewDocument}
                   isLastSibling={i === milestone.documents.length - 1}
                 />
               ))}
@@ -235,9 +427,10 @@ interface LevelAccordionProps {
   signingOffId: string | null;
   renderDocAction: RenderDocAction;
   extras?: ExtraRequirementActions;
+  onPreviewDocument?: (documentId: string, title: string, status: string) => void;
 }
 
-function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extras }: LevelAccordionProps) {
+function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extras, onPreviewDocument }: LevelAccordionProps) {
   const totalMilestones = level.milestones.length;
   const completedMilestones = level.milestones.filter((m) => m.completed).length;
   const pct = totalMilestones === 0 ? 0 : Math.round((completedMilestones / totalMilestones) * 100);
@@ -312,6 +505,7 @@ function LevelAccordion({ level, onSignOff, signingOffId, renderDocAction, extra
             signingOffId={signingOffId}
             renderDocAction={renderDocAction}
             extras={extras}
+            onPreviewDocument={onPreviewDocument}
           />
         ))}
       </AccordionDetails>
@@ -331,6 +525,10 @@ export interface JourneyTreeProps {
    * anywhere this tree is read-only (or shown to a company_owner/member, who
    * never manage extras themselves; they're "added by 2bReady"). */
   extras?: ExtraRequirementActions;
+  /** Opens the same preview dialog the main row's action uses, for a past
+   * history entry's document id — omitted anywhere history previewing isn't
+   * wired up (falls back to no preview icon on history rows). */
+  onPreviewDocument?: (documentId: string, title: string, status: string) => void;
 }
 
 // One Accordion per level, slim indented rows for milestones/documents —
@@ -341,7 +539,7 @@ export interface JourneyTreeProps {
 // renderDocAction) rather than linking out to a separate Documents tab. A
 // milestone with no documents at all falls back to a manual sign-off
 // checkbox — see MilestoneRow.
-export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction = DefaultDocAction, extras }: JourneyTreeProps) {
+export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction = DefaultDocAction, extras, onPreviewDocument }: JourneyTreeProps) {
   return (
     <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {levels.map((level) => (
@@ -352,6 +550,7 @@ export function JourneyTree({ levels, onSignOff, signingOffId, renderDocAction =
             signingOffId={signingOffId}
             renderDocAction={renderDocAction}
             extras={extras}
+            onPreviewDocument={onPreviewDocument}
           />
         </Box>
       ))}
