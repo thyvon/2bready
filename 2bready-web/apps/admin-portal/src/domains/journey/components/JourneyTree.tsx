@@ -2,17 +2,13 @@
 
 import { useState } from 'react';
 import Box from '@mui/material/Box';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
-import TableBody from '@mui/material/TableBody';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -21,8 +17,11 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import CheckIcon from '@mui/icons-material/Check';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -32,6 +31,7 @@ import { cardGridContainer, cardGridItem } from '@/lib/motion';
 import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import { LevelMedal } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
+import { formatDate } from '@/lib/utils';
 import type { DocumentHistoryEntry, JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
 
 const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
@@ -68,164 +68,214 @@ function useRecurrenceLabel(doc: JourneyDocument): string | null {
   return null;
 }
 
-function isPeriodic(doc: JourneyDocument): boolean {
-  return doc.recurrence_type === 'periodic_monthly' || doc.recurrence_type === 'periodic_annual';
-}
-
+// Same shared formatter the rest of admin-portal already uses (users/audit
+// log/payments pages) — "Jul 23, 2026", not a raw locale-default like
+// "7/23/2026".
 function formatHistoryDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : '—';
+  return value ? formatDate(value) : '—';
 }
 
-// One node per calendar period, newest first (already the array order) —
-// a connected line between nodes, a hollow dot + dashed connector for a
-// period with no filing at all (`is_missing`), matching the approved
-// design draft. Only periodic documents get this; rolling has no calendar
-// slot to be missing from (see HistoryTable below).
-function HistoryTimeline({ history, onPreview }: { history: DocumentHistoryEntry[]; onPreview?: (entry: DocumentHistoryEntry) => void }) {
+// A periodic_monthly period_key is "2026-07" (needs a real Date, not a
+// calendar day, since a month has no day-of-month of its own) — "Jul 2026"
+// reads better than the raw key. periodic_annual's period_key ("2026") is
+// already the label as-is.
+function formatMonthlyPeriodLabel(periodKey: string): string {
+  const [year, month] = periodKey.split('-').map(Number);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(year, month - 1, 1));
+}
+
+function periodLabel(entry: DocumentHistoryEntry, recurrenceType: JourneyDocument['recurrence_type']): string {
+  if (recurrenceType === 'periodic_monthly') return entry.period_key ? formatMonthlyPeriodLabel(entry.period_key) : '';
+  if (recurrenceType === 'periodic_annual') return entry.period_key ?? '';
+  return formatRollingLabel(entry);
+}
+
+// Rolling has no period_key (no calendar slot), so its own date range is the
+// entry's label — "Feb 23, 2026 – Jun 23, 2026" — instead of a period name.
+function formatRollingLabel(entry: DocumentHistoryEntry): string {
+  return `${formatHistoryDate(entry.verified_at ?? entry.created_at)} – ${formatHistoryDate(entry.expires_at)}`;
+}
+
+// A period/window nests exactly like a real sub-document (indent + left
+// guide line, see DocumentRow's own `children` recursion below) — one
+// nesting language for both, not a separate timeline/table widget.
+function HistorySubRow({
+  entry,
+  recurrenceType,
+  onPreview,
+}: {
+  entry: DocumentHistoryEntry;
+  recurrenceType: JourneyDocument['recurrence_type'];
+  onPreview?: (entry: DocumentHistoryEntry) => void;
+}) {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ pl: 3.5 }}>
-      {history.map((entry, i) => (
-        <Box key={entry.id ?? entry.period_key ?? i} sx={{ position: 'relative', pb: i === history.length - 1 ? 0 : 1.5 }}>
-          {i !== history.length - 1 && (
-            <Box
-              sx={{
-                position: 'absolute',
-                left: 4,
-                top: 14,
-                bottom: -6,
-                width: '1px',
-                bgcolor: 'divider',
-                ...(entry.is_missing && { backgroundImage: 'linear-gradient(divider 60%, transparent 0)', backgroundSize: '1px 5px', backgroundRepeat: 'repeat-y', bgcolor: 'transparent' }),
-              }}
-            />
-          )}
-          <Box
-            sx={{
-              position: 'absolute',
-              left: 0,
-              top: 4,
-              width: 9,
-              height: 9,
-              borderRadius: '50%',
-              bgcolor: entry.is_missing ? 'background.paper' : 'success.main',
-              boxShadow: (theme) => `0 0 0 2px ${entry.is_missing ? theme.palette.error.main : theme.palette.success.main}`,
-            }}
-          />
-          <Box className="flex items-center justify-between gap-2" sx={{ pl: 2.5 }}>
-            <Box>
-              <Box className="flex items-center gap-1">
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {entry.period_key}
-                </Typography>
-                {entry.is_current && <Chip label={t('journey.history_current_label')} size="small" variant="outlined" />}
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                {entry.is_missing ? t('journey.history_missing_caption') : formatHistoryDate(entry.verified_at ?? entry.created_at)}
-              </Typography>
-            </Box>
-            <Box className="flex items-center gap-1">
-              {entry.is_missing ? (
-                <Chip label={t('journey.history_missing_label')} size="small" color="error" variant="outlined" />
-              ) : (
-                <>
-                  <StatusBadge status={entry.status ?? 'pending'} />
-                  {entry.id && onPreview && (
-                    <Tooltip title="Preview">
-                      <IconButton size="small" onClick={() => onPreview(entry)}>
-                        <VisibilityOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </>
-              )}
-            </Box>
+    <Box
+      className="flex items-center justify-between gap-2"
+      sx={{
+        py: 0.65,
+        px: 1,
+        borderRadius: '0 6px 6px 0',
+        bgcolor: entry.is_missing ? (theme) => alpha(theme.palette.error.main, 0.08) : 'transparent',
+        '&:hover': { bgcolor: entry.is_missing ? (theme) => alpha(theme.palette.error.main, 0.08) : 'var(--2br-overlay-row-hover)' },
+      }}
+    >
+      <Box className="flex items-center gap-2" sx={{ minWidth: 0 }}>
+        <Box
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            flex: 'none',
+            bgcolor: entry.is_missing ? 'background.paper' : 'success.main',
+            boxShadow: (theme) =>
+              entry.is_missing ? `0 0 0 2px ${theme.palette.error.main}` : entry.is_current ? `0 0 0 3px ${theme.palette.success.light}` : 'none',
+          }}
+        />
+        <Box sx={{ minWidth: 0 }}>
+          <Box className="flex items-center gap-1.5">
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {periodLabel(entry, recurrenceType)}
+            </Typography>
+            {entry.is_current && <Chip label={t('journey.history_current_label')} size="small" variant="outlined" color="success" />}
           </Box>
+          {entry.is_missing ? (
+            <Typography variant="caption" sx={{ color: 'error.main', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <ErrorOutlineIcon sx={{ fontSize: 13 }} />
+              {t('journey.history_missing_caption')}
+            </Typography>
+          ) : (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <CheckIcon sx={{ fontSize: 12 }} />
+              {formatHistoryDate(entry.verified_at ?? entry.created_at)}
+            </Typography>
+          )}
         </Box>
+      </Box>
+      <Box className="flex items-center gap-1" sx={{ flex: 'none' }}>
+        {entry.is_missing ? (
+          <Chip label={t('journey.history_missing_label')} size="small" color="error" variant="outlined" />
+        ) : (
+          <>
+            <StatusBadge status={entry.status ?? 'pending'} />
+            {entry.id && onPreview && (
+              <Tooltip title="Preview">
+                <IconButton size="small" onClick={() => onPreview(entry)}>
+                  <VisibilityOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function HistorySubList({
+  entries,
+  recurrenceType,
+  onPreview,
+}: {
+  entries: DocumentHistoryEntry[];
+  recurrenceType: JourneyDocument['recurrence_type'];
+  onPreview?: (entry: DocumentHistoryEntry) => void;
+}) {
+  return (
+    <Box sx={{ pl: 2.75, borderLeft: '2px solid', borderColor: 'divider', ml: 0.75 }}>
+      {entries.map((entry, i) => (
+        <HistorySubRow key={entry.id ?? entry.period_key ?? i} entry={entry} recurrenceType={recurrenceType} onPreview={onPreview} />
       ))}
     </Box>
   );
 }
 
-// Compact table for rolling documents — no calendar slot to label a row
-// with, just consecutive validity windows, newest first. The current
-// window is already excluded from `history` for rolling/one-time (it
-// drives the row's own status badge instead), so every row here is a
-// superseded past window.
-function HistoryTable({ history, onPreview }: { history: DocumentHistoryEntry[]; onPreview?: (entry: DocumentHistoryEntry) => void }) {
+// A monthly document owes 12 periods/year — too many sub-rows to show by
+// default. Collapses to a glanceable strip (most recent MONTHLY_STRIP_SIZE
+// periods, oldest-to-newest left-to-right) with a gap count, one click from
+// the same sub-row list annual uses. Annual/rolling never reach this —
+// 2-4 entries is small enough to just show (see DocumentHistory below).
+const MONTHLY_STRIP_SIZE = 6;
+
+function MonthlyStrip({ history, onExpand }: { history: DocumentHistoryEntry[]; onExpand: () => void }) {
   const { t } = useTranslation();
+  const ordered = [...history.slice(0, MONTHLY_STRIP_SIZE)].reverse();
+  const gaps = ordered.filter((entry) => entry.is_missing).length;
 
   return (
-    <Box sx={{ pl: 3.5 }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ py: 0.5 }}>{t('journey.history_col_status')}</TableCell>
-            <TableCell sx={{ py: 0.5 }}>{t('journey.history_col_verified')}</TableCell>
-            <TableCell sx={{ py: 0.5 }}>{t('journey.history_col_expires')}</TableCell>
-            <TableCell sx={{ py: 0.5 }} />
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {history.map((entry, i) => (
-            <TableRow key={entry.id ?? i}>
-              <TableCell sx={{ py: 0.5 }}>
-                <StatusBadge status={entry.status ?? 'pending'} />
-              </TableCell>
-              <TableCell sx={{ py: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {formatHistoryDate(entry.verified_at ?? entry.created_at)}
-                </Typography>
-              </TableCell>
-              <TableCell sx={{ py: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {formatHistoryDate(entry.expires_at)}
-                </Typography>
-              </TableCell>
-              <TableCell sx={{ py: 0.5 }} align="right">
-                {entry.id && onPreview && (
-                  <Tooltip title="Preview">
-                    <IconButton size="small" onClick={() => onPreview(entry)}>
-                      <VisibilityOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <Box className="flex items-center gap-2" sx={{ pl: 2.75 }}>
+      <Box className="flex gap-0.5">
+        {ordered.map((entry, i) => (
+          <Box
+            key={entry.id ?? entry.period_key ?? i}
+            title={entry.period_key ?? undefined}
+            sx={{
+              width: 13,
+              height: 13,
+              borderRadius: '3px',
+              bgcolor: entry.is_missing ? 'error.main' : 'success.main',
+              opacity: entry.is_missing ? 0.5 : 0.85,
+              ...(entry.is_current && { boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}` }),
+            }}
+          />
+        ))}
+      </Box>
+      <Typography variant="caption" color="text.secondary">
+        {ordered[0] && formatMonthlyPeriodLabel(ordered[0].period_key ?? '')} → {ordered[ordered.length - 1] && formatMonthlyPeriodLabel(ordered[ordered.length - 1].period_key ?? '')}
+        {gaps > 0 && (
+          <>
+            {' · '}
+            <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              {t('journey.history_gap_count', { count: String(gaps) })}
+            </Box>
+          </>
+        )}
+      </Typography>
+      <Box
+        component="button"
+        onClick={onExpand}
+        sx={{ cursor: 'pointer', bgcolor: 'transparent', border: 'none', p: 0, color: 'primary.main', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}
+      >
+        {t('journey.history_show_all', { count: String(history.length) })}
+        <ChevronRightIcon sx={{ fontSize: 14 }} />
+      </Box>
     </Box>
   );
 }
 
-// Collapsed by default — background context, not something that should
-// compete with the row's own current status for attention.
+// Always open for annual/rolling (2-4 entries reads fine by default); a
+// monthly document starts collapsed as MonthlyStrip instead, and its
+// expanded list itself only shows the most recent MONTHLY_STRIP_SIZE
+// entries until "show earlier months" is clicked — 12+ sub-rows at once
+// would bury the checklist row it belongs to.
 function DocumentHistory({ doc, onPreview }: { doc: JourneyDocument; onPreview?: (entry: DocumentHistoryEntry) => void }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const monthly = doc.recurrence_type === 'periodic_monthly';
+  const [expanded, setExpanded] = useState(!monthly);
+  const [showAll, setShowAll] = useState(false);
 
   if (doc.history.length === 0) return null;
 
+  if (monthly && !expanded) {
+    return <MonthlyStrip history={doc.history} onExpand={() => setExpanded(true)} />;
+  }
+
+  const visible = monthly && !showAll ? doc.history.slice(0, MONTHLY_STRIP_SIZE) : doc.history;
+  const remaining = doc.history.length - visible.length;
+
   return (
-    <Box sx={{ pl: 4 }}>
-      <Typography
-        component="button"
-        onClick={() => setOpen((v) => !v)}
-        variant="caption"
-        color="text.secondary"
-        sx={{ cursor: 'pointer', bgcolor: 'transparent', border: 'none', p: 0, textDecoration: 'underline' }}
-      >
-        {t('journey.view_history', { count: String(doc.history.length) })}
-      </Typography>
-      <Collapse in={open} timeout={150}>
-        {isPeriodic(doc) ? (
-          <HistoryTimeline history={doc.history} onPreview={onPreview} />
-        ) : (
-          <HistoryTable history={doc.history} onPreview={onPreview} />
-        )}
-      </Collapse>
+    <Box>
+      <HistorySubList entries={visible} recurrenceType={doc.recurrence_type} onPreview={onPreview} />
+      {remaining > 0 && (
+        <Box
+          component="button"
+          onClick={() => setShowAll(true)}
+          sx={{ cursor: 'pointer', bgcolor: 'transparent', border: 'none', p: 0, ml: 4.75, mt: 0.5, color: 'primary.main', fontSize: 11, fontWeight: 600 }}
+        >
+          {t('journey.history_show_earlier', { count: String(remaining) })}
+        </Box>
+      )}
     </Box>
   );
 }
