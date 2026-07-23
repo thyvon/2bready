@@ -293,11 +293,15 @@ function DocumentHistory({
   onBackfillUpload?: (doc: JourneyDocument, entry: DocumentHistoryEntry) => void;
 }) {
   const { t } = useTranslation();
+  // The current period is already the doc template row's own status/action
+  // (StatusBadge + Preview/Upload above) — repeating it here would show the
+  // same document twice under one name.
+  const pastHistory = doc.history.filter((entry) => !entry.is_current);
   const monthly = doc.recurrence_type === 'periodic_monthly';
   const [expanded, setExpanded] = useState(!monthly);
   const [showAll, setShowAll] = useState(false);
 
-  if (doc.history.length === 0) return null;
+  if (pastHistory.length === 0) return null;
 
   // Rolling has no calendar slot to backfill into (only "is there a
   // currently-valid upload") — only a periodic template's real past gap
@@ -306,11 +310,11 @@ function DocumentHistory({
   const onBackfill = onBackfillUpload && canBackfill ? (entry: DocumentHistoryEntry) => onBackfillUpload(doc, entry) : undefined;
 
   if (monthly && !expanded) {
-    return <MonthlyStrip history={doc.history} onExpand={() => setExpanded(true)} />;
+    return <MonthlyStrip history={pastHistory} onExpand={() => setExpanded(true)} />;
   }
 
-  const visible = monthly && !showAll ? doc.history.slice(0, MONTHLY_STRIP_SIZE) : doc.history;
-  const remaining = doc.history.length - visible.length;
+  const visible = monthly && !showAll ? pastHistory.slice(0, MONTHLY_STRIP_SIZE) : pastHistory;
+  const remaining = pastHistory.length - visible.length;
 
   return (
     <Box>
