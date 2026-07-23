@@ -22,6 +22,7 @@ use Illuminate\Support\Collection;
  * @property bool $is_required
  * @property RecurrenceType $recurrence_type
  * @property int|null $expiry_months
+ * @property \Illuminate\Support\Carbon|null $effective_since
  *
  * @use HasFactory<DocumentTemplateFactory>
  */
@@ -45,6 +46,7 @@ class DocumentTemplate extends Model
         'is_required',
         'recurrence_type',
         'expiry_months',
+        'effective_since',
         'sort_order',
     ];
 
@@ -55,6 +57,7 @@ class DocumentTemplate extends Model
             'is_required' => 'boolean',
             'recurrence_type' => RecurrenceType::class,
             'expiry_months' => 'integer',
+            'effective_since' => 'date',
             'sort_order' => 'integer',
         ];
     }

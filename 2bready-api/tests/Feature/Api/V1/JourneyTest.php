@@ -249,14 +249,14 @@ it('surfaces a gap-aware period ledger for a periodic document, anchored to jour
     expect($history['2024']['is_missing'])->toBeFalse();
 });
 
-it('anchors a periodic document\'s ledger to its own creation date when added after journey activation', function () {
+it('anchors a periodic document\'s ledger to its own effective_since when set after journey activation', function () {
     $this->journey->update(['activated_at' => '2020-01-01']);
     $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
     $template = DocumentTemplate::factory()->create([
         'milestone_id' => $this->l1MilestoneA->id,
         'name' => 'New Annual Requirement',
         'recurrence_type' => 'periodic_annual',
-        'created_at' => now()->subYear(),
+        'effective_since' => now()->subYear(),
     ]);
 
     $response = $this->actingAs($owner)->getJson('/api/v1/journey');
@@ -264,9 +264,9 @@ it('anchors a periodic document\'s ledger to its own creation date when added af
     $levels = collect($response->json('data.levels'))->keyBy('code');
     $doc = collect($levels['L1']['milestones'][0]['documents'])->firstWhere('name', 'New Annual Requirement');
 
-    // Anchored to the template's own creation (last year), not the journey's
-    // 2020 activation — a requirement that didn't exist yet can't have a
-    // "missing" period before it did.
+    // Anchored to the template's own effective_since (last year), not the
+    // journey's 2020 activation — a requirement that didn't exist yet can't
+    // have a "missing" period before it did.
     expect($doc['history'])->toHaveCount(2);
 });
 

@@ -1211,6 +1211,8 @@ export interface components {
             is_required: boolean;
             recurrence_type: string;
             expiry_months: number | null;
+            /** Format: date-time */
+            effective_since: string | null;
             sort_order: number;
             latest_document: components["schemas"]["DocumentResource"] | null;
             children?: components["schemas"]["DocumentTemplateResource"][];
@@ -1302,6 +1304,13 @@ export interface components {
                          *     of silently resetting it.
                          */
                         expiry_months: number | null;
+                        /**
+                         * Format: date-time
+                         * @description Only meaningful for periodic types — same "edit extra
+                         *      requirement" preload reasoning as expiry_months above. See
+                         *     ComplianceAnchorResolver for what this actually drives.
+                         */
+                        effective_since: string | null;
                         status: string | "pending";
                         /**
                          * @description Null = shared taxonomy; set = this one company's own extra
@@ -1535,6 +1544,8 @@ export interface components {
             is_required?: boolean;
             recurrence_type?: components["schemas"]["RecurrenceType"];
             expiry_months?: number | null;
+            /** Format: date-time */
+            effective_since?: string | null;
             sort_order?: number;
         };
         /** StoreIndustryRequest */
@@ -1675,6 +1686,8 @@ export interface components {
             is_required?: boolean;
             recurrence_type?: components["schemas"]["RecurrenceType"];
             expiry_months?: number | null;
+            /** Format: date-time */
+            effective_since?: string | null;
             sort_order?: number;
         };
         /** UpdateGoogleOAuthSettingRequest */

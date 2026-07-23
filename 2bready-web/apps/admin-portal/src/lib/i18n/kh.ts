@@ -370,6 +370,8 @@ const kh: Record<keyof typeof en, string> = {
   'journey_template.recurrence_kind.periodic_monthly': 'ដាក់ស្នើប្រចាំខែ',
   'journey_template.recurrence_kind.periodic_annual': 'ដាក់ស្នើប្រចាំឆ្នាំ',
   'journey_template.expiry_custom_months': 'ត្រូវបន្តរៀងរាល់ (ខែ)',
+  'journey_template.effective_since_label': 'មានប្រសិទ្ធភាពចាប់ពី',
+  'journey_template.effective_since_hint': 'ពេលដែលតម្រូវការជាក់លាក់នេះចាប់ផ្តើមអនុវត្ត — ទុកឲ្យទទេដើម្បីប្រើកាលបរិច្ឆេទចាប់ផ្តើមអនុលោមភាពរបស់ក្រុមហ៊ុន។',
   'journey_template.doc_create_success': 'ឯកសារត្រូវបានបន្ថែម។',
   'journey_template.doc_update_success': 'ឯកសារត្រូវបានធ្វើបច្ចុប្បន្នភាព។',
   'journey_template.reorder_success': 'លំដាប់ត្រូវបានធ្វើបច្ចុប្បន្នភាព។',

@@ -19,6 +19,7 @@ class UpdateDocumentTemplateRequest extends FormRequest
             'is_required' => ['sometimes', 'boolean'],
             'recurrence_type' => ['sometimes', Rule::enum(RecurrenceType::class)],
             'expiry_months' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'effective_since' => ['sometimes', 'nullable', 'date'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
     }

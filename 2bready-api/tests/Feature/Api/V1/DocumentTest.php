@@ -298,9 +298,7 @@ it('does not let one company\'s extra required document block or leak into anoth
 // ─── Backfill (compliance start date + past-period upload) ─────────────────
 
 it('lets a company_owner backfill-upload a document for a real missing period', function () {
-    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
-    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
-    $this->docTemplate->save();
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
     $this->company->update(['compliance_start_date' => '2023-01-01']);
     $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
     $file = UploadedFile::fake()->create('patent-tax-2024.pdf', 500, 'application/pdf');
@@ -319,9 +317,7 @@ it('lets a company_owner backfill-upload a document for a real missing period', 
 });
 
 it('rejects a backfill period that is not a real missing gap', function () {
-    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
-    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
-    $this->docTemplate->save();
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
     $this->company->update(['compliance_start_date' => '2023-01-01']);
     $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
     $file = UploadedFile::fake()->create('doc.pdf', 500, 'application/pdf');
@@ -335,9 +331,7 @@ it('rejects a backfill period that is not a real missing gap', function () {
 });
 
 it('rejects backfilling the current period — that stays the plain upload flow', function () {
-    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
-    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
-    $this->docTemplate->save();
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
     $this->company->update(['compliance_start_date' => '2023-01-01']);
     $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
     $file = UploadedFile::fake()->create('doc.pdf', 500, 'application/pdf');
@@ -361,9 +355,7 @@ it('rejects a backfill period_key for a non-periodic document', function () {
 });
 
 it('verifies a backfilled document with the period\'s own calendar expiry, not now', function () {
-    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
-    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
-    $this->docTemplate->save();
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
     $admin = User::factory()->admin()->create();
     $document = Document::factory()->create([
         'company_id' => $this->company->id,
@@ -383,9 +375,7 @@ it('verifies a backfilled document with the period\'s own calendar expiry, not n
 });
 
 it('does not complete a milestone while a periodic template still has a real historical gap', function () {
-    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
-    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
-    $this->docTemplate->save();
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
     $this->company->update(['compliance_start_date' => '2023-01-01']);
     $admin = User::factory()->admin()->create();
 
@@ -404,9 +394,7 @@ it('does not complete a milestone while a periodic template still has a real his
 });
 
 it('completes a milestone once every historical gap is backfilled and verified', function () {
-    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
-    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
-    $this->docTemplate->save();
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
     $this->company->update(['compliance_start_date' => (int) now()->format('Y') . '-01-01']);
     $admin = User::factory()->admin()->create();
 

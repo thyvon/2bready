@@ -41,7 +41,7 @@ import {
 import { JourneyTree } from '@/domains/journey/components/JourneyTree';
 import type { Journey, JourneyDocument } from '@/domains/journey/types';
 import { documentTemplateFormSchema, documentTemplateFormDefaults, type DocumentTemplateFormInput } from '@/domains/journey-template/schemas';
-import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
+import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, recurrenceKindIsPeriodic, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
 import { verifyDocument, rejectDocument, getPreviewUrl, uploadDocument } from '@/domains/document/api';
 import { DocumentPreviewDialog } from '@/domains/document/components/DocumentPreviewDialog';
 import { getApiError } from '@/lib/utils';
@@ -214,6 +214,7 @@ export default function CompanyJourneyPage() {
       is_required: doc.is_required,
       recurrence_type: doc.recurrence_type,
       expiry_months: doc.expiry_months ?? undefined,
+      effective_since: doc.effective_since ? doc.effective_since.slice(0, 10) : '',
       sort_order: 0,
     });
     setExtraRecurrenceKind(doc.recurrence_type);
@@ -225,7 +226,7 @@ export default function CompanyJourneyPage() {
     setExtraServerError('');
     try {
       const parsed = documentTemplateFormSchema.parse(data);
-      const payload = { ...parsed, description: parsed.description || undefined };
+      const payload = { ...parsed, description: parsed.description || undefined, effective_since: parsed.effective_since || undefined };
       if (extraDialog.editing) {
         await updateExtraRequirement(extraDialog.editing.id, payload);
       } else if (extraDialog.parentDocumentId) {
@@ -410,6 +411,19 @@ export default function CompanyJourneyPage() {
                   error={!!extraForm.formState.errors.expiry_months}
                   helperText={extraForm.formState.errors.expiry_months?.message}
                   {...extraForm.register('expiry_months')}
+                />
+              </Box>
+            )}
+            {recurrenceKindIsPeriodic(extraRecurrenceKind) && (
+              <Box>
+                <FieldLabel>{t('journey_template.effective_since_label')}</FieldLabel>
+                <FormTextField
+                  type="date"
+                  fullWidth
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  helperText={t('journey_template.effective_since_hint')}
+                  error={!!extraForm.formState.errors.effective_since}
+                  {...extraForm.register('effective_since')}
                 />
               </Box>
             )}

@@ -11,3 +11,10 @@ export const RECURRENCE_KINDS: RecurrenceKind[] = ['one_time', 'rolling', 'perio
 export function recurrenceKindNeedsMonths(kind: RecurrenceKind): boolean {
   return kind === 'rolling';
 }
+
+// Only periodic types have a calendar slot that can be "missing" at all —
+// one_time/rolling have no period concept, so an effective-since floor is
+// meaningless for them.
+export function recurrenceKindIsPeriodic(kind: RecurrenceKind): boolean {
+  return kind === 'periodic_monthly' || kind === 'periodic_annual';
+}

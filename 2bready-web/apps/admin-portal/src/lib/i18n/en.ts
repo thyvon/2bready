@@ -366,6 +366,8 @@ const en = {
   'journey_template.recurrence_kind.periodic_monthly': 'Monthly filing',
   'journey_template.recurrence_kind.periodic_annual': 'Annual filing',
   'journey_template.expiry_custom_months': 'Renews every (months)',
+  'journey_template.effective_since_label': 'Effective since',
+  'journey_template.effective_since_hint': "When this specific requirement started applying — leave blank to use the company's own compliance start date.",
   'journey_template.doc_create_success': 'Document added.',
   'journey_template.doc_update_success': 'Document updated.',
   'journey_template.reorder_success': 'Order updated.',

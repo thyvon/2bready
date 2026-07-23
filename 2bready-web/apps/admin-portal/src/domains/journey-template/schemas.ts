@@ -63,6 +63,12 @@ export const documentTemplateFormSchema = z
     is_required: z.boolean(),
     recurrence_type: z.enum(['one_time', 'rolling', 'periodic_monthly', 'periodic_annual']),
     expiry_months: optionalMonths,
+    // Only meaningful for periodic_monthly/periodic_annual — see
+    // ComplianceAnchorResolver on the backend. Left blank, gap detection
+    // defers entirely to the company's own compliance_start_date; set,
+    // it's a floor for this one requirement only (can push the anchor
+    // later than a company's own date, never earlier).
+    effective_since: z.string().optional().or(z.literal('')),
     sort_order: sortOrder,
   })
   // Only 'rolling' has an admin-configurable window — periodic cadences are
@@ -79,5 +85,6 @@ export const documentTemplateFormDefaults: DocumentTemplateFormInput = {
   is_required: true,
   recurrence_type: 'one_time',
   expiry_months: undefined,
+  effective_since: '',
   sort_order: 0,
 };

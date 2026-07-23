@@ -31,6 +31,7 @@ export interface JourneyDocument {
   is_required: boolean;
   recurrence_type: 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
   expiry_months: number | null;
+  effective_since: string | null;
   status: string;
   company_id: string | null;
   history: DocumentHistoryEntry[];

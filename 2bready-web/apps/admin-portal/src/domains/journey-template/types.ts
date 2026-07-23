@@ -36,6 +36,7 @@ export type StoreDocumentTemplatePayload = {
   is_required?: boolean;
   recurrence_type?: 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
   expiry_months?: number;
+  effective_since?: string;
   sort_order?: number;
 };
 export type UpdateDocumentTemplatePayload = Partial<StoreDocumentTemplatePayload>;

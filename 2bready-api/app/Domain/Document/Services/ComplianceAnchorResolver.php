@@ -17,22 +17,32 @@ use Carbon\CarbonInterface;
  * (deciding whether a milestone may complete). One formula, one place, so
  * all three always agree on what counts as "owed."
  *
- * A company can't owe a filing before the requirement itself existed
- * (template.created_at) or before its own compliance obligation began.
  * `compliance_start_date` — when set — is the company's real history (e.g.
  * incorporation), which may predate when it joined 2bReady; left null, the
- * journey's own activation date is the anchor, reproducing the
- * pre-backfill-feature behavior exactly.
+ * journey's own activation date is the anchor.
+ *
+ * `template.effective_since` is a deliberate, admin-set override for one
+ * specific requirement that genuinely started applying at its own later
+ * date (e.g. a regulation introduced after some companies already
+ * onboarded) — it can only push the anchor *later* than the company's own
+ * anchor, never earlier. Left null (the default), a template defers
+ * entirely to the company's own anchor. This deliberately does NOT use
+ * template.created_at (the row's insertion date) as a floor — that's an
+ * implementation detail, not a business fact, and would silently defeat
+ * compliance_start_date for any template created after this feature
+ * shipped (which, this week, is every real one).
  */
 class ComplianceAnchorResolver
 {
     public function resolve(Company $company, ?Journey $journey, DocumentTemplate $template): CarbonInterface
     {
         $journeyActivatedAt = $journey?->activated_at ?? now();
-        $complianceAnchor = $company->compliance_start_date ?? $journeyActivatedAt;
+        $companyAnchor = $company->compliance_start_date ?? $journeyActivatedAt;
 
-        return $template->created_at->greaterThan($complianceAnchor)
-            ? $template->created_at
-            : $complianceAnchor;
+        if ($template->effective_since && $template->effective_since->greaterThan($companyAnchor)) {
+            return $template->effective_since;
+        }
+
+        return $companyAnchor;
     }
 }

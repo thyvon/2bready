@@ -111,6 +111,10 @@ class JourneyResource extends JsonResource
             // extra requirement" dialog can preload the real window instead
             // of silently resetting it.
             'expiry_months' => $template->expiry_months,
+            // Only meaningful for periodic types — same "edit extra
+            // requirement" preload reasoning as expiry_months above. See
+            // ComplianceAnchorResolver for what this actually drives.
+            'effective_since' => $template->effective_since,
             'status' => $latestDocument?->status->value ?? 'pending',
             // Null = shared taxonomy; set = this one company's own extra
             // requirement. Staff's per-company Journey tab uses this to know
