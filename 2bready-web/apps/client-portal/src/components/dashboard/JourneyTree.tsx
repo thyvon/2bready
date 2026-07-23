@@ -20,7 +20,7 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
-import UploadOutlinedIcon from '@mui/icons-material/UploadOutlined';
+import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { GlowButton, StatusBadge, LevelMedal, cardGridContainer, cardGridItem, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
 import { TIER_LABELS, type Tier } from '@/lib/journey-data';

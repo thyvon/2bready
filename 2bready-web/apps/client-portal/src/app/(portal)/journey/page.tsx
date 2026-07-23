@@ -9,7 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { motion } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
-import UploadOutlinedIcon from '@mui/icons-material/UploadOutlined';
+import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';

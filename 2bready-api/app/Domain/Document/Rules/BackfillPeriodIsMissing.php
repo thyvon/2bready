@@ -35,7 +35,14 @@ class BackfillPeriodIsMissing implements ValidationRule
         /** @var \Illuminate\Http\Request $request */
         $request = request();
         $template = DocumentTemplate::query()->find($request->input('document_template_id'));
-        $company = Company::query()->find($request->user()?->current_company_id);
+
+        // Same resolution DocumentController::store uses — staff has no
+        // current_company_id of their own and must say which company this
+        // backfill is for explicitly.
+        $companyId = $request->user()?->hasAnyRole(['admin', 'staff', 'finance'])
+            ? $request->input('company_id')
+            : $request->user()?->current_company_id;
+        $company = Company::query()->find($companyId);
 
         if (! $template || ! $company) {
             $fail('The selected document could not be validated.');

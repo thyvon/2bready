@@ -19,10 +19,12 @@ import Tooltip from '@mui/material/Tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ConfirmDialog } from '@2bready/ui-core';
+import { ConfirmDialog, DocumentUploadPreviewDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 import FormSelect from '@/components/forms/FormSelect';
@@ -40,7 +42,7 @@ import { JourneyTree } from '@/domains/journey/components/JourneyTree';
 import type { Journey, JourneyDocument } from '@/domains/journey/types';
 import { documentTemplateFormSchema, documentTemplateFormDefaults, type DocumentTemplateFormInput } from '@/domains/journey-template/schemas';
 import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
-import { verifyDocument, rejectDocument, getPreviewUrl } from '@/domains/document/api';
+import { verifyDocument, rejectDocument, getPreviewUrl, uploadDocument } from '@/domains/document/api';
 import { DocumentPreviewDialog } from '@/domains/document/components/DocumentPreviewDialog';
 import { getApiError } from '@/lib/utils';
 import { useCompanyWorkspace } from '@/domains/company/workspace-context';
@@ -69,6 +71,12 @@ export default function CompanyJourneyPage() {
 
   const [acting, setActing] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+
+  // Staff uploading a document on this company's behalf (e.g. received by
+  // email/in person) — staged locally first via DocumentUploadPreviewDialog,
+  // same pattern client-portal's own Journey page uses for its uploads.
+  const [stagedUpload, setStagedUpload] = useState<{ doc: JourneyDocument; file: File } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [extraDialog, setExtraDialog] = useState<{
     milestoneId: string;
@@ -176,6 +184,23 @@ export default function CompanyJourneyPage() {
     }
   };
 
+  const handleConfirmUpload = async () => {
+    if (!stagedUpload) return;
+    const { doc, file } = stagedUpload;
+    setUploading(true);
+    try {
+      await uploadDocument(company.id, doc.id, file);
+      toast.success(`${doc.name} uploaded — now being scanned.`);
+      setStagedUpload(null);
+      setReloadKey((k) => k + 1);
+      refreshCounts();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const openAddExtra = (milestoneId: string, parentDocumentId: string | null) => {
     extraForm.reset(documentTemplateFormDefaults);
     setExtraRecurrenceKind('one_time');
@@ -230,6 +255,12 @@ export default function CompanyJourneyPage() {
     }
   };
 
+  // Same states client-portal itself offers an upload/re-upload action for
+  // — nothing on file yet, or the last attempt didn't hold up. A document
+  // still pending_scan/review/verified already has a real file to look at
+  // via Preview instead.
+  const needsUpload = (doc: JourneyDocument) => ['pending', 'rejected', 'expired', 'scan_failed'].includes(doc.status);
+
   const renderDocAction = (doc: JourneyDocument) => (
     <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
       <StatusBadge status={doc.status} />
@@ -237,6 +268,23 @@ export default function CompanyJourneyPage() {
         <Tooltip title="Preview">
           <IconButton size="small" onClick={() => handlePreview(doc.document_id!, doc.name, doc.status)}>
             <VisibilityOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {needsUpload(doc) && (
+        <Tooltip title={doc.document_id ? 'Re-upload' : 'Upload'}>
+          <IconButton size="small" component="label">
+            {doc.document_id ? <RefreshOutlinedIcon fontSize="small" /> : <UploadOutlinedIcon fontSize="small" />}
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) setStagedUpload({ doc, file });
+              }}
+            />
           </IconButton>
         </Tooltip>
       )}
@@ -292,6 +340,16 @@ export default function CompanyJourneyPage() {
         onVerify={handleVerify}
         onReject={handleReject}
         acting={acting}
+      />
+
+      <DocumentUploadPreviewDialog
+        open={stagedUpload !== null}
+        title={stagedUpload?.doc.name ?? ''}
+        file={stagedUpload?.file ?? null}
+        confirming={uploading}
+        onConfirm={() => void handleConfirmUpload()}
+        onReplace={(file) => setStagedUpload((prev) => (prev ? { ...prev, file } : prev))}
+        onCancel={() => setStagedUpload(null)}
       />
 
       <Dialog open={!!extraDialog} onClose={() => setExtraDialog(null)} maxWidth="sm" fullWidth>

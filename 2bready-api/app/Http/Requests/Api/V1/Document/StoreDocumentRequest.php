@@ -12,7 +12,7 @@ class StoreDocumentRequest extends FormRequest
     /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
-        return [
+        $rules = [
             'document_template_id' => ['required', 'string', 'exists:document_templates,id'],
             // MIME + size validated here, before the file ever touches storage
             // or the malware-scan job — CLAUDE.md's non-negotiable rule.
@@ -22,5 +22,14 @@ class StoreDocumentRequest extends FormRequest
             // exactly as before. See BackfillPeriodIsMissing.
             'period_key' => ['sometimes', 'nullable', 'string', 'regex:/^\d{4}(-\d{2})?$/', app(BackfillPeriodIsMissing::class)],
         ];
+
+        // A company_owner/member's target company is always their own
+        // (current_company_id) — only an internal caller with no company of
+        // their own needs to say which company this upload is for.
+        if ($this->user()?->hasAnyRole(['admin', 'staff', 'finance'])) {
+            $rules['company_id'] = ['required', 'string', 'exists:companies,id'];
+        }
+
+        return $rules;
     }
 }

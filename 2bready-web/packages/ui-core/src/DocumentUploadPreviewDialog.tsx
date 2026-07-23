@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
-import UploadOutlinedIcon from '@mui/icons-material/UploadOutlined';
+import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 
 export interface DocumentUploadPreviewDialogProps {
   open: boolean;

@@ -154,6 +154,47 @@ it('requires authentication to upload a document', function () {
     ])->assertUnauthorized();
 });
 
+it('lets an admin upload a document on a company\'s behalf', function () {
+    Queue::fake();
+    $admin = User::factory()->admin()->create();
+    $file = UploadedFile::fake()->create('registration.pdf', 500, 'application/pdf');
+
+    $response = $this->actingAs($admin)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'company_id' => $this->company->id,
+        'file' => $file,
+    ]);
+
+    $response->assertCreated()->assertJsonPath('data.status', 'pending_scan');
+    $this->assertDatabaseHas('documents', [
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'pending_scan',
+    ]);
+    Queue::assertPushed(ScanDocumentForMalwareJob::class);
+});
+
+it('rejects an admin upload with no company_id instead of 404ing on a null company', function () {
+    $admin = User::factory()->admin()->create();
+    $file = UploadedFile::fake()->create('registration.pdf', 500, 'application/pdf');
+
+    $this->actingAs($admin)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'file' => $file,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['company_id']);
+});
+
+it('rejects an admin upload with a nonexistent company_id', function () {
+    $admin = User::factory()->admin()->create();
+    $file = UploadedFile::fake()->create('registration.pdf', 500, 'application/pdf');
+
+    $this->actingAs($admin)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'company_id' => 'not-a-real-id',
+        'file' => $file,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['company_id']);
+});
+
 // ─── Malware scan job ────────────────────────────────────────────────────────
 
 it('moves a pending_scan document to review once the scan job runs', function () {

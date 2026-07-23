@@ -85,7 +85,16 @@ class DocumentController extends Controller
         $this->authorize('upload', Document::class);
 
         $template = DocumentTemplate::query()->findOrFail($request->validated('document_template_id'));
-        $company = Company::query()->findOrFail($request->user()->current_company_id);
+
+        // Staff has no current_company_id of their own (internal users
+        // belong to no company) — StoreDocumentRequest requires them to say
+        // which company this upload is for instead. A company_owner/member
+        // always uploads to their own company regardless of what (if
+        // anything) they passed.
+        $companyId = $request->user()->hasAnyRole(['admin', 'staff', 'finance'])
+            ? $request->validated('company_id')
+            : $request->user()->current_company_id;
+        $company = Company::query()->findOrFail($companyId);
 
         $document = $action->execute($company, $template, $request->file('file'), $request->user(), $request->validated('period_key'));
 
