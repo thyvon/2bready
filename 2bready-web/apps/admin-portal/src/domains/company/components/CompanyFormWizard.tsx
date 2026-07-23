@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -86,11 +86,23 @@ export default function CompanyFormWizard({ onSubmit, submitLabel }: CompanyForm
     handleSubmit,
     trigger,
     watch,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<CompanyFormInput>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: companyFormDefaults,
   });
+
+  // Default-select F&B once the real industry list loads — by its stable
+  // `code`, never a hardcoded id (ids are per-environment ULIDs, not a
+  // literal to bake into source). Only when the field is still untouched,
+  // so this never overwrites a manual selection.
+  useEffect(() => {
+    if (getValues('industry_id')) return;
+    const fnb = industries.find((i) => i.code === 'F&B');
+    if (fnb) setValue('industry_id', fnb.id);
+  }, [industries, getValues, setValue]);
 
   const values = watch();
   const isLastStep = step === COMPANY_FORM_STEPS.length - 1;
