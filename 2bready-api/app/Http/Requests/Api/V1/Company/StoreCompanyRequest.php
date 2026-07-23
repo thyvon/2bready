@@ -15,6 +15,7 @@ class StoreCompanyRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'name_kh' => ['nullable', 'string', 'max:255'],
             'registration_no' => ['nullable', 'string', 'max:100'],
+            'compliance_start_date' => ['nullable', 'date', 'before_or_equal:today'],
             'employee_count' => ['nullable', 'integer', 'min:0'],
             'industry_id' => ['required', 'string', 'exists:industries,id'],
             'country_code' => ['sometimes', 'string', 'size:2'],

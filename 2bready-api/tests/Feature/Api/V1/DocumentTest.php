@@ -254,6 +254,136 @@ it('does not let one company\'s extra required document block or leak into anoth
     expect(MilestoneCompletion::where('company_id', $this->company->id)->where('milestone_id', $this->milestone->id)->exists())->toBeTrue();
 });
 
+// ─── Backfill (compliance start date + past-period upload) ─────────────────
+
+it('lets a company_owner backfill-upload a document for a real missing period', function () {
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
+    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
+    $this->docTemplate->save();
+    $this->company->update(['compliance_start_date' => '2023-01-01']);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $file = UploadedFile::fake()->create('patent-tax-2024.pdf', 500, 'application/pdf');
+
+    $response = $this->actingAs($owner)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'file' => $file,
+        'period_key' => '2024',
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'period_key' => '2024',
+    ]);
+});
+
+it('rejects a backfill period that is not a real missing gap', function () {
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
+    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
+    $this->docTemplate->save();
+    $this->company->update(['compliance_start_date' => '2023-01-01']);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $file = UploadedFile::fake()->create('doc.pdf', 500, 'application/pdf');
+
+    // 2099 was never owed — not in the ledger at all.
+    $this->actingAs($owner)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'file' => $file,
+        'period_key' => '2099',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['period_key']);
+});
+
+it('rejects backfilling the current period — that stays the plain upload flow', function () {
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
+    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
+    $this->docTemplate->save();
+    $this->company->update(['compliance_start_date' => '2023-01-01']);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $file = UploadedFile::fake()->create('doc.pdf', 500, 'application/pdf');
+
+    $this->actingAs($owner)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'file' => $file,
+        'period_key' => now()->format('Y'),
+    ])->assertUnprocessable()->assertJsonValidationErrors(['period_key']);
+});
+
+it('rejects a backfill period_key for a non-periodic document', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    $file = UploadedFile::fake()->create('doc.pdf', 500, 'application/pdf');
+
+    $this->actingAs($owner)->postJson('/api/v1/documents', [
+        'document_template_id' => $this->docTemplate->id,
+        'file' => $file,
+        'period_key' => '2024',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['period_key']);
+});
+
+it('verifies a backfilled document with the period\'s own calendar expiry, not now', function () {
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
+    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
+    $this->docTemplate->save();
+    $admin = User::factory()->admin()->create();
+    $document = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+        'period_key' => '2024',
+    ]);
+
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$document->id}/verify")->assertOk();
+
+    $fresh = $document->fresh();
+    expect($fresh->period_key)->toBe('2024');
+    expect($fresh->expires_at->toDateString())->toBe('2025-01-01');
+    // The audit fact (when review happened) is never backdated — only the
+    // business period/expiry reflect the backfilled year.
+    expect($fresh->verified_at->isToday())->toBeTrue();
+});
+
+it('does not complete a milestone while a periodic template still has a real historical gap', function () {
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
+    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
+    $this->docTemplate->save();
+    $this->company->update(['compliance_start_date' => '2023-01-01']);
+    $admin = User::factory()->admin()->create();
+
+    // Only the current period is filed — 2023/2024/2025 remain real gaps.
+    $current = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+        'period_key' => now()->format('Y'),
+    ]);
+
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$current->id}/verify")->assertOk();
+
+    expect(MilestoneCompletion::where('company_id', $this->company->id)->where('milestone_id', $this->milestone->id)->exists())
+        ->toBeFalse();
+});
+
+it('completes a milestone once every historical gap is backfilled and verified', function () {
+    $this->docTemplate->update(['recurrence_type' => 'periodic_annual']);
+    $this->docTemplate->created_at = \Carbon\Carbon::parse('2020-01-01');
+    $this->docTemplate->save();
+    $this->company->update(['compliance_start_date' => (int) now()->format('Y') . '-01-01']);
+    $admin = User::factory()->admin()->create();
+
+    // Only the current period is owed with this compliance_start_date —
+    // no historical gap to backfill, so a single verified upload completes it.
+    $current = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+        'period_key' => now()->format('Y'),
+    ]);
+
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$current->id}/verify")->assertOk();
+
+    expect(MilestoneCompletion::where('company_id', $this->company->id)->where('milestone_id', $this->milestone->id)->exists())
+        ->toBeTrue();
+});
+
 it('lets an admin reject a document with a reason', function () {
     $admin = User::factory()->admin()->create();
     $document = Document::factory()->create([

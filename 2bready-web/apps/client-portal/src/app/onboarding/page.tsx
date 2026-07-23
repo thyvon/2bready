@@ -37,6 +37,7 @@ export default function OnboardingPage() {
       name: data.name,
       name_kh: data.name_kh || undefined,
       registration_no: data.registration_no || undefined,
+      compliance_start_date: data.compliance_start_date || undefined,
       industry_id: data.industry_id,
       country_code: data.country_code,
     });

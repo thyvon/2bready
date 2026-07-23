@@ -87,7 +87,7 @@ class DocumentController extends Controller
         $template = DocumentTemplate::query()->findOrFail($request->validated('document_template_id'));
         $company = Company::query()->findOrFail($request->user()->current_company_id);
 
-        $document = $action->execute($company, $template, $request->file('file'), $request->user());
+        $document = $action->execute($company, $template, $request->file('file'), $request->user(), $request->validated('period_key'));
 
         return ApiResponse::created(new DocumentResource($document));
     }

@@ -17,10 +17,12 @@ export interface DocumentUploadPreviewDialogProps {
   title: string;
   /** The currently staged file — from a fresh pick or a resumed draft. */
   file: File | null;
+  /** Already-resolved copy (e.g. "Filing for 2023 — a past period"), shown as a banner only for a backfill upload. Ui-core has no i18n of its own — pass the resolved text, not a period_key or translation key. */
+  backfillNotice?: string;
   /** Uploads the staged file for real. */
   onConfirm: () => void;
-  /** Stashes the file locally (nothing sent to the server) so the user can confirm or replace it later without re-picking from the OS file dialog. */
-  onSaveDraft: () => void;
+  /** Stashes the file locally (nothing sent to the server) so the user can confirm or replace it later without re-picking from the OS file dialog. Omit to hide the action entirely — a backfill upload has no per-period draft slot to resume it from, so the caller doesn't offer one. */
+  onSaveDraft?: () => void;
   /** Swaps the staged file for a different one, without closing the dialog. */
   onReplace: (file: File) => void;
   /** Closes without acting — an existing draft (if any) is left exactly as it was. */
@@ -37,6 +39,7 @@ export function DocumentUploadPreviewDialog({
   open,
   title,
   file,
+  backfillNotice,
   onConfirm,
   onSaveDraft,
   onReplace,
@@ -68,6 +71,25 @@ export function DocumentUploadPreviewDialog({
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
+
+      {backfillNotice && (
+        <Box
+          className="flex items-center gap-1.5"
+          sx={{
+            mx: 3,
+            mb: 2,
+            px: 1.5,
+            py: 1,
+            borderRadius: '8px',
+            bgcolor: 'color-mix(in srgb, var(--mui-palette-primary-main) 8%, transparent)',
+            border: '1px solid',
+            borderColor: 'color-mix(in srgb, var(--mui-palette-primary-main) 25%, transparent)',
+          }}
+        >
+          <UploadOutlinedIcon fontSize="small" sx={{ color: 'primary.main' }} />
+          <Typography variant="body2">{backfillNotice}</Typography>
+        </Box>
+      )}
 
       <DialogContent
         sx={{
@@ -111,9 +133,11 @@ export function DocumentUploadPreviewDialog({
           <Button size="small" color="inherit" onClick={onCancel}>
             Cancel
           </Button>
-          <Button size="small" variant="outlined" onClick={onSaveDraft} disabled={confirming}>
-            Save as Draft
-          </Button>
+          {onSaveDraft && (
+            <Button size="small" variant="outlined" onClick={onSaveDraft} disabled={confirming}>
+              Save as Draft
+            </Button>
+          )}
           <Button size="small" variant="contained" loading={confirming} onClick={onConfirm}>
             Confirm Upload
           </Button>

@@ -67,6 +67,7 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
         name: parsed.name,
         name_kh: parsed.name_kh || undefined,
         registration_no: parsed.registration_no || undefined,
+        compliance_start_date: parsed.compliance_start_date || null,
         industry_id: parsed.industry_id,
         country_code: parsed.country_code,
         employee_count: parsed.employee_count ?? null,
@@ -100,6 +101,18 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
           <Box>
             <FieldLabel>{t('company.registration_no')}</FieldLabel>
             <FormTextField fullWidth error={!!errors.registration_no} helperText={errors.registration_no?.message} {...register('registration_no')} />
+          </Box>
+
+          <Box>
+            <FieldLabel>{t('company.compliance_start_date')}</FieldLabel>
+            <FormTextField
+              type="date"
+              fullWidth
+              error={!!errors.compliance_start_date}
+              helperText={errors.compliance_start_date?.message ?? t('company.compliance_start_date_hint')}
+              slotProps={{ inputLabel: { shrink: true } }}
+              {...register('compliance_start_date')}
+            />
           </Box>
 
           <Box className="flex gap-4">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Document\Enums;
 
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
 /**
@@ -108,6 +109,22 @@ enum RecurrenceType: string
         }
 
         return $keys;
+    }
+
+    /**
+     * The reference date a backfilled document's expiry must be computed
+     * from — its own period's calendar start, not "now." Without this, a
+     * document filed today for 2023 would get an expiry one year from
+     * today instead of Jan 1, 2024, silently misrepresenting when a
+     * historical filing actually lapsed.
+     */
+    public function referenceDateForPeriod(string $periodKey): CarbonInterface
+    {
+        return match ($this) {
+            self::PeriodicMonthly => Carbon::createFromFormat('Y-m', $periodKey)->startOfMonth(),
+            self::PeriodicAnnual => Carbon::createFromFormat('Y', $periodKey)->startOfYear(),
+            default => now(),
+        };
     }
 
     public function label(): string

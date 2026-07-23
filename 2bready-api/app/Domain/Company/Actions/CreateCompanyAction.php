@@ -22,6 +22,7 @@ class CreateCompanyAction
             'name' => $data->name,
             'name_kh' => $data->name_kh,
             'registration_no' => $data->registration_no,
+            'compliance_start_date' => $data->compliance_start_date,
             'employee_count' => $data->employee_count,
             'bypass_flags' => $this->bypassEvaluator->evaluate($data->employee_count),
             'industry_id' => $data->industry_id,

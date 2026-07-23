@@ -17,6 +17,14 @@ export const companySetupSchema = z.object({
   registration_no: z.string().max(100).optional().or(z.literal('')),
   industry_id: z.string().min(1, 'Industry is required'),
   country_code: z.string().length(2, 'Use a 2-letter country code'),
+  // When this company's real compliance obligations began (e.g.
+  // incorporation) — independent of today, when it's joining 2bReady.
+  // Anchors periodic-document gap detection (see ComplianceAnchorResolver
+  // on the backend) so a company with real history before signing up sees
+  // its actual missing filings, not just ones since today. Optional and
+  // blank by default — leaving it unset reproduces the pre-existing
+  // "anchor on journey activation" behavior exactly.
+  compliance_start_date: z.string().optional().or(z.literal('')),
 });
 
 export type CompanySetupInput = z.input<typeof companySetupSchema>;
@@ -24,7 +32,7 @@ export type CompanySetupOutput = z.output<typeof companySetupSchema>;
 
 export const COMPANY_SETUP_STEPS = [
   { label: 'Company Identity', fields: ['name', 'name_kh', 'registration_no'] as const },
-  { label: 'Business Profile', fields: ['industry_id', 'country_code'] as const },
+  { label: 'Business Profile', fields: ['industry_id', 'country_code', 'compliance_start_date'] as const },
   { label: 'Review', fields: [] as const },
 ] as const;
 
@@ -34,6 +42,7 @@ export const companySetupDefaults: CompanySetupInput = {
   registration_no: '',
   industry_id: '',
   country_code: 'KH',
+  compliance_start_date: '',
 };
 
 interface Option {

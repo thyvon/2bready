@@ -13,7 +13,7 @@ use Illuminate\Http\UploadedFile;
 
 class UploadDocumentAction
 {
-    public function execute(Company $company, DocumentTemplate $template, UploadedFile $file, User $uploadedBy): Document
+    public function execute(Company $company, DocumentTemplate $template, UploadedFile $file, User $uploadedBy, ?string $periodKey = null): Document
     {
         // MIME + size are already validated by StoreDocumentRequest before this
         // runs (CLAUDE.md: "validate MIME + size first, antivirus scan before
@@ -31,6 +31,12 @@ class UploadDocumentAction
             'mime_type' => $file->getMimeType() ?? $file->getClientMimeType(),
             'size_bytes' => $file->getSize() ?: 0,
             'status' => 'pending_scan',
+            // Set only for a backfill upload (StoreDocumentRequest's
+            // BackfillPeriodIsMissing rule already confirmed this is a real
+            // missing period for this template+company) — null for a normal
+            // upload, exactly as before, so VerifyDocumentAction still
+            // derives the period from "now" for it.
+            'period_key' => $periodKey,
         ]);
 
         ScanDocumentForMalwareJob::dispatch($document->id);

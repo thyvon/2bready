@@ -15,6 +15,7 @@ import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -331,6 +332,22 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                     your company.
                   </Typography>
                 </Box>
+
+                <TextField
+                  label="Compliance Start Date"
+                  type="date"
+                  fullWidth
+                  error={!!errors.compliance_start_date}
+                  helperText={
+                    errors.compliance_start_date?.message ??
+                    'Optional — when did your company first need to file these requirements (e.g. incorporation)? Leave blank to use today.'
+                  }
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    input: { startAdornment: <InputAdornment position="start"><EventOutlinedIcon fontSize="small" color="action" /></InputAdornment> },
+                  }}
+                  {...register('compliance_start_date')}
+                />
               </Box>
             )}
 
@@ -356,6 +373,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                     })()}
                   />
                   <ReviewRow label="Country" value={optionLabel(COUNTRY_OPTIONS, values.country_code)} />
+                  <ReviewRow label="Compliance Start Date" value={values.compliance_start_date || 'Today'} />
                 </ReviewSection>
               </Box>
             )}

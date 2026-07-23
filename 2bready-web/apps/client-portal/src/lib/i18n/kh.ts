@@ -65,10 +65,17 @@ const kh: Record<keyof typeof en, string> = {
   'email_verification.resent': 'អ៊ីមែលផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើ។',
 
   // ─── Compliance Journey ──────────────────────────────────────────────────
-  'journey.view_history': 'មើលប្រវត្តិ ({count})',
   'journey.history_missing_label': 'ខ្វះ',
+  'journey.history_backfill_upload': 'ផ្ទុកឡើង',
+  'journey.upload_backfill_notice': 'កំពុងដាក់ស្នើសម្រាប់ {period} — រយៈពេលកន្លងមក',
   'journey.history_missing_caption': 'មិនមានការដាក់ស្នើសម្រាប់រយៈពេលនេះទេ',
   'journey.history_current_label': 'បច្ចុប្បន្ន',
+  'journey.history_gap_count': 'ខ្វះ {count} ខែ',
+  'journey.history_show_all': 'បង្ហាញទាំង {count} ខែ',
+  'journey.history_show_earlier': 'បង្ហាញ {count} ខែមុន',
+  'journey.recurrence_monthly': 'ដាក់ស្នើប្រចាំខែ',
+  'journey.recurrence_annual': 'ដាក់ស្នើប្រចាំឆ្នាំ',
+  'journey.recurrence_expires_in': 'ផុតកំណត់ក្នុង {months} ខែ',
 
   // ─── Data Room ───────────────────────────────────────────────────────────
   'data_room.desc_locked': 'Smart Data Room បង្កើតតំណភ្ជាប់ដែលមានកំណត់ពេល និងការពារដោយពាក្យសម្ងាត់ ដើម្បីឱ្យវិនិយោគិន និងធនាគារអាចពិនិត្យមើលឯកសារអនុលោមភាពកម្រិតខ្ពស់បំផុតរបស់អ្នក ដោយមិនចាំបាច់បង្ហាញឃ្លាំងឯកសារទាំងមូល។',

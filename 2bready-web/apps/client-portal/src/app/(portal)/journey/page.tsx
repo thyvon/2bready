@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -40,6 +40,7 @@ import {
   type DocStatus,
   type JourneyLevel,
   type JourneyDocument,
+  type DocumentHistoryEntry,
 } from '@/lib/journey-api';
 import { tierByLevelCode } from '@/lib/package-api';
 import { uploadDocument, getPreviewUrl } from '@/lib/document-api';
@@ -97,7 +98,19 @@ export default function JourneyPage() {
   // sent to the server until the user actually confirms) — lost on
   // navigation/refresh, same as any unsaved browser form input.
   const [drafts, setDrafts] = useState<Record<string, File>>({});
-  const [stagedUpload, setStagedUpload] = useState<{ doc: JourneyDocument; file: File } | null>(null);
+  const [stagedUpload, setStagedUpload] = useState<{ doc: JourneyDocument; file: File; targetPeriodKey?: string } | null>(null);
+
+  // A backfill "Upload" action (on a missing history row) has no input of
+  // its own to wrap, unlike the main row's `component="label"` IconButton —
+  // it just remembers which doc+period was clicked, then programmatically
+  // opens the one hidden file input below.
+  const [backfillTarget, setBackfillTarget] = useState<{ doc: JourneyDocument; entry: DocumentHistoryEntry } | null>(null);
+  const backfillFileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleBackfillUpload(doc: JourneyDocument, entry: DocumentHistoryEntry) {
+    setBackfillTarget({ doc, entry });
+    backfillFileInputRef.current?.click();
+  }
 
   const filteredLevels: JourneyLevel[] = useMemo(() => {
     if (!isFiltering) return levels;
@@ -199,7 +212,7 @@ export default function JourneyPage() {
         {(status === 'verified' || status === 'review') && (
           <>
             <Tooltip title="Preview">
-              <IconButton size="small" onClick={() => void handlePreview(doc)}>
+              <IconButton size="small" onClick={() => doc.document_id && void handlePreview(doc.document_id, doc.name)}>
                 <VisibilityOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -221,10 +234,10 @@ export default function JourneyPage() {
   // StoreDocumentRequest); the toast surfaces whatever it says.
   async function handleConfirmUpload() {
     if (!stagedUpload) return;
-    const { doc, file } = stagedUpload;
+    const { doc, file, targetPeriodKey } = stagedUpload;
     setUploadingIds((prev) => new Set(prev).add(doc.id));
     try {
-      await uploadDocument(doc.id, file);
+      await uploadDocument(doc.id, file, targetPeriodKey);
       // Refetch immediately so the tree reflects the real new status
       // (pending_scan) right away — not on next navigation/reload.
       await refetch();
@@ -278,15 +291,17 @@ export default function JourneyPage() {
     }
   }
 
-  // `document_id` is genuinely nullable (see document-api.ts's comment) but
-  // the Preview action only ever renders for 'verified'/'review' documents,
-  // which always have a real uploaded Document row — the guard below is
-  // just defensive, not an expected path.
-  async function handlePreview(doc: JourneyDocument) {
-    if (!doc.document_id) return;
-    setPreview({ open: true, title: doc.name, url: null, mimeType: null, loading: true, error: null });
+  // Takes a real Document id directly (not a JourneyDocument) so both the
+  // main row's own preview button and a past history entry's preview icon
+  // (which only ever has an entry id, not a full JourneyDocument) can share
+  // this one function — same pattern admin-portal's Journey view uses,
+  // minus `status`: client-portal's DocumentPreviewDialog is read-only for
+  // every status (companies never see Verify/Reject), so there's nothing
+  // here that would branch on it.
+  async function handlePreview(documentId: string, title: string) {
+    setPreview({ open: true, title, url: null, mimeType: null, loading: true, error: null });
     try {
-      const result = await getPreviewUrl(doc.document_id);
+      const result = await getPreviewUrl(documentId);
       setPreview((prev) => ({ ...prev, url: result.url, mimeType: result.mime_type, loading: false }));
     } catch (err) {
       setPreview((prev) => ({ ...prev, loading: false, error: getApiError(err).message || 'Could not load preview.' }));
@@ -414,8 +429,29 @@ export default function JourneyPage() {
           tierFor={(level) => tierMap[level.code]}
           defaultMilestonesOpen={isFiltering}
           renderDocAction={renderDocAction}
+          onBackfillUpload={handleBackfillUpload}
+          onPreviewDocument={handlePreview}
         />
       )}
+
+      {/* One shared hidden input for every backfill "Upload" action across
+          the tree — handleBackfillUpload just remembers which doc+period
+          was clicked, then opens this, rather than each history row
+          wrapping its own component="label" input. */}
+      <input
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        hidden
+        ref={backfillFileInputRef}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file && backfillTarget) {
+            setStagedUpload({ doc: backfillTarget.doc, file, targetPeriodKey: backfillTarget.entry.period_key ?? undefined });
+          }
+          setBackfillTarget(null);
+        }}
+      />
 
       <DocumentPreviewDialog
         open={preview.open}
@@ -431,9 +467,10 @@ export default function JourneyPage() {
         open={stagedUpload !== null}
         title={stagedUpload?.doc.name ?? ''}
         file={stagedUpload?.file ?? null}
+        backfillNotice={stagedUpload?.targetPeriodKey ? t('journey.upload_backfill_notice', { period: stagedUpload.targetPeriodKey }) : undefined}
         confirming={stagedUpload ? uploadingIds.has(stagedUpload.doc.id) : false}
         onConfirm={() => void handleConfirmUpload()}
-        onSaveDraft={handleSaveDraft}
+        onSaveDraft={stagedUpload?.targetPeriodKey ? undefined : handleSaveDraft}
         onReplace={(file) => setStagedUpload((prev) => (prev ? { ...prev, file } : prev))}
         onCancel={() => setStagedUpload(null)}
       />

@@ -60,10 +60,17 @@ const en = {
   'email_verification.resent': 'Verification email sent.',
 
   // ─── Compliance Journey ──────────────────────────────────────────────────
-  'journey.view_history': 'View history ({count})',
   'journey.history_missing_label': 'Missing',
+  'journey.history_backfill_upload': 'Upload',
+  'journey.upload_backfill_notice': 'Filing for {period} — a past period',
   'journey.history_missing_caption': 'No filing was submitted for this period',
   'journey.history_current_label': 'Current',
+  'journey.history_gap_count': '{count} missed',
+  'journey.history_show_all': 'Show all {count} months',
+  'journey.history_show_earlier': 'Show {count} earlier months',
+  'journey.recurrence_monthly': 'Monthly filing',
+  'journey.recurrence_annual': 'Annual filing',
+  'journey.recurrence_expires_in': 'Expires in {months}mo',
 
   // ─── Data Room ───────────────────────────────────────────────────────────
   'data_room.desc_locked': 'The Smart Data Room generates a time-limited, password-protected link so investors and banks can review your most advanced compliance documents without exposing your full vault.',

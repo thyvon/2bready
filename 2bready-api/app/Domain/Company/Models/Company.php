@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property CompanyStatus $status
  * @property int|null $employee_count
+ * @property \Illuminate\Support\Carbon|null $compliance_start_date
  * @property array<string, bool> $bypass_flags
  *
  * @use HasFactory<CompanyFactory>
@@ -40,6 +41,7 @@ class Company extends Model
         'name',
         'name_kh',
         'registration_no',
+        'compliance_start_date',
         'employee_count',
         'bypass_flags',
         'industry_id',
@@ -55,6 +57,7 @@ class Company extends Model
     {
         return [
             'employee_count' => 'integer',
+            'compliance_start_date' => 'date',
             'bypass_flags' => 'array',
             'compliance_score' => 'integer',
             'status' => CompanyStatus::class,

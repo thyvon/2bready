@@ -1115,6 +1115,8 @@ export interface components {
             name: string;
             name_kh: string | null;
             registration_no: string | null;
+            /** Format: date-time */
+            compliance_start_date: string | null;
             employee_count: number | null;
             bypass_flags: unknown[];
             industry_id: string;
@@ -1502,6 +1504,8 @@ export interface components {
             name: string;
             name_kh?: string | null;
             registration_no?: string | null;
+            /** Format: date-time */
+            compliance_start_date?: string | null;
             employee_count?: number | null;
             industry_id: string;
             country_code?: string;
@@ -1517,6 +1521,12 @@ export interface components {
              *     or the malware-scan job — CLAUDE.md's non-negotiable rule.
              */
             file: string;
+            /**
+             * @description Only present when filing for a past period (backfill) — omitted
+             *     entirely for a normal "upload for now" submission, which stays
+             *     exactly as before. See BackfillPeriodIsMissing.
+             */
+            period_key?: string | null;
         };
         /** StoreDocumentTemplateRequest */
         StoreDocumentTemplateRequest: {
@@ -1630,6 +1640,15 @@ export interface components {
             name?: string;
             name_kh?: string | null;
             registration_no?: string | null;
+            /**
+             * Format: date-time
+             * @description When the company's real compliance obligations began (e.g.
+             *     incorporation) — anchors periodic-document gap detection, see
+             *     ComplianceAnchorResolver. Self-service like registration_no:
+             *     it's the company's own historical fact, not a control with
+             *     compliance-bypass consequences like employee_count below.
+             */
+            compliance_start_date?: string | null;
             industry_id?: string;
             country_code?: string;
             /** @enum {string} */

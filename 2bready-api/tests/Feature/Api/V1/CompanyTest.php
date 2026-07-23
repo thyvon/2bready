@@ -264,6 +264,27 @@ it('lets a company_owner update their own profile fields but not status', functi
     expect($company->fresh()->status->value)->toBe('active');
 });
 
+it('lets a company_owner set their own compliance_start_date', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+
+    $response = $this->actingAs($owner)->patchJson("/api/v1/companies/{$company->id}", [
+        'compliance_start_date' => '2023-01-01',
+    ])->assertOk();
+
+    expect(\Carbon\Carbon::parse($response->json('data.compliance_start_date'))->toDateString())->toBe('2023-01-01');
+    expect($company->fresh()->compliance_start_date->toDateString())->toBe('2023-01-01');
+});
+
+it('rejects a compliance_start_date in the future', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+
+    $this->actingAs($owner)->patchJson("/api/v1/companies/{$company->id}", [
+        'compliance_start_date' => now()->addYear()->toDateString(),
+    ])->assertUnprocessable()->assertJsonValidationErrors(['compliance_start_date']);
+});
+
 it('forbids a company_owner from changing their own employee_count', function () {
     $company = Company::factory()->create(['employee_count' => 20]);
     $owner = User::factory()->companyOwner()->withCompany($company)->create();

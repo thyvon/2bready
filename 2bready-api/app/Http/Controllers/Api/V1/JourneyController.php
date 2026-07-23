@@ -9,6 +9,7 @@ use App\Domain\Document\Actions\BuildPeriodicHistoryAction;
 use App\Domain\Document\DTOs\PeriodHistoryEntry;
 use App\Domain\Document\Models\Document;
 use App\Domain\Document\Models\DocumentTemplate;
+use App\Domain\Document\Services\ComplianceAnchorResolver;
 use App\Domain\Journey\Actions\CompleteMilestoneAction;
 use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
@@ -21,7 +22,10 @@ use Illuminate\Http\Request;
 
 class JourneyController extends Controller
 {
-    public function __construct(private readonly BuildPeriodicHistoryAction $buildPeriodicHistory) {}
+    public function __construct(
+        private readonly BuildPeriodicHistoryAction $buildPeriodicHistory,
+        private readonly ComplianceAnchorResolver $anchorResolver,
+    ) {}
 
     // The caller's own company's journey — no {company} param, since a
     // company_owner/member always views their own, never picks one by ID.
@@ -118,20 +122,15 @@ class JourneyController extends Controller
             ->get()
             ->groupBy('document_template_id');
 
-        // A document requirement can't have a "missing" period before the
-        // journey was activated (activated_at is nullable — an unactivated
-        // journey anchors on now(), i.e. nothing owed yet) or before the
-        // requirement itself existed.
-        $journeyActivatedAt = $journey->activated_at ?? now();
+        /** @var Company $company */
+        $company = $journey->company;
 
-        $templates->each(function (DocumentTemplate $template) use ($documentsByTemplate, $journeyActivatedAt) {
+        $templates->each(function (DocumentTemplate $template) use ($documentsByTemplate, $company, $journey) {
             $docs = $documentsByTemplate->get($template->id, collect());
             $template->setAttribute('latest_document', $docs->first());
 
             if ($template->recurrence_type->isPeriodic()) {
-                $anchor = $template->created_at->greaterThan($journeyActivatedAt)
-                    ? $template->created_at
-                    : $journeyActivatedAt;
+                $anchor = $this->anchorResolver->resolve($company, $journey, $template);
 
                 $template->setAttribute('history_documents', $this->buildPeriodicHistory->execute(
                     $template->recurrence_type,

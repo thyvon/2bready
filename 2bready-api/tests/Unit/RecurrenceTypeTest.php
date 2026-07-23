@@ -68,3 +68,19 @@ it('enumerates no period keys for non-periodic types', function () {
     expect(RecurrenceType::OneTime->periodKeysSince($since, $until))->toBe([])
         ->and(RecurrenceType::Rolling->periodKeysSince($since, $until))->toBe([]);
 });
+
+it('resolves a backfilled period to its own calendar start, not now', function () {
+    expect(RecurrenceType::PeriodicAnnual->referenceDateForPeriod('2023')->toDateString())
+        ->toBe('2023-01-01')
+        ->and(RecurrenceType::PeriodicMonthly->referenceDateForPeriod('2023-06')->toDateString())
+        ->toBe('2023-06-01');
+});
+
+it('computes a historically-correct expiry for a backfilled period', function () {
+    // A document filed today for 2023 must expire at the 2023 calendar
+    // boundary (Jan 1, 2024), not one year from today.
+    $reference = RecurrenceType::PeriodicAnnual->referenceDateForPeriod('2023');
+
+    expect(RecurrenceType::PeriodicAnnual->expiresAtFor($reference, null)->toDateString())
+        ->toBe('2024-01-01');
+});

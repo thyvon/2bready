@@ -131,6 +131,8 @@ const en = {
   'company.name': 'Company name',
   'company.name_kh': 'Company name (Khmer)',
   'company.registration_no': 'Registration number',
+  'company.compliance_start_date': 'Compliance start date',
+  'company.compliance_start_date_hint': 'When the company\'s real compliance obligations began (e.g. incorporation) — leave blank to anchor on when it joined 2bReady instead.',
   'company.employee_count': 'Employee count',
   'company.industry': 'Industry',
   'company.country': 'Country',

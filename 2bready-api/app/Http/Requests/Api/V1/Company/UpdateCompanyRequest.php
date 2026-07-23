@@ -15,6 +15,12 @@ class UpdateCompanyRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'name_kh' => ['sometimes', 'nullable', 'string', 'max:255'],
             'registration_no' => ['sometimes', 'nullable', 'string', 'max:100'],
+            // When the company's real compliance obligations began (e.g.
+            // incorporation) — anchors periodic-document gap detection, see
+            // ComplianceAnchorResolver. Self-service like registration_no:
+            // it's the company's own historical fact, not a control with
+            // compliance-bypass consequences like employee_count below.
+            'compliance_start_date' => ['sometimes', 'nullable', 'date', 'before_or_equal:today'],
             'industry_id' => ['sometimes', 'string', 'exists:industries,id'],
             'country_code' => ['sometimes', 'string', 'size:2'],
             'default_locale' => ['sometimes', 'string', 'in:en,kh'],

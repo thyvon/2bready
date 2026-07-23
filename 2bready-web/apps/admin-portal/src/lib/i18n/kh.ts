@@ -135,6 +135,8 @@ const kh: Record<keyof typeof en, string> = {
   'company.name': 'ឈ្មោះក្រុមហ៊ុន',
   'company.name_kh': 'ឈ្មោះក្រុមហ៊ុន (ខ្មែរ)',
   'company.registration_no': 'លេខចុះបញ្ជី',
+  'company.compliance_start_date': 'កាលបរិច្ឆេទចាប់ផ្តើមអនុលោមភាព',
+  'company.compliance_start_date_hint': 'ពេលដែលកាតព្វកិច្ចអនុលោមភាពពិតរបស់ក្រុមហ៊ុនចាប់ផ្តើម (ឧ. ការចុះបញ្ជីក្រុមហ៊ុន) — ទុកឲ្យទទេដើម្បីប្រើកាលបរិច្ឆេទចូលរួម 2bReady ជំនួសវិញ។',
   'company.employee_count': 'ចំនួនបុគ្គលិក',
   'company.industry': 'វិស័យ',
   'company.country': 'ប្រទេស',

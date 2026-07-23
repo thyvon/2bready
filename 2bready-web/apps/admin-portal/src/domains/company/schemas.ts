@@ -43,6 +43,12 @@ export const companyFormDefaults: CompanyFormInput = {
 // app) may ever set — see CompanyEditPayload in types.ts.
 export const companyEditSchema = companyFormSchema.extend({
   status: z.enum(['active', 'suspended', 'inactive']),
+  // Only on the edit dialog (correcting/backfilling it for a company that
+  // onboarded before this existed), not the creation wizard — a brand-new
+  // company sets this during its own onboarding, not when an admin creates
+  // it on their behalf. Anchors periodic-document gap detection; see
+  // ComplianceAnchorResolver on the backend.
+  compliance_start_date: z.string().optional().or(z.literal('')),
 });
 
 export type CompanyEditInput = z.input<typeof companyEditSchema>;
@@ -58,5 +64,6 @@ export function companyEditDefaults(company: Company): CompanyEditInput {
     employee_count: company.employee_count ?? undefined,
     default_locale: company.default_locale as 'en' | 'kh',
     status: company.status,
+    compliance_start_date: company.compliance_start_date ? company.compliance_start_date.slice(0, 10) : '',
   };
 }

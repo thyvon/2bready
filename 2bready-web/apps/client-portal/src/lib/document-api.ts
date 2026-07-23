@@ -10,10 +10,17 @@ export type Document = components['schemas']['DocumentResource'];
 // history). MIME/size are validated server-side before the file ever
 // touches storage or the scan job (CLAUDE.md's non-negotiable rule) —
 // nothing is re-validated here.
-export async function uploadDocument(documentTemplateId: string, file: File): Promise<Document> {
+// `periodKey` is only ever passed for a backfill upload — filing for a real
+// past gap on a periodic template, picked from the Journey page's history
+// list — and is omitted entirely for the normal "upload for now" flow,
+// which stays exactly as before. The backend re-validates it's a genuine
+// missing period for this exact template+company (see
+// BackfillPeriodIsMissing on the API) — a company can't invent one.
+export async function uploadDocument(documentTemplateId: string, file: File, periodKey?: string): Promise<Document> {
   const formData = new FormData();
   formData.append('document_template_id', documentTemplateId);
   formData.append('file', file);
+  if (periodKey) formData.append('period_key', periodKey);
 
   const res = await api.post<{ data: Document }>('/documents', formData);
   return res.data.data;
