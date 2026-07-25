@@ -3,6 +3,8 @@
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import theme from '@/theme';
 import LocaleProvider from '@/components/LocaleProvider';
 import { ToastProvider } from '@/components/ToastProvider';
@@ -20,7 +22,9 @@ export default function Providers({
       <AppRouterCacheProvider>
         <ThemeProvider theme={theme} defaultMode="system">
           <CssBaseline />
-          <ToastProvider>{children}</ToastProvider>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <ToastProvider>{children}</ToastProvider>
+          </LocalizationProvider>
         </ThemeProvider>
       </AppRouterCacheProvider>
     </LocaleProvider>

@@ -7,13 +7,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import MuiLink from '@mui/material/Link';
 import GoogleIcon from '@mui/icons-material/Google';
 import { GlowButton } from '@2bready/ui-core';
+import FormTextField from '@/components/forms/FormTextField';
 import { getApiError } from '@2bready/api-client';
 import { BrandMark } from '@/components/layout/BrandMark';
 import AuroraBackground from '@/components/layout/AuroraBackground';
@@ -163,7 +163,7 @@ export default function LoginPage() {
             >
               {serverError && <Alert severity="error">{serverError}</Alert>}
 
-              <TextField
+              <FormTextField
                 label="Business Email"
                 type="email"
                 required
@@ -176,7 +176,7 @@ export default function LoginPage() {
                 {...register('email')}
               />
               <Box>
-                <TextField
+                <FormTextField
                   label="Password"
                   type="password"
                   required

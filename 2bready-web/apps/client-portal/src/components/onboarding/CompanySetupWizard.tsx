@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
@@ -20,7 +19,9 @@ import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import { GlowButton, stepTransition, easeOutExpo } from '@2bready/ui-core';
+import { GlowButton, stepTransition, easeOutExpo, FormDatePicker } from '@2bready/ui-core';
+import FormTextField from '@/components/forms/FormTextField';
+import FormSelect from '@/components/forms/FormSelect';
 import {
   COMPANY_SETUP_STEPS,
   companySetupDefaults,
@@ -255,7 +256,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
           <motion.div key={step} custom={direction} initial="initial" animate="animate" exit="exit" variants={stepTransition(direction)}>
             {step === 0 && (
               <Box className="flex flex-col gap-5">
-                <TextField
+                <FormTextField
                   label="Company Name"
                   required
                   placeholder="e.g. Sabay Bakery Co., Ltd."
@@ -266,7 +267,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                   slotProps={{ input: { startAdornment: <InputAdornment position="start"><ApartmentOutlinedIcon fontSize="small" color="action" /></InputAdornment> } }}
                   {...register('name')}
                 />
-                <TextField
+                <FormTextField
                   label="Company Name (Khmer)"
                   placeholder="ឈ្មោះក្រុមហ៊ុន"
                   fullWidth
@@ -275,7 +276,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                   slotProps={{ input: { startAdornment: <InputAdornment position="start"><LanguageOutlinedIcon fontSize="small" color="action" /></InputAdornment> } }}
                   {...register('name_kh')}
                 />
-                <TextField
+                <FormTextField
                   label="Business Registration No."
                   placeholder="e.g. 00012345"
                   fullWidth
@@ -293,9 +294,8 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                   name="industry_id"
                   control={control}
                   render={({ field }) => (
-                    <TextField
+                    <FormSelect
                       {...field}
-                      select
                       label="Industry"
                       required
                       fullWidth
@@ -309,16 +309,15 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                           {locale === 'kh' && industry.name_kh ? industry.name_kh : industry.name}
                         </MenuItem>
                       ))}
-                    </TextField>
+                    </FormSelect>
                   )}
                 />
                 <Controller
                   name="country_code"
                   control={control}
                   render={({ field }) => (
-                    <TextField
+                    <FormSelect
                       {...field}
-                      select
                       label="Country"
                       required
                       fullWidth
@@ -331,7 +330,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                           {opt.label}
                         </MenuItem>
                       ))}
-                    </TextField>
+                    </FormSelect>
                   )}
                 />
                 <Box
@@ -345,20 +344,26 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                   </Typography>
                 </Box>
 
-                <TextField
-                  label="Compliance Start Date"
-                  type="date"
-                  fullWidth
-                  error={!!errors.compliance_start_date}
-                  helperText={
-                    errors.compliance_start_date?.message ??
-                    'Optional — when did your company first need to file these requirements (e.g. incorporation)? Leave blank to use today.'
-                  }
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                    input: { startAdornment: <InputAdornment position="start"><EventOutlinedIcon fontSize="small" color="action" /></InputAdornment> },
-                  }}
-                  {...register('compliance_start_date')}
+                <Controller
+                  name="compliance_start_date"
+                  control={control}
+                  render={({ field }) => (
+                    <FormDatePicker
+                      label="Compliance Start Date"
+                      variant="outlined"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      fullWidth
+                      error={!!errors.compliance_start_date}
+                      helperText={
+                        errors.compliance_start_date?.message ??
+                        'Optional — when did your company first need to file these requirements (e.g. incorporation)? Leave blank to use today.'
+                      }
+                      startAdornment={<InputAdornment position="start"><EventOutlinedIcon fontSize="small" color="action" /></InputAdornment>}
+                    />
+                  )}
                 />
               </Box>
             )}

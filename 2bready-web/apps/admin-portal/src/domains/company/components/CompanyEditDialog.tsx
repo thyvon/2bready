@@ -23,6 +23,7 @@ import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import FormTextField from '@/components/forms/FormTextField';
+import { FormDatePicker } from '@2bready/ui-core';
 
 interface CompanyEditDialogProps {
   open: boolean;
@@ -105,13 +106,20 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
 
           <Box>
             <FieldLabel>{t('company.compliance_start_date')}</FieldLabel>
-            <FormTextField
-              type="date"
-              fullWidth
-              error={!!errors.compliance_start_date}
-              helperText={errors.compliance_start_date?.message ?? t('company.compliance_start_date_hint')}
-              slotProps={{ inputLabel: { shrink: true } }}
-              {...register('compliance_start_date')}
+            <Controller
+              name="compliance_start_date"
+              control={control}
+              render={({ field }) => (
+                <FormDatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  fullWidth
+                  error={!!errors.compliance_start_date}
+                  helperText={errors.compliance_start_date?.message ?? t('company.compliance_start_date_hint')}
+                />
+              )}
             />
           </Box>
 

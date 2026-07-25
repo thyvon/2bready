@@ -8,7 +8,7 @@ import Rating from '@mui/material/Rating';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import PersonRemoveOutlinedIcon from '@mui/icons-material/PersonRemoveOutlined';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
-import { Breadcrumbs, SectionCard, EmptyState } from '@2bready/ui-core';
+import { Breadcrumbs, SectionCard, EmptyState, PillToggle } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
 import {
@@ -150,34 +150,15 @@ export default function AuditsPage() {
       <SectionCard
         title="Marketplace"
         action={
-          <Box className="flex items-center gap-1.5">
-            {(
-              [
-                { key: 'matching', label: 'Matches your industry' },
-                { key: 'all', label: 'All specialties' },
-              ] as const
-            ).map((f) => (
-              <Box
-                key={f.key}
-                onClick={() => setScope(f.key)}
-                sx={{
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: '9999px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  transition: 'background-color 0.1s ease',
-                  ...(scope === f.key
-                    ? { bgcolor: 'text.primary', color: 'background.paper' }
-                    : { bgcolor: 'action.selected', color: 'text.secondary', '&:hover': { bgcolor: 'action.hover' } }),
-                }}
-              >
-                {f.label}
-              </Box>
-            ))}
-          </Box>
+          <PillToggle
+            options={[
+              { key: 'matching', label: 'Matches your industry' },
+              { key: 'all', label: 'All specialties' },
+            ]}
+            value={scope}
+            onChange={setScope}
+            layoutId="audits-scope-pill"
+          />
         }
       >
         {partners.length === 0 ? (

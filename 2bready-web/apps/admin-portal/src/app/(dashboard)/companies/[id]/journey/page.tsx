@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -10,8 +10,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -24,10 +22,11 @@ import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ConfirmDialog, DocumentUploadPreviewDialog } from '@2bready/ui-core';
+import { ConfirmDialog, DocumentUploadPreviewDialog, FormDatePicker } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 import FormSelect from '@/components/forms/FormSelect';
+import FormSwitch from '@/components/forms/FormSwitch';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -417,23 +416,26 @@ export default function CompanyJourneyPage() {
             {recurrenceKindIsPeriodic(extraRecurrenceKind) && (
               <Box>
                 <FieldLabel>{t('journey_template.effective_since_label')}</FieldLabel>
-                <FormTextField
-                  type="date"
-                  fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  helperText={t('journey_template.effective_since_hint')}
-                  error={!!extraForm.formState.errors.effective_since}
-                  {...extraForm.register('effective_since')}
+                <Controller
+                  name="effective_since"
+                  control={extraForm.control}
+                  render={({ field }) => (
+                    <FormDatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      fullWidth
+                      helperText={t('journey_template.effective_since_hint')}
+                      error={!!extraForm.formState.errors.effective_since}
+                    />
+                  )}
                 />
               </Box>
             )}
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={extraForm.watch('is_required')}
-                  onChange={(e) => extraForm.setValue('is_required', e.target.checked)}
-                />
-              }
+            <FormSwitch
+              checked={extraForm.watch('is_required')}
+              onChange={(checked) => extraForm.setValue('is_required', checked)}
               label="Required"
             />
           </DialogContent>

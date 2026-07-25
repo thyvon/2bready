@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
@@ -283,23 +284,9 @@ export default function DataRoomPage() {
                     {t('data_room.regenerate_button')}
                   </GlowButton>
                   {isActive && (
-                    <Box
-                      component="button"
-                      onClick={() => setPendingRevoke(true)}
-                      sx={{
-                        border: '1px solid',
-                        borderColor: 'error.main',
-                        color: 'error.main',
-                        bgcolor: 'transparent',
-                        borderRadius: '8px',
-                        px: 2,
-                        fontSize: '0.8125rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
+                    <Button size="small" variant="outlined" color="error" onClick={() => setPendingRevoke(true)}>
                       {t('data_room.revoke_button')}
-                    </Box>
+                    </Button>
                   )}
                 </Box>
               </>

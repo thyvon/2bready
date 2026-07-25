@@ -7,7 +7,6 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { motion } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -23,6 +22,7 @@ import {
   StatusBadge,
   DocumentPreviewDialog,
   DocumentUploadPreviewDialog,
+  PillToggle,
 } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
@@ -374,46 +374,7 @@ export default function JourneyPage() {
             }}
           />
 
-          <Box className="flex items-center gap-1.5" sx={{ flexWrap: 'wrap' }}>
-            {FILTERS.map((f) => (
-              <Box
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                sx={{
-                  position: 'relative',
-                  // Establishes its own stacking context so the pill's
-                  // z-index:-1 below is scoped to this chip only — without
-                  // this, -1 escapes to the nearest ancestor stacking
-                  // context and paints behind SectionCard's own background,
-                  // making the pill (and its text) invisible.
-                  zIndex: 0,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: '9999px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  transition: 'color 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                  color: filter === f.key ? 'background.paper' : 'text.secondary',
-                  '&:hover': filter === f.key ? {} : { color: 'text.primary' },
-                }}
-              >
-                {filter === f.key && (
-                  <Box
-                    component={motion.div}
-                    layoutId="journey-filter-pill"
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    sx={{ position: 'absolute', inset: 0, borderRadius: '9999px', bgcolor: 'text.primary', zIndex: -1 }}
-                  />
-                )}
-                {filter !== f.key && (
-                  <Box sx={{ position: 'absolute', inset: 0, borderRadius: '9999px', bgcolor: 'action.selected', zIndex: -1 }} />
-                )}
-                {f.label}
-              </Box>
-            ))}
-          </Box>
+          <PillToggle options={FILTERS} value={filter} onChange={setFilter} layoutId="journey-filter-pill" />
 
           {totalMatches === 0 && <EmptyState title="No documents match" description="Try a different search term or filter." />}
         </Box>

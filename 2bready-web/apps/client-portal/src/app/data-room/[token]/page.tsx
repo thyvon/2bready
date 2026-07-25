@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import { isAxiosError } from 'axios';
@@ -17,6 +16,7 @@ import ListItemText from '@mui/material/ListItemText';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import { DocumentPreviewDialog } from '@2bready/ui-core';
 import { AuthCard } from '@/components/layout/AuthCard';
+import FormTextField from '@/components/forms/FormTextField';
 import { useTranslation } from '@/lib/i18n';
 import { dataRoomPinSchema, type DataRoomPinInput } from '@/lib/data-room-pin-schema';
 import {
@@ -87,7 +87,7 @@ export default function DataRoomPublicPage() {
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {serverError && <Alert severity="error">{serverError}</Alert>}
 
-          <TextField
+          <FormTextField
             label={t('public_data_room.password_label')}
             placeholder={t('public_data_room.password_placeholder')}
             autoFocus

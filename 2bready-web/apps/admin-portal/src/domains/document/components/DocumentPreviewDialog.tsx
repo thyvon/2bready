@@ -12,6 +12,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from '@/lib/i18n';
+import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 
 export interface DocumentPreviewDialogProps {
@@ -110,17 +111,18 @@ export function DocumentPreviewDialog({
         <DialogActions sx={{ px: 3, py: 2, flexDirection: 'column', alignItems: 'stretch', gap: 1.5 }}>
           {rejecting ? (
             <>
-              <FormTextField
-                autoFocus
-                multiline
-                minRows={2}
-                fullWidth
-                size="small"
-                label={t('admin.reject_document_reason_label')}
-                placeholder={t('admin.reject_document_reason_placeholder')}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
+              <Box>
+                <FieldLabel>{t('admin.reject_document_reason_label')}</FieldLabel>
+                <FormTextField
+                  autoFocus
+                  multiline
+                  minRows={2}
+                  fullWidth
+                  placeholder={t('admin.reject_document_reason_placeholder')}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </Box>
               <Box className="flex justify-end gap-2">
                 <Button variant="text" onClick={() => setRejecting(false)}>{t('common.cancel')}</Button>
                 <Button

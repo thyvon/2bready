@@ -10,9 +10,9 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import TextField from '@mui/material/TextField';
 
 import { AuthCard } from '@/components/layout/AuthCard';
+import FormTextField from '@/components/forms/FormTextField';
 import { totpCodeSchema, type TotpCodeInput } from '@/lib/totp-code-schema';
 import { totpSetup, totpConfirm, type TotpSetupResult } from '@/lib/auth-api';
 import { useAuthStore } from '@/store/auth.store';
@@ -91,7 +91,7 @@ export default function TotpSetupPage() {
 
           {serverError && <Alert severity="error">{serverError}</Alert>}
 
-          <TextField
+          <FormTextField
             label="Authentication code"
             placeholder="123456"
             inputMode="numeric"

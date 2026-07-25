@@ -11,6 +11,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import FormTextField from '@/components/forms/FormTextField';
+import { FormDatePicker } from '@2bready/ui-core';
 import { useAuthStore } from '@/store/auth.store';
 import { listAuditLogs } from '@/domains/audit-log/api';
 import AuditLogDetailsDialog from '@/domains/audit-log/components/AuditLogDetailsDialog';
@@ -106,22 +107,18 @@ export default function AuditLogsPage() {
             sx={{ width: { xs: '100%', sm: 220 } }}
             slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment> } }}
           />
-          <FormTextField
+          <FormDatePicker
             label={t('audit_log.filter_from')}
-            type="date"
             size="small"
-            slotProps={{ inputLabel: { shrink: true } }}
             value={filters.from ?? ''}
-            onChange={(e) => updateFilters({ from: e.target.value || undefined })}
+            onChange={(value) => updateFilters({ from: value || undefined })}
             sx={{ width: { xs: '100%', sm: 170 } }}
           />
-          <FormTextField
+          <FormDatePicker
             label={t('audit_log.filter_to')}
-            type="date"
             size="small"
-            slotProps={{ inputLabel: { shrink: true } }}
             value={filters.to ?? ''}
-            onChange={(e) => updateFilters({ to: e.target.value || undefined })}
+            onChange={(value) => updateFilters({ to: value || undefined })}
             sx={{ width: { xs: '100%', sm: 170 } }}
           />
         </Box>

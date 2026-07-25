@@ -11,8 +11,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import MenuItem from '@mui/material/MenuItem';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
@@ -26,6 +24,7 @@ import { ConfirmDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import FormTextField from '@/components/forms/FormTextField';
+import FormSwitch from '@/components/forms/FormSwitch';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { listPackages, createPackage, updatePackage, deletePackage } from '@/domains/package/api';
@@ -352,12 +351,7 @@ export default function AdminPackagesPage() {
             <Controller
               name="is_active"
               control={control}
-              render={({ field }) => (
-                <FormControlLabel
-                  control={<Switch checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />}
-                  label={t('package.is_active')}
-                />
-              )}
+              render={({ field }) => <FormSwitch checked={field.value} onChange={field.onChange} label={t('package.is_active')} />}
             />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

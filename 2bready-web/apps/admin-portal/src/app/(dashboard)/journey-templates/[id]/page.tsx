@@ -17,8 +17,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import MenuItem from '@mui/material/MenuItem';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -33,9 +31,10 @@ import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
 import FormTextField from '@/components/forms/FormTextField';
+import FormSwitch from '@/components/forms/FormSwitch';
 import DocumentTemplateTree, { type DocumentDragData } from '@/domains/journey-template/components/DocumentTemplateTree';
 import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, recurrenceKindIsPeriodic, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
-import { ConfirmDialog, LevelMedal, UploadDropzone } from '@2bready/ui-core';
+import { ConfirmDialog, LevelMedal, UploadDropzone, FormDatePicker } from '@2bready/ui-core';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useJourneyTemplate } from '@/domains/journey-template/hooks';
@@ -700,25 +699,27 @@ export default function JourneyTemplateDetailPage() {
             {recurrenceKindIsPeriodic(docRecurrenceKind) && (
               <Box>
                 <FieldLabel>{t('journey_template.effective_since_label')}</FieldLabel>
-                <FormTextField
-                  type="date"
-                  fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  helperText={t('journey_template.effective_since_hint')}
-                  error={!!docForm.formState.errors.effective_since}
-                  {...docForm.register('effective_since')}
+                <Controller
+                  name="effective_since"
+                  control={docForm.control}
+                  render={({ field }) => (
+                    <FormDatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      fullWidth
+                      helperText={t('journey_template.effective_since_hint')}
+                      error={!!docForm.formState.errors.effective_since}
+                    />
+                  )}
                 />
               </Box>
             )}
             <Controller
               name="is_required"
               control={docForm.control}
-              render={({ field }) => (
-                <FormControlLabel
-                  control={<Switch checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />}
-                  label={t('journey_template.is_required')}
-                />
-              )}
+              render={({ field }) => <FormSwitch checked={field.value} onChange={field.onChange} label={t('journey_template.is_required')} />}
             />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

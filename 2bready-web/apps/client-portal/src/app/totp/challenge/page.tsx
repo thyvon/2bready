@@ -7,9 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
 
 import { AuthCard } from '@/components/layout/AuthCard';
+import FormTextField from '@/components/forms/FormTextField';
 import { totpCodeSchema, type TotpCodeInput } from '@/lib/totp-code-schema';
 import { totpVerify } from '@/lib/auth-api';
 import { useAuthStore } from '@/store/auth.store';
@@ -52,7 +52,7 @@ export default function TotpChallengePage() {
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         {serverError && <Alert severity="error">{serverError}</Alert>}
 
-        <TextField
+        <FormTextField
           label="Authentication code"
           placeholder="123456"
           inputMode="numeric"

@@ -7,10 +7,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 import MuiLink from '@mui/material/Link';
 import { GlowButton } from '@2bready/ui-core';
+import FormTextField from '@/components/forms/FormTextField';
 import { getApiError } from '@2bready/api-client';
 import { BrandMark } from '@/components/layout/BrandMark';
 import AuroraBackground from '@/components/layout/AuroraBackground';
@@ -157,7 +157,7 @@ export default function RegisterPage() {
             >
               {serverError && <Alert severity="error">{serverError}</Alert>}
 
-              <TextField
+              <FormTextField
                 label="Full Name"
                 required
                 autoFocus
@@ -167,7 +167,7 @@ export default function RegisterPage() {
                 helperText={errors.name?.message}
                 {...register('name')}
               />
-              <TextField
+              <FormTextField
                 label="Business Email"
                 type="email"
                 required
@@ -178,7 +178,7 @@ export default function RegisterPage() {
                 helperText={errors.email?.message}
                 {...register('email')}
               />
-              <TextField
+              <FormTextField
                 label="Password"
                 type="password"
                 required
@@ -189,7 +189,7 @@ export default function RegisterPage() {
                 helperText={errors.password?.message ?? 'Use at least 8 characters with uppercase, lowercase, and a number.'}
                 {...register('password')}
               />
-              <TextField
+              <FormTextField
                 label="Confirm Password"
                 type="password"
                 required
