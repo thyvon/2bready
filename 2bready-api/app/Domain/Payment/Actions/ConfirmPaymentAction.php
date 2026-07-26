@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Domain\Payment\Actions;
 
+use App\Domain\Marketplace\Actions\ActivateTpHireAction;
+use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\Package\Enums\BillingPeriod;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Enums\SubscriptionStatus;
 use App\Domain\Payment\Models\Payment;
+use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 
-/** Admin/finance confirms a payment — activates the subscription and the company follows it. */
+/** Admin/finance confirms a payment — activates whatever it paid for. */
 class ConfirmPaymentAction
 {
+    public function __construct(private readonly ActivateTpHireAction $activateTpHire) {}
+
     public function execute(Payment $payment, User $confirmedBy): Payment
     {
         $payment->update([
@@ -21,7 +26,19 @@ class ConfirmPaymentAction
             'confirmed_at' => now(),
         ]);
 
-        $subscription = $payment->subscription;
+        $payable = $payment->payable;
+
+        match (true) {
+            $payable instanceof Subscription => $this->activateSubscription($payable),
+            $payable instanceof TpHire => $this->activateTpHire->execute($payable),
+            default => null,
+        };
+
+        return $payment->fresh();
+    }
+
+    private function activateSubscription(Subscription $subscription): void
+    {
         $package = $subscription->package;
 
         $expiresAt = match ($package->billing_period) {
@@ -37,7 +54,5 @@ class ConfirmPaymentAction
         ]);
 
         $subscription->company->update(['active_subscription_id' => $subscription->id]);
-
-        return $payment->fresh();
     }
 }

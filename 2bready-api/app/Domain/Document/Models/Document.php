@@ -48,6 +48,7 @@ class Document extends Model
         'status',
         'period_key',
         'rejection_reason',
+        'rejected_by_user_id',
         'verified_by_user_id',
         'verified_at',
         'expires_at',
@@ -82,5 +83,11 @@ class Document extends Model
     public function verifiedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by_user_id');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
     }
 }

@@ -16,13 +16,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
  * @property bool $is_required
  * @property RecurrenceType $recurrence_type
  * @property int|null $expiry_months
- * @property \Illuminate\Support\Carbon|null $effective_since
+ * @property Carbon|null $effective_since
  *
  * @use HasFactory<DocumentTemplateFactory>
  */

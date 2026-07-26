@@ -13,6 +13,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
 import HistoryIcon from '@mui/icons-material/HistoryOutlined';
 import BadgeIcon from '@mui/icons-material/BadgeOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 
 import { useAuthStore } from '@/store/auth.store';
 import { useTranslation } from '@/lib/i18n';
@@ -49,6 +50,7 @@ const ADMIN_NAV: NavItemDef[] = [
   { labelKey: 'nav.roles',      href: '/roles',       icon: <BadgeIcon fontSize="small" /> },
   { labelKey: 'nav.packages',   href: '/packages',    icon: <PaymentIcon fontSize="small" /> },
   { labelKey: 'nav.payments',   href: '/payments',    icon: <ReceiptLongIcon fontSize="small" /> },
+  { labelKey: 'nav.tp_partners', href: '/tp-partners', icon: <HandshakeOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.audits',     href: '/audits',      icon: <AssignmentIcon fontSize="small" /> },
   { labelKey: 'nav.documents',  href: '/documents',   icon: <DescriptionIcon fontSize="small" /> },
   { labelKey: 'nav.journey_templates', href: '/journey-templates', icon: <AccountTreeOutlinedIcon fontSize="small" /> },
@@ -127,6 +129,7 @@ const ADMIN_NAV_ENTRIES: NavEntryDef[] = [
     items: [
       { labelKey: 'nav.packages', descriptionKey: 'nav.desc_packages', href: '/packages', icon: <PaymentIcon fontSize="small" /> },
       { labelKey: 'nav.payments', descriptionKey: 'nav.desc_payments', href: '/payments', icon: <ReceiptLongIcon fontSize="small" /> },
+      { labelKey: 'nav.tp_partners', descriptionKey: 'nav.desc_tp_partners', href: '/tp-partners', icon: <HandshakeOutlinedIcon fontSize="small" /> },
     ],
   },
   {

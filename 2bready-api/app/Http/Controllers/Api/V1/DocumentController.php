@@ -101,22 +101,29 @@ class DocumentController extends Controller
         return ApiResponse::created(new DocumentResource($document));
     }
 
-    // Admin-signoff only, same reasoning as Journey's milestone completion —
-    // no Auditor domain to delegate this to yet.
-    public function verify(Document $document, Request $request, VerifyDocumentAction $action): JsonResponse
+    // Admin/staff (unrestricted) or an assigned TP/auditor (only their
+    // hired company's documents) — see DocumentPolicy::manage(). Resolved
+    // manually with withoutGlobalScope('company') rather than implicit route-
+    // model binding: an assigned TP/auditor is never company-bypassed the
+    // way admin/staff are (BelongsToCompany's null-current_company_id fix),
+    // so the scoped implicit binding would 404 before the policy ever runs,
+    // even for a document their firm is legitimately hired to review.
+    public function verify(string $document, Request $request, VerifyDocumentAction $action): JsonResponse
     {
-        $this->authorize('manage', Document::class);
+        $document = Document::query()->withoutGlobalScope('company')->findOrFail($document);
+        $this->authorize('manage', $document);
 
         $document = $action->execute($document, $request->user());
 
         return ApiResponse::success(new DocumentResource($document));
     }
 
-    public function reject(Document $document, RejectDocumentRequest $request, RejectDocumentAction $action): JsonResponse
+    public function reject(string $document, RejectDocumentRequest $request, RejectDocumentAction $action): JsonResponse
     {
-        $this->authorize('manage', Document::class);
+        $document = Document::query()->withoutGlobalScope('company')->findOrFail($document);
+        $this->authorize('manage', $document);
 
-        $document = $action->execute($document, $request->validated('reason'));
+        $document = $action->execute($document, $request->validated('reason'), $request->user());
 
         return ApiResponse::success(new DocumentResource($document));
     }

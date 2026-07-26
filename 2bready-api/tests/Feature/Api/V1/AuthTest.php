@@ -129,7 +129,11 @@ it('rejects wrong credentials via admin-login the same as regular login', functi
     ])->assertUnprocessable()->assertJsonValidationErrors('email');
 });
 
-it('still logs in an auditor via admin-login', function () {
+// auditor was previously admin-portal-gated (portal.admin.access); it now
+// grants portal.tp.access instead (see RolePermissionSeeder) — TP staff log
+// into tp-portal, not admin-portal. Full tp-login coverage lives in
+// TpAuthTest.php.
+it('rejects an auditor via admin-login now that TP staff use tp-portal instead', function () {
     User::factory()->withRole('auditor')->create([
         'email' => 'auditor@example.com',
         'password' => bcrypt('Secret1234'),
@@ -138,7 +142,7 @@ it('still logs in an auditor via admin-login', function () {
     $this->postJson('/api/v1/auth/admin-login', [
         'email' => 'auditor@example.com',
         'password' => 'Secret1234',
-    ])->assertOk();
+    ])->assertUnprocessable()->assertJsonValidationErrors('email');
 });
 
 // ─── Logout ──────────────────────────────────────────────────────────────────

@@ -395,7 +395,7 @@ it('does not complete a milestone while a periodic template still has a real his
 
 it('completes a milestone once every historical gap is backfilled and verified', function () {
     $this->docTemplate->update(['recurrence_type' => 'periodic_annual', 'effective_since' => '2020-01-01']);
-    $this->company->update(['compliance_start_date' => (int) now()->format('Y') . '-01-01']);
+    $this->company->update(['compliance_start_date' => (int) now()->format('Y').'-01-01']);
     $admin = User::factory()->admin()->create();
 
     // Only the current period is owed with this compliance_start_date —

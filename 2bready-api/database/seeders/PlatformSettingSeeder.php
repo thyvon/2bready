@@ -19,5 +19,11 @@ class PlatformSettingSeeder extends Seeder
         // company — admin-tunable, not a literal, so ops can adjust it from
         // Settings without a redeploy.
         $settings->set('document_expiry_reminder_days', 30, 'compliance');
+
+        // What 2bReady keeps from a TP hire's agreed price — the rest is the
+        // firm's payout (see CreateTpHireAction). Not a confirmed business
+        // figure from the source proposal, a placeholder default pending a
+        // real decision — admin-editable via Settings, not a redeploy.
+        $settings->set('marketplace.commission_percent', 15, 'marketplace');
     }
 }

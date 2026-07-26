@@ -10,6 +10,7 @@ services:
       - web
       - marketing
       - client
+      - tp
     networks:
       - 2bready
 
@@ -77,6 +78,17 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-2bReady}
         NEXT_PUBLIC_BASE_PATH: /portal
+    networks:
+      - 2bready
+
+  tp:
+    build:
+      context: ./2bready-web
+      dockerfile: apps/tp-portal/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_TP_APP_NAME:-2bReady TP Portal}
+        NEXT_PUBLIC_BASE_PATH: /tp-portal
     networks:
       - 2bready
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\TpPartner\Models\Auditor;
+use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -72,6 +74,22 @@ class UserFactory extends Factory
             ->afterCreating(function (User $user) use ($company) {
                 $user->companies()->syncWithoutDetaching([$company->id]);
             });
+    }
+
+    /**
+     * The factory-side equivalent of RegisterTpAuditorAction — assigns the
+     * auditor role and creates the Auditor profile row linking to a
+     * TpPartner. Pass an existing TpPartner to attach to a specific firm in
+     * a test, or omit to auto-create one.
+     */
+    public function withTpPartner(?TpPartner $tpPartner = null): static
+    {
+        return $this->withRole('auditor')->afterCreating(function (User $user) use ($tpPartner) {
+            Auditor::create([
+                'user_id' => $user->id,
+                'tp_partner_id' => ($tpPartner ?? TpPartner::factory()->create())->id,
+            ]);
+        });
     }
 
     public function withTotp(): static

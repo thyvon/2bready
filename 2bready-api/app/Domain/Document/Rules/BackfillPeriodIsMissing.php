@@ -12,6 +12,7 @@ use App\Domain\Document\Services\ComplianceAnchorResolver;
 use App\Domain\Journey\Models\Journey;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Http\Request;
 
 /**
  * Guards the one new degree of freedom this feature adds: an uploader
@@ -32,7 +33,7 @@ class BackfillPeriodIsMissing implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        /** @var \Illuminate\Http\Request $request */
+        /** @var Request $request */
         $request = request();
         $template = DocumentTemplate::query()->find($request->input('document_template_id'));
 

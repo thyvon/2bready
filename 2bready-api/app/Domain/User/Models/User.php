@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\User\Models;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\TpPartner\Models\Auditor;
 use App\Domain\User\Enums\UserStatus;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -48,8 +50,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
     // production account does) must never have the company_owner side of it
     // touched by anything that only knows about this list — see
     // UpdateUserAction, which syncs roles scoped to this set specifically so
-    // it can't accidentally strip a role outside it.
-    public const INTERNAL_ROLES = ['admin', 'staff', 'finance', 'auditor'];
+    // it can't accidentally strip a role outside it. 'auditor' deliberately
+    // excluded — TP staff are a third tenant type, not internal staff;
+    // creating/managing them goes through RegisterTpAuditorAction and
+    // admin-portal's TP Firms screen instead.
+    public const INTERNAL_ROLES = ['admin', 'staff', 'finance'];
 
     /** @return Factory<User> */
     protected static function newFactory(): Factory
@@ -110,16 +115,17 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return ! is_null($this->two_factor_confirmed_at);
     }
 
-    // 2FA is mandatory by default for every role that can reach admin-portal (a
-    // password-only credential must never be enough to reach business data
-    // there) — driven by the same portal.admin.access permission that gates
-    // login itself, not a separately-maintained role list. An admin may
-    // override this per user either direction via two_factor_required
-    // (null = keep this default, true/false = force it regardless of role) —
-    // see UpdateUserRequest.
+    // 2FA is mandatory by default for every role that can reach admin-portal OR
+    // tp-portal (a password-only credential must never be enough to reach
+    // business data there — TP staff review sensitive client compliance
+    // documents, same rationale as admin) — driven by the same
+    // portal.*.access permissions that gate login itself, not a separately-
+    // maintained role list. An admin may override this per user either
+    // direction via two_factor_required (null = keep this default, true/false
+    // = force it regardless of role) — see UpdateUserRequest.
     public function requiresTwoFactor(): bool
     {
-        return $this->two_factor_required ?? $this->canAccessAdminPortal();
+        return $this->two_factor_required ?? ($this->canAccessAdminPortal() || $this->canAccessTpPortal());
     }
 
     // Whether this account may authenticate into admin-portal vs client-portal
@@ -142,9 +148,20 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->can('portal.client.access');
     }
 
+    public function canAccessTpPortal(): bool
+    {
+        return $this->can('portal.tp.access');
+    }
+
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;
+    }
+
+    /** @return HasOne<Auditor, $this> */
+    public function auditor(): HasOne
+    {
+        return $this->hasOne(Auditor::class);
     }
 
     /**

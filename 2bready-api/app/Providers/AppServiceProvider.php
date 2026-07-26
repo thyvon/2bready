@@ -28,6 +28,8 @@ use App\Domain\Journey\Policies\JourneyLevelPolicy;
 use App\Domain\Journey\Policies\JourneyPolicy;
 use App\Domain\Journey\Policies\JourneyTemplatePolicy;
 use App\Domain\Journey\Policies\MilestonePolicy;
+use App\Domain\Marketplace\Models\TpHire;
+use App\Domain\Marketplace\Policies\TpHirePolicy;
 use App\Domain\Notification\Listeners\SendDocumentExpiredNotification;
 use App\Domain\Package\Models\Lead;
 use App\Domain\Package\Models\Package;
@@ -38,6 +40,8 @@ use App\Domain\Payment\Models\Subscription;
 use App\Domain\Payment\Policies\PaymentPolicy;
 use App\Domain\Payment\Policies\SubscriptionPolicy;
 use App\Domain\Shared\Services\MailSettingService;
+use App\Domain\TpPartner\Models\TpPartner;
+use App\Domain\TpPartner\Policies\TpPartnerPolicy;
 use App\Domain\User\Models\User;
 use App\Domain\User\Policies\UserPolicy;
 use Illuminate\Auth\Events\Registered;
@@ -45,6 +49,7 @@ use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
@@ -105,6 +110,19 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Lead::class, LeadPolicy::class);
+        Gate::policy(TpPartner::class, TpPartnerPolicy::class);
+        Gate::policy(TpHire::class, TpHirePolicy::class);
+
+        // Short, stable aliases for Payment::payable() instead of storing a
+        // fully-qualified class name that breaks if a model is ever renamed
+        // or moved. Not enforceMorphMap() — this app has other morph
+        // relations (e.g. Laravel's own notifications table via User's
+        // Notifiable trait) that aren't part of this map and must keep
+        // resolving by class name as before.
+        Relation::morphMap([
+            'subscription' => Subscription::class,
+            'tp_hire' => TpHire::class,
+        ]);
 
         Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
         Event::listen(DocumentExpired::class, RevertMilestoneCompletionOnDocumentExpired::class);

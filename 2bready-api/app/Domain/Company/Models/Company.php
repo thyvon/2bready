@@ -17,11 +17,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property CompanyStatus $status
  * @property int|null $employee_count
- * @property \Illuminate\Support\Carbon|null $compliance_start_date
+ * @property Carbon|null $compliance_start_date
  * @property array<string, bool> $bypass_flags
  *
  * @use HasFactory<CompanyFactory>

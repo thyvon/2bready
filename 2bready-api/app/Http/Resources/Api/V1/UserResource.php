@@ -33,6 +33,7 @@ class UserResource extends JsonResource
             // hardcoded role list. See User::canAccessAdminPortal/ClientPortal.
             'can_access_admin_portal' => $this->canAccessAdminPortal(),
             'can_access_client_portal' => $this->canAccessClientPortal(),
+            'can_access_tp_portal' => $this->canAccessTpPortal(),
             'email_verified_at' => $this->email_verified_at,
             'totp_enabled' => $this->hasTwoFactorEnabled(),
             'totp_required' => $this->requiresTwoFactor(),

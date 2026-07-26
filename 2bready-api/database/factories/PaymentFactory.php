@@ -20,7 +20,8 @@ class PaymentFactory extends Factory
     {
         return [
             'company_id' => Company::factory(),
-            'subscription_id' => Subscription::factory(),
+            'payable_type' => 'subscription',
+            'payable_id' => Subscription::factory(),
             'amount_cents' => 9900,
             'currency' => 'USD',
             'method' => 'manual_bank_transfer',

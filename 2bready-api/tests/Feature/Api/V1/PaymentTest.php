@@ -96,7 +96,7 @@ it('lets a company_owner mark their own manual payment as submitted', function (
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
-    $payment = Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
+    $payment = Payment::factory()->create(['company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id]);
 
     $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")
         ->assertOk()
@@ -109,7 +109,7 @@ it('forbids submitting another company\'s payment', function () {
     $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
     $otherCompany = Company::factory()->create();
     $subscription = Subscription::factory()->create(['company_id' => $otherCompany->id]);
-    $payment = Payment::factory()->create(['company_id' => $otherCompany->id, 'subscription_id' => $subscription->id]);
+    $payment = Payment::factory()->create(['company_id' => $otherCompany->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id]);
 
     // 404, not 403: BelongsToCompany's global scope filters the route-model-binding
     // query itself to the acting user's own company, so another company's payment
@@ -125,7 +125,7 @@ it('lets finance confirm a payment and activates the subscription', function () 
     $subscription = Subscription::factory()->create(['company_id' => $company->id, 'package_id' => $package->id]);
     $payment = Payment::factory()->create([
         'company_id' => $company->id,
-        'subscription_id' => $subscription->id,
+        'payable_type' => 'subscription', 'payable_id' => $subscription->id,
         'status' => 'awaiting_confirmation',
     ]);
     $finance = User::factory()->withRole('finance')->create();
@@ -142,7 +142,7 @@ it('forbids a company_owner from confirming their own payment', function () {
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
-    $payment = Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
+    $payment = Payment::factory()->create(['company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id]);
 
     $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/confirm")->assertForbidden();
 });
@@ -150,7 +150,7 @@ it('forbids a company_owner from confirming their own payment', function () {
 it('lets an admin reject a payment', function () {
     $company = Company::factory()->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
-    $payment = Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
+    $payment = Payment::factory()->create(['company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id]);
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)->postJson("/api/v1/payments/{$payment->id}/reject")
@@ -164,11 +164,11 @@ it('lets a company_owner list only their own payments', function () {
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $subscription = Subscription::factory()->create(['company_id' => $company->id]);
-    Payment::factory()->create(['company_id' => $company->id, 'subscription_id' => $subscription->id]);
+    Payment::factory()->create(['company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id]);
 
     $otherCompany = Company::factory()->create();
     $otherSubscription = Subscription::factory()->create(['company_id' => $otherCompany->id]);
-    Payment::factory()->create(['company_id' => $otherCompany->id, 'subscription_id' => $otherSubscription->id]);
+    Payment::factory()->create(['company_id' => $otherCompany->id, 'payable_type' => 'subscription', 'payable_id' => $otherSubscription->id]);
 
     $this->actingAs($owner)->getJson('/api/v1/payments')
         ->assertOk()

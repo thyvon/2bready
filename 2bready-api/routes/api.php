@@ -61,5 +61,7 @@ Route::prefix('v1')->group(function () {
         require __DIR__.'/api/report.php';
         require __DIR__.'/api/audit-log.php';
         require __DIR__.'/api/settings.php';
+        require __DIR__.'/api/profile.php';
+        require __DIR__.'/api/tp-partner.php';
     });
 });

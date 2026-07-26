@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Str;
+use Pdo\Mysql;
 
 return [
 
@@ -59,8 +60,12 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // PHP 8.4+ moved this constant to \Pdo\Mysql::ATTR_SSL_CA (PDO::MYSQL_ATTR_SSL_CA
+            // is deprecated as of 8.5) — this connection is never actually used (pgsql is the
+            // only driver this project runs), but the array literal is still evaluated at boot,
+            // so the deprecated constant name alone was enough to fail every test under PHP 8.5.
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80400 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -80,7 +85,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80400 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

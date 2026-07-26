@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @property SubscriptionStatus $status
@@ -56,10 +56,10 @@ class Subscription extends Model
         return $this->belongsTo(Package::class);
     }
 
-    /** @return HasMany<Payment, $this> */
-    public function payments(): HasMany
+    /** @return MorphMany<Payment, $this> */
+    public function payments(): MorphMany
     {
-        return $this->hasMany(Payment::class);
+        return $this->morphMany(Payment::class, 'payable');
     }
 
     public function isActive(): bool

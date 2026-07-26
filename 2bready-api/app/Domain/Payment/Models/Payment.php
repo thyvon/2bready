@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * @property int $amount_cents
@@ -36,7 +37,8 @@ class Payment extends Model
 
     protected $fillable = [
         'company_id',
-        'subscription_id',
+        'payable_id',
+        'payable_type',
         'amount_cents',
         'currency',
         'method',
@@ -59,10 +61,10 @@ class Payment extends Model
         ];
     }
 
-    /** @return BelongsTo<Subscription, $this> */
-    public function subscription(): BelongsTo
+    /** @return MorphTo<Model, $this> */
+    public function payable(): MorphTo
     {
-        return $this->belongsTo(Subscription::class);
+        return $this->morphTo();
     }
 
     /** @return BelongsTo<User, $this> */

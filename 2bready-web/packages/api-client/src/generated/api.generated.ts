@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/tp-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.tpLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/forgot-password": {
         parameters: {
             query?: never;
@@ -980,6 +996,38 @@ export interface paths {
         patch: operations["platformSetting.update"];
         trace?: never;
     };
+    "/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["profile.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["profile.changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/data-room/{token}/verify": {
         parameters: {
             query?: never;
@@ -1038,6 +1086,134 @@ export interface paths {
         get: operations["subscription.index"];
         put?: never;
         post: operations["subscription.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tpAssignment.myCompanies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp/companies/{company}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tpAssignment.companyDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-hires": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tpHire.index"];
+        put?: never;
+        post: operations["tpHire.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-hires/{tpHire}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tpHire.complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-hires/{tpHire}/mark-paid-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tpHire.markPaidOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tpPartner.index"];
+        put?: never;
+        post: operations["tpPartner.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-partners/{tpPartner}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tpPartner.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["tpPartner.update"];
+        trace?: never;
+    };
+    "/v1/tp-partners/{tpPartner}/auditors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tpPartner.auditors"];
+        put?: never;
+        post: operations["tpPartner.registerAuditor"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1109,6 +1285,12 @@ export interface components {
             company_name?: string | null;
             source?: string;
         };
+        /** ChangePasswordRequest */
+        ChangePasswordRequest: {
+            current_password: string;
+            password: string;
+            password_confirmation: string;
+        };
         /** CompanyResource */
         CompanyResource: {
             id: string;
@@ -1175,6 +1357,8 @@ export interface components {
              */
             period_key: string | null;
             rejection_reason: string | null;
+            verified_by_user_id: string | null;
+            rejected_by_user_id: string | null;
             /** Format: date-time */
             verified_at: string | null;
             /** Format: date-time */
@@ -1421,7 +1605,13 @@ export interface components {
         PaymentResource: {
             id: string;
             company_id: string;
-            subscription_id: string;
+            payable_id: string;
+            /**
+             * @description The short morph alias ('subscription' | 'tp_hire' — see AppServiceProvider's
+             *     morph map), not a raw class name, so the frontend can label a row ("Package: X"
+             *     vs "TP Hire: Firm — L3") without knowing anything about backend class paths.
+             */
+            payable_type: string;
             amount_cents: number;
             currency: string;
             method: components["schemas"]["PaymentMethod"];
@@ -1481,6 +1671,14 @@ export interface components {
          * @enum {string}
          */
         RecurrenceType: "one_time" | "rolling" | "periodic_monthly" | "periodic_annual";
+        /** RegisterAuditorRequest */
+        RegisterAuditorRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            password: string;
+            password_confirmation: string;
+        };
         /** RegisterRequest */
         RegisterRequest: {
             name: string;
@@ -1604,6 +1802,23 @@ export interface components {
             is_active?: boolean;
             sort_order?: number;
         };
+        /** StoreTpHireRequest */
+        StoreTpHireRequest: {
+            company_id: string;
+            tp_partner_id: string;
+            /** @enum {string} */
+            journey_level: "L2" | "L3" | "L4";
+            /** @enum {string} */
+            method: "manual_bank_transfer" | "stripe";
+        };
+        /** StoreTpPartnerRequest */
+        StoreTpPartnerRequest: {
+            name: string;
+            name_kh?: string | null;
+            price_l2_cents?: number | null;
+            price_l3_cents?: number | null;
+            price_l4_cents?: number | null;
+        };
         /** StoreUserRequest */
         StoreUserRequest: {
             name: string;
@@ -1611,7 +1826,7 @@ export interface components {
             email: string;
             password: string;
             password_confirmation: string;
-            roles: ("admin" | "staff" | "finance" | "auditor")[];
+            roles: ("admin" | "staff" | "finance")[];
         };
         /** SubscribeRequest */
         SubscribeRequest: {
@@ -1646,6 +1861,59 @@ export interface components {
         TotpVerifyRequest: {
             code: string;
         };
+        /**
+         * TpHirePayoutStatus
+         * @enum {string}
+         */
+        TpHirePayoutStatus: "unpaid" | "paid_out";
+        /** TpHireResource */
+        TpHireResource: {
+            id: string;
+            company_id: string;
+            company?: {
+                id: string;
+                name: string;
+            };
+            tp_partner_id: string;
+            tp_partner?: {
+                id: string;
+                name: string;
+            };
+            journey_level: string;
+            price_agreed_cents: number;
+            platform_commission_cents: number;
+            tp_payout_cents: number;
+            status: components["schemas"]["TpHireStatus"];
+            payout_status: components["schemas"]["TpHirePayoutStatus"];
+            /** Format: date-time */
+            hired_at: string | null;
+            /** Format: date-time */
+            completed_at: string | null;
+            /** Format: date-time */
+            created_at: string | null;
+        };
+        /**
+         * TpHireStatus
+         * @enum {string}
+         */
+        TpHireStatus: "pending_payment" | "active" | "completed" | "cancelled";
+        /** TpPartnerResource */
+        TpPartnerResource: {
+            id: string;
+            name: string;
+            name_kh: string | null;
+            status: components["schemas"]["TpPartnerStatus"];
+            price_l2_cents: number | null;
+            price_l3_cents: number | null;
+            price_l4_cents: number | null;
+            /** Format: date-time */
+            created_at: string | null;
+        };
+        /**
+         * TpPartnerStatus
+         * @enum {string}
+         */
+        TpPartnerStatus: "active" | "suspended";
         /** UpdateCompanyRequest */
         UpdateCompanyRequest: {
             name?: string;
@@ -1769,6 +2037,22 @@ export interface components {
             value: string;
             group?: string;
         };
+        /** UpdateProfileRequest */
+        UpdateProfileRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+        };
+        /** UpdateTpPartnerRequest */
+        UpdateTpPartnerRequest: {
+            name?: string;
+            name_kh?: string | null;
+            /** @enum {string} */
+            status?: "active" | "suspended";
+            price_l2_cents?: number | null;
+            price_l3_cents?: number | null;
+            price_l4_cents?: number | null;
+        };
         /** UpdateUserRequest */
         UpdateUserRequest: {
             name?: string;
@@ -1786,7 +2070,7 @@ export interface components {
              *     omit the key) resets back to that default.
              */
             two_factor_required?: boolean | null;
-            roles?: ("admin" | "staff" | "finance" | "auditor")[];
+            roles?: ("admin" | "staff" | "finance")[];
         };
         /** UserResource */
         UserResource: {
@@ -1812,6 +2096,7 @@ export interface components {
              */
             can_access_admin_portal: boolean;
             can_access_client_portal: boolean;
+            can_access_tp_portal: boolean;
             /** Format: date-time */
             email_verified_at: string | null;
             totp_enabled: boolean;
@@ -1997,6 +2282,42 @@ export interface operations {
         };
     };
     "auth.adminLogin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            user: components["schemas"]["UserResource"];
+                            token: string;
+                            totp_required: boolean;
+                        } | {
+                            user: components["schemas"]["UserResource"];
+                            token: string;
+                            totp_required: boolean;
+                            totp_confirmed: boolean;
+                        };
+                        meta: string[];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "auth.tpLogin": {
         parameters: {
             query?: never;
             header?: never;
@@ -2677,7 +2998,6 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The document ID */
                 document: string;
             };
             cookie?: never;
@@ -2697,7 +3017,6 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "document.reject": {
@@ -2705,7 +3024,6 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The document ID */
                 document: string;
             };
             cookie?: never;
@@ -2729,7 +3047,6 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };
@@ -4290,6 +4607,65 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "profile.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "profile.changePassword": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** @constant */
+                            message: "Password changed. Please log in again.";
+                        };
+                        meta: string[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "publicDataRoom.verify": {
         parameters: {
             query?: never;
@@ -4467,6 +4843,379 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpAssignment.myCompanies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CompanyResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example This account has no TP firm attached.
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "tpAssignment.companyDocuments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example Your firm has no active engagement with this company.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tpHire.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpHireResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "tpHire.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreTpHireRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            tp_hire: components["schemas"]["TpHireResource"];
+                            payment: components["schemas"]["PaymentResource"];
+                            gateway_data: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpHire.complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tpHire: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpHireResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "tpHire.markPaidOut": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tpHire: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpHireResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "tpPartner.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"][];
+                        meta: {
+                            pagination: {
+                                total: number;
+                                per_page: number;
+                                current_page: number;
+                                last_page: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "tpPartner.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreTpPartnerRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpPartner.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tpPartner.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateTpPartnerRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpPartner.auditors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tpPartner.registerAuditor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterAuditorRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };

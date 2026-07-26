@@ -17,7 +17,11 @@ class PaymentResource extends JsonResource
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
-            'subscription_id' => $this->subscription_id,
+            'payable_id' => $this->payable_id,
+            // The short morph alias ('subscription' | 'tp_hire' — see AppServiceProvider's
+            // morph map), not a raw class name, so the frontend can label a row ("Package: X"
+            // vs "TP Hire: Firm — L3") without knowing anything about backend class paths.
+            'payable_type' => $this->payable_type,
             'amount_cents' => $this->amount_cents,
             'currency' => $this->currency,
             'method' => $this->method,

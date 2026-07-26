@@ -27,9 +27,9 @@ class SubscribeToPackageAction
             'status' => SubscriptionStatus::Pending,
         ]);
 
-        $payment = Payment::create([
+        /** @var Payment $payment */
+        $payment = $subscription->payments()->create([
             'company_id' => $company->id,
-            'subscription_id' => $subscription->id,
             'amount_cents' => $package->price_cents,
             'currency' => 'USD',
             'method' => $method,

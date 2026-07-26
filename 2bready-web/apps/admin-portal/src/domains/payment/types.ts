@@ -11,7 +11,10 @@ export type PaymentStatus = 'pending' | 'awaiting_confirmation' | 'confirmed' | 
 export type Payment = {
   id: string;
   company_id: string;
-  subscription_id: string;
+  payable_id: string;
+  // Short morph alias from the backend (see AppServiceProvider's morph map) —
+  // 'subscription' for a package purchase, 'tp_hire' for a TP-hire engagement.
+  payable_type: 'subscription' | 'tp_hire';
   amount_cents: number;
   currency: string;
   method: PaymentMethod;

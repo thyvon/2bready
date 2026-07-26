@@ -20,8 +20,27 @@ trait BelongsToCompany
     protected static function bootBelongsToCompany(): void
     {
         static::addGlobalScope('company', function (Builder $builder) {
+            $user = auth()->user();
+
+            // No authenticated user at all (e.g. a console/queue context) — leave
+            // unscoped, matching the trait's pre-existing behavior for that case.
+            if (! $user) {
+                return;
+            }
+
             if ($companyId = static::resolveCurrentCompanyId()) {
                 $builder->where($builder->getModel()->getTable().'.company_id', $companyId);
+
+                return;
+            }
+
+            // Authenticated, non-bypass (not admin/staff/finance), but no
+            // current_company_id — e.g. a TP/auditor account, which is scoped by
+            // TpHire assignment instead, never by company membership. Previously
+            // this fell through with no `where` added at all, silently returning
+            // every company's rows. Match nothing instead.
+            if (! $user->hasAnyRole(['admin', 'staff', 'finance'])) {
+                $builder->whereRaw('1 = 0');
             }
         });
 

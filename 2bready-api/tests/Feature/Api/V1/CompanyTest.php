@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Company\Models\Company;
 use App\Domain\Industry\Models\Industry;
 use App\Domain\User\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\PlatformSettingSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -272,7 +273,7 @@ it('lets a company_owner set their own compliance_start_date', function () {
         'compliance_start_date' => '2023-01-01',
     ])->assertOk();
 
-    expect(\Carbon\Carbon::parse($response->json('data.compliance_start_date'))->toDateString())->toBe('2023-01-01');
+    expect(Carbon::parse($response->json('data.compliance_start_date'))->toDateString())->toBe('2023-01-01');
     expect($company->fresh()->compliance_start_date->toDateString())->toBe('2023-01-01');
 });
 

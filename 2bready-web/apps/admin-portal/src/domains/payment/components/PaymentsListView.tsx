@@ -75,7 +75,7 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
     setActingOn(payment.id);
     try {
       await confirmPayment(payment.id);
-      toast.success(t('admin.payment_confirmed'));
+      toast.success(t(payment.payable_type === 'tp_hire' ? 'admin.payment_confirmed_tp_hire' : 'admin.payment_confirmed'));
       load();
       workspace?.refreshCounts();
     } catch (err) {
@@ -103,6 +103,11 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
 
   const columns: Column<Payment>[] = [
     { key: 'gateway_reference', label: t('admin.reference_col'), render: (p) => p.gateway_reference ?? '—' },
+    {
+      key: 'payable_type',
+      label: t('admin.type_col'),
+      render: (p) => t(p.payable_type === 'tp_hire' ? 'admin.payable_tp_hire' : 'admin.payable_package'),
+    },
     { key: 'amount_cents', label: t('billing.amount'), render: (p) => formatCents(p.amount_cents, p.currency) },
     { key: 'method', label: t('admin.method_col'), render: (p) => t(p.method === 'stripe' ? 'billing.method_stripe' : 'billing.method_bank_transfer') },
     { key: 'submitted_at', label: t('admin.submitted_col'), render: (p) => (p.submitted_at ? formatDate(p.submitted_at) : '—') },

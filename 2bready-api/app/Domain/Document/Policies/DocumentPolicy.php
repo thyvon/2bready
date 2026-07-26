@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Document\Policies;
 
 use App\Domain\Document\Models\Document;
+use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\User\Models\User;
 
 class DocumentPolicy
@@ -29,11 +30,23 @@ class DocumentPolicy
         return $user->can('document.delete');
     }
 
-    // Verify/reject — admin/staff only, mirrors Journey's admin-signoff-only
-    // completion for the same reason (no Auditor domain exists yet to
-    // delegate this to).
-    public function manage(User $user): bool
+    // Verify/reject — either admin/staff (unrestricted), or a TP/auditor
+    // whose firm has an active TpHire for this specific document's company
+    // (document.manage.assigned). withoutGlobalScope('company') here because
+    // the caller in the second branch is never company-bypassed the way
+    // admin/staff are — after BelongsToCompany's null-current_company_id fix,
+    // an unscoped query from that account would otherwise match nothing.
+    public function manage(User $user, Document $document): bool
     {
-        return $user->can('document.manage');
+        if ($user->can('document.manage')) {
+            return true;
+        }
+
+        return $user->can('document.manage.assigned')
+            && TpHire::query()->withoutGlobalScope('company')
+                ->where('tp_partner_id', $user->auditor?->tp_partner_id)
+                ->where('company_id', $document->company_id)
+                ->where('status', 'active')
+                ->exists();
     }
 }

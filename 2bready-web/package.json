@@ -19,6 +19,10 @@
     "build:marketing": "npm run build -w marketing",
     "lint:marketing": "npm run lint -w marketing",
     "type-check:marketing": "npm run type-check -w marketing",
+    "dev:tp": "npm run dev -w tp-portal",
+    "build:tp": "npm run build -w tp-portal",
+    "lint:tp": "npm run lint -w tp-portal",
+    "type-check:tp": "npm run type-check -w tp-portal",
     "generate:types": "npm run generate:types -w @2bready/api-client"
   }
 }

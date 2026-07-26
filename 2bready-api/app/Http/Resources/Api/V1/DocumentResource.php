@@ -34,6 +34,8 @@ class DocumentResource extends JsonResource
             // rolling.
             'period_key' => $this->period_key,
             'rejection_reason' => $this->rejection_reason,
+            'verified_by_user_id' => $this->verified_by_user_id,
+            'rejected_by_user_id' => $this->rejected_by_user_id,
             'verified_at' => $this->verified_at,
             'expires_at' => $this->expires_at,
             'created_at' => $this->created_at,

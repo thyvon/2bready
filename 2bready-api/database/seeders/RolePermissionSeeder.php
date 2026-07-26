@@ -19,13 +19,14 @@ class RolePermissionSeeder extends Seeder
         // ─── Define all permissions ────────────────────────────────────────────
         $permissions = [
             // Portal access — which frontend app a role may authenticate into
-            // (see AuthController::login/adminLogin). The single source of truth
-            // for "who can use admin-portal vs client-portal"; a new back-office
-            // or company-side role only ever needs adding to the assignment lists
-            // below, never a code change in AuthController, User, or either
-            // frontend's route-gating logic.
+            // (see AuthController::login/adminLogin/tpLogin). The single source
+            // of truth for "who can use admin-portal vs client-portal vs
+            // tp-portal"; a new back-office or company-side role only ever needs
+            // adding to the assignment lists below, never a code change in
+            // AuthController, User, or any frontend's route-gating logic.
             'portal.admin.access',
             'portal.client.access',
+            'portal.tp.access',
 
             // Company
             'company.view',
@@ -74,6 +75,11 @@ class RolePermissionSeeder extends Seeder
             'document.upload',
             'document.delete',
             'document.manage',  // admin: view / manage across all companies
+            // auditor: verify/reject only a document belonging to a company
+            // they have an active TpHire for — see DocumentPolicy::manage().
+            // Never granted to admin/staff, who already have unrestricted
+            // document.manage.
+            'document.manage.assigned',
 
             // Document template authoring — separate from document.manage
             // above, which gates verify/reject of uploaded documents.
@@ -114,6 +120,15 @@ class RolePermissionSeeder extends Seeder
             // Platform settings
             'settings.manage',
             'faq.manage',
+
+            // TP Partner (the audit firm/vendor org itself — admin-only CRUD,
+            // registering firms and their staff)
+            'tp_partner.manage',
+
+            // Marketplace (the paid TpHire engagement — admin-only create/
+            // manage; a TP's own view of their active hires is gated on
+            // portal.tp.access + TpHirePolicy's assignment check instead)
+            'marketplace.manage',
         ];
 
         foreach ($permissions as $name) {
@@ -130,16 +145,18 @@ class RolePermissionSeeder extends Seeder
 
         // ─── Assign permissions ────────────────────────────────────────────────
 
-        // Admin — full platform access, but portal.client.access is deliberately
-        // excluded: syncPermissions($permissions) would otherwise grant it too
-        // (it's "full access" to literally everything, including both portal
-        // flags), letting an admin log into client-portal. admin's company_id is
-        // always null, so that session would show a portal with no company —
-        // not a real use case, just an accident of the superuser grant. Every
-        // other back-office role below grants portal.admin.access explicitly,
-        // one at a time, for the same reason.
+        // Admin — full platform access, but portal.client.access/portal.tp.access
+        // are deliberately excluded: syncPermissions($permissions) would otherwise
+        // grant them too (it's "full access" to literally everything, including
+        // every portal flag), letting an admin log into client-portal or
+        // tp-portal. admin has no current_company_id and no Auditor profile, so
+        // either session would show a portal with nothing in it — not a real use
+        // case, just an accident of the superuser grant. Every other back-office
+        // role below grants its own portal.*.access explicitly, one at a time,
+        // for the same reason.
         $admin->syncPermissions($permissions);
         $admin->revokePermissionTo('portal.client.access');
+        $admin->revokePermissionTo('portal.tp.access');
 
         // Staff — everything except destructive financial ops & platform settings
         $staff->syncPermissions([
@@ -159,6 +176,7 @@ class RolePermissionSeeder extends Seeder
             'trust_badge.view', 'trust_badge.manage',
             'data_room.view', 'data_room.manage', 'data_room.share',
             'sop.view', 'sop.manage',
+            'tp_partner.manage', 'marketplace.manage',
             'support.view', 'support.create', 'support.manage',
             'notification.view',
             'report.view', 'audit_log.view',
@@ -212,17 +230,16 @@ class RolePermissionSeeder extends Seeder
             'notification.view',
         ]);
 
-        // Auditor — scoped to assigned companies
+        // Auditor (TP staff) — logs into tp-portal, not admin-portal;
+        // scoped to only the companies their firm has an active TpHire for
+        // (DocumentPolicy::manage(), TpAssignment* endpoints), never a
+        // platform-wide company.view/company.list grant.
         $auditor->syncPermissions([
-            'portal.admin.access',
-            'company.view',
+            'portal.tp.access',
             'document.view',
-            'audit.view', 'audit.conduct',
-            'data_room.view',
-            'sop.view',
+            'document.manage.assigned',
             'support.view', 'support.create',
             'notification.view',
-            'report.view', 'audit_log.view',
         ]);
     }
 }

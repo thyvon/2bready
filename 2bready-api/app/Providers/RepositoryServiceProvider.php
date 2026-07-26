@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Domain\Company\Contracts\CompanyRepositoryInterface;
 use App\Domain\Company\Repositories\EloquentCompanyRepository;
+use App\Domain\TpPartner\Contracts\TpPartnerRepositoryInterface;
+use App\Domain\TpPartner\Repositories\EloquentTpPartnerRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -13,5 +15,6 @@ class RepositoryServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CompanyRepositoryInterface::class, EloquentCompanyRepository::class);
+        $this->app->bind(TpPartnerRepositoryInterface::class, EloquentTpPartnerRepository::class);
     }
 }

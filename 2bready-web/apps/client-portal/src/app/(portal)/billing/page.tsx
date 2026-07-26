@@ -192,6 +192,7 @@ export default function BillingPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Reference</TableCell>
+                <TableCell>Type</TableCell>
                 <TableCell>Amount</TableCell>
                 <TableCell>Submitted</TableCell>
                 <TableCell>Status</TableCell>
@@ -202,6 +203,7 @@ export default function BillingPage() {
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell>{payment.gateway_reference ?? '—'}</TableCell>
+                  <TableCell>{payment.payable_type === 'tp_hire' ? 'TP Hire' : 'Package'}</TableCell>
                   <TableCell>{formatCents(payment.amount_cents, payment.currency)}</TableCell>
                   <TableCell>{formatDate(payment.submitted_at)}</TableCell>
                   <TableCell>

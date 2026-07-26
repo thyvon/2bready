@@ -70,6 +70,17 @@ class AuthController extends Controller
         return ApiResponse::success($issueToken->execute($user), [], 200);
     }
 
+    // tp-portal's login form posts here — same mirrored pattern as login()/
+    // adminLogin() above, gated on portal.tp.access (an auditor account with
+    // no Auditor profile row yet still authenticates fine here; the
+    // tp-portal dashboard itself is what has nothing to show them).
+    public function tpLogin(LoginRequest $request, IssueAuthTokenAction $issueToken): JsonResponse
+    {
+        $user = $this->attemptCredentials($request, requiredPermission: 'portal.tp.access');
+
+        return ApiResponse::success($issueToken->execute($user), [], 200);
+    }
+
     private function attemptCredentials(LoginRequest $request, string $requiredPermission): User
     {
         $attemptedEmail = (string) $request->input('email');
