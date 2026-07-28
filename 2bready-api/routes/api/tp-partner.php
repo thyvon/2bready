@@ -15,6 +15,7 @@ Route::prefix('tp-partners')->group(function () {
     Route::post('/', [TpPartnerController::class, 'store']);
     Route::get('{tpPartner}', [TpPartnerController::class, 'show']);
     Route::patch('{tpPartner}', [TpPartnerController::class, 'update']);
+    Route::delete('{tpPartner}', [TpPartnerController::class, 'destroy']);
     Route::get('{tpPartner}/auditors', [TpPartnerController::class, 'auditors']);
     Route::post('{tpPartner}/auditors', [TpPartnerController::class, 'registerAuditor']);
 });

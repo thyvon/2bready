@@ -21,6 +21,10 @@ export async function updateTpPartner(id: string, data: UpdateTpPartnerPayload):
   return res.data.data;
 }
 
+export async function deleteTpPartner(id: string): Promise<void> {
+  await api.delete(`/tp-partners/${id}`);
+}
+
 export async function listAuditors(tpPartnerId: string): Promise<User[]> {
   const res = await api.get<{ data: User[] }>(`/tp-partners/${tpPartnerId}/auditors`);
   return res.data.data;

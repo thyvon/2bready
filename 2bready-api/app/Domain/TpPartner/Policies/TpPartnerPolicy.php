@@ -30,6 +30,11 @@ class TpPartnerPolicy
         return $user->can('tp_partner.manage');
     }
 
+    public function delete(User $user, TpPartner $tpPartner): bool
+    {
+        return $user->can('tp_partner.manage');
+    }
+
     /** Registering a firm's staff — admin-only, same gate as the firm itself. */
     public function manageAuditors(User $user, TpPartner $tpPartner): bool
     {

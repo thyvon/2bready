@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\TpPartner\Actions\DeleteTpPartnerAction;
 use App\Domain\TpPartner\Actions\RegisterTpAuditorAction;
 use App\Domain\TpPartner\Actions\RegisterTpPartnerAction;
 use App\Domain\TpPartner\Contracts\TpPartnerRepositoryInterface;
@@ -62,6 +63,15 @@ class TpPartnerController extends Controller
         $tpPartner->update($request->validated());
 
         return ApiResponse::success(new TpPartnerResource($tpPartner));
+    }
+
+    public function destroy(TpPartner $tpPartner, DeleteTpPartnerAction $action): JsonResponse
+    {
+        $this->authorize('delete', $tpPartner);
+
+        $action->execute($tpPartner);
+
+        return ApiResponse::noContent();
     }
 
     public function auditors(TpPartner $tpPartner): JsonResponse
