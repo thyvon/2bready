@@ -29,8 +29,8 @@ Route::prefix('tp-hires')->group(function () {
 });
 
 // TP-self — "which companies am I actively engaged for" (tp-portal's own
-// dashboard + document review screen).
+// companies list + per-company Journey review screen).
 Route::prefix('tp')->group(function () {
     Route::get('companies', [TpAssignmentController::class, 'myCompanies']);
-    Route::get('companies/{company}/documents', [TpAssignmentController::class, 'companyDocuments']);
+    Route::get('companies/{company}/journey', [TpAssignmentController::class, 'companyJourney']);
 });

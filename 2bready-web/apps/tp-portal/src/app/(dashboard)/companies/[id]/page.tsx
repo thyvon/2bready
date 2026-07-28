@@ -2,178 +2,169 @@
 
 import { use, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
+import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { listMyCompanies, listCompanyDocuments, verifyDocument, rejectDocument } from '@/domains/hires/api';
-import type { Company, Document } from '@/domains/hires/types';
+import { JourneyTree } from '@/domains/journey/components/JourneyTree';
+import { DocumentPreviewDialog } from '@/domains/journey/components/DocumentPreviewDialog';
+import { getCompanyJourney, getPreviewUrl } from '@/domains/journey/api';
+import type { Journey, JourneyDocument } from '@/domains/journey/types';
+import { listMyCompanies, verifyDocument, rejectDocument } from '@/domains/hires/api';
 import { useToast } from '@/components/feedback/ToastProvider';
-import { getApiError, formatDate } from '@/lib/utils';
+import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
-export default function CompanyDocumentsPage({ params }: { params: Promise<{ id: string }> }) {
+interface PreviewState {
+  documentId: string;
+  title: string;
+  status: string;
+  url: string | null;
+  mimeType: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export default function CompanyJourneyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: companyId } = use(params);
-  const { t } = useTranslation();
   const toast = useToast();
+  const { t } = useTranslation();
 
-  const [company, setCompany] = useState<Company | null>(null);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [companyName, setCompanyName] = useState<string | null>(null);
+  const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actingOn, setActingOn] = useState<string | null>(null);
-  const [pendingReject, setPendingReject] = useState<Document | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const [companies, docs] = await Promise.all([listMyCompanies(), listCompanyDocuments(companyId)]);
-      setCompany(companies.find((c) => c.id === companyId) ?? null);
-      setDocuments(docs);
-    } catch (err) {
-      toast.error(getApiError(err).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [acting, setActing] = useState(false);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function run() {
+    async function load() {
       setLoading(true);
+      setLoadError('');
       try {
-        const [companies, docs] = await Promise.all([listMyCompanies(), listCompanyDocuments(companyId)]);
-        if (!cancelled) {
-          setCompany(companies.find((c) => c.id === companyId) ?? null);
-          setDocuments(docs);
-        }
+        const [companies, journeyData] = await Promise.all([listMyCompanies(), getCompanyJourney(companyId)]);
+        if (cancelled) return;
+        setCompanyName(companies.find((c) => c.id === companyId)?.name ?? null);
+        setJourney(journeyData);
       } catch (err) {
-        if (!cancelled) toast.error(getApiError(err).message);
+        if (!cancelled) setLoadError(getApiError(err).message);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
-    run();
+    load();
 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
+  }, [companyId, reloadKey]);
 
-  const handleVerify = async (document: Document) => {
-    setActingOn(document.id);
+  // Takes primitives, not a JourneyDocument, so both the current document's
+  // preview button and a past history entry's preview icon (which has no
+  // JourneyDocument of its own, just an id/status) can call the same
+  // function — reused as-is by JourneyTree's onPreviewDocument prop.
+  const handlePreview = async (documentId: string, title: string, status: string) => {
+    setPreview({ documentId, title, status, url: null, mimeType: null, loading: true, error: null });
     try {
-      await verifyDocument(document.id);
+      const result = await getPreviewUrl(documentId);
+      setPreview((prev) => (prev && prev.documentId === documentId ? { ...prev, url: result.url, mimeType: result.mime_type, loading: false } : prev));
+    } catch (err) {
+      setPreview((prev) => (prev && prev.documentId === documentId ? { ...prev, loading: false, error: getApiError(err).message } : prev));
+    }
+  };
+
+  // A verified/rejected document can auto-complete its milestone — reload
+  // the whole tree so that shows up immediately, not just the one
+  // document's own status.
+  const handleVerify = async () => {
+    if (!preview) return;
+    setActing(true);
+    try {
+      await verifyDocument(preview.documentId);
       toast.success(t('tp.document_verified'));
-      load();
+      setPreview(null);
+      setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {
-      setActingOn(null);
+      setActing(false);
     }
   };
 
-  const handleReject = async () => {
-    if (!pendingReject || !rejectReason.trim()) return;
-    setActingOn(pendingReject.id);
+  const handleReject = async (reason: string) => {
+    if (!preview) return;
+    setActing(true);
     try {
-      await rejectDocument(pendingReject.id, rejectReason.trim());
+      await rejectDocument(preview.documentId, reason);
       toast.success(t('tp.document_rejected'));
-      setPendingReject(null);
-      setRejectReason('');
-      load();
+      setPreview(null);
+      setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {
-      setActingOn(null);
+      setActing(false);
     }
   };
 
-  const canAct = (document: Document) => document.status === 'review';
-
-  const columns: Column<Document>[] = [
-    {
-      key: 'name',
-      label: t('tp.document_col'),
-      render: (d) => d.document_template?.name ?? d.original_filename,
-    },
-    { key: 'status', label: t('tp.status_col'), render: (d) => <StatusBadge status={d.status} /> },
-    { key: 'created_at', label: t('tp.uploaded_col'), render: (d) => (d.created_at ? formatDate(d.created_at) : '—') },
-    {
-      key: 'actions',
-      label: '',
-      align: 'right',
-      render: (d) =>
-        canAct(d) ? (
-          <Box className="flex justify-end gap-2">
-            <Button size="small" variant="outlined" color="error" disabled={actingOn === d.id} onClick={() => setPendingReject(d)}>
-              {t('tp.reject')}
-            </Button>
-            <Button size="small" variant="contained" loading={actingOn === d.id} onClick={() => handleVerify(d)}>
-              {t('tp.verify')}
-            </Button>
-          </Box>
-        ) : null,
-    },
-  ];
+  const renderDocAction = (doc: JourneyDocument) => (
+    <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
+      <StatusBadge status={doc.status} />
+      {doc.document_id && (
+        <Tooltip title={t('journey.preview')}>
+          <IconButton size="small" onClick={() => handlePreview(doc.document_id!, doc.name, doc.status)}>
+            <VisibilityOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Box>
+  );
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          {company ? t('tp.documents_title', { company: company.name }) : t('common.loading')}
-        </Typography>
-      </Box>
+    <>
+      <PageHeader title={companyName ?? t('common.loading')} />
 
-      <SectionCard noPadding>
-        <DataTable
-          columns={columns}
-          rows={documents}
-          getRowId={(d) => d.id}
-          loading={loading}
-          emptyTitle={t('tp.no_documents')}
-          emptyDescription={t('tp.no_documents_desc')}
-        />
-      </SectionCard>
+      {loading ? (
+        <Box className="flex justify-center py-16">
+          <CircularProgress />
+        </Box>
+      ) : loadError ? (
+        <Alert severity="error">{loadError}</Alert>
+      ) : !journey || journey.levels.length === 0 ? (
+        <SectionCard>
+          <Box sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}>{t('journey.no_levels')}</Box>
+        </SectionCard>
+      ) : (
+        <>
+          {/* No wrapping SectionCard — each level is its own Accordion/card,
+              same as admin-portal's Journey tab. */}
+          <JourneyTree levels={journey.levels} renderDocAction={renderDocAction} onPreviewDocument={handlePreview} />
 
-      <Dialog open={!!pendingReject} onClose={() => setPendingReject(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('tp.reject')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            multiline
-            minRows={3}
-            label={t('tp.reject_reason_label')}
-            placeholder={t('tp.reject_reason_placeholder')}
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            sx={{ mt: 1 }}
+          <DocumentPreviewDialog
+            key={preview?.documentId ?? 'none'}
+            open={preview !== null}
+            onClose={() => setPreview(null)}
+            title={preview?.title ?? ''}
+            url={preview?.url ?? null}
+            mimeType={preview?.mimeType ?? null}
+            loading={preview?.loading ?? false}
+            error={preview?.error ?? null}
+            status={preview?.status}
+            onVerify={handleVerify}
+            onReject={handleReject}
+            acting={acting}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPendingReject(null)}>{t('common.cancel')}</Button>
-          <Button
-            color="error"
-            variant="contained"
-            disabled={!rejectReason.trim()}
-            loading={actingOn === pendingReject?.id}
-            onClick={handleReject}
-          >
-            {t('tp.confirm_reject')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </>
+      )}
+    </>
   );
 }

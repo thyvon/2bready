@@ -478,10 +478,11 @@ it('forbids a company_owner from previewing another company\'s document', functi
     $owner = User::factory()->companyOwner()->withCompany($otherCompany)->create();
     $document = Document::factory()->create(['company_id' => $this->company->id, 'document_template_id' => $this->docTemplate->id]);
 
-    // BelongsToCompany's global scope restricts the {document} lookup to the
-    // caller's own company — a mismatched id just 404s, same as every other
-    // tenant-scoped lookup in this codebase.
-    $this->actingAs($owner)->getJson("/api/v1/documents/{$document->id}/preview-url")->assertNotFound();
+    // previewUrl() resolves {document} manually with withoutGlobalScope('company')
+    // (needed so a TP/auditor caller isn't 404'd by BelongsToCompany's
+    // null-current_company_id fix) — the tenant check now lives entirely in
+    // DocumentPolicy::view(), so a mismatched company is a 403, not a 404.
+    $this->actingAs($owner)->getJson("/api/v1/documents/{$document->id}/preview-url")->assertForbidden();
 });
 
 it('requires authentication to get a preview url', function () {

@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 
+import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
@@ -60,12 +60,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Box>
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>{t('profile.title')}</Typography>
-        <Typography variant="body2" color="text.secondary">{t('profile.subtitle')}</Typography>
-      </Box>
+    <>
+      <PageHeader title={t('profile.title')} />
 
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <SectionCard>
         <form onSubmit={profileForm.handleSubmit(onSaveProfile)} noValidate>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -143,6 +141,7 @@ export default function ProfilePage() {
           </Box>
         </form>
       </SectionCard>
-    </Box>
+      </Box>
+    </>
   );
 }

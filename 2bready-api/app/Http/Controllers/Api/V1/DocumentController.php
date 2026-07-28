@@ -131,11 +131,15 @@ class DocumentController extends Controller
     // Short-lived (5 min) signed link so the frontend can render a PDF/image
     // inline (Content-Disposition: inline, correct Content-Type — see
     // GeneratePreviewUrlAction) without ever exposing the raw storage path
-    // via DocumentResource. `{document}` route-model binding already scopes
-    // to the caller's own company via Document::BelongsToCompany — a
-    // mismatched id just 404s, same as every other tenant-scoped lookup.
-    public function previewUrl(Document $document, GeneratePreviewUrlAction $action): JsonResponse
+    // via DocumentResource. Resolved manually with withoutGlobalScope('company'),
+    // same reasoning as verify/reject — a TP/auditor caller is never
+    // company-bypassed the way admin/staff are, so the scoped implicit
+    // binding would 404 before the policy ever ran, even for a document
+    // their firm is legitimately hired to review. DocumentPolicy::view() now
+    // does the tenant check that used to come from the scope.
+    public function previewUrl(string $document, GeneratePreviewUrlAction $action): JsonResponse
     {
+        $document = Document::query()->withoutGlobalScope('company')->findOrFail($document);
         $this->authorize('view', $document);
 
         return ApiResponse::success([

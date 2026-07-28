@@ -16,6 +16,7 @@ const kh: Record<keyof typeof en, string> = {
 
   // ─── Navigation ──────────────────────────────────────────────────────────
   'nav.dashboard': 'ផ្ទាំងគ្រប់គ្រង',
+  'nav.companies': 'ក្រុមហ៊ុន',
   'nav.profile': 'ប្រវត្តិរូប',
 
   // ─── Header ──────────────────────────────────────────────────────────────
@@ -26,6 +27,8 @@ const kh: Record<keyof typeof en, string> = {
   'header.auto': 'ស្វ័យប្រវត្តិ',
   'header.language': 'ភាសា',
   'header.open_menu': 'បើកម៉ឺនុយរុករក',
+  'header.collapse_sidebar': 'បង្រួមរបារចំហៀង',
+  'header.expand_sidebar': 'ពង្រីករបារចំហៀង',
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   'auth.sign_in': 'ចូល',
@@ -93,8 +96,13 @@ const kh: Record<keyof typeof en, string> = {
   'status.verified': 'បានផ្ទៀងផ្ទាត់',
 
   // ─── TP dashboard (assigned companies) ──────────────────────────────────
-  'tp.dashboard_title': 'ក្រុមហ៊ុនរបស់អ្នក',
-  'tp.dashboard_subtitle': 'ក្រុមហ៊ុនដែលក្រុមហ៊ុនរបស់អ្នកកំពុងបម្រើសកម្ម។',
+  'tp.dashboard_title': 'ផ្ទាំងគ្រប់គ្រង',
+  'tp.dashboard_coming_soon_title': 'ការវិភាគនឹងមកដល់ឆាប់ៗនេះ',
+  'tp.dashboard_coming_soon_desc': 'ទិដ្ឋភាពទូទៅនៃដំណើរការកិច្ចការរបស់ក្រុមហ៊ុនអ្នកនឹងបង្ហាញនៅទីនេះ។',
+  'tp.companies_title': 'ក្រុមហ៊ុនរបស់អ្នក',
+  'tp.company_name_col': 'ក្រុមហ៊ុន',
+  'tp.country_col': 'ប្រទេស',
+  'tp.hired_levels_col': 'បានជួលសម្រាប់',
   'tp.no_companies': 'មិនទាន់មានកិច្ចការសកម្មទេ',
   'tp.no_companies_desc': 'ក្រុមហ៊ុនដែលបានចាត់តាំងឱ្យក្រុមហ៊ុនរបស់អ្នកនឹងបង្ហាញនៅទីនេះនៅពេលការទូទាត់របស់ពួកគេត្រូវបានបញ្ជាក់។',
   'tp.review_documents': 'ពិនិត្យឯកសារ',
@@ -127,6 +135,31 @@ const kh: Record<keyof typeof en, string> = {
   'profile.confirm_new_password': 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី',
   'profile.change_password': 'ប្តូរពាក្យសម្ងាត់',
   'profile.password_changed': 'ពាក្យសម្ងាត់ត្រូវបានប្តូរ។ សូមចូលម្តងទៀត។',
+
+  // ─── Journey tree (company review) ──────────────────────────────────────
+  'journey.no_levels': 'មិនទាន់មានអ្វីត្រូវពិនិត្យសម្រាប់កម្រិតដែលក្រុមហ៊ុនរបស់អ្នកបានទទួលនៅក្រុមហ៊ុននេះទេ។',
+  'journey.unlocked': 'បានដោះសោ',
+  'journey.locked': 'ជាប់សោ',
+  'journey.preview': 'មើលមុន',
+  'journey.preview_unsupported': 'មិនអាចមើលឯកសារប្រភេទនេះនៅទីនេះបានទេ។',
+  'journey.optional_suffix': '(ស្រេចចិត្ត)',
+  'journey.extra_chip_label': 'បន្ថែម',
+  'journey.milestones_count_suffix': 'គោលដៅ',
+  'journey.milestones_complete_count': '{completed}/{total} គោលដៅបានបញ្ចប់',
+  'journey.milestone_auto_complete_hint': 'បញ្ចប់ដោយស្វ័យប្រវត្តិនៅពេលឯកសារទាំងអស់ដែលត្រូវការត្រូវបានផ្ទៀងផ្ទាត់។',
+  'journey.milestone_signed_off': 'បានចុះហត្ថលេខា',
+  'journey.milestone_awaiting_signoff': 'រង់ចាំការចុះហត្ថលេខា',
+  'journey.milestone_complete': 'បានបញ្ចប់',
+  'journey.milestone_verified_count': '{verified}/{total} បានផ្ទៀងផ្ទាត់',
+  'journey.history_missing_label': 'ខ្វះ',
+  'journey.history_missing_caption': 'មិនមានការដាក់ស្នើសម្រាប់រយៈពេលនេះទេ',
+  'journey.history_current_label': 'បច្ចុប្បន្ន',
+  'journey.history_gap_count': 'ខ្វះ {count} ខែ',
+  'journey.history_show_all': 'បង្ហាញទាំង {count} ខែ',
+  'journey.history_show_earlier': 'បង្ហាញ {count} ខែមុន',
+  'journey_template.expires_in': 'ផុតកំណត់ក្នុង {months} ខែ',
+  'journey_template.recurrence_kind.periodic_monthly': 'ដាក់ស្នើប្រចាំខែ',
+  'journey_template.recurrence_kind.periodic_annual': 'ដាក់ស្នើប្រចាំឆ្នាំ',
 };
 
 export default kh;

@@ -9,6 +9,7 @@ use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Package\Enums\Tier;
 use App\Domain\Package\Models\Package;
+use App\Domain\Payment\Models\Subscription;
 use Illuminate\Support\Collection;
 
 /**
@@ -27,8 +28,18 @@ class JourneyProgressService
     /** @return array<string> level codes (e.g. ['L1', 'L2']) unlocked for this company */
     public function unlockedLevelCodes(Company $company): array
     {
+        // withoutGlobalScope('company') — by the time this runs, the caller
+        // has already been authorized to see $company's journey (via
+        // JourneyController's policy check or TpAssignmentController's
+        // active-hire check); this is a pure read-only computation on an
+        // already-authorized company, not a second authorization boundary.
+        // Needed because a TP/auditor caller is never company-bypassed the
+        // way admin/staff are — after BelongsToCompany's null-current_company_id
+        // fix, a scoped query from that account would otherwise always match
+        // nothing, silently reporting every level as locked regardless of
+        // the company's real subscription/progress.
         /** @var Journey|null $journey */
-        $journey = Journey::query()->where('company_id', $company->id)->first();
+        $journey = Journey::query()->withoutGlobalScope('company')->where('company_id', $company->id)->first();
 
         if (! $journey) {
             return [];
@@ -80,7 +91,14 @@ class JourneyProgressService
      */
     private function subscriptionCapSortOrder(Company $company): int
     {
-        $entitledLevel = $company->activeSubscription?->package?->journeyLevel;
+        // Not $company->activeSubscription — Subscription is also
+        // BelongsToCompany-scoped, and that scope applies to relation
+        // queries too, so the same TP-caller null-current_company_id issue
+        // documented above would silently make this relation resolve to
+        // null even when a real active subscription exists.
+        $entitledLevel = $company->active_subscription_id
+            ? Subscription::query()->withoutGlobalScope('company')->find($company->active_subscription_id)?->package?->journeyLevel
+            : null;
 
         if ($entitledLevel) {
             return $entitledLevel->sort_order;

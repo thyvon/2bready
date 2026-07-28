@@ -12,6 +12,7 @@ const en = {
 
   // ─── Navigation ──────────────────────────────────────────────────────────
   'nav.dashboard': 'Dashboard',
+  'nav.companies': 'Companies',
   'nav.profile': 'Profile',
 
   // ─── Header ──────────────────────────────────────────────────────────────
@@ -22,6 +23,8 @@ const en = {
   'header.auto': 'Auto',
   'header.language': 'Language',
   'header.open_menu': 'Open navigation menu',
+  'header.collapse_sidebar': 'Collapse sidebar',
+  'header.expand_sidebar': 'Expand sidebar',
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   'auth.sign_in': 'Sign in',
@@ -89,8 +92,13 @@ const en = {
   'status.verified': 'Verified',
 
   // ─── TP dashboard (assigned companies) ──────────────────────────────────
-  'tp.dashboard_title': 'Your Companies',
-  'tp.dashboard_subtitle': 'Companies your firm has an active engagement with.',
+  'tp.dashboard_title': 'Dashboard',
+  'tp.dashboard_coming_soon_title': 'Analytics coming soon',
+  'tp.dashboard_coming_soon_desc': "A performance overview for your firm's engagements will live here.",
+  'tp.companies_title': 'Your Companies',
+  'tp.company_name_col': 'Company',
+  'tp.country_col': 'Country',
+  'tp.hired_levels_col': 'Hired for',
   'tp.no_companies': 'No active engagements yet',
   'tp.no_companies_desc': 'Companies assigned to your firm will appear here once their payment is confirmed.',
   'tp.review_documents': 'Review documents',
@@ -123,6 +131,31 @@ const en = {
   'profile.confirm_new_password': 'Confirm new password',
   'profile.change_password': 'Change password',
   'profile.password_changed': 'Password changed. Please log in again.',
+
+  // ─── Journey tree (company review) ──────────────────────────────────────
+  'journey.no_levels': 'Nothing to review yet for your firm’s hired level(s) at this company.',
+  'journey.unlocked': 'Unlocked',
+  'journey.locked': 'Locked',
+  'journey.preview': 'Preview',
+  'journey.preview_unsupported': "This file type can't be previewed here.",
+  'journey.optional_suffix': '(optional)',
+  'journey.extra_chip_label': 'Extra',
+  'journey.milestones_count_suffix': 'milestones',
+  'journey.milestones_complete_count': '{completed}/{total} milestones complete',
+  'journey.milestone_auto_complete_hint': 'Completes automatically once every required document is verified.',
+  'journey.milestone_signed_off': 'Signed off',
+  'journey.milestone_awaiting_signoff': 'Awaiting sign-off',
+  'journey.milestone_complete': 'Complete',
+  'journey.milestone_verified_count': '{verified}/{total} verified',
+  'journey.history_missing_label': 'Missing',
+  'journey.history_missing_caption': 'No filing was submitted for this period',
+  'journey.history_current_label': 'Current',
+  'journey.history_gap_count': '{count} missed',
+  'journey.history_show_all': 'Show all {count} months',
+  'journey.history_show_earlier': 'Show {count} earlier months',
+  'journey_template.expires_in': 'Expires in {months}mo',
+  'journey_template.recurrence_kind.periodic_monthly': 'Monthly filing',
+  'journey_template.recurrence_kind.periodic_annual': 'Annual filing',
 } as const;
 
 export default en;
