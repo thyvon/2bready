@@ -10,6 +10,7 @@ use App\Domain\TpPartner\Actions\RegisterTpPartnerAction;
 use App\Domain\TpPartner\Contracts\TpPartnerRepositoryInterface;
 use App\Domain\TpPartner\DTOs\RegisterAuditorData;
 use App\Domain\TpPartner\DTOs\TpPartnerData;
+use App\Domain\TpPartner\Enums\TpPartnerStatus;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\TpPartner\RegisterAuditorRequest;
@@ -27,7 +28,17 @@ class TpPartnerController extends Controller
     {
         $this->authorize('viewAny', TpPartner::class);
 
-        $tpPartners = $repository->paginate($request->only(['status', 'search']));
+        $filters = $request->only(['status', 'search']);
+
+        // Company-side browse (company_owner picking a firm to hire) never
+        // sees suspended firms and can't override that via ?status= — only
+        // admin/staff/finance may filter by status at all, mirroring
+        // PackageController::index()'s is_active gate for non-internal callers.
+        if (! $request->user()->hasAnyRole(['admin', 'staff', 'finance'])) {
+            $filters['status'] = TpPartnerStatus::Active->value;
+        }
+
+        $tpPartners = $repository->paginate($filters);
 
         return ApiResponse::success(
             TpPartnerResource::collection($tpPartners->items()),

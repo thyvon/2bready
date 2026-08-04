@@ -20,7 +20,14 @@ Route::prefix('tp-partners')->group(function () {
     Route::post('{tpPartner}/auditors', [TpPartnerController::class, 'registerAuditor']);
 });
 
-// Admin CRUD — the paid engagement (hire).
+// Self-service — a company_owner hires and pays for a firm themselves. Kept
+// as its own route (not inside the tp-hires prefix group below) to keep it
+// visually distinct from the admin CRUD it sits next to.
+Route::post('tp-hires/hire', [TpHireController::class, 'hire']);
+
+// Admin CRUD — the paid engagement (hire). store() stays admin-only
+// (marketplace.manage) — kept as a support/offline-sales override alongside
+// the self-service hire() route above, which is the main path.
 Route::prefix('tp-hires')->group(function () {
     Route::get('/', [TpHireController::class, 'index']);
     Route::post('/', [TpHireController::class, 'store']);

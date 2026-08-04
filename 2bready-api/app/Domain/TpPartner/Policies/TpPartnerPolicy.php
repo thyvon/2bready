@@ -9,9 +9,16 @@ use App\Domain\User\Models\User;
 
 class TpPartnerPolicy
 {
+    /**
+     * A company_owner may browse firms to hire one — independent of
+     * tp_partner.manage, mirroring SubscriptionPolicy::subscribe()'s
+     * self-service pattern. TpPartnerController::index() further restricts
+     * this caller to active firms only.
+     */
     public function viewAny(User $user): bool
     {
-        return $user->can('tp_partner.manage');
+        return $user->can('tp_partner.manage')
+            || ($user->hasRole('company_owner') && $user->current_company_id !== null);
     }
 
     public function view(User $user, TpPartner $tpPartner): bool

@@ -121,6 +121,165 @@ it('rejects creating a hire for a level the firm has no price for', function () 
     ])->assertUnprocessable();
 });
 
+// ─── Create (self-service) ──────────────────────────────────────────────────
+
+it('lets a company_owner hire a TP firm for their own company via bank transfer', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create(['price_l3_cents' => 39900]);
+    milestoneAtLevel(createCompanyJourney($company), 'L3');
+
+    $response = $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.tp_hire.company_id', $company->id)
+        ->assertJsonPath('data.tp_hire.status', 'pending_payment')
+        ->assertJsonPath('data.tp_hire.price_agreed_cents', 39900)
+        ->assertJsonPath('data.payment.status', 'pending')
+        ->assertJsonPath('data.payment.payable_type', 'tp_hire')
+        ->assertJsonStructure(['data' => ['gateway_data' => ['bank_name', 'account_number', 'reference']]]);
+
+    expect(TpHire::where('company_id', $company->id)->first()->assigned_by_user_id)->toBe($owner->id);
+});
+
+it("ignores a client-supplied company_id and uses the caller's own company", function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $otherCompany = Company::factory()->create();
+    $tpPartner = TpPartner::factory()->create();
+    milestoneAtLevel(createCompanyJourney($company), 'L3');
+
+    $response = $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'company_id' => $otherCompany->id,
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ]);
+
+    $response->assertCreated()->assertJsonPath('data.tp_hire.company_id', $company->id);
+    expect(TpHire::where('company_id', $otherCompany->id)->exists())->toBeFalse();
+});
+
+it('rejects a self-service hire with an invalid journey_level', function () {
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L9',
+        'method' => 'manual_bank_transfer',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['journey_level']);
+});
+
+it('rejects a self-service hire missing tp_partner_id', function () {
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+
+    $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['tp_partner_id']);
+});
+
+it('rejects a self-service hire for a level the firm has no price for', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create(['price_l4_cents' => null]);
+    // L4 is unlocked here — the point of this test is the "no price" business
+    // rule specifically, not the journey-lock check exercised separately below.
+    milestoneAtLevel(createCompanyJourney($company), 'L4');
+
+    $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L4',
+        'method' => 'manual_bank_transfer',
+    ])->assertUnprocessable();
+});
+
+it('rejects a self-service hire for a journey level the company has not unlocked yet', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    // L2 and L3 deliberately share a pillar — L3 stays locked until L2's
+    // milestone is completed for this company, which we never do here.
+    $template = createCompanyJourney($company);
+    $levelL2 = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L2', 'pillar' => 'comply', 'sort_order' => 1]);
+    Milestone::factory()->create(['journey_level_id' => $levelL2->id]);
+    $levelL3 = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L3', 'pillar' => 'comply', 'sort_order' => 2]);
+    Milestone::factory()->create(['journey_level_id' => $levelL3->id]);
+
+    $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['journey_level']);
+});
+
+it('forbids a company_owner with no company from self-service hiring', function () {
+    $owner = User::factory()->companyOwner()->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ])->assertForbidden();
+});
+
+it('forbids a non-company_owner role from self-service hiring', function () {
+    $staff = User::factory()->withRole('staff')->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->actingAs($staff)->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ])->assertForbidden();
+});
+
+it('requires authentication for self-service hiring', function () {
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->postJson('/api/v1/tp-hires/hire', [
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ])->assertUnauthorized();
+});
+
+it('still forbids a company_owner from creating a TP hire via the admin route', function () {
+    // Regression guard — the self-service route above must never replace or
+    // widen store()'s admin-only gate; the two entry points stay isolated.
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+    $company = Company::factory()->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->actingAs($owner)->postJson('/api/v1/tp-hires', [
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L3',
+        'method' => 'manual_bank_transfer',
+    ])->assertForbidden();
+});
+
+it('lets a company_owner list only their own TP hires', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $otherCompany = Company::factory()->create();
+
+    TpHire::factory()->create(['company_id' => $company->id]);
+    TpHire::factory()->create(['company_id' => $otherCompany->id]);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/tp-hires')->assertOk();
+
+    expect($response->json('data'))->toHaveCount(1);
+    $response->assertJsonPath('data.0.company_id', $company->id);
+});
+
 // ─── Full flow: create → pay → confirm → activate → TP reviews ─────────────────
 
 it('activates the hire once the company pays and admin confirms, and the TP can then verify a document', function () {

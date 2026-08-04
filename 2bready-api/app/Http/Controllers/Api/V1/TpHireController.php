@@ -10,6 +10,7 @@ use App\Domain\Marketplace\Actions\MarkTpHirePaidOutAction;
 use App\Domain\Marketplace\DTOs\TpHireData;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Marketplace\HireTpPartnerRequest;
 use App\Http\Requests\Api\V1\Marketplace\StoreTpHireRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
 use App\Http\Resources\Api\V1\TpHireResource;
@@ -41,6 +42,34 @@ class TpHireController extends Controller
         $this->authorize('create', TpHire::class);
 
         $result = $action->execute(TpHireData::from($request->validated()), $request->user());
+
+        return ApiResponse::created([
+            'tp_hire' => new TpHireResource($result['tp_hire']),
+            'payment' => new PaymentResource($result['payment']),
+            'gateway_data' => $result['gateway_data'],
+        ]);
+    }
+
+    /**
+     * Self-service path — a company_owner hires a firm for their own
+     * company, paying for it themselves. Distinct from store() above (admin
+     * CRUD override, used for offline-sales/support cases): same underlying
+     * CreateTpHireAction, but company_id is always the caller's own
+     * current_company_id, never client-supplied. assigned_by_user_id is
+     * stamped with the company_owner themselves (who initiated the hire).
+     */
+    public function hire(HireTpPartnerRequest $request, CreateTpHireAction $action): JsonResponse
+    {
+        $this->authorize('hire', TpHire::class);
+
+        $data = TpHireData::from([
+            'company_id' => $request->user()->current_company_id,
+            'tp_partner_id' => $request->validated('tp_partner_id'),
+            'journey_level' => $request->validated('journey_level'),
+            'method' => $request->validated('method'),
+        ]);
+
+        $result = $action->execute($data, $request->user());
 
         return ApiResponse::created([
             'tp_hire' => new TpHireResource($result['tp_hire']),

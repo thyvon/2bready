@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Company\Models\Company;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -84,4 +85,37 @@ it('requires authentication to delete a TP firm', function () {
     $tpPartner = TpPartner::factory()->create();
 
     $this->deleteJson("/api/v1/tp-partners/{$tpPartner->id}")->assertUnauthorized();
+});
+
+// ─── Browse (company_owner) ────────────────────────────────────────────────
+
+it('lets a company_owner browse only active TP firms', function () {
+    $active = TpPartner::factory()->create(['name' => 'Active Co.']);
+    TpPartner::factory()->suspended()->create(['name' => 'Suspended Co.']);
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/tp-partners')->assertOk();
+
+    expect($response->json('data'))->toHaveCount(1);
+    $response->assertJsonPath('data.0.name', 'Active Co.');
+});
+
+it('lets admin/staff/finance browse TP firms of every status', function () {
+    TpPartner::factory()->create();
+    TpPartner::factory()->suspended()->create();
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->getJson('/api/v1/tp-partners')->assertOk();
+
+    expect($response->json('data'))->toHaveCount(2);
+});
+
+it('forbids a company_owner with no company from browsing TP firms', function () {
+    $owner = User::factory()->companyOwner()->create();
+
+    $this->actingAs($owner)->getJson('/api/v1/tp-partners')->assertForbidden();
+});
+
+it('requires authentication to browse TP firms', function () {
+    $this->getJson('/api/v1/tp-partners')->assertUnauthorized();
 });

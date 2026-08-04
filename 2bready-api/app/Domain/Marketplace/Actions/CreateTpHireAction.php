@@ -20,11 +20,13 @@ use App\Exceptions\TpPartnerHasNoPriceException;
 use Illuminate\Support\Str;
 
 /**
- * Admin picks a company + TpPartner + journey level → this creates the hire
- * (pending_payment) and the Payment the company must pay, reusing the exact
- * same gateway machinery SubscribeToPackageAction already uses for packages.
- * No self-service company-initiated hire yet (Sprint 7 marketplace) — this
- * is the only entry point in v1, always admin-initiated.
+ * Creates the hire (pending_payment) and the Payment the company must pay,
+ * reusing the exact same gateway machinery SubscribeToPackageAction already
+ * uses for packages. Company-agnostic by design — company_id comes from
+ * the DTO, not from the caller's own context — so it serves two entry
+ * points: TpHireController::hire() (company_owner self-service, the main
+ * path) and TpHireController::store() (admin CRUD, kept as a support/
+ * offline-sales override).
  */
 class CreateTpHireAction
 {

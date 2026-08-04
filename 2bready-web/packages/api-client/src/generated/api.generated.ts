@@ -1108,16 +1108,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/tp/companies/{company}/documents": {
+    "/v1/tp/companies/{company}/journey": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["tpAssignment.companyDocuments"];
+        get: operations["tpAssignment.companyJourney"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-hires/hire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Self-service path — a company_owner hires a firm for their own
+         *     company, paying for it themselves. Distinct from store() above (admin
+         *     CRUD override, used for offline-sales/support cases): same underlying
+         *     CreateTpHireAction, but company_id is always the caller's own
+         *     current_company_id, never client-supplied. assigned_by_user_id is
+         *     stamped with the company_owner themselves (who initiated the hire)
+         */
+        post: operations["tpHire.hire"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1198,7 +1222,7 @@ export interface paths {
         get: operations["tpPartner.show"];
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["tpPartner.destroy"];
         options?: never;
         head?: never;
         patch: operations["tpPartner.update"];
@@ -1405,6 +1429,14 @@ export interface components {
         ForgotPasswordRequest: {
             /** Format: email */
             email: string;
+        };
+        /** HireTpPartnerRequest */
+        HireTpPartnerRequest: {
+            tp_partner_id: string;
+            /** @enum {string} */
+            journey_level: "L2" | "L3" | "L4";
+            /** @enum {string} */
+            method: "manual_bank_transfer" | "stripe";
         };
         /** IndustryResource */
         IndustryResource: {
@@ -1617,6 +1649,16 @@ export interface components {
             method: components["schemas"]["PaymentMethod"];
             status: components["schemas"]["PaymentStatus"];
             gateway_reference: string | null;
+            /**
+             * @description Static, non-secret instructions from config('payment.bank_transfer.*') —
+             *     the same data ManualBankTransferGateway::initiate() already hands back
+             *     once at creation time, now on every row so the frontend can offer a
+             *     persistent "View Bank Details" affordance instead of a one-shot dialog
+             *     the company loses access to if they close it before paying.
+             */
+            bank_name: string | null;
+            account_name: string | null;
+            account_number: string | null;
             /** Format: date-time */
             submitted_at: string | null;
             /** Format: date-time */
@@ -2966,7 +3008,6 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The document ID */
                 document: string;
             };
             cookie?: never;
@@ -2990,7 +3031,6 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "document.verify": {
@@ -4862,7 +4902,9 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["CompanyResource"][];
-                        meta: string;
+                        meta: {
+                            hired_levels: unknown[][];
+                        };
                     };
                 };
             };
@@ -4884,7 +4926,7 @@ export interface operations {
             };
         };
     };
-    "tpAssignment.companyDocuments": {
+    "tpAssignment.companyJourney": {
         parameters: {
             query?: never;
             header?: never;
@@ -4902,7 +4944,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["DocumentResource"][];
+                        data: components["schemas"]["JourneyResource"];
                         meta: string;
                     };
                 };
@@ -4924,6 +4966,41 @@ export interface operations {
                 };
             };
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tpHire.hire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireTpPartnerRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            tp_hire: components["schemas"]["TpHireResource"];
+                            payment: components["schemas"]["PaymentResource"];
+                            gateway_data: {
+                                [key: string]: unknown;
+                            };
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "tpHire.index": {
@@ -5119,6 +5196,30 @@ export interface operations {
                         meta: string;
                     };
                 };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tpPartner.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];

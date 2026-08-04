@@ -120,6 +120,24 @@ export default function BillingPage() {
     }
   }
 
+  // Reconstructs the same shape the post-subscribe dialog uses, but from a
+  // payment row's own fields — lets the company revisit bank details for any
+  // pending manual_bank_transfer payment, not just right after creating it.
+  function handleViewBankDetails(payment: Payment) {
+    if (!payment.bank_name || !payment.account_name || !payment.account_number) return;
+    setBankDetails({
+      payment,
+      gatewayData: {
+        bank_name: payment.bank_name,
+        account_name: payment.account_name,
+        account_number: payment.account_number,
+        reference: payment.gateway_reference ?? '',
+        amount_cents: payment.amount_cents,
+        currency: payment.currency,
+      },
+    });
+  }
+
   async function handleMarkSent(paymentId: string) {
     if (!window.confirm("Confirm you've sent the bank transfer? This notifies our finance team to verify and activate your pathway.")) return;
 
@@ -211,9 +229,14 @@ export default function BillingPage() {
                   </TableCell>
                   <TableCell align="right">
                     {payment.status === 'pending' && payment.method === 'manual_bank_transfer' && (
-                      <Button size="small" variant="outlined" loading={submitting === payment.id} onClick={() => handleMarkSent(payment.id)}>
-                        I&apos;ve Sent It
-                      </Button>
+                      <Box className="flex justify-end gap-2">
+                        <Button size="small" variant="text" onClick={() => handleViewBankDetails(payment)}>
+                          {t('billing.view_bank_details')}
+                        </Button>
+                        <Button size="small" variant="outlined" loading={submitting === payment.id} onClick={() => handleMarkSent(payment.id)}>
+                          I&apos;ve Sent It
+                        </Button>
+                      </Box>
                     )}
                   </TableCell>
                 </TableRow>

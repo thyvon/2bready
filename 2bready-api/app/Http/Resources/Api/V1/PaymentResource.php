@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -14,6 +15,8 @@ class PaymentResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        $isBankTransfer = $this->method === PaymentMethod::ManualBankTransfer;
+
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
@@ -27,6 +30,14 @@ class PaymentResource extends JsonResource
             'method' => $this->method,
             'status' => $this->status,
             'gateway_reference' => $this->gateway_reference,
+            // Static, non-secret instructions from config('payment.bank_transfer.*') —
+            // the same data ManualBankTransferGateway::initiate() already hands back
+            // once at creation time, now on every row so the frontend can offer a
+            // persistent "View Bank Details" affordance instead of a one-shot dialog
+            // the company loses access to if they close it before paying.
+            'bank_name' => $isBankTransfer ? config('payment.bank_transfer.bank_name') : null,
+            'account_name' => $isBankTransfer ? config('payment.bank_transfer.account_name') : null,
+            'account_number' => $isBankTransfer ? config('payment.bank_transfer.account_number') : null,
             'submitted_at' => $this->submitted_at,
             'confirmed_at' => $this->confirmed_at,
             'created_at' => $this->created_at,

@@ -37,6 +37,25 @@ it('lets a company_owner subscribe their company to a package via bank transfer'
     expect(Subscription::where('company_id', $company->id)->count())->toBe(1);
 });
 
+it('includes bank transfer instructions on every manual_bank_transfer payment row, not just at creation', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $package = Package::factory()->create();
+
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertCreated();
+
+    // A later, independent listing call must still carry the same bank
+    // details — not just the one-shot creation response.
+    $this->actingAs($owner)->getJson('/api/v1/payments')
+        ->assertOk()
+        ->assertJsonPath('data.0.bank_name', config('payment.bank_transfer.bank_name'))
+        ->assertJsonPath('data.0.account_name', config('payment.bank_transfer.account_name'))
+        ->assertJsonPath('data.0.account_number', config('payment.bank_transfer.account_number'));
+});
+
 it('lets a company_owner subscribe via the fake stripe gateway', function () {
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();

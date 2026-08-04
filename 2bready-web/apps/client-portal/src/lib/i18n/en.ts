@@ -72,6 +72,31 @@ const en = {
   'journey.recurrence_annual': 'Annual filing',
   'journey.recurrence_expires_in': 'Expires in {months}mo',
 
+  // ─── Billing ─────────────────────────────────────────────────────────────
+  'billing.view_bank_details': 'View Bank Details',
+
+  // ─── Audits (TP marketplace) ─────────────────────────────────────────────
+  'audits.subtitle': 'Hire a licensed third-party auditor to verify your documents for L2 and above.',
+  'audits.your_auditor_title': 'Your Auditors',
+  'audits.your_auditor_empty_title': 'No auditor hired yet',
+  'audits.your_auditor_empty_desc': 'Hire a firm from the marketplace below to start verification.',
+  'audits.marketplace_title': 'Marketplace',
+  'audits.marketplace_empty_title': 'No firms available',
+  'audits.marketplace_empty_desc': 'Check back soon — no audit firms are listed yet.',
+  'audits.hire_button': 'Hire for {level}',
+  'audits.hire_confirm': 'Hire {partner} for {level} verification for {price}? You will get real bank transfer details in Billing to complete it.',
+  'audits.hire_success': 'Hire started — head to Billing to complete the bank transfer.',
+  'audits.hire_error': 'Could not start this hire. Please try again.',
+  'audits.status_pending_payment': 'Awaiting Payment',
+  'audits.status_active': 'Active',
+  'audits.status_completed': 'Completed',
+  'audits.status_cancelled': 'Cancelled',
+  'audits.level_label': 'Level {level}',
+  'audits.verified_partner': 'Verified partner',
+  'audits.locked_tooltip': 'Unlock {level} in your Compliance Journey before hiring at this level.',
+  'audits.locked_label': 'Locked',
+  'audits.filter_all_levels': 'All levels',
+
   // ─── Data Room ───────────────────────────────────────────────────────────
   'data_room.desc_locked': 'The Smart Data Room generates a time-limited, password-protected link so investors and banks can review your most advanced compliance documents without exposing your full vault.',
   'data_room.desc_unlocked': 'The Smart Data Room generates a time-limited, password-protected link so investors and banks can review your L3 & L4 verified documents without exposing your full vault.',
