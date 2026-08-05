@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Marketplace\Actions\CancelTpHireAction;
 use App\Domain\Marketplace\Actions\CompleteTpHireAction;
 use App\Domain\Marketplace\Actions\CreateTpHireAction;
 use App\Domain\Marketplace\Actions\MarkTpHirePaidOutAction;
+use App\Domain\Marketplace\Actions\RateTpHireAction;
 use App\Domain\Marketplace\DTOs\TpHireData;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Marketplace\HireTpPartnerRequest;
+use App\Http\Requests\Api\V1\Marketplace\RateTpHireRequest;
 use App\Http\Requests\Api\V1\Marketplace\StoreTpHireRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
 use App\Http\Resources\Api\V1\TpHireResource;
+use App\Http\Resources\Api\V1\TpRatingResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +32,7 @@ class TpHireController extends Controller
         // BelongsToCompany's bypass; nothing in v1 lists TpHires as a TP
         // user through this endpoint (they use TpAssignmentController's
         // myCompanies/companyDocuments instead), so no auditor branch here.
-        $query = TpHire::query()->with(['company', 'tpPartner'])->latest();
+        $query = TpHire::query()->with(['company', 'tpPartner', 'rating'])->latest();
 
         if ($companyId = $request->query('company_id')) {
             $query->where('company_id', $companyId);
@@ -100,5 +104,31 @@ class TpHireController extends Controller
         $tpHire = $action->execute($tpHire, $request->user());
 
         return ApiResponse::success(new TpHireResource($tpHire));
+    }
+
+    // The marketplace unhire flow — company_owner cancels their own
+    // pending/active hire (TpHirePolicy::cancel). Scoped binding is fine
+    // here: unlike complete(), no TP-firm caller ever reaches this route.
+    public function cancel(TpHire $tpHire, CancelTpHireAction $action): JsonResponse
+    {
+        $this->authorize('cancel', $tpHire);
+
+        $tpHire = $action->execute($tpHire);
+
+        return ApiResponse::success(new TpHireResource($tpHire));
+    }
+
+    public function rate(RateTpHireRequest $request, TpHire $tpHire, RateTpHireAction $action): JsonResponse
+    {
+        $this->authorize('rate', $tpHire);
+
+        $rating = $action->execute(
+            $tpHire,
+            (int) $request->validated('rating'),
+            $request->validated('review_text'),
+            $request->user(),
+        );
+
+        return ApiResponse::created(new TpRatingResource($rating));
     }
 }

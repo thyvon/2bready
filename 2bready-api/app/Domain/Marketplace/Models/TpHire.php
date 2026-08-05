@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
@@ -58,6 +59,7 @@ class TpHire extends Model
         'payout_confirmed_at',
         'hired_at',
         'completed_at',
+        'cancelled_at',
     ];
 
     /** @return array<string, string> */
@@ -71,6 +73,7 @@ class TpHire extends Model
             'payout_status' => TpHirePayoutStatus::class,
             'hired_at' => 'datetime',
             'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'payout_confirmed_at' => 'datetime',
         ];
     }
@@ -91,6 +94,12 @@ class TpHire extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
+    }
+
+    /** @return HasOne<TpRating, $this> */
+    public function rating(): HasOne
+    {
+        return $this->hasOne(TpRating::class);
     }
 
     public function isActive(): bool

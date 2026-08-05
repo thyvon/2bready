@@ -33,6 +33,11 @@ Route::prefix('tp-hires')->group(function () {
     Route::post('/', [TpHireController::class, 'store']);
     Route::post('{tpHire}/complete', [TpHireController::class, 'complete']);
     Route::post('{tpHire}/mark-paid-out', [TpHireController::class, 'markPaidOut']);
+    // Marketplace self-service: the company_owner's unhire + rating flows
+    // (TpHirePolicy::cancel / ::rate) — sit next to complete() so the whole
+    // hire lifecycle lives in one place.
+    Route::post('{tpHire}/cancel', [TpHireController::class, 'cancel']);
+    Route::post('{tpHire}/rate', [TpHireController::class, 'rate']);
 });
 
 // TP-self — "which companies am I actively engaged for" (tp-portal's own

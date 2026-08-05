@@ -54,4 +54,27 @@ class TpHirePolicy
     {
         return $user->can('marketplace.manage');
     }
+
+    /**
+     * The marketplace unhire flow — the company_owner who started the
+     * engagement may cancel it for their own company. Mirrors hire()'s
+     * self-service independence from marketplace.manage; admin keeps the
+     * right as the back-office override for support cases.
+     */
+    public function cancel(User $user, TpHire $tpHire): bool
+    {
+        return $user->can('marketplace.manage')
+            || ($user->hasRole('company_owner') && $user->current_company_id === $tpHire->company_id);
+    }
+
+    /**
+     * Rating is a company verdict — only a company_owner of the company
+     * that hired the firm may rate a completed engagement. Admins do not
+     * rate on a company's behalf; that would be the platform writing its
+     * own reputation, which defeats the marketplace's social proof.
+     */
+    public function rate(User $user, TpHire $tpHire): bool
+    {
+        return $user->hasRole('company_owner') && $user->current_company_id === $tpHire->company_id;
+    }
 }

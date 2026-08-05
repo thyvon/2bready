@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\TpPartner\Models;
 
+use App\Domain\Marketplace\Models\TpRating;
 use App\Domain\TpPartner\Enums\TpPartnerStatus;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
@@ -21,6 +22,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * admin only — no self-service signup, per the confirmed v1 scope.
  *
  * @property TpPartnerStatus $status
+ * @property-read float|null $ratings_avg_rating  Aggregate loaded via withAvg('ratings', 'rating') on read paths.
+ * @property-read int|null $ratings_count  Aggregate loaded via withCount('ratings') on read paths.
  *
  * @use HasFactory<TpPartnerFactory>
  */
@@ -75,5 +78,11 @@ class TpPartner extends Model
     public function auditors(): HasMany
     {
         return $this->hasMany(Auditor::class);
+    }
+
+    /** @return HasMany<TpRating, $this> */
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(TpRating::class);
     }
 }

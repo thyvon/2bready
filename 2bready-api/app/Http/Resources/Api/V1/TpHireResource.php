@@ -40,6 +40,10 @@ class TpHireResource extends JsonResource
             'payout_status' => $this->payout_status,
             'hired_at' => $this->hired_at,
             'completed_at' => $this->completed_at,
+            'cancelled_at' => $this->cancelled_at,
+            'rating' => $this->whenLoaded('rating', function () {
+                return $this->rating ? new TpRatingResource($this->rating) : null;
+            }),
             'created_at' => $this->created_at,
         ];
     }

@@ -588,3 +588,152 @@ it('requires authentication for every tp-hire endpoint', function () {
 
     $this->getJson('/api/v1/tp/companies')->assertUnauthorized();
 });
+
+// ─── Cancel (marketplace unhire) ─────────────────────────────────────────────
+
+it('lets a company_owner cancel their own pending hire, failing its open payment', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+    $hire->payments()->create([
+        'company_id' => $company->id,
+        'amount_cents' => $hire->price_agreed_cents,
+        'currency' => 'USD',
+        'method' => 'manual_bank_transfer',
+        'status' => 'pending',
+        'gateway_reference' => 'PAYTEST01',
+    ]);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'cancelled');
+
+    expect($response->json('data.cancelled_at'))->not->toBeNull();
+    expect($hire->payments()->first()->status->value)->toBe('failed');
+});
+
+it('strips a TP firm of access the moment their active hire is cancelled', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $hire = TpHire::factory()->active()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+
+    $this->actingAs($auditor)->getJson('/api/v1/tp/companies')->assertJsonCount(1, 'data');
+
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
+
+    $this->actingAs($auditor)->getJson('/api/v1/tp/companies')->assertJsonCount(0, 'data');
+});
+
+it('does not touch a confirmed payment when an active hire is cancelled', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->active()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+    $payment = $hire->payments()->create([
+        'company_id' => $company->id,
+        'amount_cents' => $hire->price_agreed_cents,
+        'currency' => 'USD',
+        'method' => 'manual_bank_transfer',
+        'status' => 'confirmed',
+        'gateway_reference' => 'PAYTEST02',
+    ]);
+
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
+
+    expect($payment->fresh()->status->value)->toBe('confirmed');
+});
+
+it('cannot resurrect a cancelled hire by confirming its payment afterwards', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $finance = User::factory()->withRole('finance')->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+    $payment = $hire->payments()->create([
+        'company_id' => $company->id,
+        'amount_cents' => $hire->price_agreed_cents,
+        'currency' => 'USD',
+        'method' => 'manual_bank_transfer',
+        'status' => 'pending',
+        'gateway_reference' => 'PAYTEST03',
+    ]);
+
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
+    $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")->assertOk();
+
+    $this->actingAs($finance)->postJson("/api/v1/payments/{$payment->id}/confirm")->assertOk();
+
+    expect(TpHire::find($hire->id)->status->value)->toBe('cancelled');
+});
+
+it('forbids cancelling a hire that already completed', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->active()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+        'status' => 'completed',
+    ]);
+
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertUnprocessable();
+    expect($hire->fresh()->status->value)->toBe('completed');
+});
+
+it('hides another company\'s hire from a company_owner cancelling (404, not 403)', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $otherCompany = Company::factory()->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->create([
+        'company_id' => $otherCompany->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+
+    // Tenant isolation: the scoped binding makes the other company's hire
+    // invisible — 404 (can't even probe its existence), not 403.
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertNotFound();
+});
+
+it('lets an admin cancel a hire as the back-office override', function () {
+    $company = Company::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+
+    $this->actingAs($admin)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")
+        ->assertOk()->assertJsonPath('data.status', 'cancelled');
+});
+
+it('requires authentication to cancel a hire', function () {
+    $company = Company::factory()->create();
+    $tpPartner = TpPartner::factory()->create();
+    $hire = TpHire::factory()->create(['company_id' => $company->id, 'tp_partner_id' => $tpPartner->id]);
+
+    $this->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertUnauthorized();
+});

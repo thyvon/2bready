@@ -22,6 +22,19 @@ class TpPartnerResource extends JsonResource
             'price_l2_cents' => $this->price_l2_cents,
             'price_l3_cents' => $this->price_l3_cents,
             'price_l4_cents' => $this->price_l4_cents,
+            // Aggregates are computed on read (withAvg/withCount) — never
+            // stored on tp_partners, so there is no denormalized number to
+            // drift out of sync with tp_ratings. Keys are omitted unless the
+            // query actually loaded the aggregates (avoids
+            // MissingAttributeException on show/update/delete paths).
+            'rating_avg' => $this->when(
+                array_key_exists('ratings_avg_rating', $this->resource->getAttributes()),
+                fn (): ?float => $this->ratings_avg_rating === null ? null : round((float) $this->ratings_avg_rating, 1),
+            ),
+            'rating_count' => $this->when(
+                array_key_exists('ratings_count', $this->resource->getAttributes()),
+                fn (): int => (int) ($this->ratings_count ?? 0),
+            ),
             'created_at' => $this->created_at,
         ];
     }

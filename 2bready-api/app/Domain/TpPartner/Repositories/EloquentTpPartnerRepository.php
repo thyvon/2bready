@@ -26,6 +26,10 @@ class EloquentTpPartnerRepository implements TpPartnerRepositoryInterface
             $query->where('name', 'ilike', "%{$search}%");
         }
 
+        // The marketplace listing shows each firm's average rating and
+        // review count — one grouped aggregate, no per-row subqueries.
+        $query->withAvg('ratings', 'rating')->withCount('ratings');
+
         return $query->latest()->paginate($perPage);
     }
 
