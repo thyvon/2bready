@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 export default function AdminFooter() {
   return (
     <Box component="footer" sx={{ borderTop: '1px solid', borderColor: 'divider', mt: 'auto' }}>
-      <Box className="flex items-center justify-between flex-wrap" sx={{ px: { xs: 2, md: 3 }, py: 2.5, gap: 2 }}>
+      <Box className="flex items-center justify-between flex-wrap" sx={{ px: { xs: 2, md: 3 }, py: 2, gap: 2 }}>
         <Box className="flex items-center gap-1.5">
           <Box sx={{ width: 16, height: 16, borderRadius: '4px', bgcolor: 'text.primary', flexShrink: 0 }} />
           <Typography variant="caption" color="text.secondary">
