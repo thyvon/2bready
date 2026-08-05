@@ -14,8 +14,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import { getApiError } from '@2bready/api-client';
 import { Breadcrumbs, SectionCard, EmptyState, StatusBadge } from '@2bready/ui-core';
+import { getApiError, formatCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
 import { PricingCard } from '@/components/dashboard/PricingCard';
@@ -41,10 +41,6 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
   failed: 'Failed',
   rejected: 'Rejected',
 };
-
-function formatCents(cents: number, currency: string): string {
-  return `${currency === 'USD' ? '$' : currency + ' '}${(cents / 100).toFixed(2)}`;
-}
 
 function formatDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString() : '—';

@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import Box from '@mui/material/Box';
@@ -160,7 +160,6 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
     register,
     control,
     trigger,
-    watch,
     setValue,
     getValues,
     handleSubmit,
@@ -180,7 +179,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
     if (fnb) setValue('industry_id', fnb.id);
   }, [industries, getValues, setValue]);
 
-  const values = watch();
+  const values = useWatch({ control });
   const isLastStep = step === COMPANY_SETUP_STEPS.length - 1;
 
   const goToStep = (index: number) => {
@@ -389,7 +388,7 @@ export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
                       return locale === 'kh' && selected.name_kh ? selected.name_kh : selected.name;
                     })()}
                   />
-                  <ReviewRow label="Country" value={optionLabel(COUNTRY_OPTIONS, values.country_code)} />
+                  <ReviewRow label="Country" value={values.country_code ? optionLabel(COUNTRY_OPTIONS, values.country_code) : '—'} />
                   <ReviewRow label="Compliance Start Date" value={values.compliance_start_date || 'Today'} />
                 </ReviewSection>
               </Box>

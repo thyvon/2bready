@@ -123,6 +123,7 @@ export function PortalNavbar() {
   const overallPct = documents.length === 0 ? 0 : Math.round((countVerified(documents) / documents.length) * 100);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLDivElement | null>(null);
   const moreAnchorRef = useRef<HTMLDivElement>(null);
   const moreTriggerRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLAnchorElement>(null);
@@ -136,6 +137,7 @@ export function PortalNavbar() {
 
   const openMore = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    setMoreAnchor(moreAnchorRef.current);
     setMoreOpen(true);
   };
   const scheduleCloseMore = () => {
@@ -206,7 +208,7 @@ export function PortalNavbar() {
             ariaExpanded={moreOpen}
           />
 
-          <Popper open={moreOpen} anchorEl={moreAnchorRef.current} placement="bottom-start" sx={{ zIndex: 20 }}>
+          <Popper open={moreOpen} anchorEl={moreAnchor} placement="bottom-start" sx={{ zIndex: 20 }}>
             <ClickAwayListener onClickAway={() => setMoreOpen(false)}>
               <Paper
                 onMouseEnter={openMore}

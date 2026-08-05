@@ -4,6 +4,7 @@ import type { BankTransferGatewayData } from '@/lib/subscription-api';
 
 export type TpPartner = components['schemas']['TpPartnerResource'];
 export type TpHire = components['schemas']['TpHireResource'];
+export type TpRating = components['schemas']['TpRatingResource'];
 export type Payment = components['schemas']['PaymentResource'];
 
 export interface HireResult {
@@ -32,5 +33,21 @@ export async function hireTpPartner(tpPartnerId: string, journeyLevel: string): 
 
 export async function listMyTpHires(): Promise<TpHire[]> {
   const res = await api.get<{ data: TpHire[] }>('/tp-hires');
+  return res.data.data;
+}
+
+// Company-side cancellation. Backend only allows pending_payment/active
+// hires (HireNotCancellableException → 422 otherwise) and fails any open
+// payments — completed hires are un-cancellable by design.
+export async function cancelTpHire(tpHireId: string): Promise<TpHire> {
+  const res = await api.post<{ data: TpHire }>(`/tp-hires/${tpHireId}/cancel`);
+  return res.data.data;
+}
+
+export async function rateTpHire(tpHireId: string, rating: number, reviewText: string | null): Promise<TpRating> {
+  const res = await api.post<{ data: TpRating }>(`/tp-hires/${tpHireId}/rate`, {
+    rating,
+    review_text: reviewText,
+  });
   return res.data.data;
 }

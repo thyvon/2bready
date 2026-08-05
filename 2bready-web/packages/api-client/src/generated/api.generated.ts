@@ -1196,6 +1196,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/tp-hires/{tpHire}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tpHire.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tp-hires/{tpHire}/rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tpHire.rate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/tp-partners": {
         parameters: {
             query?: never;
@@ -1707,6 +1739,11 @@ export interface components {
             tier: components["schemas"]["Tier"];
             sort_order: number;
         };
+        /** RateTpHireRequest */
+        RateTpHireRequest: {
+            rating: number;
+            review_text?: string | null;
+        };
         /**
          * RecurrenceType
          * @description How a document requirement recurs — the distinction `expiry_months` alone couldn't express: a fixed calendar slot (periodic) vs. a rolling validity window vs. never. - OneTime         proves something that stays true once verified (MoC                   Registration, Shareholder ID). Never expires, no period. - Rolling         valid for a fixed window from the verification date; any                   upload newer than `expiry_months` months is acceptable                   (Lab CoA, CBC Credit Reports). No calendar slot, so there                   is no such thing as a "missing" rolling period — only                   "is there a currently-valid upload." - PeriodicMonthly one filing owed per calendar month. Each verified upload                   satisfies exactly one `period_key` ("2026-07"); a month                   with no upload at all is a real, visible gap. - PeriodicAnnual  one filing owed per calendar year ("2026") — Annual                   Patent Tax, Hygiene/ISO certificates, audited financials.
@@ -1932,6 +1969,9 @@ export interface components {
             /** Format: date-time */
             completed_at: string | null;
             /** Format: date-time */
+            cancelled_at: string | null;
+            rating?: components["schemas"]["TpRatingResource"] | null;
+            /** Format: date-time */
             created_at: string | null;
         };
         /**
@@ -1948,6 +1988,15 @@ export interface components {
             price_l2_cents: number | null;
             price_l3_cents: number | null;
             price_l4_cents: number | null;
+            /**
+             * @description Aggregates are computed on read (withAvg/withCount) — never
+             *     stored on tp_partners, so there is no denormalized number to
+             *     drift out of sync with tp_ratings. Keys are omitted unless the
+             *     query actually loaded the aggregates (avoids
+             *     MissingAttributeException on show/update/delete paths).
+             */
+            rating_avg?: number | null;
+            rating_count?: number;
             /** Format: date-time */
             created_at: string | null;
         };
@@ -1956,6 +2005,16 @@ export interface components {
          * @enum {string}
          */
         TpPartnerStatus: "active" | "suspended";
+        /** TpRatingResource */
+        TpRatingResource: {
+            id: string;
+            tp_hire_id: string;
+            tp_partner_id: string;
+            rating: number;
+            review_text: string | null;
+            /** Format: date-time */
+            created_at: string | null;
+        };
         /** UpdateCompanyRequest */
         UpdateCompanyRequest: {
             name?: string;
@@ -5112,6 +5171,67 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "tpHire.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp hire ID */
+                tpHire: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpHireResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tpHire.rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp hire ID */
+                tpHire: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateTpHireRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpRatingResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "tpPartner.index": {
