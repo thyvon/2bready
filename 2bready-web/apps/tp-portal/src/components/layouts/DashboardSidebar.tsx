@@ -101,8 +101,8 @@ function SidebarContent({
       >
         <BrandLogo
           logoUrl={logoUrl}
-          height={28}
-          maxWidth={collapsed ? 28 : 150}
+          height={56}
+          maxWidth={collapsed ? 44 : 200}
           fallback={<Box sx={{ width: 20, height: 20, borderRadius: '5px', bgcolor: 'text.primary', flexShrink: 0 }} />}
         />
         {!collapsed && !logoUrl && (
