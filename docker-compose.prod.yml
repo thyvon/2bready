@@ -103,6 +103,10 @@ services:
         # and apps/marketing/src/lib/client-portal-url.ts.
         NEXT_PUBLIC_ADMIN_PORTAL_URL: /admin
         NEXT_PUBLIC_CLIENT_PORTAL_URL: /portal
+        # Marketing fetches the public branding logo (and its pricing) via
+        # publicApi.ts — without the API URL baked in, those fetches went to
+        # "undefined/api/v1/..." and silently failed.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     networks:
       - 2bready
 
