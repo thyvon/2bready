@@ -4,9 +4,13 @@ import Link from 'next/link';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import BrandMark from '@/components/marketing/BrandMark';
+import BrandLogo from '@/components/marketing/BrandLogo';
+import { useBrandLogo } from '@/lib/branding';
 import { footerContent, footerColumns } from '@/components/marketing/content';
 
 export default function MarketingFooter() {
+  const logoUrl = useBrandLogo();
+
   return (
     <Box
       component="footer"
@@ -30,8 +34,13 @@ export default function MarketingFooter() {
       >
         <Box sx={{ maxWidth: 280 }}>
           <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', mb: 1 }}>
-            <BrandMark size={20} />
-            2bReady
+            <BrandLogo
+              logoUrl={logoUrl}
+              height={20}
+              maxWidth={110}
+              fallback={<BrandMark size={20} />}
+            />
+            {!logoUrl && '2bReady'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {footerContent.tagline}

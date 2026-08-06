@@ -25,6 +25,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     ...(hasRole('admin') ? [{ label: t('settings.tab_integrations'), href: '/settings' }] : []),
     ...(hasRole('admin') ? [{ label: t('settings.tab_email'), href: '/settings/email' }] : []),
     ...(hasRole('admin') ? [{ label: t('settings.tab_security'), href: '/settings/security' }] : []),
+    ...(hasRole('admin') ? [{ label: t('settings.tab_branding'), href: '/settings/branding' }] : []),
     { label: t('settings.tab_profile'), href: '/settings/profile' },
   ];
   // Integrations' href is a prefix of every other tab's href, so it needs an

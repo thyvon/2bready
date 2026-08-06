@@ -6,7 +6,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import MarkEmailUnreadOutlinedIcon from '@mui/icons-material/MarkEmailUnreadOutlined';
+import { BrandLogo } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
+import { useBrandLogo } from '@/lib/branding';
 import { useAuthStore } from '@/store/auth.store';
 import { logout, resendVerificationEmail } from '@/lib/auth-api';
 import { useToast } from '@/components/ToastProvider';
@@ -28,6 +30,7 @@ export function EmailVerificationLockoutScreen({ email }: EmailVerificationLocko
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const toast = useToast();
   const { t } = useTranslation();
+  const logoUrl = useBrandLogo();
   const [sending, setSending] = useState(false);
 
   const handleLogout = async () => {
@@ -78,7 +81,12 @@ export function EmailVerificationLockoutScreen({ email }: EmailVerificationLocko
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <BrandMark size={28} />
+          <BrandLogo
+            logoUrl={logoUrl}
+            height={28}
+            maxWidth={140}
+            fallback={<BrandMark size={28} />}
+          />
         </Box>
 
         <Box

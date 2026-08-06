@@ -196,6 +196,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/branding/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * PUBLIC — every portal (admin, client, TP, marketing) shows the
+         *     platform logo, and none of them share a permission level. The URL is
+         *     a fresh short-lived signed URL; null when no logo is uploaded yet
+         */
+        get: operations["branding.logo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/settings/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["branding.uploadLogo"];
+        delete: operations["branding.deleteLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies": {
         parameters: {
             query?: never;
@@ -1092,6 +1129,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/tp/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own firm record — the tp-portal equivalent of /me. The
+         *     firm is resolved through the auditor profile (never through a query
+         *     param), so an auditor can only ever see their own firm
+         */
+        get: operations["tpAssignment.me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/tp/companies": {
         parameters: {
             query?: never;
@@ -1258,6 +1316,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["tpPartner.update"];
+        trace?: never;
+    };
+    "/v1/tp-partners/{tpPartner}/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["tpPartner.updatePricing"];
+        trace?: never;
+    };
+    "/v1/tp-partners/{tpPartner}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["tpPartner.updateProfile"];
         trace?: never;
     };
     "/v1/tp-partners/{tpPartner}/auditors": {
@@ -2144,6 +2234,29 @@ export interface components {
             /** Format: email */
             email: string;
         };
+        /**
+         * UpdateTpPartnerPricingRequest
+         * @description Firm self-service slice of a TP partner (Sprint 7) — the three per-level
+         *     prices only. Unlike UpdateTpPartnerRequest this deliberately carries no
+         *     name/status fields: a firm's own auditors must never be able to rename or
+         *     suspend themselves through this endpoint.
+         */
+        UpdateTpPartnerPricingRequest: {
+            price_l2_cents?: number | null;
+            price_l3_cents?: number | null;
+            price_l4_cents?: number | null;
+        };
+        /**
+         * UpdateTpPartnerProfileRequest
+         * @description Firm self-service slice of a TP partner — the identity fields only
+         *     (name / name_kh). Deliberately no status here: a firm's own auditors must
+         *     never be able to suspend or reactivate themselves through this endpoint;
+         *     that stays exclusively in UpdateTpPartnerRequest (admin-only update()).
+         */
+        UpdateTpPartnerProfileRequest: {
+            name?: string;
+            name_kh?: string | null;
+        };
         /** UpdateTpPartnerRequest */
         UpdateTpPartnerRequest: {
             name?: string;
@@ -2172,6 +2285,17 @@ export interface components {
              */
             two_factor_required?: boolean | null;
             roles?: ("admin" | "staff" | "finance")[];
+        };
+        /**
+         * UploadLogoRequest
+         * @description Platform logo upload — settings.manage only, and MIME + size validated
+         *     here before anything touches storage (filesystem rule: validate first,
+         *     serve only via signed URLs). SVG is accepted: it is served through a
+         *     temporaryUrl as an <img> source, never inline, so no script context.
+         */
+        UploadLogoRequest: {
+            /** Format: binary */
+            logo: string;
         };
         /** UserResource */
         UserResource: {
@@ -2644,6 +2768,80 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "branding.logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            url: string | null;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+        };
+    };
+    "branding.uploadLogo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadLogoRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            url: string | null;
+                            setting: components["schemas"]["PlatformSettingResource"];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "branding.deleteLogo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
         };
     };
     "company.index": {
@@ -4945,6 +5143,45 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "tpAssignment.me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example This account has no TP firm attached.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "tpAssignment.myCompanies": {
         parameters: {
             query?: never;
@@ -5359,6 +5596,72 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["UpdateTpPartnerRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpPartner.updatePricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateTpPartnerPricingRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpPartner.updateProfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateTpPartnerProfileRequest"];
             };
         };
         responses: {

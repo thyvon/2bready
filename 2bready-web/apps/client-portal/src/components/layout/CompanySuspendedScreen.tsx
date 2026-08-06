@@ -5,7 +5,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { BrandLogo } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
+import { useBrandLogo } from '@/lib/branding';
 import { CompanySwitcher } from './CompanySwitcher';
 import { useAuthStore } from '@/store/auth.store';
 import { logout } from '@/lib/auth-api';
@@ -26,6 +28,7 @@ export function CompanySuspendedScreen({ companyName }: CompanySuspendedScreenPr
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const { t } = useTranslation();
+  const logoUrl = useBrandLogo();
 
   const handleLogout = async () => {
     try {
@@ -63,7 +66,12 @@ export function CompanySuspendedScreen({ companyName }: CompanySuspendedScreenPr
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <BrandMark size={28} />
+          <BrandLogo
+            logoUrl={logoUrl}
+            height={28}
+            maxWidth={140}
+            fallback={<BrandMark size={28} />}
+          />
         </Box>
 
         <Box

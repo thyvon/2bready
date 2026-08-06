@@ -10,7 +10,9 @@ import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import BrandMark from '@/components/marketing/BrandMark';
+import BrandLogo from '@/components/marketing/BrandLogo';
 import NavHoverLink from '@/components/marketing/NavHoverLink';
+import { useBrandLogo } from '@/lib/branding';
 import { clientPortalUrl } from '@/lib/client-portal-url';
 
 const NAV_LINKS = [
@@ -21,6 +23,7 @@ const NAV_LINKS = [
 
 export default function MarketingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const logoUrl = useBrandLogo();
 
   return (
     <Box
@@ -46,8 +49,13 @@ export default function MarketingHeader() {
         variant="body1"
         sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none' }}
       >
-        <BrandMark size={22} />
-        2bReady
+        <BrandLogo
+          logoUrl={logoUrl}
+          height={22}
+          maxWidth={120}
+          fallback={<BrandMark size={22} />}
+        />
+        {!logoUrl && '2bReady'}
       </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 3 }}>

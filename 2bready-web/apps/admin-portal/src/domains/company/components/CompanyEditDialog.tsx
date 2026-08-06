@@ -55,10 +55,18 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
   useEffect(() => {
     if (open) {
       reset(companyEditDefaults(company));
-      setServerError('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, company]);
+
+  // Cleared on close (and on every submit) rather than in the open-effect
+  // above — a previous failed attempt's error must never linger into the
+  // next open, and keeping setState out of the effect keeps the React
+  // Compiler lint happy.
+  const handleClose = () => {
+    setServerError('');
+    onClose();
+  };
 
   const submit = async (data: CompanyEditInput) => {
     setServerError('');
@@ -83,7 +91,7 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit(submit)} noValidate>
         <DialogTitle>{t('company.edit_company')}</DialogTitle>
         <DialogContent className="flex flex-col gap-5" sx={{ pt: '8px !important' }}>

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\BrandingController;
 use App\Http\Controllers\Api\V1\IndustryController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\PackageController;
@@ -35,6 +36,13 @@ Route::prefix('v1')->group(function () {
     Route::post('data-room/{token}/verify', [PublicDataRoomController::class, 'verify'])
         ->middleware('throttle:data-room.pin');
     Route::get('data-room/{token}/documents/{document}/preview-url', [PublicDataRoomController::class, 'previewUrl']);
+
+    // Public — the platform logo is shown by every portal (admin, client,
+    // TP, marketing) and none of them share a permission level; the logo
+    // itself is a private asset served via a fresh signed URL, never a
+    // public bucket. Upload/remove are admin-only and live in
+    // routes/api/settings.php.
+    Route::get('branding/logo', [BrandingController::class, 'logo']);
 
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
     // reaching business routes — pending tokens only carry the 'totp-pending' ability.

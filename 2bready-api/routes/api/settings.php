@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\BrandingController;
 use App\Http\Controllers\Api\V1\GoogleOAuthSettingController;
 use App\Http\Controllers\Api\V1\MailSettingController;
 use App\Http\Controllers\Api\V1\PlatformSettingController;
@@ -9,6 +10,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('permission:settings.manage')->prefix('settings')->group(function () {
     Route::get('/', [PlatformSettingController::class, 'index']);
+
+    // Platform logo — a file, not a scalar, so it gets its own endpoints
+    // instead of the generic {key} patch (which only stores JSON values).
+    // Must be registered before the generic {key} wildcard below.
+    Route::post('logo', [BrandingController::class, 'uploadLogo']);
+    Route::delete('logo', [BrandingController::class, 'deleteLogo']);
 
     // Dedicated endpoints, not another generic {key} — both secrets need
     // encryption + must never round-trip back in plaintext (see

@@ -15,6 +15,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { motion } from 'framer-motion';
 import Tooltip from '@mui/material/Tooltip';
 import { NavHoverLink } from '@2bready/ui-core';
+import { BrandLogo } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
 import { CompanySwitcher } from './CompanySwitcher';
 import { NotificationBell } from './NotificationBell';
@@ -22,6 +23,7 @@ import { RadialMeter } from '@/components/dashboard/RadialMeter';
 import { UserMenu } from './UserMenu';
 import { useNavItems, isNavItemActive } from './nav-items';
 import { useTranslation } from '@/lib/i18n';
+import { useBrandLogo } from '@/lib/branding';
 import { useJourney } from '@/components/JourneyProvider';
 import { allDocuments, countVerified } from '@/lib/journey-api';
 
@@ -116,6 +118,7 @@ const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPil
 
 export function PortalNavbar() {
   const pathname = usePathname();
+  const logoUrl = useBrandLogo();
   const { t } = useTranslation();
   const { primary, secondary, all } = useNavItems();
   const { journey } = useJourney();
@@ -183,8 +186,13 @@ export function PortalNavbar() {
         variant="body1"
         sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none', flexShrink: 0 }}
       >
-        <BrandMark size={22} />
-        2bReady
+        <BrandLogo
+          logoUrl={logoUrl}
+          height={22}
+          maxWidth={120}
+          fallback={<BrandMark size={22} />}
+        />
+        {!logoUrl && '2bReady'}
       </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>

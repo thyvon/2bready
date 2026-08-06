@@ -13,6 +13,8 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavItems, isNavItemActive, type NavItem } from '@/components/layouts/nav-items';
 import { useLayoutStore } from '@/store/layout.store';
 import { useTranslation } from '@/lib/i18n';
+import { useBrandLogo } from '@/domains/branding/hooks';
+import { BrandLogo } from '@2bready/ui-core';
 
 const SIDEBAR_WIDTH = 240;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
@@ -78,8 +80,12 @@ function SidebarContent({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  const logoUrl = useBrandLogo();
+
   return (
     <>
+      {/* Logo — the admin-uploaded platform logo when one exists (business
+          branding), otherwise the placeholder mark + wordmark. */}
       <Box
         sx={{
           px: collapsed ? 0 : 3,
@@ -93,8 +99,13 @@ function SidebarContent({
           flexShrink: 0,
         }}
       >
-        <Box sx={{ width: 20, height: 20, borderRadius: '5px', bgcolor: 'text.primary', flexShrink: 0 }} />
-        {!collapsed && (
+        <BrandLogo
+          logoUrl={logoUrl}
+          height={22}
+          maxWidth={collapsed ? 22 : 140}
+          fallback={<Box sx={{ width: 20, height: 20, borderRadius: '5px', bgcolor: 'text.primary', flexShrink: 0 }} />}
+        />
+        {!collapsed && !logoUrl && (
           <Typography sx={{ fontWeight: 700, letterSpacing: '-0.04em', fontSize: '0.9375rem', color: 'text.primary', whiteSpace: 'nowrap' }}>
             2bReady — TP Portal
           </Typography>
@@ -146,8 +157,6 @@ export default function DashboardSidebar({ mobileOpen, onMobileClose }: Dashboar
 
         <Box
           sx={{
-            borderTop: '1px solid',
-            borderColor: 'divider',
             p: 1,
             display: 'flex',
             justifyContent: sidebarCollapsed ? 'center' : 'flex-end',
