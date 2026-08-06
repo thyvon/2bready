@@ -37,6 +37,31 @@ class TpPartnerPolicy
         return $user->can('tp_partner.manage');
     }
 
+    /**
+     * A firm's own auditors may tune the per-level prices their firm charges
+     * companies (Sprint 7 self-service pricing, see MVP Proposal §0.3) — but
+     * only the prices, never the firm's identity or status, which remain
+     * admin-only through update(). The dedicated /pricing endpoint exposes
+     * exactly this slice.
+     */
+    public function updatePricing(User $user, TpPartner $tpPartner): bool
+    {
+        return $user->can('tp_partner.manage')
+            || $user->auditor?->tp_partner_id === $tpPartner->id;
+    }
+
+    /**
+     * A firm's own auditors may maintain their firm's identity fields (name
+     * / name_kh) through the dedicated /profile endpoint — the same
+     * self-service slice as updatePricing, deliberately without name/status
+     * reach: status stays admin-only so a firm can never un-suspend itself.
+     */
+    public function updateProfile(User $user, TpPartner $tpPartner): bool
+    {
+        return $user->can('tp_partner.manage')
+            || $user->auditor?->tp_partner_id === $tpPartner->id;
+    }
+
     public function delete(User $user, TpPartner $tpPartner): bool
     {
         return $user->can('tp_partner.manage');

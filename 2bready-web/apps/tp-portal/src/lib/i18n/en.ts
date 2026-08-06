@@ -13,7 +13,7 @@ const en = {
   // ─── Navigation ──────────────────────────────────────────────────────────
   'nav.dashboard': 'Dashboard',
   'nav.companies': 'Companies',
-  'nav.profile': 'Profile',
+  'nav.settings': 'Settings',
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.sign_out': 'Sign out',
@@ -131,6 +131,30 @@ const en = {
   'profile.confirm_new_password': 'Confirm new password',
   'profile.change_password': 'Change password',
   'profile.password_changed': 'Password changed. Please log in again.',
+
+  // ─── Settings shell (grouped tabs) ───────────────────────────────────────
+  'settings.tab_firm_pricing': 'Firm Pricing',
+  'settings.tab_firm_profile': 'Firm Profile',
+  'settings.tab_profile': 'Profile',
+
+  // ─── Firm pricing (Sprint 7 self-service) ────────────────────────────────
+  'firm.pricing_card_title': 'Per-level pricing',
+  'firm.pricing_subtitle': 'Set the per-level prices companies see when they hire your firm. Changes take effect immediately.',
+  'firm.level_2': 'Level 2 (L2)',
+  'firm.level_3': 'Level 3 (L3)',
+  'firm.level_4': 'Level 4 (L4)',
+  'firm.current_price': 'Current',
+  'firm.price_hint': 'Leave empty if your firm does not offer this level.',
+  'firm.save': 'Save pricing',
+  'firm.update_success': 'Pricing updated.',
+
+  // ─── Firm profile (Sprint 7 self-service) ────────────────────────────────
+  'firm.profile_card_title': 'Firm profile',
+  'firm.profile_subtitle': 'The name companies see in the marketplace. Changes take effect immediately.',
+  'firm.name': 'Firm name',
+  'firm.name_kh': 'Firm name (Khmer)',
+  'firm.save_profile': 'Save profile',
+  'firm.profile_update_success': 'Profile updated.',
 
   // ─── Journey tree (company review) ──────────────────────────────────────
   'journey.no_levels': 'Nothing to review yet for your firm’s hired level(s) at this company.',

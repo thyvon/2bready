@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Marketplace\Policies;
 
+use App\Domain\Marketplace\Enums\TpHireStatus;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\User\Models\User;
 
@@ -56,15 +57,22 @@ class TpHirePolicy
     }
 
     /**
-     * The marketplace unhire flow — the company_owner who started the
-     * engagement may cancel it for their own company. Mirrors hire()'s
-     * self-service independence from marketplace.manage; admin keeps the
-     * right as the back-office override for support cases.
+     * The marketplace unhire flow. A company may self-cancel ONLY while the
+     * hire is still pending_payment — money has not moved yet. Once the
+     * payment is confirmed the hire is active, and cancelling would strand a
+     * confirmed payment without any refund machinery (v1 has none); that
+     * becomes an admin-only mediation decision instead. Admin keeps the
+     * back-office override for exactly those support/refund cases.
      */
     public function cancel(User $user, TpHire $tpHire): bool
     {
-        return $user->can('marketplace.manage')
-            || ($user->hasRole('company_owner') && $user->current_company_id === $tpHire->company_id);
+        if ($user->can('marketplace.manage')) {
+            return true;
+        }
+
+        return $user->hasRole('company_owner')
+            && $user->current_company_id === $tpHire->company_id
+            && $tpHire->status === TpHireStatus::PendingPayment;
     }
 
     /**

@@ -620,6 +620,7 @@ it('lets a company_owner cancel their own pending hire, failing its open payment
 it('strips a TP firm of access the moment their active hire is cancelled', function () {
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $admin = User::factory()->admin()->create();
     $tpPartner = TpPartner::factory()->create();
     $auditor = User::factory()->withTpPartner($tpPartner)->create();
 
@@ -630,14 +631,18 @@ it('strips a TP firm of access the moment their active hire is cancelled', funct
 
     $this->actingAs($auditor)->getJson('/api/v1/tp/companies')->assertJsonCount(1, 'data');
 
-    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
+    // Self-service cancel is closed once money moved — the owner gets a
+    // 403; only admin may cancel an active (paid) engagement.
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertForbidden();
+
+    $this->actingAs($admin)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
 
     $this->actingAs($auditor)->getJson('/api/v1/tp/companies')->assertJsonCount(0, 'data');
 });
 
 it('does not touch a confirmed payment when an active hire is cancelled', function () {
     $company = Company::factory()->create();
-    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $admin = User::factory()->admin()->create();
     $tpPartner = TpPartner::factory()->create();
 
     $hire = TpHire::factory()->active()->create([
@@ -653,9 +658,32 @@ it('does not touch a confirmed payment when an active hire is cancelled', functi
         'gateway_reference' => 'PAYTEST02',
     ]);
 
-    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
+    $this->actingAs($admin)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
 
     expect($payment->fresh()->status->value)->toBe('confirmed');
+});
+
+it('forbids a company_owner from self-cancelling once the payment is confirmed', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->active()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+    $hire->payments()->create([
+        'company_id' => $company->id,
+        'amount_cents' => $hire->price_agreed_cents,
+        'currency' => 'USD',
+        'method' => 'manual_bank_transfer',
+        'status' => 'confirmed',
+        'gateway_reference' => 'PAYTEST04',
+    ]);
+
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertForbidden();
+
+    expect($hire->fresh()->status->value)->toBe('active');
 });
 
 it('cannot resurrect a cancelled hire by confirming its payment afterwards', function () {
@@ -688,6 +716,7 @@ it('cannot resurrect a cancelled hire by confirming its payment afterwards', fun
 it('forbids cancelling a hire that already completed', function () {
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $admin = User::factory()->admin()->create();
     $tpPartner = TpPartner::factory()->create();
 
     $hire = TpHire::factory()->active()->create([
@@ -696,7 +725,13 @@ it('forbids cancelling a hire that already completed', function () {
         'status' => 'completed',
     ]);
 
-    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertUnprocessable();
+    // Self-service: the completed state is terminal, so the company's right
+    // never even opens — policy rejects before the action runs.
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertForbidden();
+
+    // Back-office: policy opens for admin, the action still refuses — the
+    // terminal-status rule lives in the domain, not the permission layer.
+    $this->actingAs($admin)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertUnprocessable();
     expect($hire->fresh()->status->value)->toBe('completed');
 });
 

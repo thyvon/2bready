@@ -10,14 +10,18 @@ use App\Domain\Payment\Enums\PaymentStatus;
 use App\Exceptions\HireNotCancellableException;
 
 /**
- * The marketplace unhire flow. A company_owner may cancel a hire that has
- * not finished:
+ * The marketplace unhire flow. Which states are reachable is decided by
+ * TpHirePolicy::cancel(), not here:
  *
- * - pending_payment → the engagement never started; the attached payment is
- *   marked failed (only while it is still pending/awaiting_confirmation —
- *   a confirmed payment means money already moved and is out of scope here).
- * - active → the TP firm loses access to the company's journey immediately
- *   (TpAssignmentController only ever lists status=active hires).
+ * - pending_payment → self-service by the company_owner, or admin. The
+ *   engagement never started; the attached payment is marked failed (only
+ *   while it is still pending/awaiting_confirmation — a confirmed payment
+ *   means money already moved and is out of scope here).
+ * - active → admin-only mediation (a confirmed payment exists; v1 has no
+ *   refund machinery, so cancellation is the back-office's call and any
+ *   refund happens outside the system). The TP firm loses access to the
+ *   company's journey immediately (TpAssignmentController only ever lists
+ *   status=active hires).
  *
  * completed/cancelled hires are terminal — throwing keeps the history
  * honest and mirrors CompleteTpHireAction's "manual for v1" stance.

@@ -15,6 +15,8 @@ Route::prefix('tp-partners')->group(function () {
     Route::post('/', [TpPartnerController::class, 'store']);
     Route::get('{tpPartner}', [TpPartnerController::class, 'show']);
     Route::patch('{tpPartner}', [TpPartnerController::class, 'update']);
+    Route::patch('{tpPartner}/pricing', [TpPartnerController::class, 'updatePricing']);
+    Route::patch('{tpPartner}/profile', [TpPartnerController::class, 'updateProfile']);
     Route::delete('{tpPartner}', [TpPartnerController::class, 'destroy']);
     Route::get('{tpPartner}/auditors', [TpPartnerController::class, 'auditors']);
     Route::post('{tpPartner}/auditors', [TpPartnerController::class, 'registerAuditor']);
@@ -43,6 +45,7 @@ Route::prefix('tp-hires')->group(function () {
 // TP-self — "which companies am I actively engaged for" (tp-portal's own
 // companies list + per-company Journey review screen).
 Route::prefix('tp')->group(function () {
+    Route::get('me', [TpAssignmentController::class, 'me']);
     Route::get('companies', [TpAssignmentController::class, 'myCompanies']);
     Route::get('companies/{company}/journey', [TpAssignmentController::class, 'companyJourney']);
 });

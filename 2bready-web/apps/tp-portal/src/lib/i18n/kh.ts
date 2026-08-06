@@ -17,7 +17,7 @@ const kh: Record<keyof typeof en, string> = {
   // ─── Navigation ──────────────────────────────────────────────────────────
   'nav.dashboard': 'ផ្ទាំងគ្រប់គ្រង',
   'nav.companies': 'ក្រុមហ៊ុន',
-  'nav.profile': 'ប្រវត្តិរូប',
+  'nav.settings': 'ការកំណត់',
 
   // ─── Header ──────────────────────────────────────────────────────────────
   'header.sign_out': 'ចាកចេញ',
@@ -135,6 +135,30 @@ const kh: Record<keyof typeof en, string> = {
   'profile.confirm_new_password': 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី',
   'profile.change_password': 'ប្តូរពាក្យសម្ងាត់',
   'profile.password_changed': 'ពាក្យសម្ងាត់ត្រូវបានប្តូរ។ សូមចូលម្តងទៀត។',
+
+  // ─── Settings shell (grouped tabs) ───────────────────────────────────────
+  'settings.tab_firm_pricing': 'តម្លៃក្រុមហ៊ុន',
+  'settings.tab_firm_profile': 'ព័ត៌មានក្រុមហ៊ុន',
+  'settings.tab_profile': 'ប្រវត្តិរូប',
+
+  // ─── Firm pricing (Sprint 7 self-service) ────────────────────────────────
+  'firm.pricing_card_title': 'តម្លៃតាមកម្រិត',
+  'firm.pricing_subtitle': 'កំណត់តម្លៃតាមកម្រិតដែលក្រុមហ៊ុននានាមើលឃើញពេលជ្រើសរើសក្រុមហ៊ុនអ្នក។ ការផ្លាស់ប្តូរមានប្រសិទ្ធភាពភ្លាមៗ។',
+  'firm.level_2': 'កម្រិត 2 (L2)',
+  'firm.level_3': 'កម្រិត 3 (L3)',
+  'firm.level_4': 'កម្រិត 4 (L4)',
+  'firm.current_price': 'បច្ចុប្បន្ន',
+  'firm.price_hint': 'ទុកឲ្យទទេ ប្រសិនបើក្រុមហ៊ុនអ្នកមិនផ្តល់កម្រិតនេះទេ។',
+  'firm.save': 'រក្សាទុកតម្លៃ',
+  'firm.update_success': 'តម្លៃត្រូវបានធ្វើបច្ចុប្បន្នភាព។',
+
+  // ─── Firm profile (Sprint 7 self-service) ────────────────────────────────
+  'firm.profile_card_title': 'ព័ត៌មានក្រុមហ៊ុន',
+  'firm.profile_subtitle': 'ឈ្មោះដែលក្រុមហ៊ុននានាមើលឃើញនៅក្នុងទីផ្សារ។ ការផ្លាស់ប្តូរមានប្រសិទ្ធភាពភ្លាមៗ។',
+  'firm.name': 'ឈ្មោះក្រុមហ៊ុន',
+  'firm.name_kh': 'ឈ្មោះក្រុមហ៊ុន (ខ្មែរ)',
+  'firm.save_profile': 'រក្សាទុកព័ត៌មាន',
+  'firm.profile_update_success': 'ព័ត៌មានត្រូវបានធ្វើបច្ចុប្បន្នភាព។',
 
   // ─── Journey tree (company review) ──────────────────────────────────────
   'journey.no_levels': 'មិនទាន់មានអ្វីត្រូវពិនិត្យសម្រាប់កម្រិតដែលក្រុមហ៊ុនរបស់អ្នកបានទទួលនៅក្រុមហ៊ុននេះទេ។',

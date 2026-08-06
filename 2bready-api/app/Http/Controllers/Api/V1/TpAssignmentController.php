@@ -8,9 +8,11 @@ use App\Domain\Company\Models\Company;
 use App\Domain\Journey\Actions\BuildJourneyForCompanyAction;
 use App\Domain\Journey\Services\JourneyProgressService;
 use App\Domain\Marketplace\Models\TpHire;
+use App\Domain\TpPartner\Models\TpPartner;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\CompanyResource;
 use App\Http\Resources\Api\V1\JourneyResource;
+use App\Http\Resources\Api\V1\TpPartnerResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,6 +26,22 @@ use Illuminate\Http\Request;
  */
 class TpAssignmentController extends Controller
 {
+    /**
+     * The caller's own firm record — the tp-portal equivalent of /me. The
+     * firm is resolved through the auditor profile (never through a query
+     * param), so an auditor can only ever see their own firm.
+     */
+    public function me(Request $request): JsonResponse
+    {
+        $tpPartnerId = $request->user()->auditor?->tp_partner_id;
+
+        abort_if($tpPartnerId === null, 403, 'This account has no TP firm attached.');
+
+        $tpPartner = TpPartner::query()->findOrFail($tpPartnerId);
+
+        return ApiResponse::success(new TpPartnerResource($tpPartner));
+    }
+
     public function myCompanies(Request $request): JsonResponse
     {
         $tpPartnerId = $request->user()->auditor?->tp_partner_id;

@@ -19,10 +19,11 @@ import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import { Breadcrumbs, EmptyState, PillToggle, ConfirmDialog, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
+import { Breadcrumbs, EmptyState, PillToggle, ConfirmDialog, SectionCard, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
 import { getApiError, formatCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoader } from '@/components/PageLoader';
 import { useToast } from '@/components/ToastProvider';
 import { useJourney } from '@/components/JourneyProvider';
@@ -240,52 +241,57 @@ export default function AuditsPage() {
         items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? t('nav.audits') }]}
       />
 
-      <Box component="section" className="flex flex-col gap-4">
-        <Box className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <SectionHeader title={t('audits.marketplace_title')} subtitle={t('audits.marketplace_subtitle')} />
-          <TextField
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            size="small"
-            placeholder={t('audits.search_placeholder')}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlinedIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ minWidth: { xs: '100%', sm: 240 } }}
-          />
-        </Box>
+      <Box component="section" className="flex flex-col gap-5">
+        <PageHeader
+          title={t('audits.marketplace_title')}
+          subtitle={t('audits.marketplace_subtitle')}
+          action={
+            <TextField
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              size="small"
+              placeholder={t('audits.search_placeholder')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchOutlinedIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ minWidth: { xs: '100%', sm: 240 } }}
+            />
+          }
+        />
 
-        <Box className="flex flex-wrap items-center gap-2">
-          <PillToggle
-            options={[
-              { key: 'all', label: t('audits.filter_all_levels') },
-              { key: 'L2', label: 'L2' },
-              { key: 'L3', label: 'L3' },
-              { key: 'L4', label: 'L4' },
-            ]}
-            value={levelFilter}
-            onChange={setLevelFilter}
-            layoutId="audits-level-pill"
-          />
-          <Divider orientation="vertical" flexItem sx={{ alignSelf: 'stretch' }} />
-          <PillToggle
-            options={[
-              { key: 'all', label: t('audits.filter_all_hires') },
-              { key: 'pending_payment', label: t('audits.status_pending_payment') },
-              { key: 'active', label: t('audits.status_active') },
-              { key: 'completed', label: t('audits.status_completed') },
-            ]}
-            value={hireFilter}
-            onChange={setHireFilter}
-            layoutId="audits-status-pill"
-          />
-        </Box>
+        <SectionCard noPadding>
+          <Box className="flex flex-wrap items-center gap-2 p-2.5">
+            <PillToggle
+              options={[
+                { key: 'all', label: t('audits.filter_all_levels') },
+                { key: 'L2', label: 'L2' },
+                { key: 'L3', label: 'L3' },
+                { key: 'L4', label: 'L4' },
+              ]}
+              value={levelFilter}
+              onChange={setLevelFilter}
+              layoutId="audits-level-pill"
+            />
+            <Divider orientation="vertical" flexItem sx={{ alignSelf: 'stretch' }} />
+            <PillToggle
+              options={[
+                { key: 'all', label: t('audits.filter_all_hires') },
+                { key: 'pending_payment', label: t('audits.status_pending_payment') },
+                { key: 'active', label: t('audits.status_active') },
+                { key: 'completed', label: t('audits.status_completed') },
+              ]}
+              value={hireFilter}
+              onChange={setHireFilter}
+              layoutId="audits-status-pill"
+            />
+          </Box>
+        </SectionCard>
 
         {tpPartners.length === 0 ? (
           <EmptyState title={t('audits.marketplace_empty_title')} description={t('audits.marketplace_empty_desc')} />
@@ -353,17 +359,6 @@ export default function AuditsPage() {
         onSubmit={submitRate}
         onClose={() => setRateTarget(null)}
       />
-    </Box>
-  );
-}
-
-function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <Box>
-      <Typography variant="h3">{title}</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 760 }}>
-        {subtitle}
-      </Typography>
     </Box>
   );
 }
@@ -568,7 +563,7 @@ function PartnerCard({ partner, index, hiring, hiredHireFor, isLevelUnlocked, pa
                         {t('audits.pay_button')}
                       </Button>
                     )}
-                    {(hire.status === 'pending_payment' || hire.status === 'active') && (
+                    {hire.status === 'pending_payment' && (
                       <Button size="small" variant="outlined" color="error" onClick={() => onCancelHire(hire)}>
                         {t('audits.cancel_hire_action')}
                       </Button>

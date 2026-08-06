@@ -7,7 +7,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 
-import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
@@ -61,8 +60,6 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageHeader title={t('profile.title')} />
-
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <SectionCard>
         <form onSubmit={profileForm.handleSubmit(onSaveProfile)} noValidate>

@@ -400,20 +400,40 @@ export default function JourneyTemplateDetailPage() {
                   {t(`journey_template.pillar.${level.pillar}`)}
                 </Typography>
                 <IconButton
+                  component="span"
+                  role="button"
+                  tabIndex={0}
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     openEditLevel(level);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openEditLevel(level);
+                    }
                   }}
                   aria-label={t('common.edit')}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
                 <IconButton
+                  component="span"
+                  role="button"
+                  tabIndex={0}
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     setPendingDelete({ kind: 'level', item: level });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setPendingDelete({ kind: 'level', item: level });
+                    }
                   }}
                   aria-label={t('common.delete')}
                 >

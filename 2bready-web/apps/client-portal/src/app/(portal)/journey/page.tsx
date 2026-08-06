@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
@@ -26,6 +25,7 @@ import {
 } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { JourneyTree, type RenderDocAction } from '@/components/dashboard/JourneyTree';
 import { useJourney } from '@/components/JourneyProvider';
 import { usePackages } from '@/components/PackageProvider';
@@ -333,19 +333,11 @@ export default function JourneyPage() {
         items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'Compliance Journey' }]}
       />
 
-      <Box>
-        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'primary.main' }}>
-          Journey → Level → Milestone → Documents
-        </Typography>
-        <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mt: 0.5 }}>
-          Your full compliance checklist
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 640 }}>
-          {levels.length} levels · {totalDocs} documents total. Search or filter to find a document, or click a
-          milestone to browse its checklist — Pro and Enterprise levels stay visible so you can see what upgrading
-          unlocks.
-        </Typography>
-      </Box>
+      <PageHeader
+        eyebrow="Journey → Level → Milestone → Documents"
+        title="Your full compliance checklist"
+        subtitle={`${levels.length} levels · ${totalDocs} documents total. Search or filter to find a document, or click a milestone to browse its checklist — Pro and Enterprise levels stay visible so you can see what upgrading unlocks.`}
+      />
 
       <SectionCard>
         <Box className="flex flex-col gap-4">

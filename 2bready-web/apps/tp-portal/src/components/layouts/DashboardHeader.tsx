@@ -9,7 +9,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import { useState } from 'react';
 
@@ -73,9 +73,9 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Typography variant="body2" sx={{ fontWeight: 500 }}>{user?.name}</Typography>
             <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
           </Box>
-          <MenuItem onClick={() => { setAnchorEl(null); router.push('/settings/profile'); }}>
-            <ListItemIcon><PersonOutlineOutlinedIcon fontSize="small" /></ListItemIcon>
-            <ListItemText>{t('nav.profile')}</ListItemText>
+          <MenuItem onClick={() => { setAnchorEl(null); router.push('/settings'); }}>
+            <ListItemIcon><SettingsOutlinedIcon fontSize="small" /></ListItemIcon>
+            <ListItemText>{t('nav.settings')}</ListItemText>
           </MenuItem>
           <MenuItem onClick={handleLogout}>
             <ListItemIcon><LogoutOutlinedIcon fontSize="small" /></ListItemIcon>

@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { useTranslation, type TranslationKey } from '@/lib/i18n';
 
@@ -27,7 +27,7 @@ interface NavItemDef {
 const NAV_ITEMS: NavItemDef[] = [
   { labelKey: 'nav.dashboard', href: '/dashboard', icon: <SpaceDashboardOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.companies', href: '/companies', icon: <BusinessOutlinedIcon fontSize="small" /> },
-  { labelKey: 'nav.profile', href: '/settings/profile', icon: <PersonOutlineOutlinedIcon fontSize="small" /> },
+  { labelKey: 'nav.settings', href: '/settings', icon: <SettingsOutlinedIcon fontSize="small" /> },
 ];
 
 export function useNavItems(): NavItem[] {

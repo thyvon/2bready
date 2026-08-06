@@ -119,3 +119,157 @@ it('forbids a company_owner with no company from browsing TP firms', function ()
 it('requires authentication to browse TP firms', function () {
     $this->getJson('/api/v1/tp-partners')->assertUnauthorized();
 });
+
+// ─── Firm self-service pricing (Sprint 7) ───────────────────────────────────
+
+it('lets a firm\'s own auditor update their pricing', function () {
+    $tpPartner = TpPartner::factory()->create(['price_l2_cents' => 19900, 'price_l3_cents' => 29900]);
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => 24900,
+        'price_l4_cents' => 49900,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.price_l2_cents', 24900)
+        ->assertJsonPath('data.price_l3_cents', 29900)
+        ->assertJsonPath('data.price_l4_cents', 49900);
+});
+
+it('lets an admin update a firm\'s pricing', function () {
+    $tpPartner = TpPartner::factory()->create(['price_l2_cents' => 19900]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => 99900,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.price_l2_cents', 99900);
+});
+
+it('forbids an auditor from updating another firm\'s pricing', function () {
+    $tpPartner = TpPartner::factory()->create();
+    $otherFirm = TpPartner::factory()->create();
+    $auditor = User::factory()->withTpPartner($otherFirm)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => 99900,
+    ])->assertForbidden();
+});
+
+it('forbids a company_owner from updating a firm\'s pricing', function () {
+    $tpPartner = TpPartner::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+
+    $this->actingAs($owner)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => 99900,
+    ])->assertForbidden();
+});
+
+it('rejects non-integer pricing values', function () {
+    $tpPartner = TpPartner::factory()->create();
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => 199.5,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['price_l2_cents']);
+});
+
+it('rejects negative pricing values', function () {
+    $tpPartner = TpPartner::factory()->create();
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => -100,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['price_l2_cents']);
+});
+
+it('requires authentication to update a firm\'s pricing', function () {
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->patchJson("/api/v1/tp-partners/{$tpPartner->id}/pricing", [
+        'price_l2_cents' => 99900,
+    ])->assertUnauthorized();
+});
+
+// ─── TP self firm record (tp/me) ────────────────────────────────────────────
+
+it('lets an auditor fetch their own firm via tp/me', function () {
+    $tpPartner = TpPartner::factory()->create(['name' => 'My Firm']);
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $this->actingAs($auditor)->getJson('/api/v1/tp/me')
+        ->assertOk()
+        ->assertJsonPath('data.id', $tpPartner->id)
+        ->assertJsonPath('data.name', 'My Firm');
+});
+
+it('forbids tp/me for an account with no firm attached', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->getJson('/api/v1/tp/me')->assertForbidden();
+});
+
+it('requires authentication to fetch tp/me', function () {
+    $this->getJson('/api/v1/tp/me')->assertUnauthorized();
+});
+
+// ─── Firm self-service profile (Sprint 7) ───────────────────────────────────
+
+it('lets a firm\'s own auditor update their profile', function () {
+    $tpPartner = TpPartner::factory()->create(['name' => 'Old Name', 'name_kh' => null]);
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/profile", [
+        'name' => 'Admit Unit Audit Services (Rebranded)',
+        'name_kh' => 'អាឌីមិត',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Admit Unit Audit Services (Rebranded)')
+        ->assertJsonPath('data.name_kh', 'អាឌីមិត');
+});
+
+it('lets an admin update a firm\'s profile', function () {
+    $tpPartner = TpPartner::factory()->create(['name' => 'Old Name']);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/profile", [
+        'name' => 'New Name',
+    ])->assertOk()->assertJsonPath('data.name', 'New Name');
+});
+
+it('forbids an auditor from updating another firm\'s profile', function () {
+    $tpPartner = TpPartner::factory()->create(['name' => 'Target Firm']);
+    $otherFirm = TpPartner::factory()->create();
+    $auditor = User::factory()->withTpPartner($otherFirm)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/profile", [
+        'name' => 'Hijacked',
+    ])->assertForbidden();
+});
+
+it('forbids a company_owner from updating a firm\'s profile', function () {
+    $tpPartner = TpPartner::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+
+    $this->actingAs($owner)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/profile", [
+        'name' => 'Hijacked',
+    ])->assertForbidden();
+});
+
+it('rejects an over-long firm name', function () {
+    $tpPartner = TpPartner::factory()->create();
+    $auditor = User::factory()->withTpPartner($tpPartner)->create();
+
+    $this->actingAs($auditor)->patchJson("/api/v1/tp-partners/{$tpPartner->id}/profile", [
+        'name' => str_repeat('x', 256),
+    ])->assertUnprocessable()->assertJsonValidationErrors(['name']);
+});
+
+it('requires authentication to update a firm\'s profile', function () {
+    $tpPartner = TpPartner::factory()->create();
+
+    $this->patchJson("/api/v1/tp-partners/{$tpPartner->id}/profile", [
+        'name' => 'Anonymous',
+    ])->assertUnauthorized();
+});

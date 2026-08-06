@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\TpPartner\Actions\DeleteTpPartnerAction;
 use App\Domain\TpPartner\Actions\RegisterTpAuditorAction;
 use App\Domain\TpPartner\Actions\RegisterTpPartnerAction;
+use App\Domain\TpPartner\Actions\UpdateTpPartnerPricingAction;
+use App\Domain\TpPartner\Actions\UpdateTpPartnerProfileAction;
 use App\Domain\TpPartner\Contracts\TpPartnerRepositoryInterface;
 use App\Domain\TpPartner\DTOs\RegisterAuditorData;
 use App\Domain\TpPartner\DTOs\TpPartnerData;
@@ -15,6 +17,8 @@ use App\Domain\TpPartner\Models\TpPartner;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\TpPartner\RegisterAuditorRequest;
 use App\Http\Requests\Api\V1\TpPartner\StoreTpPartnerRequest;
+use App\Http\Requests\Api\V1\TpPartner\UpdateTpPartnerPricingRequest;
+use App\Http\Requests\Api\V1\TpPartner\UpdateTpPartnerProfileRequest;
 use App\Http\Requests\Api\V1\TpPartner\UpdateTpPartnerRequest;
 use App\Http\Resources\Api\V1\TpPartnerResource;
 use App\Http\Resources\Api\V1\UserResource;
@@ -72,6 +76,24 @@ class TpPartnerController extends Controller
         $this->authorize('update', $tpPartner);
 
         $tpPartner->update($request->validated());
+
+        return ApiResponse::success(new TpPartnerResource($tpPartner));
+    }
+
+    public function updatePricing(UpdateTpPartnerPricingRequest $request, TpPartner $tpPartner, UpdateTpPartnerPricingAction $action): JsonResponse
+    {
+        $this->authorize('updatePricing', $tpPartner);
+
+        $tpPartner = $action->execute($tpPartner, $request->validated());
+
+        return ApiResponse::success(new TpPartnerResource($tpPartner));
+    }
+
+    public function updateProfile(UpdateTpPartnerProfileRequest $request, TpPartner $tpPartner, UpdateTpPartnerProfileAction $action): JsonResponse
+    {
+        $this->authorize('updateProfile', $tpPartner);
+
+        $tpPartner = $action->execute($tpPartner, $request->validated());
 
         return ApiResponse::success(new TpPartnerResource($tpPartner));
     }
