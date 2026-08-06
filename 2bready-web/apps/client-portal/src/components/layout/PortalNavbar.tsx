@@ -188,8 +188,8 @@ export function PortalNavbar() {
       >
         <BrandLogo
           logoUrl={logoUrl}
-          height={28}
-          maxWidth={130}
+          height={56}
+          maxWidth={180}
           fallback={<BrandMark size={22} />}
         />
         {!logoUrl && '2bReady'}

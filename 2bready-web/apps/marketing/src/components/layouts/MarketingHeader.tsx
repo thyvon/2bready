@@ -51,8 +51,8 @@ export default function MarketingHeader() {
       >
         <BrandLogo
           logoUrl={logoUrl}
-          height={28}
-          maxWidth={130}
+          height={64}
+          maxWidth={220}
           fallback={<BrandMark size={22} />}
         />
         {!logoUrl && '2bReady'}
