@@ -36,7 +36,7 @@ export default function MarketingFooter() {
           <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', mb: 1 }}>
             <BrandLogo
               logoUrl={logoUrl}
-              height={20}
+              height={24}
               maxWidth={110}
               fallback={<BrandMark size={20} />}
             />

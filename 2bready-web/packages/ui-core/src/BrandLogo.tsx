@@ -12,7 +12,11 @@ export interface BrandLogoProps {
   logoUrl?: string | null;
   /** Shown while loading or when no platform logo is uploaded. */
   fallback: ReactNode;
-  /** Height in px — logos are typically wide, so width follows aspect. */
+  /**
+   * Maximum HEIGHT in px. The logo is fit inside a height × maxWidth box
+   * preserving aspect ratio — a wide wordmark logo gets wide, a square
+   * icon logo stays roughly square, neither is ever distorted or cropped.
+   */
   height?: number;
   /** Safety cap so an oversized upload never blows a sidebar/navbar layout. */
   maxWidth?: number;
@@ -24,8 +28,11 @@ export interface BrandLogoProps {
 // (business branding, admin-managed) or the app's own fallback mark. Plain
 // <img> rather than next/image — the source is a signed temporaryUrl on a
 // changing host, so remote-pattern configuration would be a treadmill for
-// zero benefit on a tiny header image.
-export function BrandLogo({ logoUrl, fallback, height = 24, maxWidth = 160, alt = '2bReady', className }: BrandLogoProps) {
+// zero benefit on a tiny header image. Both dimensions auto-fit the box
+// (width:auto + max constraints) so the logo scales to fill the allowed
+// space instead of being pinned by height alone — a wide logo at height-22
+// would otherwise render absurdly small.
+export function BrandLogo({ logoUrl, fallback, height = 32, maxWidth = 160, alt = '2bReady', className }: BrandLogoProps) {
   if (!logoUrl) {
     return <>{fallback}</>;
   }
@@ -35,7 +42,7 @@ export function BrandLogo({ logoUrl, fallback, height = 24, maxWidth = 160, alt 
       src={logoUrl}
       alt={alt}
       className={className}
-      style={{ height, maxWidth, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+      style={{ maxHeight: height, maxWidth, width: 'auto', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
     />
   );
 }

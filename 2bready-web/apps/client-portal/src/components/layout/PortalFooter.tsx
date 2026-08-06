@@ -21,8 +21,8 @@ export function PortalFooter() {
         <Box className="flex items-center gap-1.5">
           <BrandLogo
             logoUrl={logoUrl}
-            height={16}
-            maxWidth={80}
+            height={20}
+            maxWidth={100}
             fallback={<BrandMark size={16} />}
           />
           <Typography variant="caption" color="text.secondary">

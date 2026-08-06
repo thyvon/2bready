@@ -68,8 +68,8 @@ export function CompanySuspendedScreen({ companyName }: CompanySuspendedScreenPr
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <BrandLogo
             logoUrl={logoUrl}
-            height={28}
-            maxWidth={140}
+            height={40}
+            maxWidth={200}
             fallback={<BrandMark size={28} />}
           />
         </Box>
