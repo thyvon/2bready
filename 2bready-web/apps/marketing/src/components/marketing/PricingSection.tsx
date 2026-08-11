@@ -80,7 +80,7 @@ export default function PricingSection() {
                   </Box>
                   <Typography
                     variant="caption"
-                    sx={{ color: plan.price === '$0' ? 'success.main' : 'text.secondary', fontWeight: 600, mb: 3, display: 'block' }}
+                    sx={{ color: plan.priceCents === 0 ? 'success.main' : 'text.secondary', fontWeight: 600, mb: 3, display: 'block' }}
                   >
                     {plan.fee}
                   </Typography>

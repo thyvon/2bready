@@ -13,9 +13,11 @@ type ApiPackage = {
   description: string;
   price_cents: number;
   billing_period: 'monthly' | 'yearly' | 'one_time';
+  journey_level_code: string;
+  industry_code: string | null;
+  tier: string;
   sort_order: number;
 };
-
 
 type ApiResponseShape<T> = {
   data: T;
@@ -26,6 +28,7 @@ type PricingPlan = {
   icon: 'compliance' | 'product' | 'operational' | 'global';
   name: string;
   price: string;
+  priceCents: number;
   period: string;
   fee: string;
   description: string;
@@ -38,21 +41,27 @@ function formatPrice(priceCents: number) {
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
 
-function mergeWithStatic(apiPackages: ApiPackage[]): PricingPlan[] {
-  if (apiPackages.length !== staticPricingPlans.length) {
-    return staticPricingPlans as unknown as PricingPlan[];
-  }
-
+// The API is the source of truth for level, name, price and period.
+// Static content only augments what the API does not return (icon, features,
+// audit fee line, CTA) — matched by position so the card order follows
+// sort_order. Works for any number of packages.
+function buildPlans(apiPackages: ApiPackage[]): PricingPlan[] {
   const sorted = [...apiPackages].sort((a, b) => a.sort_order - b.sort_order);
+  const fallbackIcon: PricingPlan['icon'] = 'compliance';
 
-  return staticPricingPlans.map((staticPlan, i) => {
-    const apiPlan = sorted[i];
+  return sorted.map((pkg, i) => {
+    const staticPlan = staticPricingPlans[i];
     return {
-      ...staticPlan,
-      name: apiPlan.name || staticPlan.name,
-      description: apiPlan.description || staticPlan.description,
-      price: formatPrice(apiPlan.price_cents),
-      period: `/ ${apiPlan.billing_period}`,
+      level: pkg.journey_level_code,
+      icon: staticPlan?.icon ?? fallbackIcon,
+      name: pkg.name || staticPlan?.name || 'Pathway',
+      price: formatPrice(pkg.price_cents),
+      priceCents: pkg.price_cents,
+      period: `/ ${pkg.billing_period}`,
+      fee: staticPlan?.fee ?? '',
+      description: pkg.description || staticPlan?.description || '',
+      features: staticPlan?.features ?? [],
+      cta: staticPlan?.cta ?? { label: 'Get Started', href: '/#cta' },
     };
   });
 }
@@ -71,7 +80,7 @@ export function usePublicPricing() {
         if (cancelled) return;
         const packages = res.data.data; // unwrap Laravel's { data: [...] } envelope
         if (!Array.isArray(packages) || packages.length === 0) return; // keep static fallback
-        setPlans(mergeWithStatic(packages));
+        setPlans(buildPlans(packages));
       })
       .catch(() => {
         // Silent fallback — public page must never look broken.
