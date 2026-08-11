@@ -27,20 +27,22 @@ export interface DocumentPreviewDialogProps {
   error?: string | null;
   /** The document's current status — Verify/Reject only ever show for 'review'. */
   status?: string;
-  onVerify?: () => void;
-  onReject?: (reason: string) => void;
+  /** Comment is required when rejecting (it is the reason); optional on verify. */
+  onVerify?: (comment: string | undefined) => void;
+  onReject?: (comment: string) => void;
   acting?: boolean;
 }
 
 // One dialog for both looking at a document and acting on it — mirrors
 // admin-portal's DocumentPreviewDialog exactly (reviewing and deciding
 // verify/reject is one motion, not "open a new tab to look, then come back
-// and click a button blind").
+// and click a button blind"). Both actions can carry a reviewer comment —
+// required for a reject (it is the reason), optional for a verify.
 //
-// The reject-reason sub-form (rejecting/reason state) is reset by giving
-// this component a `key` tied to the document's id at the call site, not by
-// an effect — a fresh document opening means a fresh mount, so there's never
-// a half-typed reason left over from the previous one to clear.
+// The comment sub-form (commenting state) is reset by giving this component
+// a `key` tied to the document's id at the call site, not by an effect — a
+// fresh document opening means a fresh mount, so there's never a half-typed
+// comment left over from the previous one to clear.
 export function DocumentPreviewDialog({
   open,
   onClose,
@@ -59,8 +61,8 @@ export function DocumentPreviewDialog({
   const isPdf = mimeType === 'application/pdf';
   const canAct = status === 'review' && (onVerify || onReject);
 
-  const [rejecting, setRejecting] = useState(false);
-  const [reason, setReason] = useState('');
+  const [commenting, setCommenting] = useState(false);
+  const [comment, setComment] = useState('');
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -108,39 +110,46 @@ export function DocumentPreviewDialog({
 
       {canAct && (
         <DialogActions sx={{ px: 3, py: 2, flexDirection: 'column', alignItems: 'stretch', gap: 1.5 }}>
-          {rejecting ? (
+          {commenting ? (
             <>
               <Box>
-                <FieldLabel>{t('tp.reject_reason_label')}</FieldLabel>
+                <FieldLabel>{t('tp.document_comment_label')}</FieldLabel>
                 <FormTextField
                   autoFocus
                   multiline
                   minRows={2}
                   fullWidth
-                  placeholder={t('tp.reject_reason_placeholder')}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  placeholder={t('tp.document_comment_placeholder')}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
                 />
               </Box>
               <Box className="flex justify-end gap-2">
-                <Button variant="text" onClick={() => setRejecting(false)}>{t('common.cancel')}</Button>
+                <Button variant="text" onClick={() => setCommenting(false)}>{t('common.cancel')}</Button>
                 <Button
                   variant="contained"
                   color="error"
-                  disabled={!reason.trim()}
+                  disabled={!comment.trim()}
                   loading={acting}
-                  onClick={() => onReject?.(reason.trim())}
+                  onClick={() => onReject?.(comment.trim())}
                 >
                   {t('tp.confirm_reject')}
+                </Button>
+                <Button
+                  variant="contained"
+                  loading={acting}
+                  onClick={() => onVerify?.(comment.trim() || undefined)}
+                >
+                  {t('tp.verify')}
                 </Button>
               </Box>
             </>
           ) : (
             <Box className="flex justify-end gap-2">
-              <Button variant="outlined" color="error" disabled={acting} onClick={() => setRejecting(true)}>
+              <Button variant="outlined" color="error" disabled={acting} onClick={() => { setComment(''); setCommenting(true); }}>
                 {t('tp.reject')}
               </Button>
-              <Button variant="contained" loading={acting} onClick={onVerify}>
+              <Button variant="outlined" disabled={acting} onClick={() => { setComment(''); setCommenting(true); }}>
                 {t('tp.verify')}
               </Button>
             </Box>

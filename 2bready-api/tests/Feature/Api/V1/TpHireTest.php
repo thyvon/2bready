@@ -392,7 +392,7 @@ it('lets an assigned TP reject a document with a reason, stamping rejected_by_us
         'status' => 'review',
     ]);
 
-    $this->actingAs($auditor)->postJson("/api/v1/documents/{$document->id}/reject", ['reason' => 'Illegible scan.'])
+    $this->actingAs($auditor)->postJson("/api/v1/documents/{$document->id}/reject", ['comment' => 'Illegible scan.'])
         ->assertOk()
         ->assertJsonPath('data.status', 'rejected')
         ->assertJsonPath('data.rejected_by_user_id', $auditor->id);

@@ -47,7 +47,7 @@ class Document extends Model
         'size_bytes',
         'status',
         'period_key',
-        'rejection_reason',
+        'comment',
         'rejected_by_user_id',
         'verified_by_user_id',
         'verified_at',

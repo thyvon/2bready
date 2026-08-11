@@ -14,6 +14,7 @@ use App\Domain\Document\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Document\RejectDocumentRequest;
 use App\Http\Requests\Api\V1\Document\StoreDocumentRequest;
+use App\Http\Requests\Api\V1\Document\VerifyDocumentRequest;
 use App\Http\Resources\Api\V1\DocumentResource;
 use App\Http\Resources\Api\V1\DocumentTemplateResource;
 use App\Support\ApiResponse;
@@ -108,12 +109,12 @@ class DocumentController extends Controller
     // way admin/staff are (BelongsToCompany's null-current_company_id fix),
     // so the scoped implicit binding would 404 before the policy ever runs,
     // even for a document their firm is legitimately hired to review.
-    public function verify(string $document, Request $request, VerifyDocumentAction $action): JsonResponse
+    public function verify(string $document, VerifyDocumentRequest $request, VerifyDocumentAction $action): JsonResponse
     {
         $document = Document::query()->withoutGlobalScope('company')->findOrFail($document);
         $this->authorize('manage', $document);
 
-        $document = $action->execute($document, $request->user());
+        $document = $action->execute($document, $request->user(), $request->validated('comment'));
 
         return ApiResponse::success(new DocumentResource($document));
     }
@@ -123,7 +124,7 @@ class DocumentController extends Controller
         $document = Document::query()->withoutGlobalScope('company')->findOrFail($document);
         $this->authorize('manage', $document);
 
-        $document = $action->execute($document, $request->validated('reason'), $request->user());
+        $document = $action->execute($document, $request->validated('comment'), $request->user());
 
         return ApiResponse::success(new DocumentResource($document));
     }

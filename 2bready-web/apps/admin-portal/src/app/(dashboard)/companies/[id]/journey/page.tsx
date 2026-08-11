@@ -151,11 +151,11 @@ export default function CompanyJourneyPage() {
   // A verified/rejected document can auto-complete its milestone (see
   // CompleteMilestoneOnDocumentVerified) — reload the whole tree so that
   // shows up immediately, not just the one document's own status.
-  const handleVerify = async () => {
+  const handleVerify = async (comment?: string) => {
     if (!preview) return;
     setActing(true);
     try {
-      await verifyDocument(preview.documentId);
+      await verifyDocument(preview.documentId, comment);
       toast.success('Document verified.');
       setPreview(null);
       setReloadKey((k) => k + 1);
@@ -167,11 +167,11 @@ export default function CompanyJourneyPage() {
     }
   };
 
-  const handleReject = async (reason: string) => {
+  const handleReject = async (comment: string) => {
     if (!preview) return;
     setActing(true);
     try {
-      await rejectDocument(preview.documentId, reason);
+      await rejectDocument(preview.documentId, comment);
       toast.success('Document rejected.');
       setPreview(null);
       setReloadKey((k) => k + 1);

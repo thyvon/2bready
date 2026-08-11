@@ -112,9 +112,9 @@ const en = {
   'tp.uploaded_col': 'Uploaded',
   'tp.verify': 'Verify',
   'tp.reject': 'Reject',
-  'tp.reject_reason_label': 'Reason',
-  'tp.reject_reason_placeholder': "Explain what's wrong so the company knows what to fix.",
   'tp.confirm_reject': 'Confirm reject',
+  'tp.document_comment_label': 'Review comment',
+  'tp.document_comment_placeholder': 'Add a note for the company — required to reject, optional to verify.',
   'tp.document_verified': 'Document verified.',
   'tp.document_rejected': 'Document rejected.',
 

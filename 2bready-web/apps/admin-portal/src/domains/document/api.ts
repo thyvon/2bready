@@ -24,13 +24,13 @@ export async function listDocuments(status?: string, companyId?: string): Promis
   return res.data.data;
 }
 
-export async function verifyDocument(id: string): Promise<Document> {
-  const res = await api.post<{ data: Document }>(`/documents/${id}/verify`);
+export async function verifyDocument(id: string, comment?: string): Promise<Document> {
+  const res = await api.post<{ data: Document }>(`/documents/${id}/verify`, { comment: comment || undefined });
   return res.data.data;
 }
 
-export async function rejectDocument(id: string, reason: string): Promise<Document> {
-  const res = await api.post<{ data: Document }>(`/documents/${id}/reject`, { reason });
+export async function rejectDocument(id: string, comment: string): Promise<Document> {
+  const res = await api.post<{ data: Document }>(`/documents/${id}/reject`, { comment });
   return res.data.data;
 }
 

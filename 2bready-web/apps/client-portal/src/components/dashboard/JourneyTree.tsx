@@ -18,6 +18,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
+import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -161,6 +162,12 @@ function HistorySubRow({
             <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <CheckIcon sx={{ fontSize: 12 }} />
               {formatHistoryDate(entry.verified_at ?? entry.created_at)}
+            </Typography>
+          )}
+          {entry.comment && (
+            <Typography variant="caption" sx={{ color: entry.status === 'rejected' ? 'error.main' : 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+              <CommentOutlinedIcon sx={{ fontSize: 12 }} />
+              {entry.comment}
             </Typography>
           )}
         </Box>

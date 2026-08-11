@@ -33,7 +33,7 @@ class DocumentResource extends JsonResource
             // requirements ("2026-07" / "2026"); null for one-time and
             // rolling.
             'period_key' => $this->period_key,
-            'rejection_reason' => $this->rejection_reason,
+            'comment' => $this->comment,
             'verified_by_user_id' => $this->verified_by_user_id,
             'rejected_by_user_id' => $this->rejected_by_user_id,
             'verified_at' => $this->verified_at,

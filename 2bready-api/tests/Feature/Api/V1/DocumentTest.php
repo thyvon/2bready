@@ -413,7 +413,7 @@ it('completes a milestone once every historical gap is backfilled and verified',
         ->toBeTrue();
 });
 
-it('lets an admin reject a document with a reason', function () {
+it('lets an admin reject a document with a comment', function () {
     $admin = User::factory()->admin()->create();
     $document = Document::factory()->create([
         'company_id' => $this->company->id,
@@ -422,11 +422,40 @@ it('lets an admin reject a document with a reason', function () {
     ]);
 
     $response = $this->actingAs($admin)->postJson("/api/v1/documents/{$document->id}/reject", [
-        'reason' => 'Illegible scan, please re-upload.',
+        'comment' => 'Illegible scan, please re-upload.',
     ]);
 
     $response->assertOk()->assertJsonPath('data.status', 'rejected');
-    expect($document->fresh()->rejection_reason)->toBe('Illegible scan, please re-upload.');
+    expect($document->fresh()->comment)->toBe('Illegible scan, please re-upload.');
+});
+
+it('lets an admin attach an optional comment when verifying a document', function () {
+    $admin = User::factory()->admin()->create();
+    $document = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+    ]);
+
+    $response = $this->actingAs($admin)->postJson("/api/v1/documents/{$document->id}/verify", [
+        'comment' => 'Looks good, keep it up.',
+    ]);
+
+    $response->assertOk()->assertJsonPath('data.status', 'verified');
+    expect($document->fresh()->comment)->toBe('Looks good, keep it up.');
+});
+
+it('requires a comment to reject a document', function () {
+    $admin = User::factory()->admin()->create();
+    $document = Document::factory()->create([
+        'company_id' => $this->company->id,
+        'document_template_id' => $this->docTemplate->id,
+        'status' => 'review',
+    ]);
+
+    $this->actingAs($admin)->postJson("/api/v1/documents/{$document->id}/reject")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['comment']);
 });
 
 it('forbids a company_owner from verifying their own document', function () {

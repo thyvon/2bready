@@ -13,7 +13,7 @@ class RejectDocumentAction
     {
         $document->update([
             'status' => 'rejected',
-            'rejection_reason' => $reason,
+            'comment' => $reason,
             'rejected_by_user_id' => $rejectedBy->id,
         ]);
 

@@ -64,7 +64,7 @@ class DocumentHistoryEntryResource extends JsonResource
             'status' => $this->document?->status->value,
             'verified_at' => $this->document?->verified_at,
             'expires_at' => $this->document?->expires_at,
-            'rejection_reason' => $this->document?->rejection_reason,
+            'comment' => $this->document?->comment,
             'created_at' => $this->document?->created_at,
         ];
     }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Domain\Marketplace\Models\TpRating;
 use App\Domain\Marketplace\Models\TpHire;
+use App\Domain\Marketplace\Models\TpRating;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

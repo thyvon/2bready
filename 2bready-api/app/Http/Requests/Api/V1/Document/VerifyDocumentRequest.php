@@ -6,13 +6,13 @@ namespace App\Http\Requests\Api\V1\Document;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RejectDocumentRequest extends FormRequest
+class VerifyDocumentRequest extends FormRequest
 {
     /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
         return [
-            'comment' => ['required', 'string', 'max:1000'],
+            'comment' => ['sometimes', 'nullable', 'string', 'max:1000'],
         ];
     }
 }

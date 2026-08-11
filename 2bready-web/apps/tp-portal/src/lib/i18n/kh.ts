@@ -116,9 +116,9 @@ const kh: Record<keyof typeof en, string> = {
   'tp.uploaded_col': 'បានផ្ទុកឡើង',
   'tp.verify': 'ផ្ទៀងផ្ទាត់',
   'tp.reject': 'បដិសេធ',
-  'tp.reject_reason_label': 'មូលហេតុ',
-  'tp.reject_reason_placeholder': 'ពន្យល់ពីអ្វីដែលខុសដើម្បីឱ្យក្រុមហ៊ុនដឹងអ្វីត្រូវកែ។',
   'tp.confirm_reject': 'បញ្ជាក់ការបដិសេធ',
+  'tp.document_comment_label': 'មតិយោបល់',
+  'tp.document_comment_placeholder': 'បន្ថែមមតិយោបល់អំពីឯកសារ — ទាមទារសម្រាប់ការបដិសេធ អាចទុកទទេសម្រាប់ការផ្ទៀងផ្ទាត់។',
   'tp.document_verified': 'ឯកសារត្រូវបានផ្ទៀងផ្ទាត់។',
   'tp.document_rejected': 'ឯកសារត្រូវបានបដិសេធ។',
 

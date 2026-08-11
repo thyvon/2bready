@@ -174,7 +174,7 @@ it('surfaces prior uploads as history without disturbing the current one', funct
         'company_id' => $this->company->id,
         'document_template_id' => $template->id,
         'status' => 'rejected',
-        'rejection_reason' => 'Illegible scan.',
+        'comment' => 'Illegible scan.',
     ]);
     $current = Document::factory()->create([
         'company_id' => $this->company->id,
@@ -192,7 +192,7 @@ it('surfaces prior uploads as history without disturbing the current one', funct
     expect($doc['history'])->toHaveCount(1);
     expect($doc['history'][0]['id'])->toBe($rejected->id);
     expect($doc['history'][0]['status'])->toBe('rejected');
-    expect($doc['history'][0]['rejection_reason'])->toBe('Illegible scan.');
+    expect($doc['history'][0]['comment'])->toBe('Illegible scan.');
 });
 
 it('exposes a document template\'s expiry_months so recurrence can be preloaded when editing', function () {

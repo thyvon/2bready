@@ -9,7 +9,7 @@ export type Document = {
   mime_type: string;
   size_bytes: number;
   status: DocumentStatus;
-  rejection_reason: string | null;
+  comment: string | null;
   verified_at: string | null;
   expires_at: string | null;
   created_at: string;

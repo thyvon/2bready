@@ -16,7 +16,7 @@ export interface DocumentHistoryEntry {
   status: string | null;
   verified_at: string | null;
   expires_at: string | null;
-  rejection_reason: string | null;
+  comment: string | null;
   created_at: string | null;
 }
 

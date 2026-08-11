@@ -89,11 +89,11 @@ export default function DocumentsListView() {
     }
   };
 
-  const handleVerify = async () => {
+  const handleVerify = async (comment?: string) => {
     if (!preview) return;
     setActing(true);
     try {
-      await verifyDocument(preview.documentId);
+      await verifyDocument(preview.documentId, comment);
       toast.success(t('admin.document_verified'));
       setPreview(null);
       load();
@@ -104,11 +104,11 @@ export default function DocumentsListView() {
     }
   };
 
-  const handleReject = async (reason: string) => {
+  const handleReject = async (comment: string) => {
     if (!preview) return;
     setActing(true);
     try {
-      await rejectDocument(preview.documentId, reason);
+      await rejectDocument(preview.documentId, comment);
       toast.success(t('admin.document_rejected'));
       setPreview(null);
       load();

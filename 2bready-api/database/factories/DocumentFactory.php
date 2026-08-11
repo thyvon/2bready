@@ -28,7 +28,7 @@ class DocumentFactory extends Factory
             'size_bytes' => fake()->numberBetween(10_000, 2_000_000),
             'status' => 'pending_scan',
             'period_key' => null,
-            'rejection_reason' => null,
+            'comment' => null,
             'verified_by_user_id' => null,
             'verified_at' => null,
             'expires_at' => null,
@@ -68,7 +68,7 @@ class DocumentFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'rejected',
-            'rejection_reason' => fake()->sentence(),
+            'comment' => fake()->sentence(),
         ]);
     }
 }

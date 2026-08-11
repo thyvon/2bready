@@ -1507,7 +1507,7 @@ export interface components {
             status: string;
             verified_at: string;
             expires_at: string;
-            rejection_reason: string;
+            comment: string;
             created_at: string;
         };
         /** DocumentResource */
@@ -1524,7 +1524,7 @@ export interface components {
              *     rolling.
              */
             period_key: string | null;
-            rejection_reason: string | null;
+            comment: string | null;
             verified_by_user_id: string | null;
             rejected_by_user_id: string | null;
             /** Format: date-time */
@@ -1882,7 +1882,7 @@ export interface components {
         };
         /** RejectDocumentRequest */
         RejectDocumentRequest: {
-            reason: string;
+            comment: string;
         };
         /** ResetPasswordRequest */
         ResetPasswordRequest: {
@@ -2372,6 +2372,10 @@ export interface components {
         /** VerifyDataRoomAccessRequest */
         VerifyDataRoomAccessRequest: {
             pin: string;
+        };
+        /** VerifyDocumentRequest */
+        VerifyDocumentRequest: {
+            comment?: string | null;
         };
     };
     responses: {
@@ -3356,7 +3360,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VerifyDocumentRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -3371,6 +3379,7 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "document.reject": {

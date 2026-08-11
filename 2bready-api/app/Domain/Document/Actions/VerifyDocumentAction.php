@@ -10,7 +10,7 @@ use App\Domain\User\Models\User;
 
 class VerifyDocumentAction
 {
-    public function execute(Document $document, User $verifiedBy): Document
+    public function execute(Document $document, User $verifiedBy, ?string $comment = null): Document
     {
         $template = $document->documentTemplate;
         $recurrence = $template->recurrence_type;
@@ -34,6 +34,7 @@ class VerifyDocumentAction
         // same rules.
         $document->update([
             'status' => 'verified',
+            'comment' => $comment,
             'verified_by_user_id' => $verifiedBy->id,
             'verified_at' => $verifiedAt, // real audit fact — always "now," never faked for a backfill
             'period_key' => $periodKey,

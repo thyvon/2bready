@@ -36,7 +36,7 @@ class ComplianceAnchorResolver
 {
     public function resolve(Company $company, ?Journey $journey, DocumentTemplate $template): CarbonInterface
     {
-        $journeyActivatedAt = $journey?->activated_at ?? now();
+        $journeyActivatedAt = $journey->activated_at ?? now();
         $companyAnchor = $company->compliance_start_date ?? $journeyActivatedAt;
 
         if ($template->effective_since && $template->effective_since->greaterThan($companyAnchor)) {
