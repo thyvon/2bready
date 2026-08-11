@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -23,63 +23,93 @@ const NAV_LINKS = [
 
 export default function MarketingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const logoUrl = useThemeBrandLogo();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <Box
       component="header"
       sx={{
-        height: 64,
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr auto', md: '1fr auto 1fr' },
-        alignItems: 'center',
-        px: { xs: 2, md: 4 },
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'color-mix(in srgb, var(--mui-palette-background-paper) 80%, transparent)',
-        backdropFilter: 'blur(12px)',
         position: 'sticky',
-        top: 0,
-        zIndex: 10,
+        top: { xs: 0, md: 12 },
+        zIndex: 20,
+        px: { xs: 1.5, md: 4 },
+        pointerEvents: 'none',
+        '& > *': { pointerEvents: 'auto' },
       }}
     >
-      <Typography
-        component={Link}
-        href="/"
-        variant="body1"
-        sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none' }}
+      <Box
+        sx={{
+          maxWidth: 1200,
+          mx: 'auto',
+          height: { xs: 56, md: 60 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr auto', md: '1fr auto 1fr' },
+          alignItems: 'center',
+          px: { xs: 2, md: 3 },
+          borderRadius: { xs: '20px', md: '999px' },
+          transition: 'box-shadow 0.3s ease, background-color 0.3s ease, transform 0.3s ease, max-width 0.3s ease',
+          bgcolor: scrolled
+            ? 'color-mix(in srgb, var(--mui-palette-background-paper) 78%, transparent)'
+            : 'color-mix(in srgb, var(--mui-palette-background-paper) 55%, transparent)',
+          backdropFilter: 'blur(16px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+          boxShadow: scrolled
+            ? '0 12px 32px -12px rgba(16,24,40,0.25), 0 8px 24px -8px rgba(113,183,124,0.35), 0 0 24px -6px rgba(113,183,124,0.25)'
+            : '0 4px 16px -8px rgba(16,24,40,0.12), 0 4px 20px -6px rgba(113,183,124,0.22), 0 0 18px -4px rgba(113,183,124,0.18)',
+          mt: { xs: 0.5, md: 1 },
+          '[data-mui-color-scheme="dark"] &': {
+            boxShadow: scrolled
+              ? '0 12px 32px -12px rgba(0,0,0,0.6), 0 10px 32px -8px rgba(113,183,124,0.5), 0 0 32px -4px rgba(113,183,124,0.35)'
+              : '0 4px 16px -8px rgba(0,0,0,0.5), 0 6px 28px -6px rgba(113,183,124,0.38), 0 0 26px -4px rgba(113,183,124,0.3)',
+          },
+        }}
       >
-        <BrandLogo
-          logoUrl={logoUrl}
-          height={64}
-          maxWidth={220}
-          fallback={<BrandMark size={22} />}
-        />
-      </Typography>
-
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-        {NAV_LINKS.map((link) => (
-          <NavHoverLink
-            key={link.href}
-            href={link.href}
-            label={link.label}
-            sx={{ fontSize: '0.875rem' }}
+        <Typography
+          component={Link}
+          href="/"
+          variant="body1"
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none' }}
+        >
+          <BrandLogo
+            logoUrl={logoUrl}
+            height={56}
+            maxWidth={180}
+            fallback={<BrandMark size={22} />}
           />
-        ))}
-      </Box>
+        </Typography>
 
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-        <ThemeToggle />
-        <Button component={Link} href={clientPortalUrl('/login')} variant="outlined" size="small">
-          Client Portal
-        </Button>
-      </Box>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+          {NAV_LINKS.map((link) => (
+            <NavHoverLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+              sx={{ fontSize: '0.875rem', fontWeight: 800 }}
+            />
+          ))}
+        </Box>
 
-      <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-        <ThemeToggle />
-        <IconButton size="small" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-          <MenuIcon />
-        </IconButton>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+          <ThemeToggle />
+          <Button component={Link} href={clientPortalUrl('/login')} variant="outlined" size="small">
+            Client Portal
+          </Button>
+        </Box>
+
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+          <ThemeToggle />
+          <IconButton size="small" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+            <MenuIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       <Drawer anchor="right" open={menuOpen} onClose={() => setMenuOpen(false)}>

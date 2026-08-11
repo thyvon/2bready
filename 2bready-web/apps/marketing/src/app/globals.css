@@ -46,7 +46,7 @@ main,
 }
 
 .marketing-gradient-text {
-  background: linear-gradient(100deg, var(--mui-palette-text-primary) 30%, var(--mui-palette-primary-main) 55%, var(--mui-palette-secondary-main) 70%, var(--mui-palette-text-primary) 90%);
+  background: linear-gradient(100deg, var(--mui-palette-text-primary) 25%, var(--mui-palette-primary-main) 60%, var(--mui-palette-secondary-main) 80%, var(--mui-palette-text-primary) 95%);
   background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -70,6 +70,13 @@ main,
   filter: blur(80px);
   animation: marketing-drift 18s ease-in-out infinite;
   pointer-events: none;
+}
+
+/* How It Works timeline progress fill sits flush with the rail on md+ */
+@media (min-width: 900px) {
+  .how-it-works-fill {
+    left: 24px !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -25,7 +25,8 @@ export default function PricingSection() {
   const pricingPlans = usePublicPricing();
 
   return (
-    <Box component="section" id="pricing" sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 14 }, maxWidth: 1440, mx: 'auto' }}>
+    <Box component="section" id="pricing" sx={{ bgcolor: 'background.default', py: { xs: 10, md: 14 } }}>
+      <Box sx={{ px: { xs: 2, md: 4 }, maxWidth: 1440, mx: 'auto' }}>
       <Reveal>
         <Typography variant="h2" component="h2" sx={{ textAlign: 'center', fontSize: { xs: '1.75rem', md: '2.25rem' }, mb: 1.5 }}>
           {pricingContent.title}
@@ -46,7 +47,7 @@ export default function PricingSection() {
         {pricingPlans.map((plan, i) => {
           const Icon = PLAN_ICONS[plan.icon];
           return (
-            <Reveal key={plan.level} delay={i * 0.08}>
+            <Reveal key={plan.level} delay={i * 0.08} scale>
               <Box sx={{ height: '100%' }}>
                 <SpotlightCard sx={{ height: '100%' }}>
                   <Chip
@@ -109,6 +110,7 @@ export default function PricingSection() {
             </Reveal>
           );
         })}
+      </Box>
       </Box>
     </Box>
   );

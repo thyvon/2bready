@@ -19,23 +19,23 @@ export default function MarketingFooter() {
       sx={{
         borderTop: '1px solid',
         borderColor: 'divider',
-        bgcolor: 'background.paper',
+        bgcolor: 'background.default',
+        color: 'text.secondary',
         px: { xs: 2, md: 4 },
-        py: 6,
+        py: { xs: 6, md: 8 },
       }}
     >
       <Box
         sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1.6fr 1fr 1fr 1fr' },
           gap: 6,
           maxWidth: 1200,
           mx: 'auto',
         }}
       >
-        <Box sx={{ maxWidth: 280 }}>
-          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', mb: 1 }}>
+        <Box sx={{ maxWidth: 300 }}>
+          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', mb: 1.5, color: 'text.primary' }}>
             <BrandLogo
               logoUrl={logoUrl}
               height={24}
@@ -43,51 +43,51 @@ export default function MarketingFooter() {
               fallback={<BrandMark size={20} />}
             />
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
             {footerContent.tagline}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             {footerContent.poweredBy}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Business Development Center (BDC), 11th Floor,
+            OCIC Boulevard, Phnom Penh, Cambodia
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {footerColumns.map((col) => (
-            <Box key={col.title}>
-              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                {col.title}
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {col.items.map((item) =>
-                  'href' in item ? (
-                    <Typography
-                      key={item.label}
-                      component={Link}
-                      href={item.href}
-                      variant="body2"
-                      sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'text.primary' } }}
-                    >
-                      {item.label}
-                    </Typography>
-                  ) : (
-                    <Typography key={item.label} variant="body2" color="text.secondary">
-                      {item.label}
-                    </Typography>
-                  )
-                )}
-              </Box>
+        {footerColumns.map((col) => (
+          <Box key={col.title}>
+            <Typography variant="overline" sx={{ display: 'block', mb: 1.5, color: 'success.main', fontWeight: 700, letterSpacing: '0.14em' }}>
+              {col.title}
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {col.items.map((item) =>
+                'href' in item ? (
+                  <Typography
+                    key={item.label}
+                    component={Link}
+                    href={item.href}
+                    variant="body2"
+                    sx={{ color: 'text.primary', textDecoration: 'none', width: 'fit-content', '&:hover': { color: 'success.main' } }}
+                  >
+                    {item.label}
+                  </Typography>
+                ) : (
+                  <Typography key={item.label} variant="body2" sx={{ color: 'text.primary' }}>
+                    {item.label}
+                  </Typography>
+                )
+              )}
             </Box>
-          ))}
-        </Box>
+          </Box>
+        ))}
       </Box>
 
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ display: 'block', textAlign: 'center', mt: 6 }}
-      >
-        {footerContent.copyright}
-      </Typography>
+      <Box sx={{ mt: 6, borderTop: '1px solid', borderColor: 'divider', pt: 3 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center' }}>
+          {footerContent.copyright}
+        </Typography>
+      </Box>
     </Box>
   );
 }

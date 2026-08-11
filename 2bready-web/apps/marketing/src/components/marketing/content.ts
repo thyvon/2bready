@@ -14,6 +14,20 @@ export const heroPills = [
   { icon: 'globe', label: 'ADMIT Global Ecosystem' },
 ] as const;
 
+// The hero stat strip. STATIC placeholders for now — a public /stats
+// endpoint on the API will replace these values (see AGENTS.md backlog).
+export const statsContent = {
+  kicker: 'The platform in numbers',
+  title: 'Verifiable trust at scale',
+  subtitle: 'A live snapshot of companies, auditors and verifications moving through the 2bReady ecosystem.',
+  stats: [
+    { icon: 'companies', label: 'Companies on the journey', value: '1,240', growth: '+32%' },
+    { icon: 'badges', label: 'Verified trust badges', value: '386', growth: '+28%' },
+    { icon: 'auditors', label: 'Active master auditors', value: '52', growth: '+18%' },
+    { icon: 'audits', label: 'Readiness audits completed', value: '940', growth: '+44%' },
+  ],
+} as const;
+
 export const pricingContent = {
   title: 'Standardized service pathways',
   subtitle:
@@ -116,21 +130,25 @@ export const stakeholders = [
     icon: 'sme',
     title: 'ASEAN SMEs',
     description: 'Achieve audit-readiness, eliminate administrative bottlenecks, and scale operations securely without the overhead of massive compliance teams.',
+    cta: { label: 'Start your journey', href: adminUrl('/register') },
   },
   {
     icon: 'banks',
     title: 'Institutional Banks',
     description: 'Access verified, bank-grade financial data through a Zero-Trust secure vault, accelerating loan approvals and mitigating risk.',
+    cta: { label: 'Explore the Data Room', href: '/#data-room' },
   },
   {
     icon: 'government',
     title: 'Governments & NGOs',
     description: 'Ensure strict adherence to local laws while supporting development partners in mapping SME growth and ESG sustainability.',
+    cta: { label: 'Learn more', href: '/#how-it-works' },
   },
   {
     icon: 'investors',
     title: 'Global Investors',
     description: 'Utilize the GoInvestors Smart Data Room to review certified pre-money valuations, independent audits, and institutional-grade financial forecasts.',
+    cta: { label: 'Discover the ecosystem', href: '/#stakeholders' },
   },
 ] as const;
 
@@ -172,7 +190,7 @@ export const howItWorksSteps = [
 export const ctaContent = {
   title: 'Ready to Get Started?',
   subtitle: 'Join ASEAN SMEs building verified trust with customers, banks, and investors on 2bReady.',
-  cta: { label: 'Call to Action', href: adminUrl('/register') },
+  cta: { label: 'Get Started Free', href: adminUrl('/register') },
 };
 
 export const footerContent = {

@@ -10,6 +10,8 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import PublicIcon from '@mui/icons-material/Public';
 import AuroraBackground from './AuroraBackground';
 import GlowButton from './GlowButton';
+import HeroVisual from './HeroVisual';
+import Parallax from './Parallax';
 import { heroContent, heroPills } from './content';
 
 const PILL_ICONS = {
@@ -29,7 +31,7 @@ const item: Variants = {
 
 export default function HeroSection() {
   return (
-    <Box component="section" sx={{ position: 'relative', overflow: 'hidden' }}>
+    <Box component="section" sx={{ position: 'relative', overflow: 'hidden', mt: { xs: '-56px', md: '-64px' } }}>
       <AuroraBackground />
 
       <motion.div
@@ -38,68 +40,108 @@ export default function HeroSection() {
         animate="show"
         style={{ position: 'relative', zIndex: 1 }}
       >
-        <Box sx={{ px: 2, pt: { xs: 12, md: 18 }, pb: { xs: 8, md: 10 }, maxWidth: 880, mx: 'auto', textAlign: 'center' }}>
-          <motion.div variants={item}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', mb: 4 }}>
-              {heroPills.map(({ icon, label }) => {
-                const Icon = PILL_ICONS[icon];
-                return (
-                  <Chip
-                    key={label}
-                    icon={<Icon sx={{ fontSize: 16 }} />}
-                    label={label}
-                    variant="outlined"
-                    sx={{ height: 32, px: 1, borderRadius: '9999px', fontSize: '0.8125rem' }}
-                  />
-                );
-              })}
-            </Box>
-          </motion.div>
+        <Box
+          sx={{
+            px: { xs: 2, md: 4 },
+            pt: { xs: '104px', md: '128px' },
+            pb: { xs: 8, md: 12 },
+            maxWidth: 1200,
+            mx: 'auto',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' },
+            gap: { xs: 6, md: 8 },
+            alignItems: 'center',
+          }}
+        >
+          <Box>
+            <motion.div variants={item}>
+              <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, gap: 1.5, flexWrap: 'wrap', mb: 3.5 }}>
+                {heroPills.map(({ icon, label }) => {
+                  const Icon = PILL_ICONS[icon];
+                  return (
+                    <Chip
+                      key={label}
+                      icon={<Icon sx={{ fontSize: 16 }} />}
+                      label={label}
+                      variant="outlined"
+                      sx={{
+                        height: 32,
+                        px: 1,
+                        borderRadius: '9999px',
+                        fontSize: '0.8125rem',
+                        borderColor: 'color-mix(in srgb, var(--mui-palette-primary-main) 25%, transparent)',
+                        color: 'text.primary',
+                        bgcolor: 'color-mix(in srgb, var(--mui-palette-background-paper) 60%, transparent)',
+                        backdropFilter: 'blur(8px)',
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            </motion.div>
 
-          <motion.div variants={item}>
-            <Typography
-              sx={{
-                fontSize: { xs: '0.85rem', md: '0.95rem' },
-                fontWeight: 800,
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                color: 'text.secondary',
-                mb: 2,
-              }}
-            >
-              {heroContent.tagline}
-            </Typography>
-          </motion.div>
+            <motion.div variants={item}>
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.85rem', md: '0.95rem' },
+                  fontWeight: 800,
+                  letterSpacing: '0.3em',
+                  textTransform: 'uppercase',
+                  color: 'success.main',
+                  mb: 2,
+                  textAlign: { xs: 'center', md: 'left' },
+                }}
+              >
+                {heroContent.tagline}
+              </Typography>
+            </motion.div>
 
-          <motion.div variants={item}>
-            <Typography
-              component="h1"
-              className="marketing-gradient-text"
-              sx={{
-                fontSize: { xs: '2.25rem', sm: '3rem', md: '3.75rem' },
-                fontWeight: 800,
-                letterSpacing: '-0.03em',
-                lineHeight: 1.1,
-                mb: 3,
-              }}
-            >
-              {heroContent.headline}
-            </Typography>
-          </motion.div>
+            <motion.div variants={item}>
+              <Typography
+                component="h1"
+                className="marketing-gradient-text"
+                sx={{
+                  fontSize: { xs: '2.25rem', sm: '3rem', md: '3.5rem' },
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1.1,
+                  mb: 3,
+                  textAlign: { xs: 'center', md: 'left' },
+                }}
+              >
+                {heroContent.headline}
+              </Typography>
+            </motion.div>
 
-          <motion.div variants={item}>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '1rem', md: '1.15rem' }, mb: 5, maxWidth: 640, mx: 'auto' }}>
-              {heroContent.subheadline}
-            </Typography>
-          </motion.div>
+            <motion.div variants={item}>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{
+                  fontSize: { xs: '1rem', md: '1.125rem' },
+                  mb: 4.5,
+                  maxWidth: 560,
+                  textAlign: { xs: 'center', md: 'left' },
+                }}
+              >
+                {heroContent.subheadline}
+              </Typography>
+            </motion.div>
 
-          <motion.div variants={item}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-              <GlowButton href={heroContent.primaryCta.href}>{heroContent.primaryCta.label}</GlowButton>
-              <Button component={Link} href={heroContent.secondaryCta.href} variant="outlined" size="large" sx={{ px: 4, py: 1.5, fontSize: '1rem' }}>
-                {heroContent.secondaryCta.label}
-              </Button>
-            </Box>
+            <motion.div variants={item}>
+              <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, gap: 2, flexWrap: 'wrap' }}>
+                <GlowButton href={heroContent.primaryCta.href}>{heroContent.primaryCta.label}</GlowButton>
+                <Button component={Link} href={heroContent.secondaryCta.href} variant="outlined" size="large" sx={{ px: 4, py: 1.5, fontSize: '1rem', borderRadius: '999px' }}>
+                  {heroContent.secondaryCta.label}
+                </Button>
+              </Box>
+            </motion.div>
+          </Box>
+
+          <motion.div variants={item} style={{ display: 'flex', justifyContent: 'center' }}>
+            <Parallax speed={0.9}>
+              <HeroVisual />
+            </Parallax>
           </motion.div>
         </Box>
       </motion.div>

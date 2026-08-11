@@ -10,7 +10,8 @@ export default function PortfolioSection() {
   const partnersLoop = [...portfolioPartners, ...portfolioPartners, ...portfolioPartners];
 
   return (
-    <Box component="section" sx={{ px: { xs: 2, md: 4 }, py: { xs: 6, md: 8 }, maxWidth: 1200, mx: 'auto' }}>
+    <Box component="section" sx={{ bgcolor: 'background.default', py: { xs: 8, md: 10 } }}>
+      <Box sx={{ px: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
       <Reveal>
         <Typography
           variant="h4"
@@ -33,6 +34,7 @@ export default function PortfolioSection() {
           <MarqueeRow items={partnersLoop} direction="right" variant="secondary" />
         </Box>
       </Reveal>
+      </Box>
     </Box>
   );
 }
