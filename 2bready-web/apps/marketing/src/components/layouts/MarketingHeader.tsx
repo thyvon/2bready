@@ -38,7 +38,7 @@ export default function MarketingHeader() {
       component="header"
       sx={{
         position: 'sticky',
-        top: { xs: 0, md: 12 },
+        top: 12,
         zIndex: 20,
         px: { xs: 1.5, md: 4 },
         pointerEvents: 'none',
@@ -64,7 +64,7 @@ export default function MarketingHeader() {
           boxShadow: scrolled
             ? '0 12px 32px -12px rgba(16,24,40,0.25), 0 8px 24px -8px rgba(113,183,124,0.35), 0 0 24px -6px rgba(113,183,124,0.25)'
             : '0 4px 16px -8px rgba(16,24,40,0.12), 0 4px 20px -6px rgba(113,183,124,0.22), 0 0 18px -4px rgba(113,183,124,0.18)',
-          mt: { xs: 0.5, md: 1 },
+          mt: 1,
           '[data-mui-color-scheme="dark"] &': {
             boxShadow: scrolled
               ? '0 12px 32px -12px rgba(0,0,0,0.6), 0 10px 32px -8px rgba(113,183,124,0.5), 0 0 32px -4px rgba(113,183,124,0.35)'
