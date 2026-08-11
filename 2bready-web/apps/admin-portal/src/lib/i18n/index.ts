@@ -7,6 +7,8 @@ const dictionaries: Record<Locale, Record<string, string>> = { en, kh };
 
 type TranslationKey = keyof typeof en;
 
+export type { TranslationKey };
+
 export function useTranslation() {
   const { locale, setLocale } = useLocale();
 

@@ -13,7 +13,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavItems, isNavItemActive, type NavItem } from '@/components/layouts/nav-items';
 import { useLayoutStore } from '@/store/layout.store';
 import { useTranslation } from '@/lib/i18n';
-import { useBrandLogo } from '@/domains/branding/hooks';
+import { useBrandLogoForTheme } from '@/domains/branding/hooks';
 import { BrandLogo } from '@2bready/ui-core';
 
 const SIDEBAR_WIDTH = 240;
@@ -87,12 +87,12 @@ function SidebarContent({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
-  const logoUrl = useBrandLogo();
+  const logoUrl = useBrandLogoForTheme();
 
   return (
     <>
-      {/* Logo — the admin-uploaded platform logo when one exists (business
-          branding), otherwise the placeholder mark + wordmark. */}
+      {/* Logo — the admin-uploaded platform logo for the current theme when
+          one exists (business branding), otherwise the placeholder mark. */}
       <Box
         sx={{
           px: collapsed ? 0 : 3,
@@ -112,11 +112,6 @@ function SidebarContent({
           maxWidth={collapsed ? 44 : 200}
           fallback={<Box sx={{ width: 20, height: 20, borderRadius: '5px', bgcolor: 'text.primary', flexShrink: 0 }} />}
         />
-        {!collapsed && !logoUrl && (
-          <Typography sx={{ fontWeight: 700, letterSpacing: '-0.04em', fontSize: '0.9375rem', color: 'text.primary', whiteSpace: 'nowrap' }}>
-            2bReady
-          </Typography>
-        )}
       </Box>
 
       {/* Nav */}

@@ -23,7 +23,7 @@ import { RadialMeter } from '@/components/dashboard/RadialMeter';
 import { UserMenu } from './UserMenu';
 import { useNavItems, isNavItemActive } from './nav-items';
 import { useTranslation } from '@/lib/i18n';
-import { useBrandLogo } from '@/lib/branding';
+import { useThemeBrandLogo } from '@/lib/branding';
 import { useJourney } from '@/components/JourneyProvider';
 import { allDocuments, countVerified } from '@/lib/journey-api';
 
@@ -118,7 +118,7 @@ const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPil
 
 export function PortalNavbar() {
   const pathname = usePathname();
-  const logoUrl = useBrandLogo();
+  const logoUrl = useThemeBrandLogo();
   const { t } = useTranslation();
   const { primary, secondary, all } = useNavItems();
   const { journey } = useJourney();
@@ -192,7 +192,6 @@ export function PortalNavbar() {
           maxWidth={180}
           fallback={<BrandMark size={22} />}
         />
-        {!logoUrl && '2bReady'}
       </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>

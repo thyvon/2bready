@@ -196,7 +196,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/branding/logo": {
+    "/v1/branding": {
         parameters: {
             query?: never;
             header?: never;
@@ -205,8 +205,30 @@ export interface paths {
         };
         /**
          * PUBLIC — every portal (admin, client, TP, marketing) shows the
-         *     platform logo, and none of them share a permission level. The URL is
-         *     a fresh short-lived signed URL; null when no logo is uploaded yet
+         *     platform logo, and none of them share a permission level. The URLs are
+         *     fresh short-lived signed URLs, one per slot; null when a slot has no
+         *     logo uploaded yet
+         */
+        get: operations["branding.branding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/branding/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * PUBLIC — kept for compatibility (the original single-logo endpoint).
+         *     New code should use GET /api/v1/branding, which returns all four
+         *     slots in one request
          */
         get: operations["branding.logo"];
         put?: never;
@@ -2292,10 +2314,15 @@ export interface components {
          *     here before anything touches storage (filesystem rule: validate first,
          *     serve only via signed URLs). SVG is accepted: it is served through a
          *     temporaryUrl as an <img> source, never inline, so no script context.
+         *
+         *     `slot` selects which of the four branding slots the file lands in
+         *     (main/dark/footer/footer_dark); it defaults to 'main' when omitted.
          */
         UploadLogoRequest: {
             /** Format: binary */
             logo: string;
+            /** @enum {string} */
+            slot?: "main" | "dark" | "footer" | "footer_dark";
         };
         /** UserResource */
         UserResource: {
@@ -2770,6 +2797,33 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "branding.branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            light: string | null;
+                            dark: string | null;
+                            footer: string | null;
+                            footerDark: string | null;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+        };
+    };
     "branding.logo": {
         parameters: {
             query?: never;
@@ -2827,7 +2881,9 @@ export interface operations {
     };
     "branding.deleteLogo": {
         parameters: {
-            query?: never;
+            query?: {
+                slot?: "main" | "dark" | "footer" | "footer_dark";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2842,6 +2898,7 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "company.index": {

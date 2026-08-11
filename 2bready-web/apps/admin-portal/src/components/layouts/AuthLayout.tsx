@@ -3,8 +3,10 @@
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { BrandLogo } from '@2bready/ui-core';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import LanguageSwitcher from '@/components/layouts/LanguageSwitcher';
+import { useBrandLogoForTheme } from '@/domains/branding/hooks';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,8 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+  const logoUrl = useBrandLogoForTheme();
+
   return (
     <Box
       sx={{
@@ -32,13 +36,15 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
         <ThemeToggle />
       </Box>
 
-      {/* Wordmark above card */}
-      <Typography
-        variant="body1"
-        sx={{ fontWeight: 700, letterSpacing: '-0.04em', mb: 5, color: 'text.primary' }}
-      >
-        2bReady
-      </Typography>
+      {/* Platform logo above card */}
+      <Box sx={{ mb: 5, display: 'flex', justifyContent: 'center' }}>
+        <BrandLogo
+          logoUrl={logoUrl}
+          height={28}
+          maxWidth={160}
+          fallback={<Box sx={{ width: 20, height: 20, borderRadius: '5px', bgcolor: 'text.primary' }} />}
+        />
+      </Box>
 
       {/* Auth card */}
       <Paper

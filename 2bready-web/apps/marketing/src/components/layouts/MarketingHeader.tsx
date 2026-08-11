@@ -12,7 +12,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import BrandMark from '@/components/marketing/BrandMark';
 import BrandLogo from '@/components/marketing/BrandLogo';
 import NavHoverLink from '@/components/marketing/NavHoverLink';
-import { useBrandLogo } from '@/lib/branding';
+import { useThemeBrandLogo } from '@/lib/branding';
 import { clientPortalUrl } from '@/lib/client-portal-url';
 
 const NAV_LINKS = [
@@ -23,7 +23,7 @@ const NAV_LINKS = [
 
 export default function MarketingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const logoUrl = useBrandLogo();
+  const logoUrl = useThemeBrandLogo();
 
   return (
     <Box
@@ -55,7 +55,6 @@ export default function MarketingHeader() {
           maxWidth={220}
           fallback={<BrandMark size={22} />}
         />
-        {!logoUrl && '2bReady'}
       </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 3 }}>

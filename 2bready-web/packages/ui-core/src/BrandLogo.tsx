@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 export interface BrandLogoProps {
   /**
-   * Signed URL from GET /branding/logo. null/undefined renders the
+   * Signed URL from GET /branding (one slot). null/undefined renders the
    * fallback (undefined = still loading; null = no platform logo uploaded).
    * The URL is short-lived, so callers should refresh it (see each app's
    * useBrandLogo hook) rather than caching it for the session.

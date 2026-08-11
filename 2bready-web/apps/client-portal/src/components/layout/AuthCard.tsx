@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { BrandLogo } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
-import { useBrandLogo } from '@/lib/branding';
+import { useThemeBrandLogo } from '@/lib/branding';
 
 interface AuthCardProps {
   title: string;
@@ -18,7 +18,7 @@ interface AuthCardProps {
 // lockout) rather than a marketing moment. Mirrors CompanySuspendedScreen's
 // centered-card shape from the same app.
 export function AuthCard({ title, subtitle, children }: AuthCardProps) {
-  const logoUrl = useBrandLogo();
+  const logoUrl = useThemeBrandLogo();
 
   return (
     <Box

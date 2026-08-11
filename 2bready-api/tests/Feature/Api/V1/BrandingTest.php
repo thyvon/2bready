@@ -100,6 +100,108 @@ it('lets anyone fetch the logo URL publicly, returning null when unset', functio
         ->assertJsonPath('data.url', fn ($url) => is_string($url) && str_starts_with($url, 'http'));
 });
 
+it('returns all four branding slots publicly, null when unset', function () {
+    $this->getJson('/api/v1/branding')
+        ->assertOk()
+        ->assertJsonPath('data.light', null)
+        ->assertJsonPath('data.dark', null)
+        ->assertJsonPath('data.footer', null)
+        ->assertJsonPath('data.footerDark', null);
+
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', uploadLogoPayload())->assertOk();
+
+    $this->getJson('/api/v1/branding')
+        ->assertOk()
+        ->assertJsonPath('data.light', fn ($url) => is_string($url) && str_starts_with($url, 'http'))
+        ->assertJsonPath('data.dark', null)
+        ->assertJsonPath('data.footer', null)
+        ->assertJsonPath('data.footerDark', null);
+});
+
+it('uploads each branding slot separately', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', uploadLogoPayload())->assertOk();
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        ...uploadLogoPayload(),
+        'slot' => 'dark',
+    ])->assertOk();
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        'logo' => UploadedFile::fake()->image('footer.png', 200, 40),
+        'slot' => 'footer',
+    ])->assertOk();
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        'logo' => UploadedFile::fake()->image('footer-dark.png', 200, 40),
+        'slot' => 'footer_dark',
+    ])->assertOk();
+
+    expect(PlatformSetting::query()->where('key', 'branding.logo')->value('value')['path'])->toBe('branding/logo.png');
+    expect(PlatformSetting::query()->where('key', 'branding.logo_dark')->value('value')['path'])->toBe('branding/logo-dark.png');
+    expect(PlatformSetting::query()->where('key', 'branding.logo_footer')->value('value')['path'])->toBe('branding/logo-footer.png');
+    expect(PlatformSetting::query()->where('key', 'branding.logo_footer_dark')->value('value')['path'])->toBe('branding/logo-footer-dark.png');
+
+    Storage::disk('local')->assertExists('branding/logo.png');
+    Storage::disk('local')->assertExists('branding/logo-dark.png');
+    Storage::disk('local')->assertExists('branding/logo-footer.png');
+    Storage::disk('local')->assertExists('branding/logo-footer-dark.png');
+
+    $this->getJson('/api/v1/branding')
+        ->assertJsonPath('data.light', fn ($url) => is_string($url))
+        ->assertJsonPath('data.dark', fn ($url) => is_string($url))
+        ->assertJsonPath('data.footer', fn ($url) => is_string($url))
+        ->assertJsonPath('data.footerDark', fn ($url) => is_string($url));
+});
+
+it('replaces the previous logo within the same slot only', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        'logo' => UploadedFile::fake()->image('footer.png', 200, 40),
+        'slot' => 'footer',
+    ])->assertOk();
+    Storage::disk('local')->assertExists('branding/logo-footer.png');
+
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        'logo' => UploadedFile::fake()->image('footer.svg', 200, 40)->mimeType('image/svg+xml'),
+        'slot' => 'footer',
+    ])->assertOk();
+
+    expect(PlatformSetting::query()->where('key', 'branding.logo_footer')->value('value')['path'])->toBe('branding/logo-footer.svg');
+    Storage::disk('local')->assertMissing('branding/logo-footer.png');
+    Storage::disk('local')->assertExists('branding/logo-footer.svg');
+    Storage::disk('local')->assertMissing('branding/logo.png');
+});
+
+it('rejects an invalid branding slot', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        ...uploadLogoPayload(),
+        'slot' => 'banner',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['slot']);
+
+    $this->actingAs($admin)->deleteJson('/api/v1/settings/logo', ['slot' => 'banner'])
+        ->assertUnprocessable()->assertJsonValidationErrors(['slot']);
+});
+
+it('removes a logo from a specific slot only', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', uploadLogoPayload())->assertOk();
+    $this->actingAs($admin)->postJson('/api/v1/settings/logo', [
+        'logo' => UploadedFile::fake()->image('footer.png', 200, 40),
+        'slot' => 'footer',
+    ])->assertOk();
+
+    $this->actingAs($admin)->deleteJson('/api/v1/settings/logo', ['slot' => 'footer'])->assertNoContent();
+
+    expect(PlatformSetting::query()->where('key', 'branding.logo_footer')->exists())->toBeFalse();
+    expect(PlatformSetting::query()->where('key', 'branding.logo')->exists())->toBeTrue();
+    Storage::disk('local')->assertMissing('branding/logo-footer.png');
+    Storage::disk('local')->assertExists('branding/logo.png');
+});
+
 it('lets an admin remove the platform logo', function () {
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin)->postJson('/api/v1/settings/logo', uploadLogoPayload())->assertOk();

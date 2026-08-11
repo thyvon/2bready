@@ -7,7 +7,7 @@ import Button from '@mui/material/Button';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { BrandLogo } from '@2bready/ui-core';
 import { BrandMark } from './BrandMark';
-import { useBrandLogo } from '@/lib/branding';
+import { useThemeBrandLogo } from '@/lib/branding';
 import { CompanySwitcher } from './CompanySwitcher';
 import { useAuthStore } from '@/store/auth.store';
 import { logout } from '@/lib/auth-api';
@@ -28,7 +28,7 @@ export function CompanySuspendedScreen({ companyName }: CompanySuspendedScreenPr
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const { t } = useTranslation();
-  const logoUrl = useBrandLogo();
+  const logoUrl = useThemeBrandLogo();
 
   const handleLogout = async () => {
     try {

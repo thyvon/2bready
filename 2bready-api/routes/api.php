@@ -38,10 +38,13 @@ Route::prefix('v1')->group(function () {
     Route::get('data-room/{token}/documents/{document}/preview-url', [PublicDataRoomController::class, 'previewUrl']);
 
     // Public — the platform logo is shown by every portal (admin, client,
-    // TP, marketing) and none of them share a permission level; the logo
-    // itself is a private asset served via a fresh signed URL, never a
+    // TP, marketing) and none of them share a permission level; the logos
+    // themselves are private assets served via fresh signed URLs, never a
     // public bucket. Upload/remove are admin-only and live in
-    // routes/api/settings.php.
+    // routes/api/settings.php. `branding` returns all four slots
+    // (light/dark/footer/footerDark) in one request; `branding/logo` is the
+    // original single-slot endpoint, kept for compatibility.
+    Route::get('branding', [BrandingController::class, 'branding']);
     Route::get('branding/logo', [BrandingController::class, 'logo']);
 
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from

@@ -5,11 +5,13 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import BrandMark from '@/components/marketing/BrandMark';
 import BrandLogo from '@/components/marketing/BrandLogo';
-import { useBrandLogo } from '@/lib/branding';
+import { useThemeBrandLogo } from '@/lib/branding';
 import { footerContent, footerColumns } from '@/components/marketing/content';
 
+// The footer logo uses the dedicated footer slot (a different design from
+// the main logo), themed like the rest of the page.
 export default function MarketingFooter() {
-  const logoUrl = useBrandLogo();
+  const logoUrl = useThemeBrandLogo('footer', 'footerDark');
 
   return (
     <Box
@@ -40,7 +42,6 @@ export default function MarketingFooter() {
               maxWidth={110}
               fallback={<BrandMark size={20} />}
             />
-            {!logoUrl && '2bReady'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {footerContent.tagline}

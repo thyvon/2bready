@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('permission:settings.manage')->prefix('settings')->group(function () {
     Route::get('/', [PlatformSettingController::class, 'index']);
 
-    // Platform logo — a file, not a scalar, so it gets its own endpoints
+    // Platform logos — files, not scalars, so they get their own endpoints
     // instead of the generic {key} patch (which only stores JSON values).
-    // Must be registered before the generic {key} wildcard below.
+    // The request's `slot` field (main/dark/footer/footer_dark, default
+    // main) selects which branding slot the file lands in. Must be
+    // registered before the generic {key} wildcard below.
     Route::post('logo', [BrandingController::class, 'uploadLogo']);
     Route::delete('logo', [BrandingController::class, 'deleteLogo']);
 
