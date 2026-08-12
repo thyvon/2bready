@@ -3,7 +3,7 @@
 @theme inline {
   --color-background: var(--mui-palette-background-default);
   --color-foreground: var(--mui-palette-text-primary);
-  --font-sans: var(--font-geist-sans), var(--font-kantumruy);
+  --font-sans: var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -41,35 +41,31 @@ main,
   66% { transform: translate(-3%, -4%) scale(0.96); }
 }
 
-@keyframes marketing-shimmer {
-  to { background-position: 200% center; }
-}
-
-.marketing-gradient-text {
-  background: linear-gradient(100deg, var(--mui-palette-text-primary) 25%, var(--mui-palette-primary-main) 60%, var(--mui-palette-secondary-main) 80%, var(--mui-palette-text-primary) 95%);
-  background-size: 200% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: marketing-shimmer 6s linear infinite;
-}
-
-.marketing-grid-bg {
-  background-image:
-    linear-gradient(to right, var(--mui-palette-divider) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--mui-palette-divider) 1px, transparent 1px);
-  background-size: 56px 56px;
-  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 40%, transparent 100%);
-  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 40%, transparent 100%);
-  opacity: 0.5;
-}
-
 .marketing-aurora {
   position: absolute;
   border-radius: 9999px;
   filter: blur(80px);
   animation: marketing-drift 18s ease-in-out infinite;
   pointer-events: none;
+}
+
+@keyframes marketing-float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  33% { transform: translateY(-22px) translateX(8px); }
+  66% { transform: translateY(10px) translateX(-12px); }
+}
+
+.marketing-floater {
+  pointer-events: none;
+  animation: marketing-float 12s ease-in-out infinite;
+}
+
+@keyframes marketing-spin {
+  to { transform: rotate(360deg); }
+}
+
+.marketing-spin {
+  animation: marketing-spin 18s linear infinite;
 }
 
 /* How It Works timeline progress fill sits flush with the rail on md+ */
@@ -81,7 +77,8 @@ main,
 
 @media (prefers-reduced-motion: reduce) {
   .marketing-aurora,
-  .marketing-gradient-text {
+  .marketing-floater,
+  .marketing-spin {
     animation: none;
   }
 }

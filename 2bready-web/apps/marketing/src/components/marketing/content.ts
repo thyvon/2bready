@@ -7,6 +7,10 @@ export const heroContent = {
     'A unified compliance and growth platform establishing verifiable trust between ambitious SMEs, Institutional Banks, Governments, and Global Investors.',
   primaryCta: { label: 'Explore Pathways', href: '/#pricing' },
   secondaryCta: { label: 'Why 2bReady?', href: '/#stakeholders' },
+  digits: [
+    { value: '1,240+', label: 'Companies on the journey' },
+    { value: '940+', label: 'Readiness audits completed' },
+  ],
 };
 
 export const heroPills = [
@@ -29,6 +33,7 @@ export const statsContent = {
 } as const;
 
 export const pricingContent = {
+  kicker: 'Simple, Transparent Pricing',
   title: 'Standardized service pathways',
   subtitle:
     'Progress your enterprise from foundational legal licensing to institutional investment readiness. Each level is verified and permanently anchored in your digital trust profile.',
@@ -102,6 +107,7 @@ export const pricingPlans = [
 ] as const;
 
 export const portfolioContent = {
+  kicker: 'Trusted Partners & Clients',
   title: 'Trusted by Leading ASEAN Enterprises & Ecosystem Partners',
 };
 
@@ -120,7 +126,8 @@ export const portfolioPartners = [
 ] as const;
 
 export const stakeholdersContent = {
-  title: 'Built for the Entire Ecosystem',
+  kicker: 'Built for the Entire Ecosystem',
+  title: 'One platform, every stakeholder covered',
   subtitle:
     'Our hybrid evaluation model — combining AI extraction with ADMIT Unit expert verification — delivers uncompromising reliability across all sectors.',
 };
@@ -153,7 +160,8 @@ export const stakeholders = [
 ] as const;
 
 export const howItWorksContent = {
-  title: 'How It Works',
+  kicker: 'How It Works',
+  title: 'From registration to a verified badge',
   subtitle:
     'From registration to a verified badge — a clear, guided path to establishing trust with customers, partners, investors, and financial institutions.',
 };

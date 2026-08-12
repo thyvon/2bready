@@ -21,17 +21,16 @@ const TRUST_MARKERS = [
 
 export default function CtaSection() {
   return (
-    <Box component="section" id="cta" sx={{ px: { xs: 2, md: 4 }, py: { xs: 8, md: 10 } }}>
+    <Box component="section" id="cta" sx={{ px: 'clamp(1rem, 0.5rem + 2vw, 2.5rem)', py: 'clamp(4rem, 2.5rem + 4.5vw, 6.5rem)', maxWidth: 1440, mx: 'auto' }}>
       <Reveal>
         <Box
           sx={{
             position: 'relative',
             overflow: 'hidden',
-            maxWidth: 1000,
-            mx: 'auto',
+            width: '100%',
             textAlign: 'center',
-            py: { xs: 7, md: 10 },
-            px: { xs: 3, md: 6 },
+            py: 'clamp(5rem, 3rem + 8vw, 9rem)',
+            px: 'clamp(1.25rem, 0.75rem + 3vw, 3.5rem)',
             borderRadius: '28px',
             background: 'linear-gradient(135deg, #183659, #10243C)',
             boxShadow: '0 24px 60px -20px rgba(24,54,89,0.55), inset 0 1px 0 rgba(255,255,255,0.08)',
@@ -41,8 +40,8 @@ export default function CtaSection() {
               top: '-40%',
               left: '50%',
               transform: 'translateX(-50%)',
-              width: 560,
-              height: 560,
+              width: 640,
+              height: 640,
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(113,183,124,0.28) 0%, transparent 65%)',
               pointerEvents: 'none',
@@ -52,8 +51,8 @@ export default function CtaSection() {
               position: 'absolute',
               bottom: '-50%',
               right: '-10%',
-              width: 480,
-              height: 480,
+              width: 560,
+              height: 560,
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(49,134,126,0.3) 0%, transparent 65%)',
               pointerEvents: 'none',
@@ -61,13 +60,14 @@ export default function CtaSection() {
           }}
         >
           <Chip
-            icon={<WorkspacePremiumIcon sx={{ fontSize: 15 }} />}
+            icon={<WorkspacePremiumIcon sx={{ fontSize: 17 }} />}
             label="Start building your digital trust today"
             sx={{
               position: 'relative',
-              mb: 3,
-              fontWeight: 700,
+              mb: 3.5,
+              fontWeight: 800,
               borderRadius: '999px',
+              fontSize: '0.875rem',
               color: '#CDE6D1',
               bgcolor: 'rgba(113,183,124,0.14)',
               border: '1px solid rgba(113,183,124,0.3)',
@@ -77,18 +77,18 @@ export default function CtaSection() {
           <Typography
             variant="h2"
             component="h2"
-            sx={{ position: 'relative', fontWeight: 800, fontSize: { xs: '2rem', md: '2.75rem' }, letterSpacing: '-0.03em', lineHeight: 1.15, mb: 2, color: '#ffffff' }}
+            sx={{ position: 'relative', fontWeight: 800, textWrap: 'balance', fontSize: 'clamp(2rem, 1.375rem + 2.75vw, 3.125rem)', letterSpacing: '-0.02em', lineHeight: 1.15, mb: 2.5, color: '#ffffff' }}
           >
             {ctaContent.title}
           </Typography>
           <Typography
             variant="body1"
-            sx={{ position: 'relative', maxWidth: 580, mx: 'auto', mb: 5, fontSize: '1.0625rem', color: 'rgba(226,234,241,0.92)' }}
+            sx={{ position: 'relative', maxWidth: 640, mx: 'auto', mb: 'clamp(2rem, 1.5rem + 2vw, 3rem)', fontSize: 'clamp(0.9375rem, 0.9rem + 0.3vw, 1.0625rem)', lineHeight: 1.6, color: 'rgba(226,234,241,0.92)' }}
           >
             {ctaContent.subtitle}
           </Typography>
 
-          <Box sx={{ position: 'relative', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center', gap: 2, mb: 5 }}>
+          <Box sx={{ position: 'relative', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center', gap: 2, mb: 6 }}>
             <Button
               component={Link}
               href={ctaContent.cta.href}
@@ -96,11 +96,11 @@ export default function CtaSection() {
               color="success"
               endIcon={<ArrowForwardIcon />}
               sx={{
-                px: 5,
+                px: 5.5,
                 py: 1.5,
                 borderRadius: '999px',
                 textTransform: 'none',
-                fontWeight: 800,
+                fontWeight: 900,
                 fontSize: '1rem',
                 boxShadow: '0 12px 32px -8px rgba(87,158,99,0.6)',
                 '&:hover': { backgroundColor: '#579E63', transform: 'translateY(-1px)' },
@@ -113,11 +113,11 @@ export default function CtaSection() {
               href={clientPortalUrl('/login')}
               variant="outlined"
               sx={{
-                px: 5,
+                px: 5.5,
                 py: 1.5,
                 borderRadius: '999px',
                 textTransform: 'none',
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: '1rem',
                 color: '#ffffff',
                 borderColor: 'rgba(226,234,241,0.35)',
@@ -128,11 +128,11 @@ export default function CtaSection() {
             </Button>
           </Box>
 
-          <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: { xs: 2, md: 4 }, flexWrap: 'wrap' }}>
+          <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: { xs: 2.5, md: 5 }, flexWrap: 'wrap' }}>
             {TRUST_MARKERS.map(({ icon: Icon, label }) => (
               <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Icon sx={{ fontSize: 17, color: '#71B77C' }} />
-                <Typography variant="caption" sx={{ color: 'rgba(226,234,241,0.85)', fontWeight: 600 }}>
+                <Icon sx={{ fontSize: 19, color: '#71B77C' }} />
+                <Typography variant="body2" sx={{ color: 'rgba(226,234,241,0.85)', fontWeight: 700 }}>
                   {label}
                 </Typography>
               </Box>

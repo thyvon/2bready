@@ -10,17 +10,24 @@ export default function PortfolioSection() {
   const partnersLoop = [...portfolioPartners, ...portfolioPartners, ...portfolioPartners];
 
   return (
-    <Box component="section" sx={{ bgcolor: 'background.default', py: { xs: 8, md: 10 } }}>
-      <Box sx={{ px: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
+    <Box component="section" sx={{ bgcolor: 'background.default', py: 'clamp(4rem, 2.5rem + 4.5vw, 6.5rem)' }}>
+      <Box sx={{ px: 'clamp(1rem, 0.5rem + 2vw, 2.5rem)', maxWidth: 1440, mx: 'auto' }}>
       <Reveal>
         <Typography
-          variant="h4"
+          variant="overline"
+          sx={{ display: 'block', textAlign: 'center', color: 'success.main', fontWeight: 800, letterSpacing: '0.14em', mb: 1.5 }}
+        >
+          {portfolioContent.kicker}
+        </Typography>
+        <Typography
+          variant="h2"
+          component="h2"
           sx={{
             textAlign: 'center',
-            fontWeight: 700,
+            textWrap: 'balance',
+            fontWeight: 800,
             color: 'text.primary',
-            mb: 5,
-            fontSize: { xs: '1.75rem', md: '2.25rem' },
+            mb: 'clamp(2.5rem, 1.5rem + 3vw, 4rem)',
           }}
         >
           {portfolioContent.title}
@@ -87,7 +94,7 @@ function MarqueeRow({
               display: 'flex',
               alignItems: 'center',
               flexShrink: 0,
-              px: { xs: 3, md: 5 },
+              px: 'clamp(1.25rem, 0.75rem + 2vw, 2.25rem)',
               ...(i !== 0 && {
                 borderLeft: '1px solid',
                 borderColor: 'divider',
@@ -99,8 +106,10 @@ function MarqueeRow({
               sx={{
                 whiteSpace: 'nowrap',
                 userSelect: 'none',
-                fontWeight: variant === 'primary' ? 600 : 500,
-                fontSize: variant === 'primary' ? { xs: '1.35rem', md: '1.65rem' } : { xs: '1rem', md: '1.15rem' },
+                fontWeight: variant === 'primary' ? 800 : 700,
+                fontSize: variant === 'primary'
+                  ? 'clamp(1.125rem, 1rem + 0.8vw, 1.5rem)'
+                  : 'clamp(0.9375rem, 0.875rem + 0.5vw, 1.125rem)',
                 letterSpacing: '0.01em',
                 color: variant === 'primary' ? 'text.primary' : 'text.secondary',
                 opacity: variant === 'primary' ? 0.65 : 0.45,

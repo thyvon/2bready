@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import BrandMark from '@/components/marketing/BrandMark';
 import BrandLogo from '@/components/marketing/BrandLogo';
+import AuroraBackground from '@/components/marketing/AuroraBackground';
 import { useThemeBrandLogo } from '@/lib/branding';
 import { footerContent, footerColumns } from '@/components/marketing/content';
 
@@ -17,25 +18,35 @@ export default function MarketingFooter() {
     <Box
       component="footer"
       sx={{
+        position: 'relative',
+        overflow: 'hidden',
         borderTop: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.default',
         color: 'text.secondary',
-        px: { xs: 2, md: 4 },
-        py: { xs: 6, md: 8 },
+        px: 'clamp(1rem, 0.5rem + 2vw, 2.5rem)',
+        py: 'clamp(4rem, 2.5rem + 5vw, 6.5rem)',
       }}
     >
+      {/* Animated brand aurora + grid — the same platform background as the hero */}
+      <Box sx={{ position: 'absolute', inset: 0, opacity: { xs: 0.35, md: 0.5 }, pointerEvents: 'none' }}>
+        <AuroraBackground />
+      </Box>
+
       <Box
         sx={{
+          position: 'relative',
+          zIndex: 1,
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1.6fr 1fr 1fr 1fr' },
-          gap: 6,
-          maxWidth: 1200,
+          gap: 'clamp(2rem, 1rem + 3vw, 4rem)',
+          width: '100%',
+          maxWidth: 1440,
           mx: 'auto',
         }}
       >
         <Box sx={{ maxWidth: 300 }}>
-          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', mb: 1.5, color: 'text.primary' }}>
+          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 800, letterSpacing: '-0.02em', mb: 1.5, color: 'text.primary' }}>
             <BrandLogo
               logoUrl={logoUrl}
               height={24}
@@ -57,10 +68,10 @@ export default function MarketingFooter() {
 
         {footerColumns.map((col) => (
           <Box key={col.title}>
-            <Typography variant="overline" sx={{ display: 'block', mb: 1.5, color: 'success.main', fontWeight: 700, letterSpacing: '0.14em' }}>
+            <Typography variant="overline" sx={{ display: 'block', mb: 2, color: 'success.main', fontWeight: 800, letterSpacing: '0.14em' }}>
               {col.title}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {col.items.map((item) =>
                 'href' in item ? (
                   <Typography

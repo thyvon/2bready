@@ -9,6 +9,7 @@ import Chip from '@mui/material/Chip';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import PublicIcon from '@mui/icons-material/Public';
 import AuroraBackground from './AuroraBackground';
+import SecureSpinner from './SecureSpinner';
 import GlowButton from './GlowButton';
 import { heroContent, heroPills } from './content';
 
@@ -32,6 +33,35 @@ export default function HeroSection() {
     <Box component="section" sx={{ position: 'relative', overflow: 'hidden', mt: { xs: '-56px', md: '-64px' } }}>
       <AuroraBackground />
 
+      {/* Spinning gear (settings) — a subtle animated brand icon off to the side */}
+      <Box
+        aria-hidden
+        className="marketing-spin"
+        sx={{
+          position: 'absolute',
+          top: '16%',
+          right: '12%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: { xs: 56, sm: 72, md: 88 },
+          height: { xs: 56, sm: 72, md: 88 },
+          borderRadius: '50%',
+          bgcolor: 'color-mix(in srgb, var(--mui-palette-background-paper) 55%, transparent)',
+          border: '1px solid',
+          borderColor: 'color-mix(in srgb, var(--mui-palette-success-main) 30%, transparent)',
+          boxShadow: '0 8px 24px -8px rgba(24,54,89,0.35)',
+          backdropFilter: 'blur(6px)',
+          color: 'success.main',
+          opacity: 0.7,
+          zIndex: 0,
+          pointerEvents: 'none',
+          animationDuration: '16s',
+        }}
+      >
+        <SettingsIcon sx={{ fontSize: 'clamp(1.75rem, 1.5rem + 1vw, 2.5rem)' }} />
+      </Box>
+
       <motion.div
         variants={container}
         initial="hidden"
@@ -40,10 +70,10 @@ export default function HeroSection() {
       >
         <Box
           sx={{
-            px: { xs: 2, md: 4 },
-            pt: { xs: '104px', md: '128px' },
-            pb: { xs: 8, md: 12 },
-            maxWidth: 1200,
+            px: 'clamp(1rem, 0.5rem + 2vw, 2.5rem)',
+            pt: 'clamp(120px, 100px + 6vw, 168px)',
+            pb: 'clamp(4rem, 2.5rem + 5vw, 7rem)',
+            maxWidth: 960,
             mx: 'auto',
             textAlign: 'center',
           }}
@@ -55,14 +85,15 @@ export default function HeroSection() {
                 return (
                   <Chip
                     key={label}
-                    icon={<Icon sx={{ fontSize: 16 }} />}
+                    icon={<Icon sx={{ fontSize: 18 }} />}
                     label={label}
                     variant="outlined"
                     sx={{
-                      height: 32,
-                      px: 1,
+                      height: 'clamp(30px, 26px + 1vw, 38px)',
+                      px: 1.5,
                       borderRadius: '9999px',
-                      fontSize: '0.8125rem',
+                      fontSize: 'clamp(0.8125rem, 0.75rem + 0.2vw, 0.9375rem)',
+                      fontWeight: 700,
                       borderColor: 'color-mix(in srgb, var(--mui-palette-primary-main) 25%, transparent)',
                       color: 'text.primary',
                       bgcolor: 'color-mix(in srgb, var(--mui-palette-background-paper) 60%, transparent)',
@@ -77,12 +108,12 @@ export default function HeroSection() {
           <motion.div variants={item}>
             <Typography
               sx={{
-                fontSize: { xs: '0.85rem', md: '0.95rem' },
+                fontSize: 'clamp(0.8125rem, 0.75rem + 0.25vw, 0.9375rem)',
                 fontWeight: 800,
-                letterSpacing: '0.3em',
+                letterSpacing: '0.16em',
                 textTransform: 'uppercase',
                 color: 'success.main',
-                mb: 2,
+                mb: 2.5,
               }}
             >
               {heroContent.tagline}
@@ -91,14 +122,15 @@ export default function HeroSection() {
 
           <motion.div variants={item}>
             <Typography
+              variant="h1"
               component="h1"
-              className="marketing-gradient-text"
               sx={{
-                fontSize: { xs: '2.25rem', sm: '3rem', md: '3.5rem' },
                 fontWeight: 800,
-                letterSpacing: '-0.03em',
+                letterSpacing: '-0.02em',
                 lineHeight: 1.1,
-                mb: 3,
+                color: 'text.primary',
+                textWrap: 'balance',
+                mb: 3.5,
               }}
             >
               {heroContent.headline}
@@ -110,9 +142,10 @@ export default function HeroSection() {
               variant="body1"
               color="text.secondary"
               sx={{
-                fontSize: { xs: '1rem', md: '1.125rem' },
+                fontSize: 'clamp(1.0625rem, 1rem + 0.4vw, 1.1875rem)',
+                lineHeight: 1.6666,
                 mb: 4.5,
-                maxWidth: 560,
+                maxWidth: 640,
                 mx: 'auto',
               }}
             >
@@ -121,11 +154,46 @@ export default function HeroSection() {
           </motion.div>
 
           <motion.div variants={item}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', mb: 5 }}>
               <GlowButton href={heroContent.primaryCta.href}>{heroContent.primaryCta.label}</GlowButton>
-              <Button component={Link} href={heroContent.secondaryCta.href} variant="outlined" size="large" sx={{ px: 4, py: 1.5, fontSize: '1rem', borderRadius: '999px' }}>
+              <Button component={Link} href={heroContent.secondaryCta.href} variant="outlined" size="large" sx={{ px: 3.5, py: 1.5, fontSize: '0.9375rem', borderRadius: '999px', fontWeight: 700 }}>
                 {heroContent.secondaryCta.label}
               </Button>
+            </Box>
+          </motion.div>
+
+          {/* Hero digits — the reference site's hero stat blocks */}
+          <motion.div variants={item}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: { xs: 3, sm: 5, md: 6 },
+                flexWrap: 'wrap',
+                pt: 3,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              {heroContent.digits.map((digit) => (
+                <Box key={digit.label} sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: 'clamp(2.25rem, 1.5rem + 3vw, 2.875rem)',
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      color: 'primary.main',
+                      fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), sans-serif',
+                    }}
+                  >
+                    {digit.value}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 130, fontWeight: 600, textAlign: 'left' }}>
+                    {digit.label}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
           </motion.div>
         </Box>

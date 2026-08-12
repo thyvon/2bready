@@ -47,13 +47,14 @@ export default function MarketingHeader() {
     >
       <Box
         sx={{
-          maxWidth: 1200,
+          width: '100%',
+          maxWidth: 1440,
           mx: 'auto',
-          height: { xs: 56, md: 60 },
+          height: { xs: 60, md: 64 },
           display: 'grid',
           gridTemplateColumns: { xs: '1fr auto', md: '1fr auto 1fr' },
           alignItems: 'center',
-          px: { xs: 2, md: 3 },
+          px: { xs: 2, md: 4 },
           borderRadius: { xs: '20px', md: '999px' },
           transition: 'box-shadow 0.3s ease, background-color 0.3s ease, transform 0.3s ease, max-width 0.3s ease',
           bgcolor: scrolled
@@ -76,7 +77,7 @@ export default function MarketingHeader() {
           component={Link}
           href="/"
           variant="body1"
-          sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none' }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 800, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none' }}
         >
           <BrandLogo
             logoUrl={logoUrl}
@@ -86,13 +87,13 @@ export default function MarketingHeader() {
           />
         </Typography>
 
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           {NAV_LINKS.map((link) => (
             <NavHoverLink
               key={link.href}
               href={link.href}
               label={link.label}
-              sx={{ fontSize: '0.875rem', fontWeight: 800 }}
+              sx={{ fontSize: '0.9375rem', fontWeight: 700 }}
             />
           ))}
         </Box>
@@ -120,7 +121,7 @@ export default function MarketingHeader() {
               href={link.href}
               label={link.label}
               onClick={() => setMenuOpen(false)}
-              sx={{ fontSize: '1rem', fontWeight: 500 }}
+              sx={{ fontSize: '1rem', fontWeight: 600 }}
             />
           ))}
           <Button component={Link} href={clientPortalUrl('/login')} variant="outlined" onClick={() => setMenuOpen(false)}>

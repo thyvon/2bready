@@ -11,8 +11,6 @@ interface SpotlightCardProps {
   sx?: SxProps<Theme>;
 }
 
-const MAX_TILT = 8; 
-
 export default function SpotlightCard({ children, className, tilt = true, sx }: SpotlightCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,26 +24,25 @@ export default function SpotlightCard({ children, className, tilt = true, sx }: 
     el.style.setProperty('--spot-x', `${x}px`);
     el.style.setProperty('--spot-y', `${y}px`);
 
-    el.style.transition = 'transform 0.08s linear';
+    el.style.transition = 'transform 0.15s ease-out';
 
+    // Flat 2D lift only — no perspective/rotation. Any 3D transform keeps
+    // the card (and its text) on a composited 3D layer where glyphs can
+    // rasterize at sub-pixel positions and look blurry.
     if (tilt) {
-      const px = x / rect.width;   
-      const py = y / rect.height;  
-      const rotateY = (px - 0.5) * MAX_TILT * 2;
-      const rotateX = (0.5 - py) * MAX_TILT * 2;
-      el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      el.style.transform = 'translateY(-6px)';
     } else {
-      el.style.transform = 'translateY(-4px)'; 
+      el.style.transform = 'translateY(-4px)';
     }
   };
 
   const handleMouseLeave = () => {
     const el = ref.current;
     if (!el) return;
-    el.style.transition = 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
-    el.style.transform = tilt
-      ? 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)'
-      : 'translateY(0)';
+    el.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+    // Clear the transform entirely so the element returns to natural layout
+    // rendering (no lingering compositor layer).
+    el.style.transform = '';
   };
 
   return (
@@ -61,8 +58,6 @@ export default function SpotlightCard({ children, className, tilt = true, sx }: 
           bgcolor: 'background.paper',
           p: 4,
           overflow: 'hidden',
-          transformStyle: 'preserve-3d',
-          willChange: 'transform',
           boxShadow:
             '0 1px 2px rgba(16,24,40,0.05), 0 4px 12px rgba(16,24,40,0.06), 0 16px 40px -12px rgba(16,24,40,0.14)',
           transition: 'transform 0.15s ease-out, box-shadow 0.3s ease',
@@ -88,7 +83,7 @@ export default function SpotlightCard({ children, className, tilt = true, sx }: 
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
-      <Box sx={{ position: 'relative', zIndex: 1, transform: 'translateZ(20px)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
         {children}
       </Box>
     </Box>

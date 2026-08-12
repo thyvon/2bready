@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>probe3</title></head>
+<body>
+<iframe id="f" src="/" style="width:100%;border:0"></iframe>
+<pre id="out"></pre>
+<script>
+  const out = [];
+  const f = document.getElementById('f');
+  f.addEventListener('load', () => {
+    try {
+      const doc = f.contentDocument;
+      const win = f.contentWindow;
+      const combos = {};
+      doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, li, a, button, .MuiTypography-root').forEach((el) => {
+        if (!el.textContent || el.textContent.trim().length === 0) return;
+        const cs = win.getComputedStyle(el);
+        const fam = cs.fontFamily.split(',')[0];
+        const key = `${fam} / ${cs.fontWeight}`;
+        const t = el.textContent.trim().slice(0, 30);
+        combos[key] = combos[key] || { count: 0, sample: t };
+        combos[key].count++;
+        if (combos[key].count === 1) combos[key].sample = t;
+      });
+      Object.entries(combos).sort((a, b) => a[0].localeCompare(b[0])).forEach(([k, v]) => {
+        out.push(`${v.count.toString().padStart(3)}  ${k}  -> "${v.sample}"`);
+      });
+    } catch (e) { out.push('ERR ' + e.message); }
+    document.getElementById('out').textContent = out.join('\n');
+  });
+</script>
+</body>
+</html>

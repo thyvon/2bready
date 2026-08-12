@@ -54,49 +54,59 @@ function StakeholderCard({
           tilt={false}
           sx={{
             height: '100%',
-            p: { xs: 3, md: 4 },
+            p: 'clamp(1.25rem, 0.875rem + 1.5vw, 2rem)',
             '&:hover': {
               transform: 'translateY(-4px)',
               boxShadow: `0 12px 24px -8px color-mix(in srgb, ${accent} 30%, transparent)`,
             },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
             <Box
               sx={{
+                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 44,
-                height: 44,
-                borderRadius: '10px',
+                width: 56,
+                height: 56,
+                borderRadius: '16px',
                 bgcolor: `color-mix(in srgb, ${accent} 14%, transparent)`,
                 flexShrink: 0,
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: -3,
+                  borderRadius: 'inherit',
+                  border: '1px solid',
+                  borderColor: `color-mix(in srgb, ${accent} 30%, transparent)`,
+                  opacity: 0.6,
+                },
               }}
             >
-              <Icon sx={{ fontSize: 24, color: accent }} />
+              <Icon sx={{ fontSize: 28, color: accent }} />
             </Box>
-            <Typography variant="h4" component="span" sx={{ fontWeight: 800, color: `color-mix(in srgb, ${accent} 45%, transparent)`, lineHeight: 1 }}>
+            <Typography variant="h4" component="span" sx={{ fontWeight: 800, color: `color-mix(in srgb, ${accent} 40%, transparent)`, lineHeight: 1 }}>
               {number}
             </Typography>
           </Box>
 
-          <Typography variant="h6" component="h3" sx={{ fontWeight: 700, mb: 1 }}>
+          <Typography variant="h5" component="h3" sx={{ fontWeight: 800, mb: 1.5 }}>
             {title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, mb: 3, flex: 1 }}>
+          </Typography>          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, mb: 3, flex: 1 }}>
             {description}
           </Typography>
 
           <Button
             component={Link}
             href={cta.href}
-            endIcon={<ArrowForwardIcon sx={{ fontSize: 18 }} />}
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 20 }} />}
             sx={{
               alignSelf: 'flex-start',
               px: 0,
               color: accent,
-              fontWeight: 700,
+              fontWeight: 800,
+              fontSize: '1rem',
               '&:hover': { bgcolor: 'transparent', opacity: 0.8 },
             }}
           >
@@ -110,17 +120,17 @@ function StakeholderCard({
 
 export default function StakeholdersSection() {
   return (
-    <Box component="section" id="stakeholders" sx={{ bgcolor: 'background.default', py: { xs: 10, md: 14 } }}>
-      <Box sx={{ px: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
+    <Box component="section" id="stakeholders" sx={{ bgcolor: 'background.default', py: 'clamp(4.5rem, 3rem + 6vw, 8rem)' }}>
+      <Box sx={{ px: 'clamp(1rem, 0.5rem + 2vw, 2.5rem)', maxWidth: 1440, mx: 'auto' }}>
       <Reveal>
-        <Box sx={{ maxWidth: 640, mx: 'auto', textAlign: 'center', mb: { xs: 5, sm: 6 } }}>
+        <Box sx={{ maxWidth: 760, mx: 'auto', textAlign: 'center', mb: 'clamp(3rem, 2rem + 3vw, 4.5rem)' }}>
           <Typography
             variant="overline"
-            sx={{ display: 'block', color: 'success.main', fontWeight: 800, letterSpacing: '0.16em', mb: 1 }}
+            sx={{ display: 'block', color: 'success.main', fontWeight: 800, letterSpacing: '0.14em', mb: 1.5 }}
           >
-            Built for the entire ecosystem
+            {stakeholdersContent.kicker}
           </Typography>
-          <Typography variant="h2" component="h2" sx={{ fontSize: { xs: '1.75rem', md: '2.25rem' }, mb: 1.5 }}>
+          <Typography variant="h2" component="h2" sx={{ textAlign: 'center', textWrap: 'balance', mb: 2 }}>
             {stakeholdersContent.title}
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -132,11 +142,10 @@ export default function StakeholdersSection() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-          gap: { xs: 3, md: 4 },
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 'clamp(1rem, 0.5rem + 2vw, 2rem)',
           alignItems: 'stretch',
-          maxWidth: 900,
-          mx: 'auto',
+          width: '100%',
         }}
       >
         {stakeholders.map(({ icon, title, description, cta }, i) => (

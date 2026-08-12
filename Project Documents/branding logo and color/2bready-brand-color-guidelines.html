@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2bReady — Brand Color Guidelines</title>
+  <style>
+    :root {
+      --navy-50: #F1F5F9;
+      --navy-100: #E2EAF1;
+      --navy-200: #C5D2DF;
+      --navy-300: #9BAFC2;
+      --navy-400: #718CA7;
+      --navy-500: #4D6D8E;
+      --navy-600: #315273;
+      --navy-700: #183659;
+      --navy-800: #142D4A;
+      --navy-900: #10243C;
+      --navy-950: #0A1829;
+
+      --green: #71B77C;
+      --green-dark: #579E63;
+      --green-light: #CDE6D1;
+
+      --teal: #31867E;
+      --teal-light: #D5EEEB;
+
+      --bg: #F7FAF8;
+      --surface: #FFFFFF;
+      --text: #263238;
+      --muted: #64748B;
+      --border: #DDE5E1;
+
+      --danger: #D9534F;
+      --warning: #E5A93D;
+      --shadow: 0 12px 35px rgba(24, 54, 89, .08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 40px));
+      margin: auto;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--navy-950), var(--navy-700));
+      color: #fff;
+      padding: 70px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      right: -180px;
+      top: -250px;
+      border-radius: 50%;
+      background: rgba(113, 183, 124, .12);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      color: var(--navy-700);
+      font-weight: 900;
+      font-size: 23px;
+    }
+
+    .brand-name {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1.8px;
+    }
+
+    .brand-name span { color: var(--green); }
+
+    .eyebrow {
+      margin-top: 50px;
+      color: var(--green-light);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 8px 0 12px;
+      font-size: clamp(36px, 5vw, 58px);
+      line-height: 1.05;
+      letter-spacing: -2.5px;
+    }
+
+    .hero-text {
+      max-width: 680px;
+      color: #DDE8F1;
+      font-size: 18px;
+    }
+
+    main { padding: 60px 0 100px; }
+
+    section { margin-bottom: 72px; }
+
+    .section-title {
+      font-size: 28px;
+      margin: 0 0 8px;
+      color: var(--navy-800);
+      letter-spacing: -.8px;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      margin: 0 0 28px;
+    }
+
+    .core-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      gap: 18px;
+    }
+
+    .color-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .color-preview {
+      height: 150px;
+      display: flex;
+      align-items: flex-end;
+      padding: 20px;
+      color: #fff;
+    }
+
+    .primary-preview { background: var(--navy-700); }
+    .green-preview { background: var(--green); }
+    .teal-preview { background: var(--teal); }
+
+    .color-info { padding: 20px; }
+
+    .color-name {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .hex {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .swatch {
+      min-height: 145px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .swatch strong { font-size: 14px; }
+    .swatch span { font-family: monospace; }
+
+    .light { color: var(--navy-900); }
+    .dark { color: #fff; }
+
+    .usage-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .usage-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 25px;
+    }
+
+    .usage-card h3 {
+      margin-top: 0;
+      color: var(--navy-700);
+    }
+
+    .usage-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf1ef;
+    }
+
+    .usage-row:last-child { border-bottom: 0; }
+
+    .dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      flex: 0 0 auto;
+    }
+
+    .demo {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .demo-nav {
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 25px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mini-brand {
+      color: var(--navy-700);
+      font-weight: 900;
+      font-size: 21px;
+    }
+
+    .mini-brand span { color: var(--green); }
+
+    .demo-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 430px;
+    }
+
+    .sidebar {
+      background: var(--navy-700);
+      color: #fff;
+      padding: 25px 15px;
+    }
+
+    .sidebar-logo {
+      font-size: 21px;
+      font-weight: 800;
+      padding: 0 12px 25px;
+    }
+
+    .menu {
+      padding: 11px 13px;
+      border-radius: 9px;
+      margin: 4px 0;
+      color: #DCE6EF;
+      font-size: 14px;
+    }
+
+    .menu.active {
+      background: rgba(255,255,255,.13);
+      border-left: 3px solid var(--green);
+      color: #fff;
+    }
+
+    .dashboard {
+      padding: 28px;
+      background: var(--bg);
+    }
+
+    .dashboard h2 {
+      color: var(--navy-800);
+      margin-top: 0;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .metric {
+      background: #fff;
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .metric small { color: var(--muted); }
+    .metric strong {
+      display: block;
+      margin: 6px 0;
+      font-size: 23px;
+      color: var(--navy-700);
+    }
+
+    .positive { color: var(--green-dark); font-weight: 700; }
+
+    .chart {
+      height: 150px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 25px;
+      height: 80px;
+      border-top: 3px solid var(--navy-600);
+      transform: skewY(-7deg) rotate(-1deg);
+      border-radius: 50%;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: var(--navy-700); color: #fff; }
+    .btn-primary:hover { background: var(--navy-800); }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: var(--green-dark); }
+    .btn-teal { background: var(--teal); color: #fff; }
+    .btn-light { background: var(--navy-100); color: var(--navy-700); }
+
+    .badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    .badge {
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge-approved { background: var(--green-light); color: var(--green-dark); }
+    .badge-info { background: var(--teal-light); color: var(--teal); }
+    .badge-pending { background: #FFF1D7; color: #9A6A14; }
+    .badge-danger { background: #FBE0DF; color: var(--danger); }
+
+    .do-dont {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .rule {
+      border-radius: var(--radius);
+      padding: 25px;
+      background: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .rule.good { border-top: 5px solid var(--green); }
+    .rule.bad { border-top: 5px solid var(--danger); }
+
+    .rule h3 { margin-top: 0; }
+
+    footer {
+      background: var(--navy-950);
+      color: #DDE8F1;
+      padding: 45px 0;
+    }
+
+    footer .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      align-items: center;
+    }
+
+    footer strong { color: #fff; }
+
+    .footer-note {
+      color: #9BAFC2;
+      font-size: 13px;
+      max-width: 600px;
+    }
+
+    @media (max-width: 900px) {
+      .core-grid,
+      .usage-grid,
+      .do-dont { grid-template-columns: 1fr; }
+
+      .swatch-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .demo-body { grid-template-columns: 170px 1fr; }
+      .metrics { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .container { width: min(100% - 24px, 1180px); }
+      header { padding: 45px 0 55px; }
+      .brand-name { font-size: 32px; }
+      .swatch-grid { grid-template-columns: repeat(2, 1fr); }
+      .demo-body { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      footer .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="container">
+    <div class="brand">
+      <div class="logo-mark">2b</div>
+      <div class="brand-name"><span>2</span>bReady</div>
+    </div>
+
+    <div class="eyebrow">Brand Color Guidelines</div>
+    <h1>Navy is our<br>primary identity.</h1>
+    <p class="hero-text">
+      A clean, professional and trustworthy visual system for the 2bReady
+      business platform. Navy leads the interface while green and teal provide
+      meaningful accents for actions, success and information.
+    </p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <section>
+      <h2 class="section-title">Core Brand Colors</h2>
+      <p class="section-desc">
+        These three colors form the foundation of the 2bReady visual identity.
+      </p>
+
+      <div class="core-grid">
+        <article class="color-card">
+          <div class="color-preview primary-preview">
+            <strong>PRIMARY BRAND</strong>
+          </div>
+          <div class="color-info">
+            <div class="color-name">2bReady Navy</div>
+            <div class="hex">#183659</div>
+            <p>Primary navigation, buttons, headings, links and major brand elements.</p>
+          </div>
+        </article>
+
+        <article class="color-card">
+          <div class="color-preview green-preview">
+            <strong>ACCENT GREEN</strong>
+          </div>
+          <div class="color-info">
+            <div class="color-name">Brand Green</div>
+            <div class="hex">#71B77C</div>
+            <p>Success, positive actions, approvals and key highlights.</p>
+          </div>
+        </article>
+
+        <article class="color-card">
+          <div class="color-preview teal-preview">
+            <strong>ACCENT TEAL</strong>
+          </div>
+          <div class="color-info">
+            <div class="color-name">Brand Teal</div>
+            <div class="hex">#31867E</div>
+            <p>Information, secondary actions and supporting visual accents.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Navy Color Scale</h2>
+      <p class="section-desc">
+        Use the scale consistently across navigation, typography, borders,
+        backgrounds and interaction states.
+      </p>
+
+      <div class="swatch-grid">
+        <div class="swatch light" style="background:#F1F5F9"><strong>50</strong><span>#F1F5F9</span></div>
+        <div class="swatch light" style="background:#E2EAF1"><strong>100</strong><span>#E2EAF1</span></div>
+        <div class="swatch light" style="background:#C5D2DF"><strong>200</strong><span>#C5D2DF</span></div>
+        <div class="swatch light" style="background:#9BAFC2"><strong>300</strong><span>#9BAFC2</span></div>
+        <div class="swatch light" style="background:#718CA7"><strong>400</strong><span>#718CA7</span></div>
+        <div class="swatch dark" style="background:#4D6D8E"><strong>500</strong><span>#4D6D8E</span></div>
+        <div class="swatch dark" style="background:#315273"><strong>600</strong><span>#315273</span></div>
+        <div class="swatch dark" style="background:#183659"><strong>700</strong><span>#183659</span></div>
+        <div class="swatch dark" style="background:#142D4A"><strong>800</strong><span>#142D4A</span></div>
+        <div class="swatch dark" style="background:#10243C"><strong>900</strong><span>#10243C</span></div>
+        <div class="swatch dark" style="background:#0A1829"><strong>950</strong><span>#0A1829</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">UI Color Roles</h2>
+      <p class="section-desc">
+        The colors should have clear functional roles instead of being used randomly.
+      </p>
+
+      <div class="usage-grid">
+        <div class="usage-card">
+          <h3>Primary Interface</h3>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#183659"></div>
+            <div><strong>Sidebar / Navigation</strong><br><span class="hex">#183659</span></div>
+          </div>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#142D4A"></div>
+            <div><strong>Hover / Active Dark</strong><br><span class="hex">#142D4A</span></div>
+          </div>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#F7FAF8;border:1px solid #DDE5E1"></div>
+            <div><strong>Application Background</strong><br><span class="hex">#F7FAF8</span></div>
+          </div>
+        </div>
+
+        <div class="usage-card">
+          <h3>Accent & Status</h3>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#71B77C"></div>
+            <div><strong>Success / Approved</strong><br><span class="hex">#71B77C</span></div>
+          </div>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#31867E"></div>
+            <div><strong>Information</strong><br><span class="hex">#31867E</span></div>
+          </div>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#E5A93D"></div>
+            <div><strong>Warning</strong><br><span class="hex">#E5A93D</span></div>
+          </div>
+
+          <div class="usage-row">
+            <div class="dot" style="background:#D9534F"></div>
+            <div><strong>Danger / Rejected</strong><br><span class="hex">#D9534F</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Application Preview</h2>
+      <p class="section-desc">
+        Example of how the branding can be applied throughout the 2bReady ERP interface.
+      </p>
+
+      <div class="demo">
+        <div class="demo-nav">
+          <div class="mini-brand"><span>2</span>bReady</div>
+          <div style="color:#64748B;font-size:13px;">John Doe · Administrator</div>
+        </div>
+
+        <div class="demo-body">
+          <aside class="sidebar">
+            <div class="sidebar-logo"><span style="color:#71B77C">2</span>bReady</div>
+            <div class="menu active">⌂ &nbsp; Dashboard</div>
+            <div class="menu">🛒 &nbsp; Procurement</div>
+            <div class="menu">▣ &nbsp; Inventory</div>
+            <div class="menu">▤ &nbsp; Warehouse</div>
+            <div class="menu">◫ &nbsp; Sales</div>
+            <div class="menu">◈ &nbsp; Finance</div>
+            <div class="menu">▥ &nbsp; Reports</div>
+            <div class="menu">⚙ &nbsp; Settings</div>
+          </aside>
+
+          <div class="dashboard">
+            <h2>Dashboard</h2>
+            <div style="color:#64748B;font-size:14px;">
+              Welcome back. Here's what's happening with your business.
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <small>Total Purchase</small>
+                <strong>$125,890</strong>
+                <span class="positive">↑ 12.5%</span>
+              </div>
+              <div class="metric">
+                <small>Inventory Value</small>
+                <strong>$342,780</strong>
+                <span class="positive">↑ 8.3%</span>
+              </div>
+              <div class="metric">
+                <small>Pending Requests</small>
+                <strong>24</strong>
+                <span style="color:#D9534F;font-weight:700;">↓ 4.2%</span>
+              </div>
+            </div>
+
+            <div class="chart">
+              <strong style="color:#183659;">Purchase vs Sales</strong>
+              <div class="chart-line"></div>
+            </div>
+
+            <div class="buttons">
+              <button class="btn-primary">+ New Purchase Order</button>
+              <button class="btn-green">Approve Request</button>
+              <button class="btn-teal">View Report</button>
+              <button class="btn-light">Export</button>
+            </div>
+
+            <div class="badges">
+              <span class="badge badge-approved">Approved</span>
+              <span class="badge badge-info">In Progress</span>
+              <span class="badge badge-pending">Pending</span>
+              <span class="badge badge-danger">Rejected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Brand Usage Principles</h2>
+
+      <div class="do-dont">
+        <div class="rule good">
+          <h3 style="color:#579E63;">✓ Recommended</h3>
+          <ul>
+            <li>Use <strong>#183659</strong> as the dominant brand color.</li>
+            <li>Use green for positive actions and success states.</li>
+            <li>Keep application backgrounds light and clean.</li>
+            <li>Use teal sparingly for information and secondary emphasis.</li>
+            <li>Maintain strong contrast and consistent hierarchy.</li>
+          </ul>
+        </div>
+
+        <div class="rule bad">
+          <h3 style="color:#D9534F;">✕ Avoid</h3>
+          <ul>
+            <li>Do not make green the primary navigation color.</li>
+            <li>Do not use all three brand colors at equal intensity.</li>
+            <li>Do not place navy text on dark navy backgrounds.</li>
+            <li>Do not use bright colors purely for decoration.</li>
+            <li>Do not introduce unrelated brand colors without a functional reason.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div>
+      <strong style="font-size:20px;">2bReady</strong>
+      <div class="footer-note">
+        Navy-first brand system for a professional, trustworthy and modern business platform.
+      </div>
+    </div>
+    <div class="footer-note">
+      Primary Brand: <strong>#183659</strong> &nbsp; · &nbsp;
+      Accent Green: <strong>#71B77C</strong> &nbsp; · &nbsp;
+      Accent Teal: <strong>#31867E</strong>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

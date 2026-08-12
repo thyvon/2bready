@@ -35,26 +35,30 @@ export default function Reveal({
   y = 24,
   x = 0,
   direction = 'up',
-  blur = true,
+  blur = false,
   scale = false,
   className,
   once = true,
   amount = 0.2,
 }: RevealProps) {
   const { y: fromY, x: fromX } = offset(direction, y, x);
-  const initial: Variants = {
+
+  // Only touch `filter` when the blur prop is on. Even a no-op `blur(0px)`
+  // forces a filter compositing layer that keeps text rasterized on a GPU
+  // layer, which reads as soft/blurry glyphs on some browsers.
+  const hidden: Variants = {
     hidden: {
       opacity: 0,
       y: fromY,
       x: fromX,
-      filter: blur ? 'blur(6px)' : 'blur(0px)',
-      ...(scale ? { scale: 0.96 } : {}),
+      ...(blur ? { filter: 'blur(6px)' } : {}),
+      ...(scale ? { scale: 0.97 } : {}),
     },
     visible: {
       opacity: 1,
       y: 0,
       x: 0,
-      filter: 'blur(0px)',
+      ...(blur ? { filter: 'blur(0px)' } : {}),
       ...(scale ? { scale: 1 } : {}),
       transition: {
         duration: 0.7,
@@ -66,12 +70,12 @@ export default function Reveal({
 
   return (
     <motion.div
-      variants={initial}
+      variants={hidden}
       initial="hidden"
       whileInView="visible"
       viewport={{ once, amount }}
       className={className}
-      style={{ willChange: 'transform, opacity, filter' }}
+      style={{ willChange: 'transform, opacity' }}
     >
       {children}
     </motion.div>

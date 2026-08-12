@@ -16,7 +16,7 @@ const theme = createTheme({
         success:    { main: '#71B77C', dark: '#579E63', light: '#CDE6D1', contrastText: '#10243C' },
         info:       { main: '#31867E', light: '#D5EEEB' },
         background: { default: '#ffffff', paper: '#f6f7f9' },
-        text:       { primary: '#263238', secondary: '#64748B' },
+        text:       { primary: '#10243C', secondary: '#4E637B' },
         divider:    '#DDE5E1',
       },
     },
@@ -37,17 +37,20 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: 'var(--font-geist-sans), var(--font-kantumruy), system-ui, sans-serif',
-    h1:      { fontSize: '2rem',      fontWeight: 800, letterSpacing: '-0.03em',  lineHeight: 1.2 },
-    h2:      { fontSize: '1.5rem',    fontWeight: 800, letterSpacing: '-0.02em',  lineHeight: 1.3 },
-    h3:      { fontSize: '1.25rem',   fontWeight: 700, letterSpacing: '-0.015em', lineHeight: 1.4 },
-    h4:      { fontSize: '1.125rem',  fontWeight: 700, letterSpacing: '-0.01em' },
-    h5:      { fontSize: '1rem',      fontWeight: 700, letterSpacing: '-0.005em' },
-    h6:      { fontSize: '0.875rem',  fontWeight: 700 },
-    body1:   { fontSize: '0.875rem',  fontWeight: 500, lineHeight: 1.6 },
-    body2:   { fontSize: '0.8125rem', fontWeight: 500, lineHeight: 1.5 },
-    caption: { fontSize: '0.75rem',   fontWeight: 500, lineHeight: 1.4 },
-    button:  { fontSize: '0.875rem',  fontWeight: 700, textTransform: 'none', letterSpacing: 0 },
-    overline:{ fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' },
+    // Display scale follows the MAXX reference design (Martex "skyblue"):
+    // big bold Jakarta Sans headings (s-50/s-60 ≈ 50–60px), 16px body at
+    // 1.67 line-height, uppercase eyebrow labels. Heavy weights + navy text.
+    h1:      { fontSize: 'clamp(2.5rem, 1.5rem + 4vw, 3.75rem)',  fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy), sans-serif' },
+    h2:      { fontSize: 'clamp(2rem, 1.375rem + 2.75vw, 3.125rem)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy), sans-serif' },
+    h3:      { fontSize: 'clamp(1.375rem, 1.125rem + 1vw, 1.75rem)', fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1.3, fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy), sans-serif' },
+    h4:      { fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.375rem)',  fontWeight: 800, letterSpacing: '-0.005em', lineHeight: 1.4, fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy), sans-serif' },
+    h5:      { fontSize: '1.1875rem',                               fontWeight: 800, letterSpacing: '-0.005em', lineHeight: 1.45, fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy), sans-serif' },
+    h6:      { fontSize: '1rem',                                     fontWeight: 800, letterSpacing: '-0.005em', lineHeight: 1.45, fontFamily: 'var(--font-plus-jakarta), var(--font-geist-sans), var(--font-kantumruy), sans-serif' },
+    body1:   { fontSize: '1rem',                                      fontWeight: 500, lineHeight: 1.6666 },
+    body2:   { fontSize: '0.9375rem',                                 fontWeight: 500, lineHeight: 1.6666 },
+    caption: { fontSize: '0.8125rem',  fontWeight: 600, lineHeight: 1.5 },
+    button:  { fontSize: '0.9375rem',  fontWeight: 700, textTransform: 'none', letterSpacing: 0 },
+    overline:{ fontSize: '0.8125rem',  fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em' },
   },
   shape: { borderRadius: 6 },
   shadows: [
@@ -83,9 +86,9 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme, ownerState }) => ({
           borderRadius: 6,
-          fontWeight: 500,
-          fontSize: '0.875rem',
-          padding: '6px 16px',
+          fontWeight: 700,
+          fontSize: '0.9375rem',
+          padding: '8px 18px',
           transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
 
           // Contained primary: brand green accent. Navy stays the identity
@@ -171,7 +174,7 @@ const theme = createTheme({
 
     MuiChip: {
       styleOverrides: {
-        root: { borderRadius: 9999, fontSize: '0.75rem', fontWeight: 500, height: 20 },
+        root: { borderRadius: 9999, fontSize: '0.75rem', fontWeight: 700, height: 20 },
       },
     },
 
