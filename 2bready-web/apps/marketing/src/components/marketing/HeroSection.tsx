@@ -8,8 +8,8 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import PublicIcon from '@mui/icons-material/Public';
+import SettingsIcon from '@mui/icons-material/Settings';
 import AuroraBackground from './AuroraBackground';
-import SecureSpinner from './SecureSpinner';
 import GlowButton from './GlowButton';
 import { heroContent, heroPills } from './content';
 
