@@ -45,9 +45,24 @@ function formatPrice(priceCents: number) {
 // Static content only augments what the API does not return (icon, features,
 // audit fee line, CTA) — matched by position so the card order follows
 // sort_order. Works for any number of packages.
+//
+// Each level now has TWO packages (monthly + yearly) — the landing page
+// shows one card per level, using the yearly row (the headline offer); the
+// full monthly/yearly choice lives on the client billing page's toggle.
 function buildPlans(apiPackages: ApiPackage[]): PricingPlan[] {
-  const sorted = [...apiPackages].sort((a, b) => a.sort_order - b.sort_order);
   const fallbackIcon: PricingPlan['icon'] = 'compliance';
+  const byLevel = new Map<string, ApiPackage>();
+
+  for (const pkg of [...apiPackages].sort((a, b) => a.sort_order - b.sort_order)) {
+    const key = pkg.journey_level_code || pkg.name;
+    const existing = byLevel.get(key);
+    // Prefer the yearly row; fall back to whatever exists (e.g. a one-time add-on).
+    if (!existing || existing.billing_period !== 'yearly') {
+      byLevel.set(key, pkg.billing_period === 'yearly' ? pkg : existing ?? pkg);
+    }
+  }
+
+  const sorted = [...byLevel.values()].sort((a, b) => a.sort_order - b.sort_order);
 
   return sorted.map((pkg, i) => {
     const staticPlan = staticPricingPlans[i];

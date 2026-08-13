@@ -7,6 +7,9 @@ use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Package\Models\Package;
 use App\Domain\User\Models\User;
+use Database\Seeders\IndustrySeeder;
+use Database\Seeders\JourneyTemplateSeeder;
+use Database\Seeders\PackageSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -238,4 +241,25 @@ it('nests the real journey level code in the public pricing list', function () {
     $response->assertOk()
         ->assertJsonPath('data.0.tier', 'free')
         ->assertJsonPath('data.0.journey_level_code', 'L1');
+});
+
+it('seeds a monthly and a yearly package for every level', function () {
+    $this->seed(IndustrySeeder::class);
+    $this->seed(JourneyTemplateSeeder::class);
+    $this->seed(PackageSeeder::class);
+
+    $levels = JourneyLevel::query()->whereHas('journeyTemplate', fn ($q) => $q->where('country_code', 'KH'))->get();
+
+    foreach ($levels as $level) {
+        $periods = Package::query()
+            ->where('journey_level_id', $level->id)
+            ->where('is_active', true)
+            ->pluck('billing_period')
+            ->map(fn ($p) => $p->value)
+            ->sort()
+            ->values()
+            ->all();
+
+        expect($periods)->toBe(['monthly', 'yearly'], "Level {$level->code} should have both a monthly and a yearly package");
+    }
 });

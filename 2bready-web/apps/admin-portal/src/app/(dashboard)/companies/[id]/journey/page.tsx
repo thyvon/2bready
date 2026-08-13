@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,7 +66,6 @@ export default function CompanyJourneyPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [signingOff, setSigningOff] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
 
   const [acting, setActing] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -91,6 +90,16 @@ export default function CompanyJourneyPage() {
     resolver: zodResolver(documentTemplateFormSchema),
     defaultValues: documentTemplateFormDefaults,
   });
+
+  // Re-fetches the journey in place — never flips `loading` or remounts the
+  // tree, so scroll position and accordion state survive every mutation
+  // (verify/reject/upload/sign-off/extra CRUD). Same SPA behaviour as
+  // client-portal's JourneyProvider.refetch.
+  const refetch = useCallback(async () => {
+    const journeyData = await getCompanyJourney(params.id);
+    setJourney(journeyData);
+    return journeyData;
+  }, [params.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,14 +128,14 @@ export default function CompanyJourneyPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.id, reloadKey]);
+  }, [params.id]);
 
   const handleSignOff = async (milestoneId: string) => {
     setSigningOff(milestoneId);
     try {
       await completeMilestone(params.id, milestoneId);
       toast.success('Milestone signed off.');
-      setReloadKey((k) => k + 1);
+      await refetch();
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {
@@ -158,7 +167,7 @@ export default function CompanyJourneyPage() {
       await verifyDocument(preview.documentId, comment);
       toast.success('Document verified.');
       setPreview(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
       refreshCounts();
     } catch (err) {
       toast.error(getApiError(err).message);
@@ -174,7 +183,7 @@ export default function CompanyJourneyPage() {
       await rejectDocument(preview.documentId, comment);
       toast.success('Document rejected.');
       setPreview(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
       refreshCounts();
     } catch (err) {
       toast.error(getApiError(err).message);
@@ -191,7 +200,7 @@ export default function CompanyJourneyPage() {
       await uploadDocument(company.id, doc.id, file);
       toast.success(`${doc.name} uploaded — now being scanned.`);
       setStagedUpload(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
       refreshCounts();
     } catch (err) {
       toast.error(getApiError(err).message);
@@ -235,7 +244,7 @@ export default function CompanyJourneyPage() {
       }
       toast.success(extraDialog.editing ? 'Extra requirement updated.' : 'Extra requirement added.');
       setExtraDialog(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
     } catch (err) {
       setExtraServerError(getApiError(err).message);
     }
@@ -247,7 +256,7 @@ export default function CompanyJourneyPage() {
       await deleteExtraRequirement(pendingDeleteExtra.id);
       toast.success('Extra requirement deleted.');
       setPendingDeleteExtra(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {

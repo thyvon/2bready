@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -39,10 +39,20 @@ export default function CompanyJourneyPage({ params }: { params: Promise<{ id: s
   const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [reloadKey, setReloadKey] = useState(0);
 
   const [acting, setActing] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+
+  // Re-fetches the journey in place — never flips `loading` or remounts the
+  // tree, so scroll position and accordion state survive a verify/reject
+  // (same SPA behaviour as client-portal's JourneyProvider.refetch). Call
+  // after any mutation instead of bumping a reloadKey that would tear down
+  // and rebuild the whole tree.
+  const refetch = useCallback(async () => {
+    const journeyData = await getCompanyJourney(companyId);
+    setJourney(journeyData);
+    return journeyData;
+  }, [companyId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +77,7 @@ export default function CompanyJourneyPage({ params }: { params: Promise<{ id: s
     return () => {
       cancelled = true;
     };
-  }, [companyId, reloadKey]);
+  }, [companyId]);
 
   // Takes primitives, not a JourneyDocument, so both the current document's
   // preview button and a past history entry's preview icon (which has no
@@ -83,9 +93,9 @@ export default function CompanyJourneyPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  // A verified/rejected document can auto-complete its milestone — reload
-  // the whole tree so that shows up immediately, not just the one
-  // document's own status.
+  // A verified/rejected document can auto-complete its milestone — the
+  // in-place refetch shows that immediately, without a reload that would
+  // reset scroll/accordion state.
   const handleVerify = async (comment?: string) => {
     if (!preview) return;
     setActing(true);
@@ -93,7 +103,7 @@ export default function CompanyJourneyPage({ params }: { params: Promise<{ id: s
       await verifyDocument(preview.documentId, comment);
       toast.success(t('tp.document_verified'));
       setPreview(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {
@@ -108,7 +118,7 @@ export default function CompanyJourneyPage({ params }: { params: Promise<{ id: s
       await rejectDocument(preview.documentId, comment);
       toast.success(t('tp.document_rejected'));
       setPreview(null);
-      setReloadKey((k) => k + 1);
+      await refetch();
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {

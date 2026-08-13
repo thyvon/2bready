@@ -14,12 +14,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import { Breadcrumbs, SectionCard, EmptyState, StatusBadge } from '@2bready/ui-core';
+import { Breadcrumbs, SectionCard, EmptyState, StatusBadge, PillToggle } from '@2bready/ui-core';
 import { getApiError, formatCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
 import { PricingCard } from '@/components/dashboard/PricingCard';
-import { buildLevelPricing, type LevelPricing } from '@/lib/billing-data';
+import { buildLevelPricing, type LevelPricing, type BillingPeriod } from '@/lib/billing-data';
 import { useJourney } from '@/components/JourneyProvider';
 import { usePackages } from '@/components/PackageProvider';
 import { PageLoader } from '@/components/PageLoader';
@@ -54,7 +54,8 @@ export default function BillingPage() {
 
   const { journey, loading: journeyLoading } = useJourney();
   const { packages, loading: packagesLoading } = usePackages();
-  const levelPricing = buildLevelPricing(packages, journey?.levels ?? []);
+  const [period, setPeriod] = useState<BillingPeriod>('yearly');
+  const levelPricing = buildLevelPricing(packages, journey?.levels ?? [], period);
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -89,9 +90,14 @@ export default function BillingPage() {
     };
   }, []);
 
-  function statusFor(packageId: string, tier: string): 'free' | 'active' | 'pending' | 'none' {
-    if (tier === 'free') return 'free';
-    const sub = subscriptions.find((s) => s.package?.id === packageId && s.status !== 'cancelled');
+  // A subscription is per level, not per billing period — the monthly and
+  // yearly rows of a level both represent the same pathway, so an active
+  // subscription on either one should read as "already taken" regardless of
+  // which period the toggle currently shows.
+  function statusFor(pricing: LevelPricing): 'free' | 'active' | 'pending' | 'none' {
+    if (pricing.pkg.tier === 'free') return 'free';
+    const ids = new Set([pricing.pkg.id, pricing.monthly?.id, pricing.yearly?.id].filter((id): id is string => Boolean(id)));
+    const sub = subscriptions.find((s) => s.package && ids.has(s.package.id) && s.status !== 'cancelled');
     if (!sub) return 'none';
     return sub.status === 'active' ? 'active' : 'pending';
   }
@@ -181,12 +187,23 @@ export default function BillingPage() {
       </Typography>
 
       <SectionCard title="Standardized Service Pathways" subtitle="Each pathway unlocks one compliance level">
+        <Box className="flex justify-end mb-4">
+          <PillToggle
+            options={[
+              { key: 'monthly', label: 'Monthly' },
+              { key: 'yearly', label: 'Yearly' },
+            ]}
+            value={period}
+            onChange={setPeriod}
+            layoutId="billing-period-toggle"
+          />
+        </Box>
         <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {levelPricing.map((pricing) => (
             <PricingCard
               key={pricing.pkg.id}
               pricing={pricing}
-              status={statusFor(pricing.pkg.id, pricing.pkg.tier)}
+              status={statusFor(pricing)}
               loading={subscribing === pricing.pkg.id}
               onSelect={() => handleSelect(pricing)}
             />
