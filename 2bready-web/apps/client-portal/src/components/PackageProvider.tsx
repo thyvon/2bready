@@ -1,10 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getPublicPackages, type Package } from '@/lib/package-api';
+import { getPublicPackages, type PackageGroup } from '@/lib/package-api';
 
 interface PackageContextValue {
-  packages: Package[];
+  packages: PackageGroup[];
   loading: boolean;
 }
 
@@ -15,7 +15,7 @@ const PackageContext = createContext<PackageContextValue | null>(null);
 // real per-level pricing/tier data — fetched once here and shared, instead
 // of each reaching for the old hardcoded LEVEL_META/PRICING_BY_LEVEL maps.
 export default function PackageProvider({ children }: { children: React.ReactNode }) {
-  const [packages, setPackages] = useState<Package[]>([]);
+  const [packages, setPackages] = useState<PackageGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

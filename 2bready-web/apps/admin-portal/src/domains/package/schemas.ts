@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Form captures price in dollars (what an admin naturally types) — converted to
-// price_cents at submit time, the only place this conversion should happen
+// Form captures prices in dollars (what an admin naturally types) — converted
+// to *_price_cents at submit time, the only place this conversion should happen
 // (never divide by 100 inline elsewhere; use formatCents for display).
 const priceDollars = z.preprocess((val) => {
   if (val === '' || val === null || val === undefined) return undefined;
@@ -22,10 +22,11 @@ export const packageFormSchema = z.object({
   name: z.string().min(1, 'Package name is required').max(255),
   name_kh: z.string().max(255).optional().or(z.literal('')),
   description: z.string().max(2000).optional().or(z.literal('')),
-  price: priceDollars,
+  monthly_price: priceDollars,
+  yearly_price: priceDollars,
+  audit_fee: priceDollars,
   industry_id: z.string().optional().or(z.literal('')),
   journey_level_id: z.string().optional().or(z.literal('')),
-  billing_period: z.enum(['monthly', 'yearly', 'one_time']),
   tier: z.enum(['free', 'pro', 'enterprise']),
   is_active: z.boolean(),
   sort_order: sortOrder,
@@ -38,10 +39,11 @@ export const packageFormDefaults: PackageFormInput = {
   name: '',
   name_kh: '',
   description: '',
-  price: 0,
+  monthly_price: 0,
+  yearly_price: 0,
+  audit_fee: 0,
   industry_id: '',
   journey_level_id: '',
-  billing_period: 'monthly',
   tier: 'free',
   is_active: true,
   sort_order: 0,

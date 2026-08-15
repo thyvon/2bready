@@ -29,6 +29,7 @@ export interface JourneyDocument {
   document_id: string | null;
   name: string;
   is_required: boolean;
+  client_can_add_subdocs: boolean;
   recurrence_type: 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
   expiry_months: number | null;
   effective_since: string | null;
@@ -45,3 +46,19 @@ type RawMilestone = RawLevel['milestones'][number];
 export type JourneyMilestone = Omit<RawMilestone, 'documents'> & { documents: JourneyDocument[] };
 export type JourneyLevel = Omit<RawLevel, 'milestones'> & { milestones: JourneyMilestone[] };
 export type Journey = Omit<RawJourney, 'levels'> & { levels: JourneyLevel[] };
+
+// Flattens a document and every one of its sub-documents (to any depth) —
+// progress/status lookups need every document, not just the top-level ones.
+export function flattenDocuments(docs: JourneyDocument[]): JourneyDocument[] {
+  return docs.flatMap((doc) => [doc, ...flattenDocuments(doc.children)]);
+}
+
+// Returns the first document (top-level or nested) matching the checklist
+// id — the same helper client-portal's journey-api.ts uses, so staff and
+// company see identical post-upload polling behaviour.
+export function findDocument(journey: Journey | null, documentId: string): JourneyDocument | null {
+  if (!journey) return null;
+  return flattenDocuments(
+    journey.levels.flatMap((level) => level.milestones.flatMap((milestone) => milestone.documents)),
+  ).find((doc) => doc.id === documentId) ?? null;
+}

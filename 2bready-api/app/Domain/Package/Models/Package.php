@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int $price_cents
+ * @property int $audit_fee_cents
  * @property BillingPeriod $billing_period
  * @property Tier $tier
  * @property bool $is_active
@@ -44,6 +45,7 @@ class Package extends Model
         'name_kh',
         'description',
         'price_cents',
+        'audit_fee_cents',
         'billing_period',
         'tier',
         'is_active',
@@ -55,6 +57,7 @@ class Package extends Model
     {
         return [
             'price_cents' => 'integer',
+            'audit_fee_cents' => 'integer',
             'billing_period' => BillingPeriod::class,
             'tier' => Tier::class,
             'is_active' => 'boolean',
@@ -75,5 +78,16 @@ class Package extends Model
     public function journeyLevel(): BelongsTo
     {
         return $this->belongsTo(JourneyLevel::class);
+    }
+
+    // The level's other billing-period rows (the monthly + yearly pair that
+    // together make up one "package" in the admin/public grouped views).
+    // Used by PackageController::show to attach prices to a single row.
+    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<Package, $this> */
+    public function siblingPrices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Package::class, 'journey_level_id', 'journey_level_id')
+            ->where('industry_id', $this->industry_id)
+            ->where('id', '!=', $this->id);
     }
 }

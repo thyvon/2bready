@@ -61,6 +61,7 @@ export const documentTemplateFormSchema = z
     name: z.string().min(1, 'Name is required').max(255),
     description: z.string().max(2000).optional().or(z.literal('')),
     is_required: z.boolean(),
+    client_can_add_subdocs: z.boolean(),
     recurrence_type: z.enum(['one_time', 'rolling', 'periodic_monthly', 'periodic_annual']),
     expiry_months: optionalMonths,
     // Only meaningful for periodic_monthly/periodic_annual — see
@@ -83,6 +84,7 @@ export const documentTemplateFormDefaults: DocumentTemplateFormInput = {
   name: '',
   description: '',
   is_required: true,
+  client_can_add_subdocs: false,
   recurrence_type: 'one_time',
   expiry_months: undefined,
   effective_since: '',

@@ -1,52 +1,59 @@
 import { levelTotalDocs, type JourneyLevel } from './journey-api';
-import type { Package } from './package-api';
+import type { PackageGroup, PackagePrice } from './package-api';
+import type { components } from '@2bready/api-client';
 
-// Real pricing now — Package.price_cents/billing_period/tier, matched to
-// its real journey level via journey_level_code. This used to be a fully
-// local PRICING_BY_LEVEL map (a duplicate of what's now real Package data);
-// removed once Package gained real tier/journey_level_id columns.
+// Real pricing now — the public /pricing endpoint returns one PackageGroup per
+// journey level with the monthly + yearly options nested under `prices`
+// (each carrying its own id for subscribing to a specific cadence). This used
+// to be a fully local PRICING_BY_LEVEL map (a duplicate of what's now real
+// Package data); removed once Package gained real tier/journey_level_id columns.
 //
-// Each level has TWO Package rows (monthly + yearly) so the customer can pick
-// their billing cadence; grouping by level here gives the billing page the
-// per-period prices it needs to render the Monthly/Yearly toggle.
+// buildLevelPricing flattens the per-period prices so the billing page can
+// render the Monthly/Yearly toggle and pass the selected period's package id
+// to subscribeToPackage.
 export type BillingPeriod = 'monthly' | 'yearly' | 'one_time';
 
 export interface LevelPricing {
   /** The package for the currently-selected billing period. */
-  pkg: Package;
+  pkg: PackagePrice & {
+    name: string;
+    name_kh: string | null;
+    description: string | null;
+    tier: components['schemas']['Tier'];
+    journey_level_code: string | undefined;
+  };
   level: JourneyLevel | null;
-  /** Monthly and yearly rows for the same level, for the cadence toggle. */
-  monthly: Package | null;
-  yearly: Package | null;
+  /** Monthly and yearly prices for the same level, for the cadence toggle. */
+  monthly: PackagePrice | null;
+  yearly: PackagePrice | null;
 }
 
-export function buildLevelPricing(packages: Package[], levels: JourneyLevel[], period: BillingPeriod = 'yearly'): LevelPricing[] {
+export function buildLevelPricing(packages: PackageGroup[], levels: JourneyLevel[], period: BillingPeriod = 'yearly'): LevelPricing[] {
   const levelsByCode = new Map(levels.map((level) => [level.code, level]));
-  const byLevel = new Map<string, { monthly: Package | null; yearly: Package | null }>();
 
-  for (const pkg of packages) {
-    const key = pkg.journey_level_code ?? pkg.id;
-    const group = byLevel.get(key) ?? { monthly: null, yearly: null };
-    if (pkg.billing_period === 'monthly') group.monthly = pkg;
-    if (pkg.billing_period === 'yearly') group.yearly = pkg;
-    byLevel.set(key, group);
-  }
+  return packages
+    .map((group) => {
+      const prices = group.prices ?? [];
+      const monthly = prices.find((p) => p.billing_period === 'monthly') ?? null;
+      const yearly = prices.find((p) => p.billing_period === 'yearly') ?? null;
+      const pkg = period === 'monthly' ? (monthly ?? yearly) : (yearly ?? monthly);
+      if (!pkg) return null;
 
-  const result: LevelPricing[] = [];
-  for (const [key, group] of byLevel) {
-    const pkg = period === 'monthly' ? (group.monthly ?? group.yearly) : (group.yearly ?? group.monthly);
-    if (!pkg) continue;
-    result.push({
-      pkg,
-      level: key && levelsByCode.has(key) ? (levelsByCode.get(key) ?? null) : null,
-      monthly: group.monthly,
-      yearly: group.yearly,
-    });
-  }
-
-  // Keep the packages' own sort_order (L1 → L4), not insertion order of the map.
-  const order = new Map(packages.map((p, i) => [p.id, i]));
-  return result.sort((a, b) => (order.get(a.pkg.id) ?? 0) - (order.get(b.pkg.id) ?? 0));
+      return {
+        pkg: {
+          ...pkg,
+          name: group.name,
+          name_kh: group.name_kh,
+          description: group.description,
+          tier: group.tier,
+          journey_level_code: group.journey_level_code,
+        },
+        level: group.journey_level_code && levelsByCode.has(group.journey_level_code) ? (levelsByCode.get(group.journey_level_code) ?? null) : null,
+        monthly,
+        yearly,
+      };
+    })
+    .filter((p): p is LevelPricing => p !== null);
 }
 
 export function levelSummary(level: JourneyLevel | null): string {

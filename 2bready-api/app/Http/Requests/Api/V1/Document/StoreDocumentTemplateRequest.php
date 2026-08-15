@@ -17,6 +17,7 @@ class StoreDocumentTemplateRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_required' => ['sometimes', 'boolean'],
+            'client_can_add_subdocs' => ['sometimes', 'boolean'],
             'recurrence_type' => ['sometimes', Rule::enum(RecurrenceType::class)],
             'expiry_months' => ['nullable', 'integer', 'min:1'],
             'effective_since' => ['sometimes', 'nullable', 'date'],

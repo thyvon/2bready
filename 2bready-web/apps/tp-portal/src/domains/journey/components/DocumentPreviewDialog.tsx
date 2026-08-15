@@ -14,6 +14,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from '@/lib/i18n';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
+import { ConfirmDialog } from '@2bready/ui-core';
 
 export interface DocumentPreviewDialogProps {
   open: boolean;
@@ -39,10 +40,10 @@ export interface DocumentPreviewDialogProps {
 // and click a button blind"). Both actions can carry a reviewer comment —
 // required for a reject (it is the reason), optional for a verify.
 //
-// The comment sub-form (commenting state) is reset by giving this component
-// a `key` tied to the document's id at the call site, not by an effect — a
-// fresh document opening means a fresh mount, so there's never a half-typed
-// comment left over from the previous one to clear.
+// The comment field is cleared by giving this component a `key` tied to the
+// document's id at the call site, not by an effect — a fresh document opening
+// means a fresh mount, so there's never a half-typed comment left over from
+// the previous one to clear.
 export function DocumentPreviewDialog({
   open,
   onClose,
@@ -61,8 +62,8 @@ export function DocumentPreviewDialog({
   const isPdf = mimeType === 'application/pdf';
   const canAct = status === 'review' && (onVerify || onReject);
 
-  const [commenting, setCommenting] = useState(false);
   const [comment, setComment] = useState('');
+  const [confirmAction, setConfirmAction] = useState<'verify' | 'reject' | null>(null);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -110,51 +111,61 @@ export function DocumentPreviewDialog({
 
       {canAct && (
         <DialogActions sx={{ px: 3, py: 2, flexDirection: 'column', alignItems: 'stretch', gap: 1.5 }}>
-          {commenting ? (
-            <>
-              <Box>
-                <FieldLabel>{t('tp.document_comment_label')}</FieldLabel>
-                <FormTextField
-                  autoFocus
-                  multiline
-                  minRows={2}
-                  fullWidth
-                  placeholder={t('tp.document_comment_placeholder')}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-              </Box>
-              <Box className="flex justify-end gap-2">
-                <Button variant="text" onClick={() => setCommenting(false)}>{t('common.cancel')}</Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  disabled={!comment.trim()}
-                  loading={acting}
-                  onClick={() => onReject?.(comment.trim())}
-                >
-                  {t('tp.confirm_reject')}
-                </Button>
-                <Button
-                  variant="contained"
-                  loading={acting}
-                  onClick={() => onVerify?.(comment.trim() || undefined)}
-                >
-                  {t('tp.verify')}
-                </Button>
-              </Box>
-            </>
-          ) : (
-            <Box className="flex justify-end gap-2">
-              <Button variant="outlined" color="error" disabled={acting} onClick={() => { setComment(''); setCommenting(true); }}>
-                {t('tp.reject')}
-              </Button>
-              <Button variant="outlined" disabled={acting} onClick={() => { setComment(''); setCommenting(true); }}>
-                {t('tp.verify')}
-              </Button>
-            </Box>
-          )}
+          <Box>
+            <FieldLabel>{t('tp.document_comment_label')}</FieldLabel>
+            <FormTextField
+              autoFocus
+              multiline
+              minRows={2}
+              fullWidth
+              placeholder={t('tp.document_comment_placeholder')}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          </Box>
+          <Box className="flex justify-end gap-2">
+            <Button
+              variant="contained"
+              color="error"
+              disabled={!comment.trim()}
+              loading={acting}
+              onClick={() => setConfirmAction('reject')}
+            >
+              {t('tp.confirm_reject')}
+            </Button>
+            <Button
+              variant="contained"
+              loading={acting}
+              onClick={() => setConfirmAction('verify')}
+            >
+              {t('tp.verify')}
+            </Button>
+          </Box>
         </DialogActions>
+      )}
+
+      {confirmAction === 'reject' && (
+        <ConfirmDialog
+          open
+          onCancel={() => setConfirmAction(null)}
+          title={t('tp.confirm_reject')}
+          description={t('tp.confirm_reject_desc', { docTitle: title })}
+          confirmLabel={t('tp.confirm_reject')}
+          cancelLabel={t('common.cancel')}
+          danger
+          onConfirm={() => { onReject?.(comment.trim()); setConfirmAction(null); }}
+        />
+      )}
+      {confirmAction === 'verify' && (
+        <ConfirmDialog
+          open
+          onCancel={() => setConfirmAction(null)}
+          title={t('tp.verify')}
+          description={t('tp.confirm_verify_desc', { docTitle: title })}
+          confirmLabel={t('tp.verify')}
+          cancelLabel={t('common.cancel')}
+          onConfirm={() => { onVerify?.(comment.trim() || undefined); setConfirmAction(null); }}
+        />
       )}
     </Dialog>
   );

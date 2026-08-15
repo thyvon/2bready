@@ -30,6 +30,7 @@ export interface JourneyDocument {
   document_id: string | null;
   name: string;
   is_required: boolean;
+  client_can_add_subdocs: boolean;
   recurrence_type: 'one_time' | 'rolling' | 'periodic_monthly' | 'periodic_annual';
   expiry_months: number | null;
   effective_since: string | null;

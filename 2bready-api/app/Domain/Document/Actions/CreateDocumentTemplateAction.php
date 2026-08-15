@@ -18,6 +18,7 @@ class CreateDocumentTemplateAction
             'name' => $data->name,
             'description' => $data->description,
             'is_required' => $data->is_required,
+            'client_can_add_subdocs' => $data->client_can_add_subdocs,
             'recurrence_type' => $data->recurrence_type,
             'expiry_months' => $data->expiry_months,
             'sort_order' => $data->sort_order,

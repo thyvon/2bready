@@ -25,3 +25,8 @@ Route::delete('document-templates/{documentTemplate}', [DocumentTemplateControll
 // own Journey tab, on top of the shared taxonomy above) ─────────────────────
 Route::post('companies/{company}/milestones/{milestone}/document-templates', [DocumentTemplateController::class, 'storeForCompany']);
 Route::post('companies/{company}/document-templates/{documentTemplate}/children', [DocumentTemplateController::class, 'storeChildForCompany']);
+
+// ─── Company self-scoped child creation (client-portal: add sub-document) ──
+Route::post('my/document-templates/{documentTemplate}/children', [DocumentTemplateController::class, 'storeOwnChild']);
+Route::patch('my/document-templates/{documentTemplate}', [DocumentTemplateController::class, 'updateOwn']);
+Route::delete('my/document-templates/{documentTemplate}', [DocumentTemplateController::class, 'destroyOwn']);

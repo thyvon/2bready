@@ -133,7 +133,24 @@ export default function HeroSection() {
                 mb: 3.5,
               }}
             >
-              {heroContent.headline}
+              {heroContent.headline.split(/(Engine)/).map((part, i) =>
+                part === 'Engine' ? (
+                  <Box
+                    component="span"
+                    key={i}
+                    sx={{
+                      background: 'linear-gradient(120deg, var(--mui-palette-success-main) 0%, var(--mui-palette-info-main) 100%)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      color: 'transparent',
+                    }}
+                  >
+                    {part}
+                  </Box>
+                ) : (
+                  part
+                ),
+              )}
             </Typography>
           </motion.div>
 

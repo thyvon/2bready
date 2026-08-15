@@ -113,6 +113,8 @@ const en = {
   'tp.verify': 'Verify',
   'tp.reject': 'Reject',
   'tp.confirm_reject': 'Confirm reject',
+  'tp.confirm_reject_desc': 'Are you sure you want to reject "{docTitle}"? The company will need to re-upload.',
+  'tp.confirm_verify_desc': 'Are you sure you want to verify "{docTitle}"? This marks the document as approved.',
   'tp.document_comment_label': 'Review comment',
   'tp.document_comment_placeholder': 'Add a note for the company — required to reject, optional to verify.',
   'tp.document_verified': 'Document verified.',

@@ -98,9 +98,12 @@ function periodLabel(entry: DocumentHistoryEntry, recurrenceType: JourneyDocumen
   return formatRollingLabel(entry);
 }
 
-// Rolling has no period_key (no calendar slot), so its own date range is the
-// entry's label — "Feb 23, 2026 – Jun 23, 2026" — instead of a period name.
+// Rolling/one-time has no period_key (no calendar slot), so its own date
+// range is the entry's label — "Feb 23, 2026 – Jun 23, 2026" — instead of a
+// period name. A one-time doc has no expiry, so without an end date the
+// label is just the single date ("Aug 15, 2026"), not a dangling "– —".
 function formatRollingLabel(entry: DocumentHistoryEntry): string {
+  if (!entry.expires_at) return formatHistoryDate(entry.verified_at ?? entry.created_at);
   return `${formatHistoryDate(entry.verified_at ?? entry.created_at)} – ${formatHistoryDate(entry.expires_at)}`;
 }
 

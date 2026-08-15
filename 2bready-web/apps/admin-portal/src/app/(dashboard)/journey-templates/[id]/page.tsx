@@ -218,6 +218,7 @@ export default function JourneyTemplateDetailPage() {
       name: doc.name,
       description: doc.description ?? '',
       is_required: doc.is_required,
+      client_can_add_subdocs: doc.client_can_add_subdocs ?? false,
       recurrence_type: doc.recurrence_type as RecurrenceKind,
       expiry_months: doc.expiry_months ?? undefined,
       effective_since: doc.effective_since ? doc.effective_since.slice(0, 10) : '',
@@ -740,6 +741,11 @@ export default function JourneyTemplateDetailPage() {
               name="is_required"
               control={docForm.control}
               render={({ field }) => <FormSwitch checked={field.value} onChange={field.onChange} label={t('journey_template.is_required')} />}
+            />
+            <Controller
+              name="client_can_add_subdocs"
+              control={docForm.control}
+              render={({ field }) => <FormSwitch checked={field.value} onChange={field.onChange} label={t('journey_template.client_can_add_subdocs')} />}
             />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

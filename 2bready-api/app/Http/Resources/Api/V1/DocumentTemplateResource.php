@@ -38,6 +38,7 @@ class DocumentTemplateResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'is_required' => $this->is_required,
+            'client_can_add_subdocs' => $this->client_can_add_subdocs,
             'recurrence_type' => $this->recurrence_type->value,
             'expiry_months' => $this->expiry_months,
             'effective_since' => $this->effective_since,

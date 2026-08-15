@@ -527,6 +527,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/my/document-templates/{documentTemplate}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["documentTemplate.storeOwnChild"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/my/document-templates/{documentTemplate}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["documentTemplate.destroyOwn"];
+        options?: never;
+        head?: never;
+        patch: operations["documentTemplate.updateOwn"];
+        trace?: never;
+    };
     "/v1/auth/email/verify/{user}/{hash}": {
         parameters: {
             query?: never;
@@ -1561,6 +1593,7 @@ export interface components {
             name: string;
             description: string | null;
             is_required: boolean;
+            client_can_add_subdocs: boolean;
             recurrence_type: string;
             expiry_months: number | null;
             /** Format: date-time */
@@ -1652,6 +1685,8 @@ export interface components {
                         document_id: string;
                         name: string;
                         is_required: boolean;
+                        client_can_add_subdocs: boolean;
+                        parent_id: string | null;
                         /**
                          * @description How this requirement recurs — drives whether `history` below
                          *     is a flat past-uploads list (rolling/one-time) or a full
@@ -1752,6 +1787,26 @@ export interface components {
             sort_order: number;
             document_templates?: components["schemas"]["DocumentTemplateResource"][];
         };
+        /** PackageGroupResource */
+        PackageGroupResource: {
+            id: string;
+            name: string;
+            name_kh: string | null;
+            description: string | null;
+            audit_fee_cents: number;
+            industry_id: string | null;
+            industry_code?: string;
+            journey_level_id: string | null;
+            journey_level_code?: string;
+            tier: components["schemas"]["Tier"];
+            is_active: boolean;
+            sort_order: number;
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+            prices?: components["schemas"]["PublicPackagePriceResource"][];
+        };
         /** PackageResource */
         PackageResource: {
             id: string;
@@ -1838,18 +1893,27 @@ export interface components {
             name_kh: string | null;
             sort_order: number;
         };
-        /** PublicPackageResource */
-        PublicPackageResource: {
+        /** PublicPackageGroupResource */
+        PublicPackageGroupResource: {
             id: string;
             name: string;
             name_kh: string | null;
             description: string | null;
-            price_cents: number;
+            audit_fee_cents: number;
             industry_code?: string;
             journey_level_code?: string;
-            billing_period: components["schemas"]["BillingPeriod"];
+            pathway_name?: string;
+            pillar?: string;
+            milestones?: components["schemas"]["MilestoneResource"][];
             tier: components["schemas"]["Tier"];
             sort_order: number;
+            prices?: components["schemas"]["PublicPackagePriceResource"][];
+        };
+        /** PublicPackagePriceResource */
+        PublicPackagePriceResource: {
+            id: string;
+            billing_period: components["schemas"]["BillingPeriod"];
+            price_cents: number;
         };
         /** RateTpHireRequest */
         RateTpHireRequest: {
@@ -1931,6 +1995,7 @@ export interface components {
             name: string;
             description?: string | null;
             is_required?: boolean;
+            client_can_add_subdocs?: boolean;
             recurrence_type?: components["schemas"]["RecurrenceType"];
             expiry_months?: number | null;
             /** Format: date-time */
@@ -1983,11 +2048,11 @@ export interface components {
             name: string;
             name_kh?: string | null;
             description?: string | null;
-            price_cents: number;
+            monthly_price_cents: number;
+            yearly_price_cents: number;
+            audit_fee_cents: number;
             industry_id?: string | null;
             journey_level_id?: string | null;
-            /** @enum {string} */
-            billing_period?: "monthly" | "yearly" | "one_time";
             /** @enum {string} */
             tier?: "free" | "pro" | "enterprise";
             is_active?: boolean;
@@ -2165,6 +2230,7 @@ export interface components {
             name?: string;
             description?: string | null;
             is_required?: boolean;
+            client_can_add_subdocs?: boolean;
             recurrence_type?: components["schemas"]["RecurrenceType"];
             expiry_months?: number | null;
             /** Format: date-time */
@@ -2235,11 +2301,11 @@ export interface components {
             name?: string;
             name_kh?: string | null;
             description?: string | null;
-            price_cents?: number;
+            monthly_price_cents?: number;
+            yearly_price_cents?: number;
+            audit_fee_cents?: number;
             industry_id?: string | null;
             journey_level_id?: string | null;
-            /** @enum {string} */
-            billing_period?: "monthly" | "yearly" | "one_time";
             /** @enum {string} */
             tier?: "free" | "pro" | "enterprise";
             is_active?: boolean;
@@ -3606,6 +3672,96 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "documentTemplate.storeOwnChild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "documentTemplate.destroyOwn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "documentTemplate.updateOwn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The document template ID */
+                documentTemplate: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateDocumentTemplateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentTemplateResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "emailVerification.verify": {
         parameters: {
             query?: never;
@@ -4664,7 +4820,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["PublicPackageResource"][];
+                        data: components["schemas"]["PublicPackageGroupResource"][];
                         meta: string;
                     };
                 };
@@ -4686,7 +4842,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["PackageResource"][];
+                        data: components["schemas"]["PackageGroupResource"][];
                         meta: string;
                     };
                 };
@@ -4714,7 +4870,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["PackageResource"];
+                        data: components["schemas"]["PackageGroupResource"];
                         meta: string;
                     };
                 };
@@ -4742,7 +4898,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["PackageResource"];
+                        data: components["schemas"]["PackageGroupResource"];
                         meta: string;
                     };
                 };
@@ -4798,7 +4954,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["PackageResource"];
+                        data: components["schemas"]["PackageGroupResource"];
                         meta: string;
                     };
                 };

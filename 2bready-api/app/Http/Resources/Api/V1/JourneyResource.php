@@ -103,6 +103,8 @@ class JourneyResource extends JsonResource
             'document_id' => $latestDocument?->id,
             'name' => $template->name,
             'is_required' => $template->is_required,
+            'client_can_add_subdocs' => $template->client_can_add_subdocs,
+            'parent_id' => $template->parent_id,
             // How this requirement recurs — drives whether `history` below
             // is a flat past-uploads list (rolling/one-time) or a full
             // calendar-period ledger with possible gaps (periodic).

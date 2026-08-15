@@ -117,6 +117,8 @@ const kh: Record<keyof typeof en, string> = {
   'tp.verify': 'ផ្ទៀងផ្ទាត់',
   'tp.reject': 'បដិសេធ',
   'tp.confirm_reject': 'បញ្ជាក់ការបដិសេធ',
+  'tp.confirm_reject_desc': 'តើអ្នកពិតជាចង់បដិសេធ "{docTitle}" ទេ? ក្រុមហ៊ុននឹងត្រូវផ្ទុកឡើងម្តងទៀត។',
+  'tp.confirm_verify_desc': 'តើអ្នកពិតជាចង់ផ្ទៀងផ្ទាត់ "{docTitle}" ទេ? នេះគឺមានន័យថាឯកសារត្រូវបានអនុម័ត។',
   'tp.document_comment_label': 'មតិយោបល់',
   'tp.document_comment_placeholder': 'បន្ថែមមតិយោបល់អំពីឯកសារ — ទាមទារសម្រាប់ការបដិសេធ អាចទុកទទេសម្រាប់ការផ្ទៀងផ្ទាត់។',
   'tp.document_verified': 'ឯកសារត្រូវបានផ្ទៀងផ្ទាត់។',

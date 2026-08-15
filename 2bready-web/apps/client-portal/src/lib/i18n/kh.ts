@@ -17,6 +17,9 @@ const kh: Record<keyof typeof en, string> = {
   'nav.support': 'ជំនួយ',
   'nav.more': 'ច្រើនទៀត',
   'nav.open_menu': 'បើកម៉ឺនុយ',
+  'common.cancel': 'បោះបង់',
+  'common.save': 'រក្សាទុក',
+  'common.delete': 'លុប',
 
   // ─── Nav descriptions ────────────────────────────────────────────────────
   'nav.journey_desc': 'បញ្ជីត្រួតពិនិត្យអនុលោមភាពជាជំហាន ៗ របស់អ្នកនឹងបង្ហាញនៅទីនេះ។',
@@ -76,6 +79,12 @@ const kh: Record<keyof typeof en, string> = {
   'journey.recurrence_monthly': 'ដាក់ស្នើប្រចាំខែ',
   'journey.recurrence_annual': 'ដាក់ស្នើប្រចាំឆ្នាំ',
   'journey.recurrence_expires_in': 'ផុតកំណត់ក្នុង {months} ខែ',
+  'journey.add_sub_document_title': 'បន្ថែមឯកសាររាងការបន្ថែម',
+  'journey.edit_sub_document_title': 'កែសម្រួលឯកសាររាងការបន្ថែម',
+  'journey.delete_sub_document_title': 'លុបឯកសាររាងការបន្ថែម',
+  'journey.delete_sub_document_desc': 'តើអ្នកពិតជាចង់លុប "{name}" ទេ? ការលុបនេះមិនអាចត្រឡប់វិញទេ។',
+  'journey.sub_document_name_label': 'ឈ្មោះឯកសាររាងការបន្ថែម',
+  'journey.sub_document_name_placeholder': 'បញ្ចូលឈ្មោះឯកសាររាងការបន្ថែម',
 
   // ─── Billing ─────────────────────────────────────────────────────────────
   'billing.view_bank_details': 'មើលព័ត៌មានធនាគារ',

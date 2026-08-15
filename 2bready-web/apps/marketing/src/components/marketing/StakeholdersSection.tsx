@@ -73,15 +73,6 @@ function StakeholderCard({
                 borderRadius: '16px',
                 bgcolor: `color-mix(in srgb, ${accent} 14%, transparent)`,
                 flexShrink: 0,
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  inset: -3,
-                  borderRadius: 'inherit',
-                  border: '1px solid',
-                  borderColor: `color-mix(in srgb, ${accent} 30%, transparent)`,
-                  opacity: 0.6,
-                },
               }}
             >
               <Icon sx={{ fontSize: 28, color: accent }} />

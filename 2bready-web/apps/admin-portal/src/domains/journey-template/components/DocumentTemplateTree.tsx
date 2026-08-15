@@ -74,6 +74,7 @@ function DocumentTemplateNode({ doc, dragData, onAdd, onEdit, onDelete }: Docume
         </Typography>
         {doc.company_id && <Chip label={t('journey_template.extra')} size="small" color="info" variant="outlined" />}
         {doc.is_required && <Chip label={t('journey_template.required')} size="small" variant="outlined" />}
+        {doc.client_can_add_subdocs && <Chip label={t('journey_template.client_can_add_subdocs')} size="small" color="success" variant="outlined" />}
         {recurrenceLabel && <Chip label={recurrenceLabel} size="small" variant="outlined" />}
         <IconButton size="small" onClick={() => onAdd(doc.id)} aria-label={t('journey_template.add_sub_document')}>
           <AddIcon fontSize="small" />

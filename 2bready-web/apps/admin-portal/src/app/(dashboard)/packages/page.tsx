@@ -105,16 +105,22 @@ export default function AdminPackagesPage() {
     setDialogOpen(true);
   };
 
+  const priceFor = (pkg: Package, period: 'monthly' | 'yearly') => {
+    const price = (pkg.prices ?? []).find((p) => p.billing_period === period);
+    return price?.price_cents ?? null;
+  };
+
   const openEdit = (pkg: Package) => {
     setEditing(pkg);
     reset({
       name: pkg.name,
       name_kh: pkg.name_kh ?? '',
       description: pkg.description ?? '',
-      price: pkg.price_cents / 100,
+      monthly_price: (priceFor(pkg, 'monthly') ?? 0) / 100,
+      yearly_price: (priceFor(pkg, 'yearly') ?? 0) / 100,
+      audit_fee: Number(pkg.audit_fee_cents ?? 0) / 100,
       industry_id: pkg.industry_id ?? '',
       journey_level_id: pkg.journey_level_id ?? '',
-      billing_period: pkg.billing_period,
       tier: pkg.tier,
       is_active: pkg.is_active,
       sort_order: pkg.sort_order,
@@ -131,10 +137,11 @@ export default function AdminPackagesPage() {
         name: parsed.name,
         name_kh: parsed.name_kh || undefined,
         description: parsed.description || undefined,
-        price_cents: Math.round(parsed.price * 100),
+        monthly_price_cents: Math.round(parsed.monthly_price * 100),
+        yearly_price_cents: Math.round(parsed.yearly_price * 100),
+        audit_fee_cents: Math.round(parsed.audit_fee * 100),
         industry_id: parsed.industry_id || undefined,
         journey_level_id: parsed.journey_level_id || undefined,
-        billing_period: parsed.billing_period,
         tier: parsed.tier,
         is_active: parsed.is_active,
         sort_order: parsed.sort_order,
@@ -180,8 +187,22 @@ export default function AdminPackagesPage() {
       },
     },
     { key: 'tier', label: t('package.tier_col'), render: (p) => t(`package.tier.${p.tier}`) },
-    { key: 'price_cents', label: t('package.price_col'), render: (p) => formatCents(p.price_cents) },
-    { key: 'billing_period', label: t('package.billing_period_col'), render: (p) => t(`package.billing_period.${p.billing_period}`) },
+    {
+      key: 'prices',
+      label: t('package.price_col'),
+      render: (p) => {
+        const monthly = priceFor(p, 'monthly');
+        const yearly = priceFor(p, 'yearly');
+        return (
+          <span className="text-sm">
+            {monthly !== null && <span>{formatCents(monthly)}{t('package.per_month')}</span>}
+            {monthly !== null && yearly !== null && <span className="mx-1.5 text-gray-400">·</span>}
+            {yearly !== null && <span>{formatCents(yearly)}{t('package.per_year')}</span>}
+            {monthly === null && yearly === null && <span className="text-gray-400">—</span>}
+          </span>
+        );
+      },
+    },
     { key: 'is_active', label: t('common.status'), render: (p) => <StatusBadge status={p.is_active ? 'active' : 'inactive'} /> },
     {
       key: 'actions',
@@ -260,31 +281,42 @@ export default function AdminPackagesPage() {
 
             <Box className="flex gap-4">
               <Box className="flex-1">
-                <FieldLabel>{t('package.price')}</FieldLabel>
+                <FieldLabel>{t('package.monthly_price')}</FieldLabel>
+                <FormTextField
+                  type="number"
+                  placeholder="19.90"
+                  fullWidth
+                  slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
+                  error={!!errors.monthly_price}
+                  helperText={errors.monthly_price?.message}
+                  {...register('monthly_price')}
+                />
+              </Box>
+              <Box className="flex-1">
+                <FieldLabel>{t('package.yearly_price')}</FieldLabel>
                 <FormTextField
                   type="number"
                   placeholder="199.00"
                   fullWidth
                   slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
-                  error={!!errors.price}
-                  helperText={errors.price?.message}
-                  {...register('price')}
+                  error={!!errors.yearly_price}
+                  helperText={errors.yearly_price?.message}
+                  {...register('yearly_price')}
                 />
               </Box>
-              <Box className="flex-1">
-                <FieldLabel>{t('package.billing_period_col')}</FieldLabel>
-                <Controller
-                  name="billing_period"
-                  control={control}
-                  render={({ field }) => (
-                    <FormSelect {...field} fullWidth error={!!errors.billing_period} helperText={errors.billing_period?.message}>
-                      <MenuItem value="monthly">{t('package.billing_period.monthly')}</MenuItem>
-                      <MenuItem value="yearly">{t('package.billing_period.yearly')}</MenuItem>
-                      <MenuItem value="one_time">{t('package.billing_period.one_time')}</MenuItem>
-                    </FormSelect>
-                  )}
-                />
-              </Box>
+            </Box>
+
+            <Box>
+              <FieldLabel>{t('package.audit_fee')}</FieldLabel>
+              <FormTextField
+                type="number"
+                placeholder="25.00"
+                fullWidth
+                slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
+                error={!!errors.audit_fee}
+                helperText={errors.audit_fee?.message}
+                {...register('audit_fee')}
+              />
             </Box>
 
             <Box className="flex gap-4">

@@ -34,6 +34,8 @@ export interface JourneyDocument {
   document_id: string | null;
   name: string;
   is_required: boolean;
+  client_can_add_subdocs: boolean;
+  parent_id: string | null;
   recurrence_type: RecurrenceType;
   expiry_months: number | null;
   status: string;

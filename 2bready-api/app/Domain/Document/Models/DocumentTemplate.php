@@ -24,6 +24,7 @@ use Illuminate\Support\Collection;
  * @property RecurrenceType $recurrence_type
  * @property int|null $expiry_months
  * @property Carbon|null $effective_since
+ * @property bool $client_can_add_subdocs
  *
  * @use HasFactory<DocumentTemplateFactory>
  */
@@ -45,6 +46,7 @@ class DocumentTemplate extends Model
         'name',
         'description',
         'is_required',
+        'client_can_add_subdocs',
         'recurrence_type',
         'expiry_months',
         'effective_since',
@@ -56,6 +58,7 @@ class DocumentTemplate extends Model
     {
         return [
             'is_required' => 'boolean',
+            'client_can_add_subdocs' => 'boolean',
             'recurrence_type' => RecurrenceType::class,
             'expiry_months' => 'integer',
             'effective_since' => 'date',

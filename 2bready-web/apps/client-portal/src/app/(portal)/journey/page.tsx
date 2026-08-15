@@ -6,6 +6,11 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -13,7 +18,11 @@ import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { getApiError } from '@2bready/api-client';
+import api from '@/lib/api';
 import {
   Breadcrumbs,
   SectionCard,
@@ -22,6 +31,7 @@ import {
   DocumentPreviewDialog,
   DocumentUploadPreviewDialog,
   PillToggle,
+  ConfirmDialog,
 } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
@@ -31,6 +41,7 @@ import { useJourney } from '@/components/JourneyProvider';
 import { usePackages } from '@/components/PackageProvider';
 import { PageLoader } from '@/components/PageLoader';
 import { useToast } from '@/components/ToastProvider';
+import { useAuthStore } from '@/store/auth.store';
 import { TIER_LABELS } from '@/lib/journey-data';
 import {
   allDocuments,
@@ -76,6 +87,7 @@ export default function JourneyPage() {
   const { journey, loading, refetch } = useJourney();
   const { packages } = usePackages();
   const toast = useToast();
+  const currentCompanyId = useAuthStore((s) => s.user?.current_company_id ?? null);
 
   const levels = useMemo(() => journey?.levels ?? [], [journey]);
   const totalDocs = allDocuments(journey).length;
@@ -107,9 +119,73 @@ export default function JourneyPage() {
   const [backfillTarget, setBackfillTarget] = useState<{ doc: JourneyDocument; entry: DocumentHistoryEntry } | null>(null);
   const backfillFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Add/edit sub-document dialog state
+  const [addSubDoc, setAddSubDoc] = useState<{ doc: JourneyDocument | null; name: string; editing: boolean }>({ doc: null, name: '', editing: false });
+
+  // Delete sub-document confirmation state
+  const [deleteSubDoc, setDeleteSubDoc] = useState<JourneyDocument | null>(null);
+
   function handleBackfillUpload(doc: JourneyDocument, entry: DocumentHistoryEntry) {
     setBackfillTarget({ doc, entry });
     backfillFileInputRef.current?.click();
+  }
+
+  function openAddSubDoc(doc: JourneyDocument) {
+    setAddSubDoc({ doc, name: '', editing: false });
+  }
+
+  function openEditSubDoc(doc: JourneyDocument) {
+    setAddSubDoc({ doc, name: doc.name, editing: true });
+  }
+
+  async function handleConfirmAddSubDoc() {
+    if (!addSubDoc.doc || !addSubDoc.name.trim()) return;
+    try {
+      if (addSubDoc.editing) {
+        await api.patch(`/my/document-templates/${addSubDoc.doc.id}`, {
+          name: addSubDoc.name.trim(),
+        });
+        toast.success('Sub-document updated.');
+      } else {
+        await api.post(`/my/document-templates/${addSubDoc.doc.id}/children`, {
+          name: addSubDoc.name.trim(),
+          description: '',
+          is_required: false,
+          client_can_add_subdocs: false,
+          recurrence_type: 'one_time',
+        });
+        toast.success('Sub-document added.');
+      }
+      setAddSubDoc({ doc: null, name: '', editing: false });
+      await refetch();
+    } catch (err) {
+      toast.error(getApiError(err).message || 'Could not save sub-document.');
+    }
+  }
+
+  async function handleDeleteSubDoc(doc: JourneyDocument) {
+    setDeleteSubDoc(doc);
+  }
+
+  async function handleConfirmDeleteSubDoc() {
+    if (!deleteSubDoc) return;
+    try {
+      await api.delete(`/my/document-templates/${deleteSubDoc.id}`);
+      toast.success('Sub-document deleted.');
+      await refetch();
+    } catch (err) {
+      toast.error(getApiError(err).message || 'Could not delete sub-document.');
+    } finally {
+      setDeleteSubDoc(null);
+    }
+  }
+
+  function handleCancelDeleteSubDoc() {
+    setDeleteSubDoc(null);
+  }
+
+  function handleCancelAddSubDoc() {
+    setAddSubDoc({ doc: null, name: '', editing: false });
   }
 
   const filteredLevels: JourneyLevel[] = useMemo(() => {
@@ -223,6 +299,27 @@ export default function JourneyPage() {
                 </IconButton>
               </Tooltip>
             )}
+          </>
+        )}
+        {doc.client_can_add_subdocs && (
+          <Tooltip title="Add sub-document">
+            <IconButton size="small" onClick={() => openAddSubDoc(doc)}>
+              <AddIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+        {doc.company_id === currentCompanyId && doc.parent_id && (
+          <>
+            <Tooltip title="Edit sub-document">
+              <IconButton size="small" onClick={() => openEditSubDoc(doc)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete sub-document">
+              <IconButton size="small" color="error" onClick={() => handleDeleteSubDoc(doc)}>
+                <DeleteOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </>
         )}
       </Box>
@@ -426,6 +523,40 @@ export default function JourneyPage() {
         onSaveDraft={stagedUpload?.targetPeriodKey ? undefined : handleSaveDraft}
         onReplace={(file) => setStagedUpload((prev) => (prev ? { ...prev, file } : prev))}
         onCancel={() => setStagedUpload(null)}
+      />
+
+      {/* Add sub-document dialog */}
+      <Dialog open={addSubDoc.doc !== null} onClose={handleCancelAddSubDoc} maxWidth="sm" fullWidth>
+        <DialogTitle>{addSubDoc.editing ? t('journey.edit_sub_document_title') : t('journey.add_sub_document_title')}</DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <TextField
+            autoFocus
+            label={t('journey.sub_document_name_label')}
+            placeholder={t('journey.sub_document_name_placeholder')}
+            fullWidth
+            value={addSubDoc.name}
+            onChange={(e) => setAddSubDoc({ ...addSubDoc, name: e.target.value })}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
+          <Button variant="text" onClick={handleCancelAddSubDoc}>{t('common.cancel')}</Button>
+          <Button variant="contained" onClick={handleConfirmAddSubDoc} disabled={!addSubDoc.name.trim()}>
+            {t('common.save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete sub-document confirmation */}
+      <ConfirmDialog
+        open={deleteSubDoc !== null}
+        onCancel={handleCancelDeleteSubDoc}
+        title={t('journey.delete_sub_document_title')}
+        description={t('journey.delete_sub_document_desc', { name: deleteSubDoc?.name ?? '' })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        danger
+        onConfirm={handleConfirmDeleteSubDoc}
       />
     </Box>
   );

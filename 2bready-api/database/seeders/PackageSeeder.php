@@ -42,17 +42,22 @@ class PackageSeeder extends Seeder
         // billing page's Monthly/Yearly toggle). Monthly is seeded as
         // yearly/10 (10 months ≈ 1 year is a common SaaS default); both are
         // admin-editable via the packages screen — mockup defaults only.
+        //
+        // audit_fee_cents is the TP firm's charge for the level's manual
+        // audit (shown on the landing pricing card as the fee line). Mockup
+        // defaults only — admin-editable with the rest of the package.
         $packages = [
-            ['name' => 'Compliance Readiness', 'name_kh' => null, 'description' => 'Authoritative legal and tax structuring.', 'tier' => Tier::Free, 'level_code' => 'L1', 'sort_order' => 1, 'prices' => ['monthly' => 0, 'yearly' => 0]],
-            ['name' => 'Product Excellence', 'name_kh' => null, 'description' => 'Certified quality and safety standards.', 'tier' => Tier::Pro, 'level_code' => 'L2', 'sort_order' => 2, 'prices' => ['monthly' => 490, 'yearly' => 4900]],
-            ['name' => 'Operational Excellence', 'name_kh' => null, 'description' => 'Robust managerial and financial workflows.', 'tier' => Tier::Pro, 'level_code' => 'L3', 'sort_order' => 3, 'prices' => ['monthly' => 990, 'yearly' => 9900]],
-            ['name' => 'Global Readiness', 'name_kh' => null, 'description' => 'Institutional investment & export grade.', 'tier' => Tier::Enterprise, 'level_code' => 'L4', 'sort_order' => 4, 'prices' => ['monthly' => 1990, 'yearly' => 19900]],
+            ['name' => 'Compliance Readiness', 'name_kh' => null, 'description' => 'Authoritative legal and tax structuring.', 'tier' => Tier::Free, 'level_code' => 'L1', 'sort_order' => 1, 'prices' => ['monthly' => 0, 'yearly' => 0], 'audit_fee_cents' => 0],
+            ['name' => 'Product Excellence', 'name_kh' => null, 'description' => 'Certified quality and safety standards.', 'tier' => Tier::Pro, 'level_code' => 'L2', 'sort_order' => 2, 'prices' => ['monthly' => 490, 'yearly' => 4900], 'audit_fee_cents' => 2500],
+            ['name' => 'Operational Excellence', 'name_kh' => null, 'description' => 'Robust managerial and financial workflows.', 'tier' => Tier::Pro, 'level_code' => 'L3', 'sort_order' => 3, 'prices' => ['monthly' => 990, 'yearly' => 9900], 'audit_fee_cents' => 7500],
+            ['name' => 'Global Readiness', 'name_kh' => null, 'description' => 'Institutional investment & export grade.', 'tier' => Tier::Enterprise, 'level_code' => 'L4', 'sort_order' => 4, 'prices' => ['monthly' => 1990, 'yearly' => 19900], 'audit_fee_cents' => 15000],
         ];
 
         foreach ($packages as $package) {
             $levelCode = $package['level_code'];
             $prices = $package['prices'];
-            unset($package['level_code'], $package['prices']);
+            $auditFeeCents = $package['audit_fee_cents'];
+            unset($package['level_code'], $package['prices'], $package['audit_fee_cents']);
 
             $level = $levelsByCode->get($levelCode);
 
@@ -62,6 +67,7 @@ class PackageSeeder extends Seeder
                     [
                         ...$package,
                         'price_cents' => $priceCents,
+                        'audit_fee_cents' => $auditFeeCents,
                         'billing_period' => $period,
                         'industry_id' => $fnb->id,
                         'journey_level_id' => $level?->id,

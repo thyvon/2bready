@@ -15,6 +15,7 @@ class DocumentTemplateData extends Data
         public readonly ?string $company_id = null,
         public readonly ?string $description = null,
         public readonly bool $is_required = true,
+        public readonly bool $client_can_add_subdocs = false,
         public readonly string $recurrence_type = 'one_time',
         public readonly ?int $expiry_months = null,
         public readonly int $sort_order = 0,

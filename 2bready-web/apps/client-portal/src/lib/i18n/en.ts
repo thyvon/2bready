@@ -12,6 +12,9 @@ const en = {
   'nav.support': 'Support',
   'nav.more': 'More',
   'nav.open_menu': 'Open menu',
+  'common.cancel': 'Cancel',
+  'common.save': 'Save',
+  'common.delete': 'Delete',
 
   // ─── Nav descriptions ────────────────────────────────────────────────────
   'nav.journey_desc': 'Your guided, step-by-step compliance checklist will appear here.',
@@ -71,6 +74,12 @@ const en = {
   'journey.recurrence_monthly': 'Monthly filing',
   'journey.recurrence_annual': 'Annual filing',
   'journey.recurrence_expires_in': 'Expires in {months}mo',
+  'journey.add_sub_document_title': 'Add Sub-Document',
+  'journey.edit_sub_document_title': 'Edit Sub-Document',
+  'journey.delete_sub_document_title': 'Delete Sub-Document',
+  'journey.delete_sub_document_desc': 'Are you sure you want to delete "{name}"? This action cannot be undone.',
+  'journey.sub_document_name_label': 'Sub-Document Name',
+  'journey.sub_document_name_placeholder': 'Enter sub-document name',
 
   // ─── Billing ─────────────────────────────────────────────────────────────
   'billing.view_bank_details': 'View Bank Details',

@@ -38,7 +38,7 @@ import {
   deleteExtraRequirement,
 } from '@/domains/journey/api';
 import { JourneyTree } from '@/domains/journey/components/JourneyTree';
-import type { Journey, JourneyDocument } from '@/domains/journey/types';
+import { findDocument, type Journey, type JourneyDocument } from '@/domains/journey/types';
 import { documentTemplateFormSchema, documentTemplateFormDefaults, type DocumentTemplateFormInput } from '@/domains/journey-template/schemas';
 import { RECURRENCE_KINDS, recurrenceKindNeedsMonths, recurrenceKindIsPeriodic, type RecurrenceKind } from '@/domains/journey-template/recurrence-kind';
 import { verifyDocument, rejectDocument, getPreviewUrl, uploadDocument } from '@/domains/document/api';
@@ -202,12 +202,33 @@ export default function CompanyJourneyPage() {
       setStagedUpload(null);
       await refetch();
       refreshCounts();
+      // The malware scan runs on a background queue worker, not on this
+      // request — poll for a bit so the tree updates itself the moment the
+      // scan finishes (pending_scan → review), mirroring client-portal's
+      // own Journey page, instead of leaving a stale "being scanned" toast.
+      void pollForScanResult(doc.id, doc.name);
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {
       setUploading(false);
     }
   };
+
+  // Polls the real journey every 2.5s (up to ~20s) after an upload, stopping
+  // as soon as this specific document leaves the "pending_scan" bucket — i.e.
+  // the background scan job (Horizon) has actually run. Fire-and-forget from
+  // the caller; the tree re-renders on its own via refetch()'s setState.
+  async function pollForScanResult(documentId: string, docName: string) {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      const fresh = await refetch();
+      const doc = findDocument(fresh, documentId);
+      if (doc && doc.status !== 'pending_scan') {
+        toast.success(`${docName} scan complete — now ${doc.status === 'review' ? 'In Review' : 'Verified'}.`);
+        return;
+      }
+    }
+  }
 
   const openAddExtra = (milestoneId: string, parentDocumentId: string | null) => {
     extraForm.reset(documentTemplateFormDefaults);
@@ -220,6 +241,7 @@ export default function CompanyJourneyPage() {
       name: doc.name,
       description: '',
       is_required: doc.is_required,
+      client_can_add_subdocs: doc.client_can_add_subdocs ?? false,
       recurrence_type: doc.recurrence_type,
       expiry_months: doc.expiry_months ?? undefined,
       effective_since: doc.effective_since ? doc.effective_since.slice(0, 10) : '',

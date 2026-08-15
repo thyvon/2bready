@@ -1,10 +1,10 @@
 import { adminUrl } from '@/lib/admin-url';
 
 export const heroContent = {
-  tagline: 'Comply. Scale. Lead.',
+  tagline: 'VERIFY. CONNECT. GROW.',
   headline: 'The Digital Trust Engine for ASEAN.',
   subheadline:
-    'A unified compliance and growth platform establishing verifiable trust between ambitious SMEs, Institutional Banks, Governments, and Global Investors.',
+    'Your gateway to verified growth. Build verifiable trust to seamlessly connect with regional markets and scale your enterprise.',
   primaryCta: { label: 'Explore Pathways', href: '/#pricing' },
   secondaryCta: { label: 'Why 2bReady?', href: '/#stakeholders' },
   digits: [

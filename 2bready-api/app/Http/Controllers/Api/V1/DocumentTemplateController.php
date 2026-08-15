@@ -18,6 +18,7 @@ use App\Http\Resources\Api\V1\DocumentTemplateResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use App\Domain\User\Models\User;
 
 // No index() here — document templates are always fetched nested inside a
 // JourneyTemplate's tree via JourneyTemplateController::show. Don't confuse
@@ -107,6 +108,56 @@ class DocumentTemplateController extends Controller
     public function destroy(DocumentTemplate $documentTemplate, DeleteDocumentTemplateAction $action): JsonResponse
     {
         $this->authorize('delete', $documentTemplate);
+
+        $action->execute($documentTemplate);
+
+        return ApiResponse::noContent();
+    }
+
+    // Company self-scoped child creation — the logged-in company adds a
+    // sub-document under a template they're allowed to extend.
+    // Route: POST /my/document-templates/{documentTemplate}/children
+    public function storeOwnChild(StoreDocumentTemplateRequest $request, DocumentTemplate $documentTemplate, CreateDocumentTemplateAction $action): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $this->authorize('addChild', $documentTemplate);
+
+        $child = $action->execute(DocumentTemplateData::from([
+            ...$request->validated(),
+            'milestone_id' => $documentTemplate->milestone_id,
+            'parent_id' => $documentTemplate->id,
+            'company_id' => $user->current_company_id,
+            // Client-added sub-docs are simple one-time, non-required by default
+            'recurrence_type' => 'one_time',
+            'is_required' => false,
+        ]));
+
+        return ApiResponse::created(new DocumentTemplateResource($child));
+    }
+
+    // Company self-scoped update — the logged-in company updates their own sub-document.
+    // Route: PATCH /my/document-templates/{documentTemplate}
+    public function updateOwn(UpdateDocumentTemplateRequest $request, DocumentTemplate $documentTemplate, UpdateDocumentTemplateAction $action): JsonResponse
+    {
+        $this->authorize('updateOwn', $documentTemplate);
+
+        // Only allow certain fields for client updates (not recurrence_type, expiry_months, etc.)
+        $data = array_intersect_key($request->validated(), array_flip([
+            'name', 'description', 'is_required', 'client_can_add_subdocs',
+        ]));
+
+        $documentTemplate = $action->execute($documentTemplate, $data);
+
+        return ApiResponse::success(new DocumentTemplateResource($documentTemplate));
+    }
+
+    // Company self-scoped delete — the logged-in company deletes their own sub-document.
+    // Route: DELETE /my/document-templates/{documentTemplate}
+    public function destroyOwn(DocumentTemplate $documentTemplate, DeleteDocumentTemplateAction $action): JsonResponse
+    {
+        $this->authorize('deleteOwn', $documentTemplate);
 
         $action->execute($documentTemplate);
 
