@@ -44,7 +44,7 @@ export const pricingPlans = [
     level: 'L1',
     icon: 'compliance',
     name: 'Compliance Readiness',
-    price: '$0',
+    price: '$190',
     period: '/ yr',
     fee: 'No verification fee',
     description: 'Authoritative legal and tax structuring.',
@@ -54,7 +54,7 @@ export const pricingPlans = [
       'Automated Patent & VAT Tracking',
       'NSSF & MLVT Labor Compliance',
     ],
-    cta: { label: 'Start Free', href: adminUrl('/register') },
+    cta: { label: 'Select Pathway', href: adminUrl('/register?level=l1') },
   },
   {
     level: 'L2',
@@ -198,7 +198,7 @@ export const howItWorksSteps = [
 export const ctaContent = {
   title: 'Ready to Get Started?',
   subtitle: 'Join ASEAN SMEs building verified trust with customers, banks, and investors on 2bReady.',
-  cta: { label: 'Get Started Free', href: adminUrl('/register') },
+  cta: { label: 'Get Started', href: adminUrl('/register') },
 };
 
 export const footerContent = {

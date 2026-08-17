@@ -27,7 +27,7 @@ export const packageFormSchema = z.object({
   audit_fee: priceDollars,
   industry_id: z.string().optional().or(z.literal('')),
   journey_level_id: z.string().optional().or(z.literal('')),
-  tier: z.enum(['free', 'pro', 'enterprise']),
+  tier: z.enum(['free', 'starter', 'pro', 'enterprise']),
   is_active: z.boolean(),
   sort_order: sortOrder,
 });
@@ -44,7 +44,7 @@ export const packageFormDefaults: PackageFormInput = {
   audit_fee: 0,
   industry_id: '',
   journey_level_id: '',
-  tier: 'free',
+  tier: 'starter',
   is_active: true,
   sort_order: 0,
 };

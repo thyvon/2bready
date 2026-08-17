@@ -84,6 +84,11 @@ const en = {
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   'auth.sign_in': 'Sign in',
+  'auth.admin_portal': 'Admin Portal',
+  'auth.admin_panel_title': 'Platform administration console',
+  'auth.admin_panel_desc': 'Manage companies, payments, audits and platform settings from one secure place.',
+  'auth.admin_login_subtitle': 'Access the back-office console.',
+  'auth.admin_restricted': 'Restricted to authorized staff. All activity is logged.',
   'auth.email_address': 'Email address',
   'auth.password': 'Password',
   'auth.forgot_password': 'Forgot password?',
@@ -181,6 +186,7 @@ const en = {
   'journey.unlocked': 'Unlocked',
   'journey.locked': 'Locked',
   'journey.tier_free': 'Free',
+  'journey.tier_starter': 'Starter',
   'journey.tier_pro': 'Pro',
   'journey.tier_enterprise': 'Enterprise',
   'journey.pillar_comply_label': 'Foundation',
@@ -233,6 +239,10 @@ const en = {
   'company.locale.kh': 'Khmer',
 
   // ─── Admin ───────────────────────────────────────────────────────────────
+  'admin.dashboard_title': 'Dashboard',
+  'admin.dashboard_subtitle': 'Overview of the platform at a glance.',
+  'admin.dashboard_coming_soon': 'Detailed metrics are on the way',
+  'admin.dashboard_coming_soon_desc': 'This area will soon show KPIs for companies, revenue, audits and documents. Use the sidebar to manage the platform in the meantime.',
   'admin.companies_title': 'Companies',
   'admin.companies_subtitle': 'Every company registered on the platform.',
   'admin.new_company': 'New Company',
@@ -349,6 +359,7 @@ const en = {
   'package.no_journey_level': 'None',
   'package.tier_col': 'Tier',
   'package.tier.free': 'Free',
+  'package.tier.starter': 'Starter',
   'package.tier.pro': 'Pro',
   'package.tier.enterprise': 'Enterprise',
   'package.sort_order': 'Display order',
@@ -566,7 +577,7 @@ const en = {
   'settings.tab_profile': 'Profile',
   'branding.title': 'Business Branding',
   'branding.desc': 'Upload your logo variants — main and footer, each with a light and dark version — they replace the default mark across the admin portal, client portal, TP portal and the marketing site.',
-  'branding.upload_button': 'Upload logo',
+  'branding.dropzone_hint': 'Click to browse or drag & drop — PNG, JPG, SVG or WEBP up to 2MB',
   'branding.remove_button': 'Remove logo',
   'branding.empty_state': 'No logo uploaded yet — showing the default mark.',
   'branding.upload_success': 'Logo uploaded — it now appears across all portals.',

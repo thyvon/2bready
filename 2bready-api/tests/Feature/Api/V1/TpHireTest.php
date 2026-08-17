@@ -10,6 +10,8 @@ use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Journey\Models\Milestone;
 use App\Domain\Marketplace\Models\TpHire;
+use App\Domain\Package\Models\Package;
+use App\Domain\Payment\Models\Subscription;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -63,6 +65,27 @@ function milestoneAtLevel(JourneyTemplate $template, string $code): Milestone
     ]);
 
     return Milestone::factory()->create(['journey_level_id' => $level->id]);
+}
+
+/** Grants $company an active subscription to $level, so that level surfaces
+ *  as unlocked. Every level is a paid tier now — a company with no
+ *  subscription has no unlocked levels at all (see JourneyProgressService),
+ *  so tests exercising anything that depends on a level being unlocked must
+ *  subscribe the company first. */
+function subscribeCompanyToLevel(Company $company, JourneyLevel $level, ?int $industryId = null): Subscription
+{
+    $package = Package::factory()->create([
+        'tier' => 'pro',
+        'journey_level_id' => $level->id,
+        'industry_id' => $industryId ?? $company->industry_id,
+    ]);
+    $subscription = Subscription::factory()->active()->create([
+        'company_id' => $company->id,
+        'package_id' => $package->id,
+    ]);
+    $company->update(['active_subscription_id' => $subscription->id]);
+
+    return $subscription;
 }
 
 // ─── Create (admin) ──────────────────────────────────────────────────────────
@@ -127,7 +150,10 @@ it('lets a company_owner hire a TP firm for their own company via bank transfer'
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $tpPartner = TpPartner::factory()->create(['price_l3_cents' => 39900]);
-    milestoneAtLevel(createCompanyJourney($company), 'L3');
+    $journeyTemplate = createCompanyJourney($company);
+    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'lead', 'sort_order' => 3]);
+    Milestone::factory()->create(['journey_level_id' => $l3Level->id]);
+    subscribeCompanyToLevel($company, $l3Level);
 
     $response = $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
         'tp_partner_id' => $tpPartner->id,
@@ -151,7 +177,10 @@ it("ignores a client-supplied company_id and uses the caller's own company", fun
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $otherCompany = Company::factory()->create();
     $tpPartner = TpPartner::factory()->create();
-    milestoneAtLevel(createCompanyJourney($company), 'L3');
+    $journeyTemplate = createCompanyJourney($company);
+    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'lead', 'sort_order' => 3]);
+    Milestone::factory()->create(['journey_level_id' => $l3Level->id]);
+    subscribeCompanyToLevel($company, $l3Level);
 
     $response = $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
         'company_id' => $otherCompany->id,
@@ -316,7 +345,9 @@ it('activates the hire once the company pays and admin confirms, and the TP can 
         ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $company->id);
 
     $journeyTemplate = createCompanyJourney($company);
-    $milestone = milestoneAtLevel($journeyTemplate, 'L3');
+    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'lead', 'sort_order' => 3]);
+    $milestone = Milestone::factory()->create(['journey_level_id' => $l3Level->id]);
+    subscribeCompanyToLevel($company, $l3Level);
     $template = DocumentTemplate::factory()->create(['milestone_id' => $milestone->id]);
     $document = Document::factory()->create([
         'company_id' => $company->id,
@@ -481,6 +512,8 @@ it('scopes the journey tree to only the level(s) a TP firm is actively hired for
     DocumentTemplate::factory()->create(['milestone_id' => $l2Milestone->id, 'name' => 'L2 doc']);
     DocumentTemplate::factory()->create(['milestone_id' => $l3Milestone->id, 'name' => 'L3 doc']);
 
+    subscribeCompanyToLevel($company, $l2Milestone->journeyLevel);
+
     // Hired for L2 only, even though the company's journey also has an L3.
     TpHire::factory()->active()->create([
         'company_id' => $company->id,
@@ -510,6 +543,8 @@ it('excludes a hired level from the journey tree while the company hasn\'t unloc
     $l3 = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'comply', 'sort_order' => 2]);
     Milestone::factory()->create(['journey_level_id' => $l2->id]);
     Milestone::factory()->create(['journey_level_id' => $l3->id]);
+
+    subscribeCompanyToLevel($company, $l3);
 
     // Hired for both — the gap being tested is "hired but not yet unlocked",
     // not "not hired".

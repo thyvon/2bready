@@ -361,6 +361,7 @@ export default function AdminPackagesPage() {
                   render={({ field }) => (
                     <FormSelect {...field} fullWidth error={!!errors.tier} helperText={errors.tier?.message}>
                       <MenuItem value="free">{t('package.tier.free')}</MenuItem>
+                      <MenuItem value="starter">{t('package.tier.starter')}</MenuItem>
                       <MenuItem value="pro">{t('package.tier.pro')}</MenuItem>
                       <MenuItem value="enterprise">{t('package.tier.enterprise')}</MenuItem>
                     </FormSelect>

@@ -88,6 +88,11 @@ const kh: Record<keyof typeof en, string> = {
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   'auth.sign_in': 'ចូល',
+  'auth.admin_portal': 'វិបផតថលអ្នកគ្រប់គ្រង',
+  'auth.admin_panel_title': 'ផ្ទាំងគ្រប់គ្រងវេទិកា',
+  'auth.admin_panel_desc': 'គ្រប់គ្រងក្រុមហ៊ុន ការទូទាត់ សវនកម្ម និងការកំណត់វេទិកាពីកន្លែងដែលមានសុវត្ថិភាពតែមួយ។',
+  'auth.admin_login_subtitle': 'ចូលទៅកាន់ផ្ទាំងគ្រប់គ្រងខាងក្រោយ។',
+  'auth.admin_restricted': 'សម្រាប់តែបុគ្គលិកដែលមានការអនុញ្ញាតប៉ុណ្ណោះ។ សកម្មភាពទាំងអស់ត្រូវបានកត់ត្រា។',
   'auth.email_address': 'អាសយដ្ឋានអ៊ីមែល',
   'auth.password': 'ពាក្យសម្ងាត់',
   'auth.forgot_password': 'ភ្លេចពាក្យសម្ងាត់?',
@@ -185,6 +190,7 @@ const kh: Record<keyof typeof en, string> = {
   'journey.unlocked': 'បានដោះសោ',
   'journey.locked': 'ជាប់សោ',
   'journey.tier_free': 'ឥតគិតថ្លៃ',
+  'journey.tier_starter': 'អ្នកចាប់ផ្តើម',
   'journey.tier_pro': 'ប្រូ',
   'journey.tier_enterprise': 'សហគ្រាស',
   'journey.pillar_comply_label': 'គ្រឹះ',
@@ -237,6 +243,10 @@ const kh: Record<keyof typeof en, string> = {
   'company.locale.kh': 'ខ្មែរ',
 
   // ─── Admin ───────────────────────────────────────────────────────────────
+  'admin.dashboard_title': 'ផ្ទាំងគ្រប់គ្រង',
+  'admin.dashboard_subtitle': 'ទិដ្ឋភាពទូទៅនៃវេទិកានៅក្រឡេកមួយ។',
+  'admin.dashboard_coming_soon': 'សូចនាករលម្អិតកំពុងត្រូវបានរៀបចំ',
+  'admin.dashboard_coming_soon_desc': 'តំបន់នេះនឹងបង្ហាញ KPI សម្រាប់ក្រុមហ៊ុន ចំណូល សវនកម្ម និងឯកសារក្នុងពេលឆាប់ៗ។ សូមប្រើរបារចំហៀងដើម្បីគ្រប់គ្រងវេទិកានាពេលនេះ។',
   'admin.companies_title': 'ក្រុមហ៊ុន',
   'admin.companies_subtitle': 'ក្រុមហ៊ុនទាំងអស់ដែលបានចុះឈ្មោះលើវេទិកា។',
   'admin.new_company': 'ក្រុមហ៊ុនថ្មី',
@@ -353,6 +363,7 @@ const kh: Record<keyof typeof en, string> = {
   'package.no_journey_level': 'គ្មាន',
   'package.tier_col': 'ថ្នាក់',
   'package.tier.free': 'ឥតគិតថ្លៃ',
+  'package.tier.starter': 'អ្នកចាប់ផ្តើម',
   'package.tier.pro': 'ប្រូ',
   'package.tier.enterprise': 'សហគ្រាស',
   'package.sort_order': 'លំដាប់បង្ហាញ',
@@ -570,7 +581,7 @@ const kh: Record<keyof typeof en, string> = {
   'settings.tab_profile': 'ព័ត៌មានផ្ទាល់ខ្លួន',
   'branding.title': 'ម៉ាកអាជីវកម្ម',
   'branding.desc': 'បង្ហោះបំរែបំរួលឡូហ្គោរបស់អ្នក — ចម្បង និងបាតទំព័រ នីមួយៗមានកំណែភ្លឺ និងងងឹត — ពួកវានឹងជំនួសសញ្ញាលំនាំដើមនៅលើវិបផតថលរដ្ឋបាល វិបផតថលអតិថិជន វិបផតថល TP និងគេហទំព័រទីផ្សារ។',
-  'branding.upload_button': 'បង្ហោះឡូហ្គោ',
+  'branding.dropzone_hint': 'ចុចដើម្បីរកមើល ឬអូសហើយទម្លាក់ — PNG, JPG, SVG ឬ WEBP ទំហំអតិបរមា 2MB',
   'branding.remove_button': 'លុបឡូហ្គោ',
   'branding.empty_state': 'មិនទាន់បង្ហោះឡូហ្គោទេ — កំពុងបង្ហាញសញ្ញាលំនាំដើម។',
   'branding.upload_success': 'បានបង្ហោះឡូហ្គោ — ឥឡូវវាលេចឡើងនៅលើវិបផតថលទាំងអស់។',

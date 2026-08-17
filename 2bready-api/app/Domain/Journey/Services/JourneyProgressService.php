@@ -7,8 +7,6 @@ namespace App\Domain\Journey\Services;
 use App\Domain\Company\Models\Company;
 use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
-use App\Domain\Package\Enums\Tier;
-use App\Domain\Package\Models\Package;
 use App\Domain\Payment\Models\Subscription;
 use Illuminate\Support\Collection;
 
@@ -16,10 +14,11 @@ use Illuminate\Support\Collection;
  * Unlock logic: sequential-within-pillar, capped by what the company's
  * plan entitles them to (Week 2's "journey activation by plan" per the
  * proposal). Deliberately mirrors client-portal's activeLevelCodes()
- * (journey-data.ts) exactly — a pillar's first level is always unlocked
- * (subject to the plan cap below), and each subsequent level within the
- * same pillar unlocks only once every milestone of the previous level in
- * that pillar has a MilestoneCompletion for this company. Levels in
+ * (journey-data.ts) exactly — within the plan cap, a pillar's first level
+ * unlocks on its own, and each subsequent level within the same pillar
+ * unlocks only once every milestone of the previous level in that pillar
+ * has a MilestoneCompletion for this company. Without an active (paid)
+ * subscription the cap is zero, so nothing is unlocked at all. Levels in
  * different pillars don't gate each other (matches the existing, already
  * signed-off Comply/Scale/Lead grouping).
  */
@@ -83,11 +82,10 @@ class JourneyProgressService
      * Subscription once ConfirmPaymentAction has activated it, so a null
      * here genuinely means "hasn't checked out yet" rather than "pending."
      *
-     * With no active subscription, default to this company's industry's
-     * Free-tier package (Tier::Free costs $0, so nothing should require an
-     * explicit checkout to see it) rather than locking everything out. If
-     * that industry has no packages configured at all yet, don't gate
-     * (fail open) instead of blocking every company in it.
+     * Every level is now a paid tier (L1 is the paid 'starter' tier, $19/mo
+     * — see the seeder), so a company with no active subscription is not
+     * entitled to anything: return 0 so not a single level surfaces as
+     * unlocked until they check out.
      */
     private function subscriptionCapSortOrder(Company $company): int
     {
@@ -104,18 +102,7 @@ class JourneyProgressService
             return $entitledLevel->sort_order;
         }
 
-        $freeLevel = Package::query()
-            ->where('industry_id', $company->industry_id)
-            ->where('tier', Tier::Free)
-            ->with('journeyLevel')
-            ->first()
-            ?->journeyLevel;
-
-        if ($freeLevel) {
-            return $freeLevel->sort_order;
-        }
-
-        return PHP_INT_MAX;
+        return 0;
     }
 
     /**

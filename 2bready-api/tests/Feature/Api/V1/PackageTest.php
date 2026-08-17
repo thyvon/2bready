@@ -266,12 +266,12 @@ it('nests the real journey level data in the public pricing list', function () {
     $template = JourneyTemplate::factory()->create(['country_code' => 'KH', 'industry_id' => $fnb->id]);
     $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pathway_name' => 'The Launchpad']);
     Milestone::factory()->create(['journey_level_id' => $level->id, 'name' => 'Corporate & Legal', 'sort_order' => 1]);
-    Package::factory()->create(['name' => 'Compliance Readiness', 'tier' => 'free', 'journey_level_id' => $level->id, 'audit_fee_cents' => 0]);
+    Package::factory()->create(['name' => 'Compliance Readiness', 'tier' => 'starter', 'journey_level_id' => $level->id, 'audit_fee_cents' => 0]);
 
     $response = $this->getJson('/api/v1/pricing');
 
     $response->assertOk()
-        ->assertJsonPath('data.0.tier', 'free')
+        ->assertJsonPath('data.0.tier', 'starter')
         ->assertJsonPath('data.0.journey_level_code', 'L1')
         ->assertJsonPath('data.0.pathway_name', 'The Launchpad')
         ->assertJsonPath('data.0.audit_fee_cents', 0)

@@ -113,8 +113,10 @@ const staticFallbackPlans: PricingPlan[] = staticPricingPlans.map((plan, i) => (
   level: plan.level,
   icon: plan.icon,
   name: plan.name,
-  monthlyCents: i === 0 ? 0 : null,
-  yearlyCents: parseFloat(plan.price.replace('$', '').replace(',', '')) || 0,
+  // L1 is a paid 'starter' level now ($190/yr, $19/mo in the seeder) — the
+  // `$0` free-first-card special case was retired with the old free tier.
+  monthlyCents: i === 0 ? 1900 : null,
+  yearlyCents: i === 0 ? 19000 : parseFloat(plan.price.replace('$', '').replace(',', '')) || 0,
   auditFeeCents: 0,
   fee: plan.fee,
   description: plan.description,

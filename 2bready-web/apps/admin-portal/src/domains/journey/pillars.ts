@@ -1,4 +1,4 @@
-export type Tier = 'free' | 'pro' | 'enterprise';
+export type Tier = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export interface Pillar {
   id: 'comply' | 'scale' | 'lead';
@@ -10,7 +10,7 @@ export interface Pillar {
 // display copy (label/name/sub/description) is translated via journey.pillar_*
 // keys in lib/i18n, not hardcoded English like the client-portal source.
 export const PILLARS: Pillar[] = [
-  { id: 'comply', tier: 'free' },
+  { id: 'comply', tier: 'starter' },
   { id: 'scale', tier: 'pro' },
   { id: 'lead', tier: 'enterprise' },
 ];

@@ -20,7 +20,7 @@ class UpdatePackageRequest extends FormRequest
             'audit_fee_cents' => ['sometimes', 'integer', 'min:0'],
             'industry_id' => ['sometimes', 'nullable', 'string', 'exists:industries,id'],
             'journey_level_id' => ['sometimes', 'nullable', 'string', 'exists:journey_levels,id'],
-            'tier' => ['sometimes', 'string', 'in:free,pro,enterprise'],
+            'tier' => ['sometimes', 'string', 'in:free,starter,pro,enterprise'],
             'is_active' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];

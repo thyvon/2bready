@@ -1836,6 +1836,15 @@ export interface components {
         PaymentResource: {
             id: string;
             company_id: string;
+            /**
+             * @description Only present when eager-loaded (the back-office payment queue) —
+             *     a company viewing its own payment history already knows which
+             *     company it is, so this stays absent from that response.
+             */
+            company?: {
+                id: string;
+                name: string;
+            };
             payable_id: string;
             /**
              * @description The short morph alias ('subscription' | 'tp_hire' — see AppServiceProvider's
@@ -2054,7 +2063,7 @@ export interface components {
             industry_id?: string | null;
             journey_level_id?: string | null;
             /** @enum {string} */
-            tier?: "free" | "pro" | "enterprise";
+            tier?: "free" | "starter" | "pro" | "enterprise";
             is_active?: boolean;
             sort_order?: number;
         };
@@ -2112,7 +2121,7 @@ export interface components {
          * Tier
          * @enum {string}
          */
-        Tier: "free" | "pro" | "enterprise";
+        Tier: "free" | "starter" | "pro" | "enterprise";
         /** TotpVerifyRequest */
         TotpVerifyRequest: {
             code: string;
@@ -2307,7 +2316,7 @@ export interface components {
             industry_id?: string | null;
             journey_level_id?: string | null;
             /** @enum {string} */
-            tier?: "free" | "pro" | "enterprise";
+            tier?: "free" | "starter" | "pro" | "enterprise";
             is_active?: boolean;
             sort_order?: number;
         };

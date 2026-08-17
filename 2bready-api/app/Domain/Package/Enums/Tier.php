@@ -9,6 +9,7 @@ namespace App\Domain\Package\Enums;
 enum Tier: string
 {
     case Free = 'free';
+    case Starter = 'starter';
     case Pro = 'pro';
     case Enterprise = 'enterprise';
 }

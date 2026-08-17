@@ -29,6 +29,7 @@ export interface PillarCardProps {
 // rather than a second brand color creeping in everywhere.
 const TIER_ACCENT: Record<Tier, string> = {
   free: 'var(--mui-palette-text-primary)',
+  starter: 'var(--mui-palette-primary-main)',
   pro: 'var(--mui-palette-primary-main)',
   enterprise: '#b8860b',
 };

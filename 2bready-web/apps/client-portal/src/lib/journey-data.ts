@@ -7,10 +7,11 @@
 // pillar marketing copy — display-only text with no backend column, unlike
 // the actual unlock decision, which reads the real Package.tier/level.unlocked
 // data (see project memory).
-export type Tier = 'free' | 'pro' | 'enterprise';
+export type Tier = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export const TIER_LABELS: Record<Tier, string> = {
   free: 'FREE',
+  starter: 'STARTER',
   pro: 'PRO',
   enterprise: 'ENTERPRISE',
 };
@@ -37,7 +38,7 @@ export const PILLARS: Pillar[] = [
     name: 'Comply',
     sub: 'Audit-Ready · Local Laws',
     description: 'Precision in GDT, MoC, MLVT compliance. Risk mitigation and full regulatory alignment.',
-    tier: 'free',
+    tier: 'starter',
   },
   {
     id: 'scale',
