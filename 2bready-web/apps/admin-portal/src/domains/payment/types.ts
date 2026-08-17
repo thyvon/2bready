@@ -11,6 +11,8 @@ export type PaymentStatus = 'pending' | 'awaiting_confirmation' | 'confirmed' | 
 export type Payment = {
   id: string;
   company_id: string;
+  // Present when eager-loaded (back-office queue) — see PaymentResource.
+  company?: { id: string; name: string } | null;
   payable_id: string;
   // Short morph alias from the backend (see AppServiceProvider's morph map) —
   // 'subscription' for a package purchase, 'tp_hire' for a TP-hire engagement.

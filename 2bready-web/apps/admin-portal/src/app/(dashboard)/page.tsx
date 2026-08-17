@@ -1,15 +1,28 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Box from '@mui/material/Box';
+import DashboardIcon from '@mui/icons-material/GridViewOutlined';
+import { useTranslation } from '@/lib/i18n';
+import PageHeader from '@/components/ui/PageHeader';
+import SectionCard from '@/components/ui/SectionCard';
+import EmptyState from '@/components/ui/EmptyState';
 
-// No general admin dashboard yet — Companies is the only built-out section so far.
-export default function AdminIndexPage() {
-  const router = useRouter();
+// Admin dashboard shell. KPI tiles (companies, revenue, audits, documents)
+// land with their backend endpoint — until then this is the post-login
+// landing surface instead of bouncing straight into /companies.
+export default function AdminDashboardPage() {
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    router.replace('/companies');
-  }, [router]);
-
-  return null;
+  return (
+    <Box>
+      <PageHeader title={t('admin.dashboard_title')} />
+      <SectionCard title={t('admin.dashboard_title')} subtitle={t('admin.dashboard_subtitle')}>
+        <EmptyState
+          icon={<DashboardIcon fontSize="inherit" />}
+          title={t('admin.dashboard_coming_soon')}
+          description={t('admin.dashboard_coming_soon_desc')}
+        />
+      </SectionCard>
+    </Box>
+  );
 }

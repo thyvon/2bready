@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useColorScheme } from '@mui/material/styles';
 import { getBranding, type BrandLogoVariant, type BrandingSlots } from './api';
 
@@ -23,6 +23,24 @@ interface BrandingCache {
 let cache: BrandingCache | null | undefined;
 let fetching = false;
 
+// Invalidation signal: bumped every time an admin uploads/removes a logo.
+// Mounted hooks subscribe via useSyncExternalStore and re-fetch when it
+// changes — clearing the module/localStorage caches alone would leave the
+// sidebar/auth/login showing stale URLs until the 8-min TTL passed.
+let invalidateVersion = 0;
+const invalidateListeners = new Set<() => void>();
+
+function subscribeToInvalidation(listener: () => void): () => void {
+  invalidateListeners.add(listener);
+  return () => {
+    invalidateListeners.delete(listener);
+  };
+}
+
+function getInvalidateVersion(): number {
+  return invalidateVersion;
+}
+
 function readCache(): BrandingCache | null {
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
@@ -44,11 +62,31 @@ function writeCache(slots: BrandingSlots): void {
 }
 
 /**
+ * Drop the cached branding payload so every mounted hook re-fetches on its
+ * next pass. Call after an admin uploads/removes a logo — otherwise the
+ * sidebar/auth/login keep showing the stale (or missing) logo until the
+ * 8-minute TTL naturally expires.
+ */
+export function invalidateBrandingCache(): void {
+  cache = null;
+  try {
+    window.localStorage.removeItem(CACHE_KEY);
+  } catch {
+    // storage unavailable — the module cache reset above is enough.
+  }
+  invalidateVersion += 1;
+  invalidateListeners.forEach((listener) => listener());
+}
+
+/**
  * Signed URL for one branding slot. undefined = still loading on a
  * never-cached visit (render a sized placeholder); null = slot empty
  * (render the default BrandMark).
  */
 export function useBrandLogo(variant: BrandLogoVariant = 'light'): string | null | undefined {
+  // Re-render + re-run the fetch effect whenever an admin invalidates the
+  // cache (upload/remove) — otherwise this hook never notices the change.
+  const invalidateVersion = useSyncExternalStore(subscribeToInvalidation, getInvalidateVersion, () => 0);
   const [slots, setSlots] = useState<BrandingSlots | null | undefined>(cache?.slots);
 
   useEffect(() => {
@@ -67,7 +105,12 @@ export function useBrandLogo(variant: BrandLogoVariant = 'light'): string | null
         if (cached) {
           cache = cached;
           setSlots(cached.slots);
-          return Date.now() - cached.fetchedAt < CACHE_TTL_MS ? null : getBranding();
+          // An all-null payload is treated as suspect: it usually means the
+          // cache predates a logo upload (and the signed URL would be dead
+          // anyway). Only a fresh cache that actually HAS a logo skips the
+          // background refetch.
+          const hasAny = Boolean(cached.slots && (cached.slots.light || cached.slots.dark || cached.slots.footer || cached.slots.footerDark));
+          return hasAny && Date.now() - cached.fetchedAt < CACHE_TTL_MS ? null : getBranding();
         }
         return getBranding();
       })
@@ -83,7 +126,7 @@ export function useBrandLogo(variant: BrandLogoVariant = 'light'): string | null
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [invalidateVersion]);
 
   return slots?.[variant] ?? null;
 }

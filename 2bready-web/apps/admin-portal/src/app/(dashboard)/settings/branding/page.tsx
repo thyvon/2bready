@@ -4,14 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { useAuthStore } from '@/store/auth.store';
-import { ConfirmDialog, EmptyState, UploadDropzone } from '@2bready/ui-core';
+import { ConfirmDialog, InlineDropzone } from '@2bready/ui-core';
 import {
   deleteBrandLogo,
   getBranding,
@@ -21,6 +19,7 @@ import {
 } from '@/domains/branding/api';
 import { getApiError } from '@/lib/utils';
 import { useTranslation, type TranslationKey } from '@/lib/i18n';
+import { invalidateBrandingCache } from '@/domains/branding/hooks';
 
 interface SlotDef {
   variant: BrandLogoVariant;
@@ -54,7 +53,6 @@ export default function BrandingSettingsPage() {
 
   const [urls, setUrls] = useState<BrandingSlots>(EMPTY_URLS);
   const [loading, setLoading] = useState(true);
-  const [uploadOpen, setUploadOpen] = useState<BrandLogoVariant | null>(null);
   const [removeOpen, setRemoveOpen] = useState<BrandLogoVariant | null>(null);
   const [busy, setBusy] = useState<BrandLogoVariant | null>(null);
 
@@ -89,12 +87,12 @@ export default function BrandingSettingsPage() {
     try {
       const url = await uploadBrandLogo(file, variant);
       setUrls((prev) => ({ ...prev, [variant]: url }));
+      invalidateBrandingCache();
       toast.success(t('branding.upload_success'));
     } catch (err) {
       toast.error(getApiError(err).message || t('branding.upload_error'));
     } finally {
       setBusy(null);
-      setUploadOpen(null);
     }
   };
 
@@ -104,6 +102,7 @@ export default function BrandingSettingsPage() {
     try {
       await deleteBrandLogo(removeOpen);
       setUrls((prev) => ({ ...prev, [removeOpen]: null }));
+      invalidateBrandingCache();
       toast.success(t('branding.remove_success'));
     } catch (err) {
       toast.error(getApiError(err).message || t('branding.remove_error'));
@@ -115,85 +114,84 @@ export default function BrandingSettingsPage() {
 
   return (
     <SectionCard title={t('branding.title')} subtitle={t('branding.desc')}>
-      <Box>
-        {SLOTS.map((slot, i) => {
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+        {SLOTS.map((slot) => {
           const url = urls[slot.variant];
 
           return (
-            <Box key={slot.variant}>
-              {i > 0 && <Divider sx={{ my: 4 }} />}
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 3, flexWrap: 'wrap' }}>
-                <Box sx={{ flex: 1, minWidth: 260 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+            <Box
+              key={slot.variant}
+              sx={{
+                p: 2.5,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
                     {t(slot.titleKey)}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                     {t(slot.descKey)}
                   </Typography>
-                  <Box
-                    sx={{
-                      p: 2,
-                      border: '1px solid',
-                      borderColor: slot.darkPreview ? '#444444' : 'divider',
-                      borderRadius: '12px',
-                      bgcolor: slot.darkPreview ? '#141414' : 'background.default',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minWidth: 180,
-                      minHeight: 72,
-                    }}
-                  >
-                    {loading ? null : url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={url}
-                        alt=""
-                        style={{ height: 40, maxWidth: 220, width: 'auto', objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <Box sx={{ width: '100%' }}>
-                        <EmptyState title={t('branding.empty_state')} />
-                      </Box>
-                    )}
-                  </Box>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', pt: 4 }}>
+                {url && (
                   <Button
-                    startIcon={<UploadFileOutlinedIcon />}
-                    variant="contained"
+                    color="error"
+                    variant="text"
                     size="small"
+                    sx={{ flexShrink: 0, mt: -0.5, mr: -0.5 }}
                     disabled={busy !== null}
-                    onClick={() => setUploadOpen(slot.variant)}
+                    onClick={() => setRemoveOpen(slot.variant)}
                   >
-                    {t('branding.upload_button')}
+                    {t('branding.remove_button')}
                   </Button>
-                  {url && (
-                    <Button
-                      color="error"
-                      variant="outlined"
-                      size="small"
-                      disabled={busy !== null}
-                      onClick={() => setRemoveOpen(slot.variant)}
-                    >
-                      {t('branding.remove_button')}
-                    </Button>
-                  )}
-                </Box>
+                )}
               </Box>
+
+              <Box
+                sx={{
+                  p: 1.5,
+                  border: '1px solid',
+                  borderColor: slot.darkPreview ? '#444444' : 'divider',
+                  borderRadius: '12px',
+                  bgcolor: slot.darkPreview ? '#141414' : 'background.default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 64,
+                }}
+              >
+                {loading ? null : url ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={url}
+                    alt=""
+                    style={{ height: 36, maxWidth: 200, width: 'auto', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <Typography variant="caption" color="text.secondary">
+                    {t('branding.empty_state')}
+                  </Typography>
+                )}
+              </Box>
+
+              <InlineDropzone
+                accept=".png,.jpg,.jpeg,.svg,.webp"
+                maxSizeMB={2}
+                disabled={busy !== null}
+                hint={t('branding.dropzone_hint')}
+                onUpload={(file) => void handleUpload(slot.variant, file)}
+              />
             </Box>
           );
         })}
       </Box>
-
-      <UploadDropzone
-        open={uploadOpen !== null}
-        onClose={() => setUploadOpen(null)}
-        onUpload={(file) => uploadOpen && void handleUpload(uploadOpen, file)}
-        title={t('branding.upload_button')}
-        accept=".png,.jpg,.jpeg,.svg,.webp"
-        maxSizeMB={2}
-      />
 
       <ConfirmDialog
         open={removeOpen !== null}

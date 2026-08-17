@@ -22,7 +22,7 @@ class PaymentController extends Controller
 
         // BelongsToCompany's global scope already restricts this to the current
         // user's own company (with the internal-role bypass built in) — see Rule #1.
-        $query = Payment::query()->latest();
+        $query = Payment::query()->with('company')->latest();
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);

@@ -33,7 +33,7 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
 
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState('awaiting_confirmation');
+  const [status, setStatus] = useState('');
   const [actingOn, setActingOn] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<Payment | null>(null);
 
@@ -102,6 +102,9 @@ export default function PaymentsListView({ companyId }: PaymentsListViewProps) {
   };
 
   const columns: Column<Payment>[] = [
+    ...(companyId
+      ? []
+      : [{ key: 'company', label: t('admin.company_col'), render: (p: Payment) => p.company?.name ?? '—' }]),
     { key: 'gateway_reference', label: t('admin.reference_col'), render: (p) => p.gateway_reference ?? '—' },
     {
       key: 'payable_type',

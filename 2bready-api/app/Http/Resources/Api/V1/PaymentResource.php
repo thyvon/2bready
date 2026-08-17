@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Domain\Company\Models\Company;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\Payment;
 use Illuminate\Http\Request;
@@ -20,6 +21,15 @@ class PaymentResource extends JsonResource
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
+            // Only present when eager-loaded (the back-office payment queue) —
+            // a company viewing its own payment history already knows which
+            // company it is, so this stays absent from that response.
+            'company' => $this->whenLoaded('company', function () {
+                /** @var Company $company */
+                $company = $this->company;
+
+                return ['id' => $company->id, 'name' => $company->name];
+            }),
             'payable_id' => $this->payable_id,
             // The short morph alias ('subscription' | 'tp_hire' — see AppServiceProvider's
             // morph map), not a raw class name, so the frontend can label a row ("Package: X"

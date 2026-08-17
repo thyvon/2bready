@@ -47,41 +47,64 @@ function writeCache(slots: BrandingSlots): void {
  * Signed URL for one branding slot. undefined = still loading on a
  * never-cached visit (render a sized placeholder); null = slot empty
  * (render the default BrandMark).
+ *
+ * Re-validates whenever the tab regains focus, so a logo the admin just
+ * uploaded shows up without waiting for the 8-min TTL or a full reload —
+ * the cached URL renders instantly and the fresh network result replaces it.
  */
 export function useBrandLogo(variant: BrandLogoVariant = 'light'): string | null | undefined {
   const [slots, setSlots] = useState<BrandingSlots | null | undefined>(cache?.slots);
 
   useEffect(() => {
-    if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return;
-    if (fetching) return;
-    fetching = true;
     let cancelled = false;
-    // All state updates ride promise continuations: the persisted cache (if
-    // any) is applied on the first microtask — before the browser paints, so
-    // a reload never flashes the fallback — then the payload is refreshed
-    // in the background once the cache is stale.
-    void Promise.resolve()
-      .then(() => cache ?? readCache())
-      .then((cached) => {
-        if (cancelled) return null;
-        if (cached) {
-          cache = cached;
-          setSlots(cached.slots);
-          return Date.now() - cached.fetchedAt < CACHE_TTL_MS ? null : getBranding();
-        }
-        return getBranding();
-      })
-      .then((next) => {
-        if (cancelled || next === null) return;
-        cache = { fetchedAt: Date.now(), slots: next };
-        writeCache(next);
-        setSlots(next);
-      })
-      .finally(() => {
-        fetching = false;
-      });
+
+    const ensureFresh = (force: boolean) => {
+      if (fetching || cancelled) return;
+      if (!force && cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return;
+      fetching = true;
+      // All state updates ride promise continuations: the persisted cache (if
+      // any) is applied on the first microtask — before the browser paints, so
+      // a reload never flashes the fallback — then the payload is refreshed
+      // in the background once stale (or immediately when forced on focus).
+      void Promise.resolve()
+        .then(() => cache ?? readCache())
+        .then((cached) => {
+          if (cancelled) return null;
+          if (cached) {
+            cache = cached;
+            setSlots(cached.slots);
+            // An all-null payload is treated as suspect: it usually means the
+            // cache predates a logo upload (and the signed URL would be dead
+            // anyway). Only a fresh cache that actually HAS a logo skips the
+            // background refetch.
+            const hasAny = Boolean(cached.slots && (cached.slots.light || cached.slots.dark || cached.slots.footer || cached.slots.footerDark));
+            return force || !hasAny || Date.now() - cached.fetchedAt >= CACHE_TTL_MS ? getBranding() : null;
+          }
+          return getBranding();
+        })
+        .then((next) => {
+          if (cancelled || next === null) return;
+          cache = { fetchedAt: Date.now(), slots: next };
+          writeCache(next);
+          setSlots(next);
+        })
+        .finally(() => {
+          fetching = false;
+        });
+    };
+
+    ensureFresh(false);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ensureFresh(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
     };
   }, []);
 

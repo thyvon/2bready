@@ -12,7 +12,12 @@ class PlatformSettingSeeder extends Seeder
     public function run(PlatformSettingService $settings): void
     {
         $settings->set('bypass_employee_threshold', 8, 'compliance');
-        $settings->set('two_factor_globally_enabled', true, 'security');
+
+        // Off by default for demo/local dev so a fresh install's seeded admin
+        // can sign in immediately; flip on from Settings > Security when
+        // enforcing 2FA. Enforced per-account regardless of this toggle once
+        // an admin turns it on and users enroll (see IssueAuthTokenAction).
+        $settings->set('two_factor_globally_enabled', false, 'security');
         $settings->set('data_room_link_expiry_days', 7, 'compliance');
 
         // How many days before a recurring document expires to warn the

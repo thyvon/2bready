@@ -8,6 +8,7 @@ export { NavHoverLink, type NavHoverLinkProps } from './NavHoverLink';
 export { GlowButton, type GlowButtonProps } from './GlowButton';
 export { ThemeToggle, type ThemeToggleProps } from './ThemeToggle';
 export { UploadDropzone, type UploadDropzoneProps } from './UploadDropzone';
+export { InlineDropzone, type InlineDropzoneProps } from './InlineDropzone';
 export { BrandLogo, type BrandLogoProps } from './BrandLogo';
 export { LevelMedal, type LevelMedalProps } from './LevelMedal';
 export { DocumentPreviewDialog, type DocumentPreviewDialogProps } from './DocumentPreviewDialog';

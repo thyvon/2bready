@@ -193,3 +193,15 @@ it('lets a company_owner list only their own payments', function () {
         ->assertOk()
         ->assertJsonCount(1, 'data');
 });
+
+it('includes the eager-loaded company name for an admin payment queue listing', function () {
+    $company = Company::factory()->create(['name' => 'Acme Cambodia Co.']);
+    $subscription = Subscription::factory()->create(['company_id' => $company->id]);
+    Payment::factory()->create(['company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->getJson('/api/v1/payments')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.company.name', 'Acme Cambodia Co.');
+});
