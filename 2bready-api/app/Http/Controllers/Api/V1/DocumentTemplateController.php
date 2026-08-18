@@ -11,6 +11,7 @@ use App\Domain\Document\Actions\UpdateDocumentTemplateAction;
 use App\Domain\Document\DTOs\DocumentTemplateData;
 use App\Domain\Document\Models\DocumentTemplate;
 use App\Domain\Journey\Models\Milestone;
+use App\Domain\User\Models\User;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Document\StoreDocumentTemplateRequest;
 use App\Http\Requests\Api\V1\Document\UpdateDocumentTemplateRequest;
@@ -18,7 +19,6 @@ use App\Http\Resources\Api\V1\DocumentTemplateResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
-use App\Domain\User\Models\User;
 
 // No index() here — document templates are always fetched nested inside a
 // JourneyTemplate's tree via JourneyTemplateController::show. Don't confuse

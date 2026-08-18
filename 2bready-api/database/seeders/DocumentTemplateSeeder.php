@@ -46,6 +46,18 @@ class DocumentTemplateSeeder extends Seeder
         'CBC Credit Reports' => 'rolling',
     ];
 
+    /**
+     * Documents that a qualifying company may waive (v3 §0.2/§1.5). Key =
+     * document name, value = the bypass key the company's `bypass_flags`
+     * JSONB carries (set by CompanyBypassEvaluator). EmployeeCountBypassRule
+     * matches this key against those flags to skip the milestone.
+     *
+     * @var array<int, string>
+     */
+    private const BYPASS_KEYS = [
+        'Company Internal Rules' => 'company_internal_rules',
+    ];
+
     public function run(): void
     {
         $docsByMilestone = [
@@ -125,6 +137,7 @@ class DocumentTemplateSeeder extends Seeder
                     ['milestone_id' => $milestone->id, 'name' => $name],
                     [
                         'is_required' => true,
+                        'bypass_key' => self::BYPASS_KEYS[$name] ?? null,
                         'recurrence_type' => self::RECURRENCE[$name] ?? 'one_time',
                         'expiry_months' => self::EXPIRY_MONTHS[$name] ?? null,
                         'sort_order' => $i + 1,

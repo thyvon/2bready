@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { motion } from 'framer-motion';
@@ -19,6 +20,8 @@ import { TrustJourneyHero } from '@/components/dashboard/TrustJourneyHero';
 import { PageLoader } from '@/components/PageLoader';
 import { PILLARS } from '@/lib/journey-data';
 import { useJourney } from '@/components/JourneyProvider';
+import { usePackages } from '@/components/PackageProvider';
+import { tierByLevelCode } from '@/lib/package-api';
 import { allDocuments, pillarDocuments, pillarLevels, countVerified, levelTotalDocs, levelVerifiedDocs, toDocStatus } from '@/lib/journey-api';
 
 const PILLAR_ICONS = {
@@ -42,6 +45,8 @@ const cardHoverSx = {
 
 export default function OverviewPage() {
   const { journey, loading } = useJourney();
+  const { packages } = usePackages();
+  const tierMap = useMemo(() => tierByLevelCode(packages), [packages]);
 
   if (loading) return <PageLoader />;
 
@@ -56,13 +61,17 @@ export default function OverviewPage() {
   // upgrade-gated entry point, not real progress), so that would surface e.g.
   // "L4" the moment a company exists, regardless of actual document
   // progress. Comply is the one pathway every company is actually on before
-  // upgrading, matching the "current stage" section below.
+  // upgrading, matching the "current stage" section below. Every level is a
+  // paid tier now (L1 is Starter), so with no active subscription nothing is
+  // unlocked and currentLevel falls back to '—'.
   const complyLevels = pillarLevels(journey, 'comply');
   const unlockedComplyLevels = complyLevels.filter((level) => level.unlocked);
-  const currentLevel = unlockedComplyLevels.length > 0 ? unlockedComplyLevels[unlockedComplyLevels.length - 1].code : 'L1';
+  const currentLevel = unlockedComplyLevels.length > 0 ? unlockedComplyLevels[unlockedComplyLevels.length - 1].code : '—';
 
   // The "current stage" section below always shows the comply pillar's
-  // first level — that's the one free pathway every company starts on.
+  // first level — the entry point every company starts from. Locked until
+  // their L1 (Starter) subscription is active; the tree surfaces the real
+  // state via `isUnlocked`, including the Upgrade CTA for locked L1.
   const complyLevel = complyLevels[0] ?? null;
   const complyTotalDocs = complyLevel ? levelTotalDocs(complyLevel) : 0;
   const complyVerifiedDocs = complyLevel ? levelVerifiedDocs(complyLevel) : 0;
@@ -136,11 +145,11 @@ export default function OverviewPage() {
         </SectionCard>
       </Box>
 
-      {/* 3 pillars — Comply (free, always unlocked), Scale (pro), Lead (enterprise).
-          `unlocked` reflects the real per-level `level.unlocked` from the API
-          (subscription tier + milestone-progress chain, see
-          JourneyProgressService) — a pillar shows unlocked once its first
-          level does, same signal activeLevelCodes below already uses. */}
+      {/* 3 pillars — Comply (starter, paid like every level), Scale (pro),
+          Lead (enterprise). `unlocked` reflects the real per-level
+          `level.unlocked` from the API (subscription tier + milestone-progress
+          chain, see JourneyProgressService) — a pillar shows unlocked once its
+          first level does, same signal activeLevelCodes below already uses. */}
       <motion.div variants={cardGridContainer} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {PILLARS.map((pillar) => {
           const docs = pillarDocuments(journey, pillar.id);
@@ -161,7 +170,9 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Current stage — the comply pillar's first (and so far only) level,
-          the one free pathway every company starts on. Reuses JourneyTree
+          the entry point every company starts on. Every level is a paid tier
+          now (L1 is Starter), so it stays locked — with its Upgrade CTA —
+          until the company's L1 subscription is active. Reuses JourneyTree
           (scoped to just this one level) instead of re-implementing the
           milestone/document list by hand. */}
       {complyLevel && (
@@ -170,7 +181,11 @@ export default function OverviewPage() {
           subtitle={`${complyVerifiedDocs}/${complyTotalDocs} verified`}
           sx={cardHoverSx}
         >
-          <JourneyTree levels={[complyLevel]} isUnlocked={() => true} />
+          <JourneyTree
+            levels={[complyLevel]}
+            isUnlocked={(level) => level.unlocked}
+            tierFor={(level) => tierMap[level.code]}
+          />
           <Box sx={{ mt: 2 }}>
             <GlowButton href="/journey" size="medium">
               View All Documents

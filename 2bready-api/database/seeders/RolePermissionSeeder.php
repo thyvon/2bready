@@ -101,6 +101,19 @@ class RolePermissionSeeder extends Seeder
             'data_room.manage', // set access control, manage folders
             'data_room.share',  // create guest/PIN sharing links
 
+            // Vault — the PIN gate over sensitive L3/L4 document previews.
+            // vault.manage is admin-only (set/rotate a company's PIN);
+            // vault.view/vault.unlock are admin+finance (blueprint: "Only
+            // Admin or Finance can unlock vault"). Staff gets none of these,
+            // so sensitive documents stay locked to staff.
+            'vault.view',
+            'vault.manage',
+            'vault.unlock',
+
+            // Legal consent — client-side gating of restricted P3/P4 doc
+            // actions; company_owner/member hold document.upload already, so
+            // no separate permission is needed (routes gate on that).
+
             // SOPs
             'sop.view',
             'sop.manage',
@@ -191,6 +204,13 @@ class RolePermissionSeeder extends Seeder
             'subscription.view', 'subscription.manage',
             'payment.view', 'payment.manage',
             'lead.view',
+            // Finance views documents for billing proof — but sensitive L3/L4
+            // previews are still vault-gated AND restricted to documents finance
+            // themselves uploaded (both enforced in DocumentPolicy::view).
+            'document.view',
+            // Vault: finance may unlock + view sensitive docs (self-uploaded
+            // only, enforced in DocumentPolicy) but cannot set/rotate a PIN.
+            'vault.view', 'vault.unlock',
             'notification.view',
             'report.view', 'audit_log.view',
         ]);
@@ -233,11 +253,15 @@ class RolePermissionSeeder extends Seeder
         // Auditor (TP staff) — logs into tp-portal, not admin-portal;
         // scoped to only the companies their firm has an active TpHire for
         // (DocumentPolicy::manage(), TpAssignment* endpoints), never a
-        // platform-wide company.view/company.list grant.
+        // platform-wide company.view/company.list grant. audit.view lets them
+        // see the audits for those engagements; audit.conduct lets the
+        // assigned auditor submit findings.
         $auditor->syncPermissions([
             'portal.tp.access',
             'document.view',
             'document.manage.assigned',
+            'audit.view',
+            'audit.conduct',
             'support.view', 'support.create',
             'notification.view',
         ]);

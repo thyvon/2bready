@@ -81,6 +81,11 @@ const en = {
   'journey.sub_document_name_label': 'Sub-Document Name',
   'journey.sub_document_name_placeholder': 'Enter sub-document name',
 
+  // ─── Legal consent (restricted L3/L4 documents) ─────────────────────────
+  'legal_consent.title': 'Confirm access',
+  'legal_consent.desc': 'This document is restricted. You must confirm you are authorized to use it before continuing.',
+  'legal_consent.accept': 'I agree — continue',
+
   // ─── Billing ─────────────────────────────────────────────────────────────
   'billing.view_bank_details': 'View Bank Details',
 

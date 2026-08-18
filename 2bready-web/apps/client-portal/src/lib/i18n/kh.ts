@@ -86,6 +86,11 @@ const kh: Record<keyof typeof en, string> = {
   'journey.sub_document_name_label': 'ឈ្មោះឯកសាររាងការបន្ថែម',
   'journey.sub_document_name_placeholder': 'បញ្ចូលឈ្មោះឯកសាររាងការបន្ថែម',
 
+  // ─── Legal consent (restricted L3/L4 documents) ─────────────────────────
+  'legal_consent.title': 'បញ្ជាក់ការចូលប្រើប្រាស់',
+  'legal_consent.desc': 'ឯកសារនេះត្រូវបានកំណត់សិទ្ធិ។ អ្នកត្រូវតែបញ្ជាក់ថាអ្នកមានសិទ្ធិប្រើប្រាស់វាមុនពេលបន្ត។',
+  'legal_consent.accept': 'ខ្ញុំយល់ព្រម — បន្ត',
+
   // ─── Billing ─────────────────────────────────────────────────────────────
   'billing.view_bank_details': 'មើលព័ត៌មានធនាគារ',
 

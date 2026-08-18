@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Audit\Events\AuditDecisionMade;
+use App\Domain\Audit\Listeners\UpdateComplianceScoreListener;
+use App\Domain\Audit\Models\Audit;
+use App\Domain\Audit\Policies\AuditPolicy;
 use App\Domain\AuditLog\Events\AuditableActionOccurred;
 use App\Domain\AuditLog\Listeners\RecordAuditLogListener;
 use App\Domain\AuditLog\Models\AuditLog;
@@ -97,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
+        Gate::policy(Audit::class, AuditPolicy::class);
         Gate::policy(Company::class, CompanyPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);
         Gate::policy(Industry::class, IndustryPolicy::class);
@@ -127,6 +132,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
         Event::listen(DocumentExpired::class, RevertMilestoneCompletionOnDocumentExpired::class);
         Event::listen(DocumentExpired::class, SendDocumentExpiredNotification::class);
+        Event::listen(AuditDecisionMade::class, UpdateComplianceScoreListener::class);
         Event::listen(AuditableActionOccurred::class, RecordAuditLogListener::class);
         // Fires on RegisterUserAction's event(new Registered($user)) — sends the
         // verification email via User's now-wired MustVerifyEmail trait. Internal

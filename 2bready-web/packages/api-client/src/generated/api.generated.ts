@@ -4,6 +4,102 @@
  */
 
 export interface paths {
+    "/v1/audits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit.index"];
+        put?: never;
+        post: operations["audit.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/audits/{audit}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/audits/{audit}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["audit.assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/audits/{audit}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["audit.submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/audits/{audit}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["audit.review"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/audits/{audit}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["audit.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/audit-logs": {
         parameters: {
             query?: never;
@@ -879,6 +975,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/legal-consent/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["legalConsent.status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/legal-consent/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["legalConsent.accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/settings/mail": {
         parameters: {
             query?: never;
@@ -1452,10 +1580,83 @@ export interface paths {
         patch: operations["user.update"];
         trace?: never;
     };
+    "/v1/vault/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["vault.status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/vault/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["vault.setPin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/vault/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["vault.unlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/vault/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["vault.lock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptLegalConsentRequest */
+        AcceptLegalConsentRequest: {
+            /** @enum {string} */
+            journey_level: "L3" | "L4";
+        };
+        /** AssignAuditorRequest */
+        AssignAuditorRequest: {
+            auditor_id: string;
+        };
         /** AuditLogResource */
         AuditLogResource: {
             id: string;
@@ -1471,6 +1672,47 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        /** AuditResource */
+        AuditResource: {
+            id: string;
+            company_id: string;
+            company?: {
+                id: string;
+                name: string;
+            };
+            tp_hire_id: string;
+            tpHire?: {
+                id: string;
+                status: components["schemas"]["TpHireStatus"];
+                tp_partner_id: string;
+            };
+            tp_partner?: {
+                id: string;
+                name: string;
+            };
+            auditor_id: string | null;
+            auditor?: {
+                id: string;
+                name: string;
+            };
+            journey_level: string;
+            status: components["schemas"]["AuditStatus"];
+            score: number | null;
+            feedback: string | null;
+            deadline: string;
+            assigned_at: string;
+            submitted_at: string;
+            reviewed_at: string;
+            cancelled_at: string;
+            documents?: unknown[];
+            /** Format: date-time */
+            created_at: string | null;
+        };
+        /**
+         * AuditStatus
+         * @enum {string}
+         */
+        AuditStatus: "pending" | "in_progress" | "submitted" | "approved" | "rejected" | "cancelled";
         /**
          * BillingPeriod
          * @enum {string}
@@ -1578,6 +1820,13 @@ export interface components {
                 id: string;
                 name: string;
             };
+            /**
+             * @description Journey level the document sits in (e.g. "L3") — the back-office
+             *     UI uses it to know which documents the Vault gates (L3/L4
+             *     sensitive) before it even attempts a preview, rather than only
+             *     learning from a 403. Null when the template chain isn't loaded.
+             */
+            level_code?: string;
         };
         /**
          * DocumentStatus
@@ -1673,7 +1922,7 @@ export interface components {
                 milestones: {
                     id: string;
                     name: string;
-                    completed: boolean;
+                    completed: string;
                     documents: {
                         id: string;
                         /**
@@ -1965,10 +2214,31 @@ export interface components {
             password: string;
             password_confirmation: string;
         };
+        /** ReviewAuditRequest */
+        ReviewAuditRequest: {
+            /** @enum {string} */
+            decision: "approved" | "rejected";
+        };
         /** RoleResource */
         RoleResource: {
             name: string;
             permissions: unknown[];
+        };
+        /**
+         * SetVaultPinRequest
+         * @description Admin-only: set/rotate a company's vault PIN. The digit-count comes from
+         *     platform_settings.vault_pin_length (seed 6) — v3 §0.5's "configurable PIN
+         *      * policy, not a hardcoded maxlength". Digits-only, never echoed back.
+         */
+        SetVaultPinRequest: {
+            company_id: string;
+            pin: string;
+        };
+        /** StoreAuditRequest */
+        StoreAuditRequest: {
+            tp_hire_id: string;
+            /** Format: date-time */
+            deadline?: string | null;
         };
         /** StoreCompanyRequest */
         StoreCompanyRequest: {
@@ -2092,6 +2362,11 @@ export interface components {
             password: string;
             password_confirmation: string;
             roles: ("admin" | "staff" | "finance")[];
+        };
+        /** SubmitAuditRequest */
+        SubmitAuditRequest: {
+            score: number;
+            feedback?: string | null;
         };
         /** SubscribeRequest */
         SubscribeRequest: {
@@ -2452,6 +2727,16 @@ export interface components {
         VerifyDocumentRequest: {
             comment?: string | null;
         };
+        /**
+         * VerifyVaultPinRequest
+         * @description Back-office unlock: the submitted PIN must match the company's
+         *     vault_pin_hash digit-count policy (platform_settings.vault_pin_length).
+         *     The comparison itself happens server-side in VerifyVaultPinAction.
+         */
+        VerifyVaultPinRequest: {
+            company_id: string;
+            pin: string;
+        };
     };
     responses: {
         /** @description Validation error */
@@ -2514,6 +2799,204 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "audit.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "audit.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreAuditRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "audit.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                audit: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "audit.assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                audit: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignAuditorRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "audit.submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                audit: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitAuditRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "audit.review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                audit: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewAuditRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "audit.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                audit: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
     "auditLog.index": {
         parameters: {
             query?: never;
@@ -4614,6 +5097,82 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "legalConsent.status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            consent_required: boolean;
+                            accepted: string;
+                            version: string;
+                            text_en: string;
+                            text_kh: string;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "legalConsent.accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptLegalConsentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            accepted: boolean;
+                            version: string;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            accepted: boolean;
+                            version: string;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "mailSetting.show": {
         parameters: {
             query?: never;
@@ -6093,6 +6652,127 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "vault.status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            company_id: string;
+                            pin_set: boolean;
+                            unlocked: boolean;
+                            seconds_remaining: number;
+                            pin_length: number;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "vault.setPin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetVaultPinRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            company_id: string;
+                            pin_set: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "vault.unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyVaultPinRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            company_id: string;
+                            unlocked: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "vault.lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            company_id: string;
+                            unlocked: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
 }

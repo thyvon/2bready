@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace App\Domain\Document\Policies;
 
+use App\Domain\Company\Models\Company;
 use App\Domain\Document\Models\Document;
+use App\Domain\LegalConsent\Services\LegalConsentAccessService;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\User\Models\User;
+use App\Domain\Vault\Services\VaultAccessService;
 
 class DocumentPolicy
 {
+    public function __construct(
+        private readonly VaultAccessService $vault,
+        private readonly LegalConsentAccessService $legalConsent,
+    ) {}
+
     public function viewAny(User $user): bool
     {
         return $user->can('document.view');
@@ -34,6 +42,28 @@ class DocumentPolicy
         }
 
         if ($user->hasAnyRole(['admin', 'staff', 'finance'])) {
+            // Back-office vault gate (v3 §4.2/§5.1): sensitive L3/L4 documents
+            // are only viewable while this user holds an open vault session
+            // for the document's company. Only admin/finance can open a
+            // session (route middleware), so staff simply can't preview
+            // sensitive docs; finance is further restricted to documents they
+            // themselves uploaded (uploadedBy === 'finance' from the blueprint).
+            if ($this->vault->isSensitive($document)) {
+                /** @var Company|null $company */
+                $company = $document->company;
+                if ($company === null) {
+                    return false;
+                }
+
+                if (! $this->vault->isUnlocked($user, $company)) {
+                    return false;
+                }
+
+                if ($user->hasRole('finance') && $document->uploaded_by_user_id !== $user->id) {
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -49,8 +79,19 @@ class DocumentPolicy
                     ->exists();
         }
 
-        // company_owner/member — must belong to this document's own company.
-        return $user->companies()->where('companies.id', $document->company_id)->exists();
+        // company_owner/member — must belong to this document's own company,
+        // and must hold a current legal consent to view a restricted P3/P4
+        // (L3/L4) document (v3 §4.2 — client-side consent gating). Back-office
+        // review of the same documents is gated by the Vault above instead.
+        $belongsToCompany = $user->companies()->where('companies.id', $document->company_id)->exists();
+        if (! $belongsToCompany) {
+            return false;
+        }
+
+        /** @var Company|null $company */
+        $company = $document->company;
+
+        return $company !== null && $this->legalConsent->hasAccepted($user, $company, $document);
     }
 
     public function upload(User $user): bool

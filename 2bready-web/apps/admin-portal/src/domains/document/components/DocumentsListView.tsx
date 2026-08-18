@@ -7,6 +7,8 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import InputAdornment from '@mui/material/InputAdornment';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
@@ -17,6 +19,9 @@ import { useToast } from '@/components/feedback/ToastProvider';
 import { listDocuments, verifyDocument, rejectDocument, getPreviewUrl } from '@/domains/document/api';
 import type { Document } from '@/domains/document/types';
 import { DocumentPreviewDialog } from '@/domains/document/components/DocumentPreviewDialog';
+import { getVaultStatus, lockVault } from '@/domains/vault/api';
+import type { VaultStatus } from '@/domains/vault/types';
+import { VaultPinDialog } from '@/domains/vault/components/VaultPinDialog';
 import { getApiError, formatDate } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
@@ -28,6 +33,14 @@ interface PreviewState {
   mimeType: string | null;
   loading: boolean;
   error: string | null;
+}
+
+interface VaultGateState {
+  companyId: string;
+  companyName: string;
+  status: VaultStatus;
+  /** The document whose preview is queued behind this unlock. */
+  pendingDocument: Document | null;
 }
 
 // The cross-company back-office review queue. A company's own workspace
@@ -44,6 +57,13 @@ export default function DocumentsListView() {
   const [status, setStatus] = useState('review');
   const [acting, setActing] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [vaultGate, setVaultGate] = useState<VaultGateState | null>(null);
+  const [lockedByCompany, setLockedByCompany] = useState<Record<string, boolean>>({});
+
+  // L3/L4 documents are vault-sensitive (v3 §4.2) — the backend enforces the
+  // gate on preview-url; here we surface it proactively so the PIN dialog
+  // shows before the 403, and so the row can carry a lock affordance.
+  const isSensitive = (doc: Document) => doc.level_code === 'L3' || doc.level_code === 'L4';
 
   const load = async () => {
     setLoading(true);
@@ -80,12 +100,59 @@ export default function DocumentsListView() {
   }, [status]);
 
   const handlePreview = async (document: Document) => {
-    setPreview({ documentId: document.id, title: document.document_template?.name ?? document.original_filename, status: document.status, url: null, mimeType: null, loading: true, error: null });
+    if (!isSensitive(document)) {
+      openPreview(document);
+      return;
+    }
+
+    // Sensitive document: resolve the vault state for its company first.
+    const company = document.company;
+    if (!company) {
+      toast.error(t('vault.no_company'));
+      return;
+    }
+
     try {
-      const result = await getPreviewUrl(document.id);
-      setPreview((prev) => (prev && prev.documentId === document.id ? { ...prev, url: result.url, mimeType: result.mime_type, loading: false } : prev));
+      const vaultStatus = await getVaultStatus(company.id);
+      setLockedByCompany((prev) => ({ ...prev, [company.id]: !vaultStatus.unlocked }));
+      if (vaultStatus.unlocked) {
+        openPreview(document);
+        return;
+      }
+      setVaultGate({ companyId: company.id, companyName: company.name, status: vaultStatus, pendingDocument: document });
     } catch (err) {
-      setPreview((prev) => (prev && prev.documentId === document.id ? { ...prev, loading: false, error: getApiError(err).message } : prev));
+      toast.error(getApiError(err).message);
+    }
+  };
+
+  const openPreview = (document: Document) => {
+    setPreview({ documentId: document.id, title: document.document_template?.name ?? document.original_filename, status: document.status, url: null, mimeType: null, loading: true, error: null });
+    getPreviewUrl(document.id)
+      .then((result) => {
+        setPreview((prev) => (prev && prev.documentId === document.id ? { ...prev, url: result.url, mimeType: result.mime_type, loading: false } : prev));
+      })
+      .catch((err) => {
+        setPreview((prev) => (prev && prev.documentId === document.id ? { ...prev, loading: false, error: getApiError(err).message } : prev));
+      });
+  };
+
+  const handleVaultUnlocked = () => {
+    if (!vaultGate) return;
+    setLockedByCompany((prev) => ({ ...prev, [vaultGate.companyId]: false }));
+    const pending = vaultGate.pendingDocument;
+    setVaultGate(null);
+    if (pending) openPreview(pending);
+  };
+
+  const handleLock = async (document: Document) => {
+    const company = document.company;
+    if (!company) return;
+    try {
+      await lockVault(company.id);
+      setLockedByCompany((prev) => ({ ...prev, [company.id]: true }));
+      toast.success(t('vault.locked'));
+    } catch (err) {
+      toast.error(getApiError(err).message);
     }
   };
 
@@ -128,15 +195,28 @@ export default function DocumentsListView() {
       key: 'actions',
       label: '',
       align: 'right',
-      render: (d) => (
-        <Box className="flex justify-end gap-2">
-          <Tooltip title={t('admin.preview')}>
-            <IconButton size="small" onClick={() => handlePreview(d)}>
-              <VisibilityOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ),
+      render: (d) => {
+        const sensitive = isSensitive(d);
+        const companyId = d.company?.id;
+        const locked = sensitive && companyId ? lockedByCompany[companyId] ?? true : false;
+
+        return (
+          <Box className="flex justify-end gap-2">
+            {sensitive && companyId && (
+              <Tooltip title={locked ? t('vault.locked_tooltip') : t('vault.unlocked_tooltip')}>
+                <IconButton size="small" color={locked ? 'warning' : 'success'} onClick={() => (locked ? handlePreview(d) : handleLock(d))}>
+                  {locked ? <LockOutlinedIcon fontSize="small" /> : <LockOpenOutlinedIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title={t('admin.preview')}>
+              <IconButton size="small" onClick={() => handlePreview(d)}>
+                <VisibilityOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        );
+      },
     },
   ];
 
@@ -185,6 +265,16 @@ export default function DocumentsListView() {
         onVerify={handleVerify}
         onReject={handleReject}
         acting={acting}
+      />
+
+      <VaultPinDialog
+        open={vaultGate !== null}
+        companyId={vaultGate?.companyId ?? ''}
+        companyName={vaultGate?.companyName ?? ''}
+        pinSet={vaultGate?.status.pin_set ?? true}
+        pinLength={vaultGate?.status.pin_length ?? 6}
+        onClose={() => setVaultGate(null)}
+        onUnlocked={handleVaultUnlocked}
       />
     </>
   );

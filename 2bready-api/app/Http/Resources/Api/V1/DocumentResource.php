@@ -54,6 +54,13 @@ class DocumentResource extends JsonResource
 
                 return ['id' => $template->id, 'name' => $template->name];
             }),
+            // Journey level the document sits in (e.g. "L3") — the back-office
+            // UI uses it to know which documents the Vault gates (L3/L4
+            // sensitive) before it even attempts a preview, rather than only
+            // learning from a 403. Null when the template chain isn't loaded.
+            'level_code' => $this->whenLoaded('documentTemplate', function () {
+                return $this->documentTemplate?->milestone?->journeyLevel?->code;
+            }),
         ];
     }
 }

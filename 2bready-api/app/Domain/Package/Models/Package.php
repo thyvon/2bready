@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -83,8 +84,8 @@ class Package extends Model
     // The level's other billing-period rows (the monthly + yearly pair that
     // together make up one "package" in the admin/public grouped views).
     // Used by PackageController::show to attach prices to a single row.
-    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<Package, $this> */
-    public function siblingPrices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<Package, $this> */
+    public function siblingPrices(): HasMany
     {
         return $this->hasMany(Package::class, 'journey_level_id', 'journey_level_id')
             ->where('industry_id', $this->industry_id)

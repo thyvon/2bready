@@ -288,6 +288,24 @@ const en = {
   'admin.no_documents': 'No documents here',
   'admin.no_documents_desc': 'Documents matching this filter will appear here.',
 
+  // ─── Vault (sensitive L3/L4 document gate, v3 §4.2) ─────────────────────
+  'vault.unlock_title': 'Unlock Vault',
+  'vault.set_title': 'Set Vault PIN',
+  'vault.unlock_desc': 'This is a sensitive document for {company}. Enter the vault PIN to unlock it for preview.',
+  'vault.set_desc': 'No vault PIN is set for {company} yet. Create one — it gates access to sensitive L3/L4 documents.',
+  'vault.pin_label': 'Vault PIN',
+  'vault.confirm_pin_label': 'Confirm PIN',
+  'vault.pin_digits': 'PIN must be exactly {length} digits',
+  'vault.pin_mismatch': 'PINs do not match',
+  'vault.unlock_button': 'Unlock',
+  'vault.set_button': 'Set PIN',
+  'vault.unlocked': 'Vault unlocked.',
+  'vault.set_and_unlocked': 'PIN set and vault unlocked.',
+  'vault.locked': 'Vault locked.',
+  'vault.locked_tooltip': 'Vault locked — unlock to preview',
+  'vault.unlocked_tooltip': 'Vault unlocked — lock',
+  'vault.no_company': 'This document has no company attached.',
+
   // ─── TP Partners (audit firms) ──────────────────────────────────────────
   'tp_partner.title': 'TP Firms',
   'tp_partner.new_partner': 'New Firm',

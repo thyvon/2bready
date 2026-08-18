@@ -74,5 +74,7 @@ Route::prefix('v1')->group(function () {
         require __DIR__.'/api/settings.php';
         require __DIR__.'/api/profile.php';
         require __DIR__.'/api/tp-partner.php';
+        require __DIR__.'/api/vault.php';
+        require __DIR__.'/api/legal-consent.php';
     });
 });

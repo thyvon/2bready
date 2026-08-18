@@ -292,6 +292,24 @@ const kh: Record<keyof typeof en, string> = {
   'admin.no_documents': 'គ្មានឯកសារនៅទីនេះ',
   'admin.no_documents_desc': 'ឯកសារដែលត្រូវនឹងតម្រងនេះនឹងបង្ហាញនៅទីនេះ។',
 
+  // ─── Vault (sensitive L3/L4 document gate, v3 §4.2) ─────────────────────
+  'vault.unlock_title': 'ដោះសោ Vault',
+  'vault.set_title': 'កំណត់លេខសម្ងាត់ Vault',
+  'vault.unlock_desc': 'នេះជាឯកសាររសើបរបស់ {company}។ បញ្ចូលលេខសម្ងាត់ Vault ដើម្បីដោះសោសម្រាប់មើលជាមុន។',
+  'vault.set_desc': 'មិនទាន់មានលេខសម្ងាត់ Vault សម្រាប់ {company} នៅឡើយទេ។ បង្កើតមួយ — វាគ្រប់គ្រងការចូលដំណើរការឯកសាររសើប L3/L4។',
+  'vault.pin_label': 'លេខសម្ងាត់ Vault',
+  'vault.confirm_pin_label': 'បញ្ជាក់លេខសម្ងាត់',
+  'vault.pin_digits': 'លេខសម្ងាត់ត្រូវតែមាន {length} ខ្ទង់',
+  'vault.pin_mismatch': 'លេខសម្ងាត់មិនត្រូវគ្នាទេ',
+  'vault.unlock_button': 'ដោះសោ',
+  'vault.set_button': 'កំណត់លេខសម្ងាត់',
+  'vault.unlocked': 'Vault ត្រូវបានដោះសោ។',
+  'vault.set_and_unlocked': 'លេខសម្ងាត់ត្រូវបានកំណត់ ហើយ Vault ត្រូវបានដោះសោ។',
+  'vault.locked': 'Vault ត្រូវបានចាក់សោ។',
+  'vault.locked_tooltip': 'Vault បានចាក់សោ — ដោះសោដើម្បីមើលជាមុន',
+  'vault.unlocked_tooltip': 'Vault បានដោះសោ — ចាក់សោ',
+  'vault.no_company': 'ឯកសារនេះមិនមានក្រុមហ៊ុនភ្ជាប់ទេ។',
+
   // ─── TP Partners (audit firms) ──────────────────────────────────────────
   'tp_partner.title': 'ក្រុមហ៊ុនភាគីទីបី',
   'tp_partner.new_partner': 'ក្រុមហ៊ុនថ្មី',

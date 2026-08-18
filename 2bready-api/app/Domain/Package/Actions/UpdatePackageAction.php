@@ -46,7 +46,7 @@ class UpdatePackageAction
             }
 
             $package->setRelation('prices', collect([$sibling, $package])->filter()->sortBy(
-                fn (Package $row) => $row->billing_period === BillingPeriod::Yearly
+                fn (Package $row) => $row->billing_period === BillingPeriod::Yearly,
             )->values());
 
             return $package;

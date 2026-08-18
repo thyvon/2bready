@@ -12,6 +12,7 @@ use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\Milestone;
 use App\Domain\Journey\Services\JourneyProgressService;
+use App\Domain\Journey\Services\MilestoneUnlockRuleEngine;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
@@ -71,12 +72,17 @@ class JourneyResource extends JsonResource
     /** @return array<string, mixed> */
     private function mapMilestone(Milestone $milestone): array
     {
+        // Same satisfaction decision as the unlock chain: bypass rules first,
+        // then the completion record — so a fully-bypassed milestone surfaces
+        // as completed instead of a permanently "required" gap.
+        /** @var Company $company */
+        $company = $this->company;
+        $completed = app(MilestoneUnlockRuleEngine::class)->isMilestoneSatisfied($milestone, $company);
+
         return [
             'id' => $milestone->id,
             'name' => $milestone->name,
-            'completed' => $milestone->completions->contains(
-                fn ($completion) => $completion->company_id === $this->company_id,
-            ),
+            'completed' => $completed,
             'documents' => $milestone->documentTemplates->map(fn (DocumentTemplate $template) => $this->mapDocument($template))->values()->all(),
         ];
     }

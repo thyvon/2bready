@@ -107,7 +107,7 @@ class PackageController extends Controller
      * representative (yearly, else the single row). Packages without a
      * journey_level_id (future add-ons) stay as their own single-row group.
      *
-     * @param Collection<int, Package> $packages
+     * @param  Collection<int, Package>  $packages
      * @return Collection<int, Package>
      */
     private function groupByLevel(Collection $packages): Collection

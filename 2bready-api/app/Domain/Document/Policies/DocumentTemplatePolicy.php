@@ -59,6 +59,7 @@ class DocumentTemplatePolicy
         // company_owner/member — parent must be global (company_id null)
         // or already scoped to their own company
         $companyId = $user->current_company_id;
+
         return $companyId !== null
             && ($parent->company_id === null || $parent->company_id === $companyId);
     }
@@ -78,6 +79,7 @@ class DocumentTemplatePolicy
         }
 
         $companyId = $user->current_company_id;
+
         return $companyId !== null && $document->company_id === $companyId;
     }
 
@@ -96,6 +98,7 @@ class DocumentTemplatePolicy
         }
 
         $companyId = $user->current_company_id;
+
         return $companyId !== null && $document->company_id === $companyId;
     }
 }

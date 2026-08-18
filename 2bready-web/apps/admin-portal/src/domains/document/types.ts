@@ -15,4 +15,6 @@ export type Document = {
   created_at: string;
   company: { id: string; name: string } | null;
   document_template: { id: string; name: string } | null;
+  /** Journey level code this document sits in (e.g. "L3") — L3/L4 are vault-sensitive. */
+  level_code: string | null;
 };

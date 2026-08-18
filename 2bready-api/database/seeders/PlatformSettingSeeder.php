@@ -30,5 +30,19 @@ class PlatformSettingSeeder extends Seeder
         // figure from the source proposal, a placeholder default pending a
         // real decision — admin-editable via Settings, not a redeploy.
         $settings->set('marketplace.commission_percent', 15, 'marketplace');
+
+        // Vault (v3 §0.5): the blueprint hardcoded a 3-minute auto-lock and a
+        // 6-digit PIN in the prototype — both are seed defaults here, not
+        // literals, so an admin can tune them from Settings without a redeploy.
+        $settings->set('vault_auto_lock_minutes', 3, 'security');
+        $settings->set('vault_pin_length', 6, 'security');
+
+        // Legal consent (v3 §5.1): versioned consent text. The blueprint's
+        // exact string is the seed default (en is the legally operative copy,
+        // kh mirrors it); bump legal_consent_version whenever it's reworded
+        // so old consents remain valid evidence against their own version.
+        $settings->set('legal_consent_version', 'v1', 'compliance');
+        $settings->set('legal_consent_text_en', 'I agree to the Terms of Use — I confirm authorization and will use this document for legitimate business purposes. It contains confidential information.', 'compliance');
+        $settings->set('legal_consent_text_kh', 'ខ្ញុំយល់ព្រមនឹងលក្ខខណ្ឌប្រើប្រាស់ — ខ្ញុំបញ្ជាក់សិទ្ធិអំណាច ហើយនឹងប្រើប្រាស់ឯកសារនេះសម្រាប់គោលបំណងអាជីវកម្មស្របច្បាប់។ វាមានផ្ទុកព័ត៌មានសម្ងាត់។', 'compliance');
     }
 }

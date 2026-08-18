@@ -36,6 +36,8 @@ class CompleteMilestoneOnDocumentVerified
     {
         $document = $event->document;
         $milestoneId = $document->documentTemplate->milestone_id;
+        /** @var Company $company */
+        $company = $document->company;
 
         // Global docs count toward every company's completion; a company_id
         // match only counts for that one company — without this, one
@@ -43,18 +45,23 @@ class CompleteMilestoneOnDocumentVerified
         // every other company sharing this milestone. Nested sub-documents
         // already count correctly with no extra handling here: they retain
         // their ancestor's milestone_id regardless of nesting depth.
+        // Bypassed templates (v3 §0.2) are excluded from the required set —
+        // a waived document must not block the milestone's auto-completion.
+        $bypassedKeys = collect($company->bypass_flags ?? [])
+            ->filter()
+            ->keys();
+
         $requiredTemplates = DocumentTemplate::query()
             ->where('milestone_id', $milestoneId)
             ->where('is_required', true)
             ->where(fn ($query) => $query->whereNull('company_id')->orWhere('company_id', $document->company_id))
-            ->get();
+            ->get()
+            ->filter(fn (DocumentTemplate $template) => $template->bypass_key === null || ! $bypassedKeys->contains($template->bypass_key));
 
         if ($requiredTemplates->isEmpty()) {
             return;
         }
 
-        /** @var Company $company */
-        $company = $document->company;
         $journey = Journey::query()->where('company_id', $document->company_id)->first();
 
         $allSatisfied = $requiredTemplates->every(function (DocumentTemplate $template) use ($document, $company, $journey) {

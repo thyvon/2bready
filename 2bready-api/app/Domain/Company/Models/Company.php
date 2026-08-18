@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $employee_count
  * @property Carbon|null $compliance_start_date
  * @property array<string, bool> $bypass_flags
+ * @property string|null $vault_pin_hash
  *
  * @use HasFactory<CompanyFactory>
  */
@@ -45,6 +46,7 @@ class Company extends Model
         'compliance_start_date',
         'employee_count',
         'bypass_flags',
+        'vault_pin_hash',
         'industry_id',
         'country_code',
         'status',

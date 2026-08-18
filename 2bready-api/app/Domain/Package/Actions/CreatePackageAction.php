@@ -42,7 +42,7 @@ class CreatePackageAction
             /** @var Package $representative */
             $representative = $rows[BillingPeriod::Yearly->value];
             $representative->setRelation('prices', collect($rows)->sortBy(
-                fn (Package $row) => $row->billing_period === BillingPeriod::Yearly
+                fn (Package $row) => $row->billing_period === BillingPeriod::Yearly,
             )->values());
 
             return $representative;

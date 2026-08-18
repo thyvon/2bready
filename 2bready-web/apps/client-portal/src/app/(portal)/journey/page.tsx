@@ -55,6 +55,8 @@ import {
 } from '@/lib/journey-api';
 import { tierByLevelCode } from '@/lib/package-api';
 import { uploadDocument, getPreviewUrl } from '@/lib/document-api';
+import { getLegalConsentStatus } from '@/lib/legal-consent-api';
+import { LegalConsentDialog } from '@/components/LegalConsentDialog';
 
 const FILTERS: Array<{ key: DocStatus | 'all'; label: string }> = [
   { key: 'all', label: 'All' },
@@ -93,6 +95,21 @@ export default function JourneyPage() {
   const totalDocs = allDocuments(journey).length;
   const tierMap = useMemo(() => tierByLevelCode(packages), [packages]);
 
+  // Template id → journey level code, for resolving a document's restriction
+  // from the upload path (which only has the template id, not the level
+  // context the tree rows carry).
+  const levelByDocumentId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const level of levels) {
+      for (const milestone of level.milestones) {
+        for (const doc of milestone.documents) {
+          map[doc.id] = level.code;
+        }
+      }
+    }
+    return map;
+  }, [levels]);
+
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<DocStatus | 'all'>('all');
   const isFiltering = query.trim().length > 0 || filter !== 'all';
@@ -124,6 +141,43 @@ export default function JourneyPage() {
 
   // Delete sub-document confirmation state
   const [deleteSubDoc, setDeleteSubDoc] = useState<JourneyDocument | null>(null);
+
+  // Legal consent gate (v3 §4.2): restricted P3/P4 (L3/L4) documents require
+  // an accepted consent before preview/upload. We check status lazily on the
+  // action (never pre-flight the whole journey) and queue the action to run
+  // once consent is recorded server-side.
+  const [consentGate, setConsentGate] = useState<{
+    levelCode: string;
+    textEn: string;
+    textKh: string;
+    run: () => void;
+  } | null>(null);
+
+  // L3/L4 documents are restricted — mirror of the backend's
+  // pathwayForLevel() (LegalConsentService). Anything else passes straight
+  // through with no modal.
+  const isRestrictedLevel = (code: string) => code === 'L3' || code === 'L4';
+
+  // Wraps a restricted action (preview/upload) in the consent check: if the
+  // user already holds a current-version consent for the level the action
+  // runs immediately; otherwise the consent dialog opens and `run` fires
+  // only after the server records acceptance.
+  const gateByLevel = async (levelCode: string, run: () => void) => {
+    if (!isRestrictedLevel(levelCode)) {
+      run();
+      return;
+    }
+    try {
+      const status = await getLegalConsentStatus(levelCode);
+      if (status.accepted) {
+        run();
+        return;
+      }
+      setConsentGate({ levelCode, textEn: status.text_en, textKh: status.text_kh, run });
+    } catch (err) {
+      toast.error(getApiError(err).message || 'Could not check consent.');
+    }
+  };
 
   function handleBackfillUpload(doc: JourneyDocument, entry: DocumentHistoryEntry) {
     setBackfillTarget({ doc, entry });
@@ -217,12 +271,13 @@ export default function JourneyPage() {
   const renderDocAction: RenderDocAction = (doc, ctx) => {
     const status = toDocStatus(doc.status);
     const levelUnlocked = ctx.level.unlocked;
+    const levelCode = ctx.level.code;
 
     if (!levelUnlocked) {
       return (
         <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
           <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />
-          <Tooltip title={`Upgrade to ${TIER_LABELS[tierMap[ctx.level.code]] ?? 'a paid'} plan to unlock this level`}>
+          <Tooltip title={`Upgrade to ${TIER_LABELS[tierMap[levelCode]] ?? 'a paid'} plan to unlock this level`}>
             <LockOutlinedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
           </Tooltip>
         </Box>
@@ -287,11 +342,13 @@ export default function JourneyPage() {
         )}
         {(status === 'verified' || status === 'review') && (
           <>
-            <Tooltip title="Preview">
-              <IconButton size="small" onClick={() => doc.document_id && void handlePreview(doc.document_id, doc.name)}>
-                <VisibilityOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            {doc.document_id && (
+              <Tooltip title="Preview">
+                <IconButton size="small" onClick={() => void gateByLevel(levelCode, () => handlePreview(doc.document_id!, doc.name))}>
+                  <VisibilityOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             {status === 'verified' && (
               <Tooltip title="Download">
                 <IconButton size="small">
@@ -332,33 +389,40 @@ export default function JourneyPage() {
   async function handleConfirmUpload() {
     if (!stagedUpload) return;
     const { doc, file, targetPeriodKey } = stagedUpload;
-    setUploadingIds((prev) => new Set(prev).add(doc.id));
-    try {
-      await uploadDocument(doc.id, file, targetPeriodKey);
-      // Refetch immediately so the tree reflects the real new status
-      // (pending_scan) right away — not on next navigation/reload.
-      await refetch();
-      setDrafts((prev) => {
-        const next = { ...prev };
-        delete next[doc.id];
-        return next;
-      });
-      setStagedUpload(null);
-      toast.success(`${doc.name} uploaded — now being scanned.`);
-      // The malware scan runs on a background queue worker, not on this
-      // request — poll for a bit so the tree updates itself the moment the
-      // scan finishes (pending_scan → review), instead of requiring a
-      // manual page reload to see it.
-      void pollForScanResult(doc.id, doc.name);
-    } catch (err) {
-      toast.error(getApiError(err).message || `Could not upload ${doc.name}. Please try again.`);
-    } finally {
-      setUploadingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(doc.id);
-        return next;
-      });
-    }
+
+    const upload = async () => {
+      setUploadingIds((prev) => new Set(prev).add(doc.id));
+      try {
+        await uploadDocument(doc.id, file, targetPeriodKey);
+        // Refetch immediately so the tree reflects the real new status
+        // (pending_scan) right away — not on next navigation/reload.
+        await refetch();
+        setDrafts((prev) => {
+          const next = { ...prev };
+          delete next[doc.id];
+          return next;
+        });
+        setStagedUpload(null);
+        toast.success(`${doc.name} uploaded — now being scanned.`);
+        // The malware scan runs on a background queue worker, not on this
+        // request — poll for a bit so the tree updates itself the moment the
+        // scan finishes (pending_scan → review), instead of requiring a
+        // manual page reload to see it.
+        void pollForScanResult(doc.id, doc.name);
+      } catch (err) {
+        toast.error(getApiError(err).message || `Could not upload ${doc.name}. Please try again.`);
+      } finally {
+        setUploadingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(doc.id);
+          return next;
+        });
+      }
+    };
+
+    // Restricted L3/L4 uploads need an accepted consent first — the backend
+    // rejects them otherwise, so gate before the request, not on its 403.
+    await gateByLevel(levelByDocumentId[doc.id] ?? '', upload);
   }
 
   // Stashes the staged file locally — nothing is sent to the server. Lets
@@ -557,6 +621,20 @@ export default function JourneyPage() {
         cancelLabel={t('common.cancel')}
         danger
         onConfirm={handleConfirmDeleteSubDoc}
+      />
+
+      {/* Legal consent — required before acting on restricted L3/L4 documents */}
+      <LegalConsentDialog
+        open={consentGate !== null}
+        levelCode={consentGate?.levelCode ?? ''}
+        textEn={consentGate?.textEn ?? ''}
+        textKh={consentGate?.textKh ?? ''}
+        onCancel={() => setConsentGate(null)}
+        onAccepted={() => {
+          const run = consentGate?.run;
+          setConsentGate(null);
+          run?.();
+        }}
       />
     </Box>
   );

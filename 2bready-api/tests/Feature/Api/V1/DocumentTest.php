@@ -24,7 +24,12 @@ beforeEach(function () {
     Storage::fake('local');
 
     $template = JourneyTemplate::factory()->create();
-    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id]);
+    // Pinned to L1: the random factory default (L1-L4) intermittently lands
+    // on a restricted L3/L4 level, which the legal-consent/vault gates then
+    // block — these tests exercise the plain document flow, not the
+    // restricted-pathway gating (that's covered in LegalConsentTest and
+    // VaultTest).
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1']);
     $this->milestone = Milestone::factory()->create(['journey_level_id' => $level->id]);
     $this->docTemplate = DocumentTemplate::factory()->create(['milestone_id' => $this->milestone->id, 'name' => 'MoC Registration']);
     $this->company = Company::factory()->create();

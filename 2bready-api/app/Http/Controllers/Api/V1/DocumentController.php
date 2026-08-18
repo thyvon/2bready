@@ -31,7 +31,9 @@ class DocumentController extends Controller
     {
         $this->authorize('viewAny', Document::class);
 
-        $query = Document::query()->with(['company', 'documentTemplate'])->latest();
+        $query = Document::query()
+            ->with(['company', 'documentTemplate.milestone.journeyLevel'])
+            ->latest();
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);

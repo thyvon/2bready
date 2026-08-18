@@ -8,13 +8,29 @@ use App\Domain\Company\Models\Company;
 use App\Domain\Document\Jobs\ScanDocumentForMalwareJob;
 use App\Domain\Document\Models\Document;
 use App\Domain\Document\Models\DocumentTemplate;
+use App\Domain\LegalConsent\Exceptions\LegalConsentNotAcceptedException;
+use App\Domain\LegalConsent\Services\LegalConsentAccessService;
 use App\Domain\User\Models\User;
 use Illuminate\Http\UploadedFile;
 
 class UploadDocumentAction
 {
+    public function __construct(private readonly LegalConsentAccessService $legalConsent) {}
+
     public function execute(Company $company, DocumentTemplate $template, UploadedFile $file, User $uploadedBy, ?string $periodKey = null): Document
     {
+        // Client-side consent gate (v3 §4.2): a company user uploading to a
+        // restricted P3/P4 (L3/L4) template must hold a current legal consent.
+        // Back-office uploads (admin/staff/finance acting on a company's
+        // behalf) are exempt — that path is gated by the Vault instead.
+        if (! $uploadedBy->hasAnyRole(['admin', 'staff', 'finance'])) {
+            $pathway = $this->legalConsent->pathwayForTemplate($template);
+
+            if ($pathway && ! $this->legalConsent->hasAcceptedForPathway($uploadedBy, $company, $pathway)) {
+                throw new LegalConsentNotAcceptedException;
+            }
+        }
+
         // MIME + size are already validated by StoreDocumentRequest before this
         // runs (CLAUDE.md: "validate MIME + size first, antivirus scan before
         // persisting"). Stored on config('filesystems.documents_disk') — local

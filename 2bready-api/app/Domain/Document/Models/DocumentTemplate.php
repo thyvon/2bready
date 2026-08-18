@@ -44,6 +44,7 @@ class DocumentTemplate extends Model
         'parent_id',
         'company_id',
         'name',
+        'bypass_key',
         'description',
         'is_required',
         'client_can_add_subdocs',

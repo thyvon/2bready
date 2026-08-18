@@ -156,6 +156,42 @@ it('unlocks the next level once every milestone in the previous one is completed
     expect($levels['L2']['milestones'][0]['completed'])->toBeTrue();
 });
 
+it('unlocks a level when a gating milestone is fully bypassed instead of completed', function () {
+    $package = Package::factory()->create([
+        'industry_id' => $this->industry->id,
+        'tier' => Tier::Pro,
+        'journey_level_id' => $this->l3->id,
+    ]);
+    $subscription = Subscription::factory()->active()->create([
+        'company_id' => $this->company->id,
+        'package_id' => $package->id,
+    ]);
+    $this->company->update(['active_subscription_id' => $subscription->id]);
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+
+    // This company is under the employee-count threshold, so the internal
+    // rules milestone is waived by EmployeeCountBypassRule — no completion
+    // record is needed for it to count toward unlocking L3.
+    $this->company->update(['bypass_flags' => ['company_internal_rules' => true]]);
+    DocumentTemplate::factory()->create([
+        'milestone_id' => $this->l2MilestoneA->id,
+        'name' => 'Company Internal Rules',
+        'bypass_key' => 'company_internal_rules',
+        'is_required' => true,
+    ]);
+
+    app(CompleteMilestoneAction::class)->execute($this->company, $this->l2MilestoneB, null);
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    expect($levels['L3']['unlocked'])->toBeTrue();
+    // The bypassed milestone surfaces as completed rather than a "required" gap.
+    $l2Milestones = collect($levels['L2']['milestones'])->keyBy('id');
+    expect($l2Milestones[$this->l2MilestoneA->id]['completed'])->toBeTrue();
+    expect($l2Milestones[$this->l2MilestoneB->id]['completed'])->toBeTrue();
+});
+
 it('nests real document status under each milestone', function () {
     $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
     $template = DocumentTemplate::factory()->create(['milestone_id' => $this->l1MilestoneA->id, 'name' => 'MoC Registration']);
