@@ -20,6 +20,7 @@ const kh: Record<keyof typeof en, string> = {
   'common.cancel': 'បោះបង់',
   'common.save': 'រក្សាទុក',
   'common.delete': 'លុប',
+  'common.retry': 'ព្យាយាមម្តងទៀត',
 
   // ─── Nav descriptions ────────────────────────────────────────────────────
   'nav.journey_desc': 'បញ្ជីត្រួតពិនិត្យអនុលោមភាពជាជំហាន ៗ របស់អ្នកនឹងបង្ហាញនៅទីនេះ។',
@@ -188,6 +189,22 @@ const kh: Record<keyof typeof en, string> = {
   'public_data_room.incorrect_pin': 'ពាក្យសម្ងាត់មិនត្រឹមត្រូវ។',
   'public_data_room.generic_error': 'មិនអាចផ្ទៀងផ្ទាត់តំណភ្ជាប់នេះបានទេ។',
   'public_data_room.preview_error': 'មិនអាចផ្ទុកឯកសារនេះបានទេ។',
+
+  // ─── Trust Badge page ───────────────────────────────────────────────────
+  'trust_badge.intro': 'សញ្ញាសម្គាល់ទំនុកចិត្តរបស់អ្នកគឺជាអត្តសញ្ញាណដែលសវនករ ដៃគូ និងអ្នកឱ្យខ្ចីឃើញ — កំណត់ត្រាសាធារណៈដែលអាចផ្ទៀងផ្ទាត់បានអំពីវឌ្ឍនភាពដំណើរអនុលោមភាពរបស់អ្នក។ រកបានដោយបំពេញបញ្ជីឯកសារពេញលេញនៃកម្រិតមួយ។',
+  'trust_badge.not_certified_title': 'មិនទាន់ទទួលបានវិញ្ញាបនបត្រនៅឡើយទេ',
+  'trust_badge.not_certified_desc': '{verified} ក្នុងចំណោម {total} ឯកសារត្រូវបានផ្ទៀងផ្ទាត់។ បំពេញ {level} ដើម្បីទទួលបានសញ្ញាសម្គាល់ដំបូងរបស់អ្នក។',
+  'trust_badge.continue_journey': 'បន្តដំណើររបស់អ្នក',
+  'trust_badge.public_verification_title': 'ការផ្ទៀងផ្ទាត់សាធារណៈ',
+  'trust_badge.public_verification_subtitle': 'ចែករំលែកស្ថានភាពបានទទួលវិញ្ញាបនបត្ររបស់អ្នកជាមួយនរណាម្នាក់ ដោយមិនបង្ហាញឯកសាររបស់អ្នក',
+  'trust_badge.no_verification_title': 'មិនទាន់មានតំណផ្ទៀងផ្ទាត់នៅឡើយទេ',
+  'trust_badge.no_verification_desc': 'នៅពេលអ្នកទទួលបានសញ្ញាសម្គាល់ ទំព័រស្ថានភាពសាធារណៈ និងកូដ QR នឹងបង្ហាញនៅទីនេះសម្រាប់សវនករ និងដៃគូ ដើម្បីបញ្ជាក់ការទទួលវិញ្ញាបនបត្ររបស់អ្នក — មិនចាំបាច់ចូលប្រើ គ្មានឯកសារណាត្រូវបានបង្ហាញទេ។',
+  'trust_badge.earned_title': 'បានទទួលវិញ្ញាបនបត្រ',
+  'trust_badge.earned_level': 'កម្រិត {level}',
+  'trust_badge.issued_on': 'ចេញឱ្យនៅ {date}',
+  'trust_badge.download_pdf': 'ទាញយកវិញ្ញាបនបត្រ PDF',
+  'trust_badge.verify_link': 'តំណផ្ទៀងផ្ទាត់សាធារណៈ',
+  'trust_badge.load_error': 'មិនអាចផ្ទុកសញ្ញាសម្គាល់ទំនុកចិត្តរបស់អ្នកបានទេ។ សូមព្យាយាមម្តងទៀត។',
 };
 
 export default kh;

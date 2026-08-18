@@ -1279,6 +1279,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/public/verify/{auditId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["publicVerification.verify"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/roles": {
         parameters: {
             query?: never;
@@ -1542,6 +1558,22 @@ export interface paths {
         get: operations["tpPartner.auditors"];
         put?: never;
         post: operations["tpPartner.registerAuditor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/trust-badges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["trustBadge.index"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2475,6 +2507,22 @@ export interface components {
             review_text: string | null;
             /** Format: date-time */
             created_at: string | null;
+        };
+        /** TrustBadgeResource */
+        TrustBadgeResource: {
+            id: string;
+            level: string;
+            issued_at: string;
+            expires_at: string;
+            qr_payload_url: string | null;
+            audit_id: string;
+            certificate?: {
+                id: string;
+                pdf_url: string;
+                qr_payload_url: string;
+                master_verifier_stamp: unknown[];
+                issued_at: string;
+            } | null;
         };
         /** UpdateCompanyRequest */
         UpdateCompanyRequest: {
@@ -5850,6 +5898,52 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "publicVerification.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                auditId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            audit_id: string;
+                            level: string;
+                            company_name: string;
+                            company_name_kh: string | null;
+                            issued_at: string | null;
+                            score: string;
+                            pdf_url: string;
+                            qr_payload_url: string;
+                            master_verifier_stamp: unknown[];
+                        } | null;
+                        meta: string;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Certificate not found for this audit.";
+                        errors: string[];
+                    };
+                };
+            };
+        };
+    };
     "role.index": {
         parameters: {
             query?: never;
@@ -6531,6 +6625,29 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "trustBadge.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TrustBadgeResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
         };
     };
     "user.index": {

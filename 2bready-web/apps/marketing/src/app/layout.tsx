@@ -5,8 +5,6 @@ import { Plus_Jakarta_Sans, Kantumruy_Pro } from 'next/font/google';
 import { MotionConfig } from 'framer-motion';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from '@/components/Providers';
-import MarketingHeader from '@/components/layouts/MarketingHeader';
-import MarketingFooter from '@/components/layouts/MarketingFooter';
 import './globals.css';
 
 // Marketing is English-only today (see feedback_always_translate_new_ui /
@@ -38,11 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased" suppressHydrationWarning>
         <InitColorSchemeScript defaultMode="system" />
         <Providers>
-          <MotionConfig reducedMotion="user">
-            <MarketingHeader />
-            <main>{children}</main>
-            <MarketingFooter />
-          </MotionConfig>
+          <MotionConfig reducedMotion="user">{children}</MotionConfig>
         </Providers>
       </body>
     </html>

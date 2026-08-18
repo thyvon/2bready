@@ -46,6 +46,7 @@ use App\Domain\Payment\Policies\SubscriptionPolicy;
 use App\Domain\Shared\Services\MailSettingService;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\TpPartner\Policies\TpPartnerPolicy;
+use App\Domain\TrustBadge\Listeners\IssueTrustBadgeListener;
 use App\Domain\User\Models\User;
 use App\Domain\User\Policies\UserPolicy;
 use Illuminate\Auth\Events\Registered;
@@ -133,6 +134,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(DocumentExpired::class, RevertMilestoneCompletionOnDocumentExpired::class);
         Event::listen(DocumentExpired::class, SendDocumentExpiredNotification::class);
         Event::listen(AuditDecisionMade::class, UpdateComplianceScoreListener::class);
+        Event::listen(AuditDecisionMade::class, IssueTrustBadgeListener::class);
         Event::listen(AuditableActionOccurred::class, RecordAuditLogListener::class);
         // Fires on RegisterUserAction's event(new Registered($user)) — sends the
         // verification email via User's now-wired MustVerifyEmail trait. Internal

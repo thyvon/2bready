@@ -44,5 +44,18 @@ class PlatformSettingSeeder extends Seeder
         $settings->set('legal_consent_version', 'v1', 'compliance');
         $settings->set('legal_consent_text_en', 'I agree to the Terms of Use — I confirm authorization and will use this document for legitimate business purposes. It contains confidential information.', 'compliance');
         $settings->set('legal_consent_text_kh', 'ខ្ញុំយល់ព្រមនឹងលក្ខខណ្ឌប្រើប្រាស់ — ខ្ញុំបញ្ជាក់សិទ្ធិអំណាច ហើយនឹងប្រើប្រាស់ឯកសារនេះសម្រាប់គោលបំណងអាជីវកម្មស្របច្បាប់។ វាមានផ្ទុកព័ត៌មានសម្ងាត់។', 'compliance');
+
+        // Certificates (v3 §0.3): the fixed master-verification-authority stamp
+        // every certificate footer carries regardless of which TP partner was
+        // hired for the audit. Snapshot into certificates.master_verifier_stamp
+        // at issuance, so historical certificates don't change if this is later
+        // edited. verify_base_url is what the QR encodes (v3 §1.6) — the public
+        // verify page root, seeded with the production blueprint value.
+        $settings->set('certificate.master_verification_authority', [
+            'verified_by' => 'ADMIT UNIT Master Auditors',
+            'approved_by' => 'ADMIT Global Executive',
+            'prepared_by' => '2bReady Trust Engine Powered by ADMIT Global',
+        ], 'certificate');
+        $settings->set('certificate.verify_base_url', 'https://verify.2bready.asia', 'certificate');
     }
 }

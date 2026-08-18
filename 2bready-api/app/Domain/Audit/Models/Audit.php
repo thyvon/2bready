@@ -12,7 +12,9 @@ use App\Domain\TpPartner\Models\TpPartner;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
+use Database\Factories\AuditFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -35,10 +37,13 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $submitted_at
  * @property Carbon|null $reviewed_at
  * @property Carbon|null $cancelled_at
+ *
+ * @use HasFactory<AuditFactory>
  */
 class Audit extends Model
 {
-    use Auditable, BelongsToCompany, HasUlid;
+    /** @use HasFactory<AuditFactory> */
+    use Auditable, BelongsToCompany, HasFactory, HasUlid;
 
     protected $fillable = [
         'company_id',

@@ -15,6 +15,7 @@ const en = {
   'common.cancel': 'Cancel',
   'common.save': 'Save',
   'common.delete': 'Delete',
+  'common.retry': 'Retry',
 
   // ─── Nav descriptions ────────────────────────────────────────────────────
   'nav.journey_desc': 'Your guided, step-by-step compliance checklist will appear here.',
@@ -183,6 +184,22 @@ const en = {
   'public_data_room.incorrect_pin': 'Incorrect PIN.',
   'public_data_room.generic_error': 'Could not verify this link.',
   'public_data_room.preview_error': 'Could not load this document.',
+
+  // ─── Trust Badge page ───────────────────────────────────────────────────
+  'trust_badge.intro': 'Your Trust Badge is the credential auditors, partners, and lenders see — a public, verifiable record of how far your compliance journey has come. Earn it by completing a level\'s full document checklist.',
+  'trust_badge.not_certified_title': 'Not certified yet',
+  'trust_badge.not_certified_desc': '{verified} of {total} documents verified. Complete {level} to earn your first badge.',
+  'trust_badge.continue_journey': 'Continue Your Journey',
+  'trust_badge.public_verification_title': 'Public Verification',
+  'trust_badge.public_verification_subtitle': 'Share your certified status with anyone, without exposing your documents',
+  'trust_badge.no_verification_title': 'No verification link yet',
+  'trust_badge.no_verification_desc': 'Once you earn a badge, a public status page and QR code will appear here for auditors and partners to confirm your certification — no login required, no documents exposed.',
+  'trust_badge.earned_title': 'Certified',
+  'trust_badge.earned_level': 'Level {level}',
+  'trust_badge.issued_on': 'Issued {date}',
+  'trust_badge.download_pdf': 'Download certificate PDF',
+  'trust_badge.verify_link': 'Public verification link',
+  'trust_badge.load_error': 'Could not load your trust badges. Please try again.',
 } as const;
 
 export default en;

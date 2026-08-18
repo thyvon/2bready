@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\BrandingController;
 use App\Http\Controllers\Api\V1\IndustryController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\PackageController;
+use App\Http\Controllers\Api\V1\Public\PublicVerificationController;
 use App\Http\Controllers\Api\V1\PublicDataRoomController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +48,13 @@ Route::prefix('v1')->group(function () {
     Route::get('branding', [BrandingController::class, 'branding']);
     Route::get('branding/logo', [BrandingController::class, 'logo']);
 
+    // Public — the certificate verify page the QR codes encode. Reads only
+    // the narrow certificates table by audit_id (v3 §1.5), never the
+    // authenticated tenant surface. Certificates don't change after issuance,
+    // so this is independently throttled and CDN-cacheable.
+    Route::get('public/verify/{auditId}', [PublicVerificationController::class, 'verify'])
+        ->middleware('throttle:60,1');
+
     // totp.verified blocks tokens issued mid-2FA-flow (see AuthController::login()) from
     // reaching business routes — pending tokens only carry the 'totp-pending' ability.
     // company.active rejects requests from a user whose current company is
@@ -76,5 +84,6 @@ Route::prefix('v1')->group(function () {
         require __DIR__.'/api/tp-partner.php';
         require __DIR__.'/api/vault.php';
         require __DIR__.'/api/legal-consent.php';
+        require __DIR__.'/api/trust-badges.php';
     });
 });
