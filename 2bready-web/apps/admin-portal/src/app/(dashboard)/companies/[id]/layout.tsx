@@ -40,7 +40,6 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [reloadKey, setReloadKey] = useState(0);
   const [pendingDocuments, setPendingDocuments] = useState(0);
   const [pendingPayments, setPendingPayments] = useState(0);
   const [countsReloadKey, setCountsReloadKey] = useState(0);
@@ -49,6 +48,8 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
   }, [hasAnyRole, router]);
 
+  // Initial fetch (and the only one allowed to flip `loading`) — mounted once
+  // per company id. Follow-up reconciliations use the silent `reload` below.
   useEffect(() => {
     let cancelled = false;
 
@@ -70,9 +71,19 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
     return () => {
       cancelled = true;
     };
-  }, [params.id, reloadKey]);
+  }, [params.id]);
 
-  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+  // Silent in-place refetch — never flips `loading`, so calling it after an
+  // edit (or on error) reconciles with server truth without unmounting the
+  // whole workspace into a spinner, collapsing tabs, or losing scroll. The
+  // SPA equivalent of the old reloadKey effect.
+  const reload = useCallback(() => {
+    void getCompany(params.id)
+      .then(setCompany)
+      .catch(() => {
+        // Keep current company on failure — the caller already surfaced the error.
+      });
+  }, [params.id]);
   const refreshCounts = useCallback(() => setCountsReloadKey((k) => k + 1), []);
 
   // Tab badge counts — "how many things here need my attention right now."
@@ -140,7 +151,7 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
   const activeIndex = tabs.findIndex((tab, i) => (i === 0 ? pathname === tab.href : pathname.startsWith(tab.href)));
 
   return (
-    <CompanyWorkspaceProvider value={{ company, reload, refreshCounts }}>
+    <CompanyWorkspaceProvider value={{ company, setCompany, reload, refreshCounts }}>
       <PageHeader
         title={company.name}
         action={

@@ -43,7 +43,11 @@ type RawJourney = components['schemas']['JourneyResource'];
 type RawLevel = RawJourney['levels'][number];
 type RawMilestone = RawLevel['milestones'][number];
 
-export type JourneyMilestone = Omit<RawMilestone, 'documents'> & { documents: JourneyDocument[] };
+// JourneyResource.mapMilestone() returns `completed` straight from
+// MilestoneUnlockRuleEngine::isMilestoneSatisfied(), which is a real bool —
+// but Scramble types it as a non-nullable string. Override here, same
+// hand-declared-shape pattern as JourneyDocument/DocumentHistoryEntry above.
+export type JourneyMilestone = Omit<RawMilestone, 'documents' | 'completed'> & { completed: boolean; documents: JourneyDocument[] };
 export type JourneyLevel = Omit<RawLevel, 'milestones'> & { milestones: JourneyMilestone[] };
 export type Journey = Omit<RawJourney, 'levels'> & { levels: JourneyLevel[] };
 

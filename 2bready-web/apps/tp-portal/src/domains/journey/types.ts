@@ -44,6 +44,12 @@ type RawJourney = components['schemas']['JourneyResource'];
 type RawLevel = RawJourney['levels'][number];
 type RawMilestone = RawLevel['milestones'][number];
 
-export type JourneyMilestone = Omit<RawMilestone, 'documents'> & { documents: JourneyDocument[] };
+// JourneyResource.mapMilestone() returns a bool `completed` from
+// isMilestoneSatisfied() but Scramble infers it as string — same override
+// admin-portal applies.
+export type JourneyMilestone = Omit<RawMilestone, 'documents' | 'completed'> & {
+  documents: JourneyDocument[];
+  completed: boolean;
+};
 export type JourneyLevel = Omit<RawLevel, 'milestones'> & { milestones: JourneyMilestone[] };
 export type Journey = Omit<RawJourney, 'levels'> & { levels: JourneyLevel[] };

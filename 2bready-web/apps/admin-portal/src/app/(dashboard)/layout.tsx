@@ -12,6 +12,7 @@ import DashboardSidebar from '@/components/layouts/DashboardSidebar';
 import DashboardHeader from '@/components/layouts/DashboardHeader';
 import DashboardNavHorizontal from '@/components/layouts/DashboardNavHorizontal';
 import AdminFooter from '@/components/layouts/AdminFooter';
+import { TopProgressBar } from '@2bready/ui-core';
 import { fadeIn, pageTransition } from '@/lib/motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -66,6 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (navOrientation === 'horizontal' && !isMobile) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
+        <TopProgressBar />
         <motion.div key="horizontal-nav" initial="initial" animate="animate" variants={fadeIn}>
           <DashboardNavHorizontal />
         </motion.div>
@@ -81,6 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <TopProgressBar />
       <motion.div key="vertical-nav" initial="initial" animate="animate" variants={fadeIn}>
         <DashboardSidebar mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
       </motion.div>

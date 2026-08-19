@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -53,8 +53,10 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
   const [serverError, setServerError] = useState('');
   const [actingOn, setActingOn] = useState<string | null>(null);
 
-  const load = async () => {
-    setLoading(true);
+  // Silent in-place refetch after a staff/hire/payout mutation — updates all
+  // four panels without flipping `loading`, so nothing unmounts into a
+  // spinner or loses scroll. The mount effect below is the only loader.
+  const load = useCallback(async () => {
     try {
       const [partner, staff, hireList, { companies: companyList }] = await Promise.all([
         getTpPartner(tpPartnerId),
@@ -68,10 +70,8 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
       setCompanies(companyList);
     } catch (err) {
       toast.error(getApiError(err).message);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [tpPartnerId, toast]);
 
   useEffect(() => {
     let cancelled = false;

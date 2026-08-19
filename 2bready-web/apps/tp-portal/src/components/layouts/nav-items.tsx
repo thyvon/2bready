@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { useTranslation, type TranslationKey } from '@/lib/i18n';
@@ -23,10 +24,12 @@ interface NavItemDef {
 // role-branching needed, just the flat list. Dashboard is a placeholder for
 // a future analytics view; Companies is where the actual company-list +
 // per-company Journey review work happens (mirrors admin-portal's own
-// Dashboard/Companies split).
+// Dashboard/Companies split); My Audits is where the auditor submits their
+// per-audit findings (score + feedback).
 const NAV_ITEMS: NavItemDef[] = [
   { labelKey: 'nav.dashboard', href: '/dashboard', icon: <SpaceDashboardOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.companies', href: '/companies', icon: <BusinessOutlinedIcon fontSize="small" /> },
+  { labelKey: 'nav.audits', href: '/audits', icon: <FactCheckOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.settings', href: '/settings', icon: <SettingsOutlinedIcon fontSize="small" /> },
 ];
 

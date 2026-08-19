@@ -111,7 +111,7 @@ class TpPartnerController extends Controller
     {
         $this->authorize('view', $tpPartner);
 
-        return ApiResponse::success(UserResource::collection($tpPartner->auditors()->with('user')->get()->pluck('user')));
+        return ApiResponse::success(UserResource::collection($tpPartner->auditors()->with('user.auditor')->get()->pluck('user')));
     }
 
     public function registerAuditor(TpPartner $tpPartner, RegisterAuditorRequest $request, RegisterTpAuditorAction $action): JsonResponse

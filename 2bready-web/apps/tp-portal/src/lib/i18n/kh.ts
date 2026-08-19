@@ -17,6 +17,7 @@ const kh: Record<keyof typeof en, string> = {
   // ─── Navigation ──────────────────────────────────────────────────────────
   'nav.dashboard': 'ផ្ទាំងគ្រប់គ្រង',
   'nav.companies': 'ក្រុមហ៊ុន',
+  'nav.audits': 'សវនកម្មរបស់ខ្ញុំ',
   'nav.settings': 'ការកំណត់',
 
   // ─── Header ──────────────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ const kh: Record<keyof typeof en, string> = {
   'status.scan_failed': 'ស្កេនបរាជ័យ',
   'status.review': 'រង់ចាំពិនិត្យ',
   'status.verified': 'បានផ្ទៀងផ្ទាត់',
+  'status.submitted': 'បានដាក់ស្នើ',
 
   // ─── TP dashboard (assigned companies) ──────────────────────────────────
   'tp.dashboard_title': 'ផ្ទាំងគ្រប់គ្រង',
@@ -123,6 +125,31 @@ const kh: Record<keyof typeof en, string> = {
   'tp.document_comment_placeholder': 'បន្ថែមមតិយោបល់អំពីឯកសារ — ទាមទារសម្រាប់ការបដិសេធ អាចទុកទទេសម្រាប់ការផ្ទៀងផ្ទាត់។',
   'tp.document_verified': 'ឯកសារត្រូវបានផ្ទៀងផ្ទាត់។',
   'tp.document_rejected': 'ឯកសារត្រូវបានបដិសេធ។',
+
+  // ─── TP audit submission (per audit) ────────────────────────────────────
+  'tp.audits_title': 'សវនកម្មរបស់ខ្ញុំ',
+  'tp.audit_detail_title': 'ព័ត៌មានលម្អិតនៃសវនកម្ម',
+  'tp.audit_not_found': 'រកមិនឃើញសវនកម្មនេះទេ។',
+  'tp.audit_level_col': 'កម្រិត',
+  'tp.audit_score_col': 'ពិន្ទុ',
+  'tp.audit_submitted_col': 'បានដាក់ស្នើ',
+  'tp.audit_deadline_col': 'ថ្ងៃផុតកំណត់',
+  'tp.audit_firm_col': 'ក្រុមហ៊ុន TP',
+  'tp.audit_auditor_col': 'សវនករ',
+  'tp.no_audits': 'មិនទាន់មានសវនកម្មទេ',
+  'tp.no_audits_desc': 'សវនកម្មដែលបានបង្កើតសម្រាប់ការងាររបស់ក្រុមហ៊ុនអ្នកនឹងបង្ហាញនៅទីនេះ។',
+  'tp.audit_details': 'ព័ត៌មានលម្អិតនៃសវនកម្ម',
+  'tp.audit_submit_title': 'ដាក់ស្នើលទ្ធផល',
+  'tp.audit_score_label': 'ពិន្ទុអនុលោមភាព (0–100)',
+  'tp.audit_feedback_label': 'មតិ',
+  'tp.audit_feedback_placeholder': 'សង្ខេបលទ្ធផលសម្រាប់ក្រុមហ៊ុន និងអ្នកពិនិត្យរបស់រដ្ឋបាល។',
+  'tp.audit_submit': 'ដាក់ស្នើសវនកម្ម',
+  'tp.audit_submit_success': 'បានដាក់ស្នើសវនកម្ម — កំពុងរង់ចាំការពិនិត្យរបស់រដ្ឋបាល។',
+  'tp.confirm_audit_submit_title': 'ដាក់ស្នើលទ្ធផលសវនកម្ម?',
+  'tp.confirm_audit_submit': 'នេះនឹងចាក់សោពិន្ទុ និងមតិរបស់អ្នកសម្រាប់ការពិនិត្យរបស់រដ្ឋបាល។ អ្នកមិនអាចកែប្រែវាបានទេបន្ទាប់ពីដាក់ស្នើ។',
+  'tp.audit_feedback': 'មតិរបស់សវនករ',
+  'tp.audit_no_feedback': 'មិនទាន់មានមតិទេ',
+  'tp.audit_no_feedback_desc': 'មតិនឹងបង្ហាញនៅទីនេះនៅពេលដែលសវនកម្មត្រូវបានដាក់ស្នើ។',
 
   // ─── Profile / change password (self-service) ───────────────────────────
   'profile.title': 'ប្រវត្តិរូបរបស់អ្នក',

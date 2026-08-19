@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store';
 import DashboardSidebar from '@/components/layouts/DashboardSidebar';
 import DashboardHeader from '@/components/layouts/DashboardHeader';
 import PortalFooter from '@/components/layouts/PortalFooter';
+import { TopProgressBar } from '@2bready/ui-core';
 import { fadeIn, pageTransition } from '@/lib/motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <TopProgressBar />
       <motion.div key="sidebar" initial="initial" animate="animate" variants={fadeIn}>
         <DashboardSidebar mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
       </motion.div>

@@ -47,7 +47,7 @@ export default function JourneyTemplatesPage() {
   const toast = useToast();
   const { t, locale } = useTranslation();
   const { industries } = useIndustries();
-  const { journeyTemplates, loading, reload } = useJourneyTemplates();
+  const { journeyTemplates, loading, setJourneyTemplates, reload } = useJourneyTemplates();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<JourneyTemplate | null>(null);
@@ -94,24 +94,58 @@ export default function JourneyTemplatesPage() {
     setServerError('');
     try {
       const parsed = journeyTemplateFormSchema.parse(data);
-      const payload = {
+      // API payload uses undefined for optional string fields
+      const apiPayload = {
         country_code: parsed.country_code,
         industry_id: parsed.industry_id,
         name: parsed.name,
         name_kh: parsed.name_kh || undefined,
         is_active: parsed.is_active,
       };
+      // Optimistic update uses null (matches JourneyTemplateResource response type)
+      const optimisticPayload = {
+        country_code: parsed.country_code,
+        industry_id: parsed.industry_id,
+        name: parsed.name,
+        name_kh: parsed.name_kh ?? null,
+        is_active: parsed.is_active,
+      };
 
       if (editing) {
-        await updateJourneyTemplate(editing.id, payload);
+        // Optimistic update for edit
+        setJourneyTemplates((prev) =>
+          prev.map((jt) => (jt.id === editing.id ? { ...jt, ...optimisticPayload } : jt)),
+        );
+        await updateJourneyTemplate(editing.id, apiPayload);
+        toast.success(t('journey_template.update_success'));
       } else {
-        await createJourneyTemplate(payload);
+        // Optimistic insert for create (temporary ID until server responds)
+        const tempId = `temp-${crypto.randomUUID()}`;
+        const optimisticTemplate: JourneyTemplate = {
+          id: tempId,
+          country_code: optimisticPayload.country_code,
+          industry_id: optimisticPayload.industry_id,
+          industry_code: industries.find((i) => i.id === optimisticPayload.industry_id)?.code ?? '',
+          name: optimisticPayload.name,
+          name_kh: optimisticPayload.name_kh,
+          is_active: optimisticPayload.is_active,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setJourneyTemplates((prev) => [optimisticTemplate, ...prev]);
+
+        const created = await createJourneyTemplate(apiPayload);
+        // Replace temp with real server response
+        setJourneyTemplates((prev) =>
+          prev.map((jt) => (jt.id === tempId ? created : jt)),
+        );
+        toast.success(t('journey_template.create_success'));
       }
 
-      toast.success(editing ? t('journey_template.update_success') : t('journey_template.create_success'));
       setDialogOpen(false);
-      reload();
     } catch (err) {
+      // Revert on error by refetching
+      reload();
       setServerError(getApiError(err).message);
     }
   };
@@ -119,12 +153,16 @@ export default function JourneyTemplatesPage() {
   const handleDelete = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
+    const deletedId = pendingDelete.id;
+    // Optimistic remove
+    setJourneyTemplates((prev) => prev.filter((jt) => jt.id !== deletedId));
     try {
-      await deleteJourneyTemplate(pendingDelete.id);
+      await deleteJourneyTemplate(deletedId);
       toast.success(t('journey_template.delete_success'));
       setPendingDelete(null);
-      reload();
     } catch (err) {
+      // Revert on error
+      reload();
       toast.error(getApiError(err).message);
     } finally {
       setDeleting(false);

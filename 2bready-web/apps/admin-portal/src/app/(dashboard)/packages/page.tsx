@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,16 +56,13 @@ export default function AdminPackagesPage() {
     if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
   }, [hasAnyRole, router]);
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      setPackages(await listPackages());
-    } catch (err) {
-      toast.error(getApiError(err).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Silent in-place refetch for after a create/edit/delete — updates the
+  // table without flipping `loading`, so no spinner flash or scroll jump.
+  const refetch = useCallback(() => {
+    void listPackages()
+      .then(setPackages)
+      .catch((err) => toast.error(getApiError(err).message));
+  }, [toast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,7 +152,7 @@ export default function AdminPackagesPage() {
 
       toast.success(editing ? t('package.update_success') : t('package.create_success'));
       setDialogOpen(false);
-      load();
+      refetch();
     } catch (err) {
       setServerError(getApiError(err).message);
     }
@@ -168,7 +165,7 @@ export default function AdminPackagesPage() {
       await deletePackage(pendingDelete.id);
       toast.success(t('package.archive_success'));
       setPendingDelete(null);
-      load();
+      refetch();
     } catch (err) {
       toast.error(getApiError(err).message);
     } finally {

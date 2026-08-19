@@ -5,6 +5,12 @@ import type { Company } from './types';
 
 interface CompanyWorkspaceValue {
   company: Company;
+  // Direct in-place company replacement — the SPA path for edits (e.g. after
+  // saving CompanyEditDialog) so the header/tabs/overview update immediately
+  // without a full layout reload.
+  setCompany: (company: Company) => void;
+  // Silent in-place refetch — reconciles with server truth without flipping
+  // loading (never unmounts the tab into a spinner, never loses scroll).
   reload: () => void;
   // Lets a tab (e.g. after verifying a document) tell the layout's tab-badge
   // counts to refetch immediately, instead of waiting for the next navigation.

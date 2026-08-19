@@ -80,13 +80,20 @@ function findDocumentById(docs: DocumentTemplate[], id: string): DocumentTemplat
   return null;
 }
 
+// Replace-if-exists else append — used by the in-place tree mutations below.
+function upsertInList<T extends { id: string }>(list: T[], item: T): T[] {
+  const idx = list.findIndex((x) => x.id === item.id);
+  if (idx === -1) return [...list, item];
+  return list.map((x) => (x.id === item.id ? item : x));
+}
+
 export default function JourneyTemplateDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { hasAnyRole } = useAuthStore();
   const toast = useToast();
   const { t } = useTranslation();
-  const { journeyTemplate, loading, setJourneyTemplate, reload } = useJourneyTemplate(params.id);
+  const { journeyTemplate, loading, setJourneyTemplate, refresh } = useJourneyTemplate(params.id);
 
   useEffect(() => {
     if (!hasAnyRole(['admin', 'staff'])) router.replace('/dashboard');
@@ -142,14 +149,13 @@ export default function JourneyTemplateDetailPage() {
     setServerError('');
     try {
       const parsed = journeyLevelFormSchema.parse(data);
-      if (levelDialog.editing) {
-        await updateJourneyLevel(levelDialog.editing.id, parsed);
-      } else {
-        await createJourneyLevel(journeyTemplate.id, parsed);
-      }
+      const saved =
+        levelDialog.editing
+          ? await updateJourneyLevel(levelDialog.editing.id, parsed)
+          : await createJourneyLevel(journeyTemplate.id, parsed);
+      upsertLevel(saved);
       toast.success(levelDialog.editing ? t('journey_template.level_update_success') : t('journey_template.level_create_success'));
       setLevelDialog(null);
-      reload();
     } catch (err) {
       setServerError(getApiError(err).message);
     }
@@ -161,9 +167,9 @@ export default function JourneyTemplateDetailPage() {
     try {
       const updated = await uploadJourneyLevelMedal(levelDialog.editing.id, file);
       setLevelDialog({ editing: updated });
+      upsertLevel(updated);
       toast.success(t('journey_template.medal_upload_success'));
       setMedalUploadOpen(false);
-      reload();
     } catch (err) {
       toast.error(getApiError(err).message || t('journey_template.medal_upload_error'));
     } finally {
@@ -186,16 +192,15 @@ export default function JourneyTemplateDetailPage() {
     setServerError('');
     try {
       const parsed = milestoneFormSchema.parse(data);
-      if (milestoneDialog.editing) {
-        await updateMilestone(milestoneDialog.editing.id, parsed);
-      } else {
-        await createMilestone(milestoneDialog.levelId, parsed);
-      }
+      const saved =
+        milestoneDialog.editing
+          ? await updateMilestone(milestoneDialog.editing.id, parsed)
+          : await createMilestone(milestoneDialog.levelId, parsed);
+      upsertMilestone(saved);
       toast.success(
         milestoneDialog.editing ? t('journey_template.milestone_update_success') : t('journey_template.milestone_create_success')
       );
       setMilestoneDialog(null);
-      reload();
     } catch (err) {
       setServerError(getApiError(err).message);
     }
@@ -234,20 +239,133 @@ export default function JourneyTemplateDetailPage() {
     try {
       const parsed = documentTemplateFormSchema.parse(data);
       const payload = { ...parsed, description: parsed.description || undefined, effective_since: parsed.effective_since || undefined };
-      if (docDialog.editing) {
-        await updateDocumentTemplate(docDialog.editing.id, payload);
-      } else if (docDialog.parentDocumentId) {
-        await createDocumentTemplateChild(docDialog.parentDocumentId, payload);
+      const saved = docDialog.editing
+        ? await updateDocumentTemplate(docDialog.editing.id, payload)
+        : docDialog.parentDocumentId
+          ? await createDocumentTemplateChild(docDialog.parentDocumentId, payload)
+          : await createDocumentTemplate(docDialog.milestoneId, payload);
+      if (docDialog.parentDocumentId && !docDialog.editing) {
+        upsertDocumentChild(docDialog.parentDocumentId, docDialog.milestoneId, saved);
       } else {
-        await createDocumentTemplate(docDialog.milestoneId, payload);
+        upsertDocument(docDialog.milestoneId, saved);
       }
       toast.success(docDialog.editing ? t('journey_template.doc_update_success') : t('journey_template.doc_create_success'));
       setDocDialog(null);
-      reload();
     } catch (err) {
       setServerError(getApiError(err).message);
     }
   };
+
+  // In-place tree updates — the SPA counterpart to the old reload()-after-save:
+  // every create/update/delete below mutates the in-memory journeyTemplate via
+  // setJourneyTemplate (mirroring client-portal's refetch-in-place), so the
+  // page never unmounts into a spinner or loses scroll position.
+
+  function upsertLevel(level: JourneyLevel): void {
+    setJourneyTemplate((prev) => {
+      if (!prev) return prev;
+      const levels = prev.levels ?? [];
+      const idx = levels.findIndex((l) => l.id === level.id);
+      const next = idx === -1 ? [...levels, level] : levels.map((l) => (l.id === level.id ? level : l));
+      return { ...prev, levels: next };
+    });
+  }
+
+  function upsertMilestone(milestone: Milestone): void {
+    setJourneyTemplate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        levels: (prev.levels ?? []).map((l) =>
+          l.id !== milestone.journey_level_id
+            ? l
+            : {
+                ...l,
+                milestones: upsertInList(l.milestones ?? [], milestone),
+              }
+        ),
+      };
+    });
+  }
+
+  function upsertDocument(milestoneId: string, doc: DocumentTemplate): void {
+    setJourneyTemplate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        levels: (prev.levels ?? []).map((l) => ({
+          ...l,
+          milestones: (l.milestones ?? []).map((m) => {
+            if (m.id !== milestoneId) return m;
+            const docs = m.document_templates ?? [];
+            const idx = docs.findIndex((d) => d.id === doc.id);
+            const next = idx === -1 ? [...docs, doc] : docs.map((d) => (d.id === doc.id ? doc : d));
+            return { ...m, document_templates: next };
+          }),
+        })),
+      };
+    });
+  }
+
+  function upsertDocumentChild(parentId: string, milestoneId: string, doc: DocumentTemplate): void {
+    setJourneyTemplate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        levels: (prev.levels ?? []).map((l) => ({
+          ...l,
+          milestones: (l.milestones ?? []).map((m) => {
+            if (m.id !== milestoneId) return m;
+            return {
+              ...m,
+              document_templates: (m.document_templates ?? []).map((d) =>
+                d.id === parentId
+                  ? { ...d, children: upsertInList(d.children ?? [], doc) }
+                  : d
+              ),
+            };
+          }),
+        })),
+      };
+    });
+  }
+
+  function removeLevel(levelId: string): void {
+    setJourneyTemplate((prev) => (prev ? { ...prev, levels: (prev.levels ?? []).filter((l) => l.id !== levelId) } : prev));
+  }
+
+  function removeMilestone(milestoneId: string): void {
+    setJourneyTemplate((prev) =>
+      prev
+        ? {
+            ...prev,
+            levels: (prev.levels ?? []).map((l) => ({
+              ...l,
+              milestones: (l.milestones ?? []).filter((m) => m.id !== milestoneId),
+            })),
+          }
+        : prev
+    );
+  }
+
+  function removeDocument(docId: string): void {
+    const strip = (docs: DocumentTemplate[]): DocumentTemplate[] =>
+      docs.filter((d) => d.id !== docId).map((d) => ({ ...d, children: d.children ? strip(d.children) : d.children }));
+    setJourneyTemplate((prev) =>
+      prev
+        ? {
+            ...prev,
+            levels: (prev.levels ?? []).map((l) => ({
+              ...l,
+              milestones: (l.milestones ?? []).map((m) => ({
+                ...m,
+                document_templates: strip(m.document_templates ?? []),
+              })),
+            })),
+          }
+        : prev
+    );
+  }
 
   // Reorders one sibling group (identified by milestoneId + parentId) inside
   // the in-memory tree — optimistic, so the drop feels instant instead of
@@ -320,7 +438,7 @@ export default function JourneyTemplateDetailPage() {
       toast.success(t('journey_template.reorder_success'));
     } catch (err) {
       toast.error(getApiError(err).message);
-      reload();
+      refresh();
     }
   };
 
@@ -328,14 +446,26 @@ export default function JourneyTemplateDetailPage() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      if (pendingDelete.kind === 'level') await deleteJourneyLevel(pendingDelete.item.id);
-      if (pendingDelete.kind === 'milestone') await deleteMilestone(pendingDelete.item.id);
-      if (pendingDelete.kind === 'document_template') await deleteDocumentTemplate(pendingDelete.item.id);
+      if (pendingDelete.kind === 'level') {
+        const levelId = pendingDelete.item.id;
+        await deleteJourneyLevel(levelId);
+        removeLevel(levelId);
+      }
+      if (pendingDelete.kind === 'milestone') {
+        const milestoneId = pendingDelete.item.id;
+        await deleteMilestone(milestoneId);
+        removeMilestone(milestoneId);
+      }
+      if (pendingDelete.kind === 'document_template') {
+        const docId = pendingDelete.item.id;
+        await deleteDocumentTemplate(docId);
+        removeDocument(docId);
+      }
       toast.success(t('journey_template.delete_node_success'));
       setPendingDelete(null);
-      reload();
     } catch (err) {
       toast.error(getApiError(err).message);
+      refresh();
     } finally {
       setDeleting(false);
     }

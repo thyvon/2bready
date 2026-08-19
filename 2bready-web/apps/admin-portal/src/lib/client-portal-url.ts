@@ -1,4 +1,4 @@
-// This app is back-office only (admin/staff/finance/auditor) — a
+// This app is back-office only (admin/staff/finance) — a
 // company_owner/company_member account has no home here and must be sent
 // across the app boundary to client-portal. Env-configurable rather than a
 // relative link for the same reason as marketing's admin-url.ts: in prod

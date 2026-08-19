@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getJourneyTemplate, listJourneyTemplates } from './api';
 import type { JourneyTemplate } from './types';
 
 export function useJourneyTemplates() {
   const [journeyTemplates, setJourneyTemplates] = useState<JourneyTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  // Bumped after a successful create/edit/delete to trigger the effect below
-  // without ever calling setState synchronously from outside an effect body.
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -29,7 +27,12 @@ export function useJourneyTemplates() {
     };
   }, [reloadKey]);
 
-  return { journeyTemplates, loading, reload: () => setReloadKey((k) => k + 1) };
+  return {
+    journeyTemplates,
+    loading,
+    setJourneyTemplates,
+    reload: () => setReloadKey((k) => k + 1),
+  };
 }
 
 export function useJourneyTemplate(id: string) {
@@ -57,6 +60,18 @@ export function useJourneyTemplate(id: string) {
     };
   }, [id, reloadKey]);
 
+  // Silent in-place refetch — never flips `loading`, so callers can reconcile
+  // with server truth (e.g. reverting an optimistic edit after an API error)
+  // without unmounting the tree, collapsing the accordions, or losing scroll.
+  const refresh = useCallback(async () => {
+    try {
+      const data = await getJourneyTemplate(id);
+      setJourneyTemplate(data);
+    } catch {
+      // Keep current tree on failure — the caller already surfaced the error.
+    }
+  }, [id]);
+
   return {
     journeyTemplate,
     loading,
@@ -65,6 +80,7 @@ export function useJourneyTemplate(id: string) {
     // experience, persists via the API, then calls reload() to reconcile
     // with server truth.
     setJourneyTemplate,
+    refresh,
     reload: () => setReloadKey((k) => k + 1),
   };
 }

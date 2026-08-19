@@ -30,12 +30,6 @@ interface NavItemDef {
   icon: ReactNode;
 }
 
-const AUDITOR_NAV: NavItemDef[] = [
-  { labelKey: 'nav.dashboard', href: '/auditor',         icon: <DashboardIcon fontSize="small" /> },
-  { labelKey: 'nav.my_audits', href: '/auditor/audits',  icon: <AssignmentIcon fontSize="small" /> },
-  { labelKey: 'nav.support',   href: '/auditor/support', icon: <SupportIcon fontSize="small" /> },
-];
-
 // Hrefs here are internal app routes (relative to this app's own root), NOT
 // external URLs — next/link and router.push() both auto-prepend `basePath`
 // (/admin in production, see next.config.ts) when resolving them. Writing
@@ -59,25 +53,24 @@ const ADMIN_NAV: NavItemDef[] = [
   { labelKey: 'nav.settings',   href: '/settings',    icon: <SettingsIcon fontSize="small" /> },
 ];
 
-// This app is back-office only (admin/staff/finance/auditor) — company_owner/
-// company_member accounts belong exclusively in client-portal and have no nav
-// here at all. If one somehow lands on a dashboard page, an empty nav is the
-// correct degenerate case; the actual redirect-out lives in dashboard/page.tsx.
+// This app is back-office only (admin/staff/finance) — company_owner/
+// company_member and auditor accounts belong in client-portal / tp-portal
+// respectively and have no nav here at all. If one somehow lands on a
+// dashboard page, an empty nav is the correct degenerate case; the actual
+// redirect-out lives in dashboard/page.tsx. (The backend adminLogin gate
+// rejects auditors anyway — they authenticate into tp-portal via
+// portal.tp.access, never this app.)
 export function useNavItems(): NavItem[] {
   const { hasAnyRole } = useAuthStore();
   const { t } = useTranslation();
 
-  const defs = hasAnyRole(['admin', 'staff', 'finance'])
-    ? ADMIN_NAV
-    : hasAnyRole(['auditor'])
-    ? AUDITOR_NAV
-    : [];
+  const defs = hasAnyRole(['admin', 'staff', 'finance']) ? ADMIN_NAV : [];
 
   return defs.map((d) => ({ label: t(d.labelKey), href: d.href, icon: d.icon }));
 }
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {
-  const isSectionRoot = item.href === '/' || item.href === '/auditor';
+  const isSectionRoot = item.href === '/';
   return pathname === item.href || (!isSectionRoot && pathname.startsWith(item.href));
 }
 
@@ -108,9 +101,6 @@ type NavEntryDef =
       labelKey: NavItemDef['labelKey'];
       items: { labelKey: NavItemDef['labelKey']; descriptionKey: NavItemDef['labelKey']; href: string; icon: ReactNode }[];
     };
-
-// Auditor's 3 items are too few to gain anything from grouping — plain links only.
-const AUDITOR_NAV_ENTRIES: NavEntryDef[] = AUDITOR_NAV.map((d) => ({ type: 'link', ...d }));
 
 const ADMIN_NAV_ENTRIES: NavEntryDef[] = [
   { type: 'link', labelKey: 'nav.dashboard', href: '/', icon: <DashboardIcon fontSize="small" /> },
@@ -150,11 +140,7 @@ export function useNavGroups(): NavEntry[] {
   const { hasAnyRole } = useAuthStore();
   const { t } = useTranslation();
 
-  const defs = hasAnyRole(['admin', 'staff', 'finance'])
-    ? ADMIN_NAV_ENTRIES
-    : hasAnyRole(['auditor'])
-    ? AUDITOR_NAV_ENTRIES
-    : [];
+  const defs = hasAnyRole(['admin', 'staff', 'finance']) ? ADMIN_NAV_ENTRIES : [];
 
   return defs.map((d) =>
     d.type === 'link'

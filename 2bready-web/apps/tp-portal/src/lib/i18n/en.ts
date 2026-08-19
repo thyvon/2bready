@@ -13,6 +13,7 @@ const en = {
   // ─── Navigation ──────────────────────────────────────────────────────────
   'nav.dashboard': 'Dashboard',
   'nav.companies': 'Companies',
+  'nav.audits': 'My Audits',
   'nav.settings': 'Settings',
 
   // ─── Header ──────────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ const en = {
   'status.scan_failed': 'Scan Failed',
   'status.review': 'Pending Review',
   'status.verified': 'Verified',
+  'status.submitted': 'Submitted',
 
   // ─── TP dashboard (assigned companies) ──────────────────────────────────
   'tp.dashboard_title': 'Dashboard',
@@ -119,6 +121,31 @@ const en = {
   'tp.document_comment_placeholder': 'Add a note for the company — required to reject, optional to verify.',
   'tp.document_verified': 'Document verified.',
   'tp.document_rejected': 'Document rejected.',
+
+  // ─── TP audit submission (per audit) ────────────────────────────────────
+  'tp.audits_title': 'My Audits',
+  'tp.audit_detail_title': 'Audit details',
+  'tp.audit_not_found': 'This audit could not be found.',
+  'tp.audit_level_col': 'Level',
+  'tp.audit_score_col': 'Score',
+  'tp.audit_submitted_col': 'Submitted',
+  'tp.audit_deadline_col': 'Deadline',
+  'tp.audit_firm_col': 'TP Firm',
+  'tp.audit_auditor_col': 'Auditor',
+  'tp.no_audits': 'No audits yet',
+  'tp.no_audits_desc': 'Audits created for your firm\'s engagements will appear here.',
+  'tp.audit_details': 'Audit details',
+  'tp.audit_submit_title': 'Submit findings',
+  'tp.audit_score_label': 'Compliance score (0–100)',
+  'tp.audit_feedback_label': 'Feedback',
+  'tp.audit_feedback_placeholder': 'Summarize the findings for the company and admin reviewer.',
+  'tp.audit_submit': 'Submit audit',
+  'tp.audit_submit_success': 'Audit submitted — pending admin review.',
+  'tp.confirm_audit_submit_title': 'Submit audit findings?',
+  'tp.confirm_audit_submit': 'This locks in your score and feedback for admin review. You cannot edit them after submitting.',
+  'tp.audit_feedback': 'Auditor feedback',
+  'tp.audit_no_feedback': 'No feedback yet',
+  'tp.audit_no_feedback_desc': 'Feedback appears here once the audit is submitted.',
 
   // ─── Profile / change password (self-service) ───────────────────────────
   'profile.title': 'Your Profile',

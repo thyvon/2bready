@@ -2759,6 +2759,14 @@ export interface components {
              */
             two_factor_required: boolean | null;
             google_auth_enabled: boolean;
+            /**
+             * @description Present only when the auditor profile is eager-loaded (the
+             *     tp-partners/{id}/auditors listing). The Audit assign endpoint
+             *     validates `exists:auditors,id`, so the frontend needs the
+             *     Auditor model id — which differs from this user's own ULID —
+             *     to build an assign dropdown.
+             */
+            auditor_id?: string;
             /** Format: date-time */
             created_at: string | null;
         };

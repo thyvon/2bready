@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,9 +51,6 @@ export default function UsersPage() {
   const [filters, setFilters] = useState<UserListFilters>({});
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
-  // Bumped after a successful create/edit to trigger the effect below without
-  // ever calling setState synchronously from outside an effect body.
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
@@ -76,6 +73,17 @@ export default function UsersPage() {
     setPage(1);
     setFilters((f) => ({ ...f, ...patch }));
   };
+
+  // Silent in-place refetch for after a create/edit — updates the table
+  // without flipping `loading`, so no spinner flash or scroll jump.
+  const refetch = useCallback(() => {
+    void listUsers({ ...filters, page, per_page: perPage })
+      .then(({ users: list, pagination: meta }) => {
+        setUsers(list);
+        setPagination(meta);
+      })
+      .catch((err) => toast.error(getApiError(err).message));
+  }, [filters, page, perPage, toast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +109,7 @@ export default function UsersPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, page, perPage, refreshKey]);
+  }, [filters, page, perPage]);
 
   const createForm = useForm<CreateUserInput>({
     resolver: zodResolver(createUserSchema),
@@ -137,7 +145,7 @@ export default function UsersPage() {
       await createUser(data);
       toast.success(t('users.create_success'));
       setCreateOpen(false);
-      setRefreshKey((k) => k + 1);
+      refetch();
     } catch (err) {
       setServerError(getApiError(err).message);
     }
@@ -152,7 +160,7 @@ export default function UsersPage() {
       setEditing(null);
       setPendingAdminGrant(null);
       setPendingTwoFactorExempt(null);
-      setRefreshKey((k) => k + 1);
+      refetch();
     } catch (err) {
       setServerError(getApiError(err).message);
     }

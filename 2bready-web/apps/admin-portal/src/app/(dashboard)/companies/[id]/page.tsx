@@ -61,7 +61,7 @@ function DetailField({ icon, label, value }: { icon: React.ReactNode; label: str
 
 export default function CompanyOverviewPage() {
   const params = useParams<{ id: string }>();
-  const { company, reload } = useCompanyWorkspace();
+  const { company, setCompany } = useCompanyWorkspace();
   const { t, locale } = useTranslation();
   const { industries } = useIndustries();
 
@@ -234,9 +234,9 @@ export default function CompanyOverviewPage() {
         open={editOpen}
         company={company}
         onClose={() => setEditOpen(false)}
-        onSaved={() => {
+        onSaved={(updated) => {
           setEditOpen(false);
-          reload();
+          setCompany(updated);
         }}
       />
     </Box>

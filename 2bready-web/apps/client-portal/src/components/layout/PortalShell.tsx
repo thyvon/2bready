@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box';
+import { TopProgressBar } from '@2bready/ui-core';
 import { PortalNavbar } from './PortalNavbar';
 import { PageTransition } from './PageTransition';
 import { PortalFooter } from './PortalFooter';
@@ -6,6 +7,7 @@ import { PortalFooter } from './PortalFooter';
 export function PortalShell({ children }: { children: React.ReactNode }) {
   return (
     <Box className="flex min-h-screen flex-col">
+      <TopProgressBar />
       <PortalNavbar />
       {/* flex: 1 keeps the footer pinned to the viewport bottom on short
           pages instead of floating directly under a half-empty page.

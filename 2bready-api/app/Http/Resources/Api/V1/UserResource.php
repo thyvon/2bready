@@ -43,6 +43,12 @@ class UserResource extends JsonResource
             // effective true/false.
             'two_factor_required' => $this->two_factor_required,
             'google_auth_enabled' => $this->google_auth_enabled,
+            // Present only when the auditor profile is eager-loaded (the
+            // tp-partners/{id}/auditors listing). The Audit assign endpoint
+            // validates `exists:auditors,id`, so the frontend needs the
+            // Auditor model id — which differs from this user's own ULID —
+            // to build an assign dropdown.
+            'auditor_id' => $this->whenLoaded('auditor', fn () => $this->auditor?->id),
             'created_at' => $this->created_at,
         ];
     }
