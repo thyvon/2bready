@@ -1311,6 +1311,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sop.index"];
+        put?: never;
+        post: operations["sop.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sops/{sop}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sop.show"];
+        put: operations["sop.update"];
+        post?: never;
+        delete: operations["sop.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sops/{sop}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sop.activate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sops/{sop}/adopt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sop.adopt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sops/sop-companies/{sopCompany}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["sop.unadopt"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/subscriptions": {
         parameters: {
             query?: never;
@@ -2266,6 +2346,43 @@ export interface components {
             company_id: string;
             pin: string;
         };
+        /** SopCompany */
+        SopCompany: {
+            id: string;
+            sop_id: string;
+            company_id: string;
+            override_content_en: string | null;
+            override_content_kh: string | null;
+            /** Format: date-time */
+            adopted_at: string;
+            adopted_by_user_id: string | null;
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
+        /** SopResource */
+        SopResource: {
+            id: string;
+            title: string;
+            version: string;
+            content_en: string;
+            content_kh: string;
+            effective_at: string;
+            is_active: string;
+            is_global: boolean;
+            company?: {
+                id: string;
+                name: string;
+            };
+            created_by?: {
+                id: string;
+                name: string;
+            };
+            adoptions?: string;
+            created_at: string;
+            updated_at: string;
+        };
         /** StoreAuditRequest */
         StoreAuditRequest: {
             tp_hire_id: string;
@@ -2368,6 +2485,17 @@ export interface components {
             tier?: "free" | "starter" | "pro" | "enterprise";
             is_active?: boolean;
             sort_order?: number;
+        };
+        /** StoreSopRequest */
+        StoreSopRequest: {
+            title: string;
+            version: string;
+            content_en: string;
+            content_kh?: string | null;
+            /** Format: date-time */
+            effective_at?: string | null;
+            is_active?: boolean;
+            company_id?: string;
         };
         /** StoreTpHireRequest */
         StoreTpHireRequest: {
@@ -2653,6 +2781,17 @@ export interface components {
             name: string;
             /** Format: email */
             email: string;
+        };
+        /** UpdateSopRequest */
+        UpdateSopRequest: {
+            title?: string;
+            version?: string;
+            content_en?: string;
+            content_kh?: string | null;
+            /** Format: date-time */
+            effective_at?: string | null;
+            is_active?: boolean;
+            company_id?: string;
         };
         /**
          * UpdateTpPartnerPricingRequest
@@ -5974,6 +6113,259 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "sop.index": {
+        parameters: {
+            query?: {
+                is_active?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "sop.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreSopRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "sop.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sop.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateSopRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "sop.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            deleted: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sop.activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @default false */
+                    active?: boolean;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sop.adopt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            sop_company: components["schemas"]["SopCompany"];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Only global SOPs can be adopted.";
+                        errors: string[];
+                    };
+                };
+            };
+        };
+    };
+    "sop.unadopt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop company ID */
+                sopCompany: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            unadopted: boolean;
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "subscription.index": {

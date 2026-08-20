@@ -229,7 +229,11 @@ class RolePermissionSeeder extends Seeder
             'audit.view', 'audit.request',
             'trust_badge.view',
             'data_room.view', 'data_room.manage', 'data_room.share',
-            'sop.view',
+            // sop.manage: create/edit/activate own company SOPs + adopt global
+            // templates — SopPolicy restricts every action to the owner's own
+            // company (or, for adoption, global SOPs only), so this coarse
+            // route-level permission is safe to grant here.
+            'sop.view', 'sop.manage',
             'support.view', 'support.create',
             'notification.view',
             'report.view', 'audit_log.view',
