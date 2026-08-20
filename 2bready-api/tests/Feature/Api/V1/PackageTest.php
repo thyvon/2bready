@@ -171,6 +171,45 @@ it('forbids a company_owner from updating a package', function () {
     ])->assertForbidden();
 });
 
+it('materializes the missing monthly sibling when a monthly price is saved on a yearly-only package', function () {
+    $level = JourneyLevel::factory()->create();
+    $package = Package::factory()->create([
+        'journey_level_id' => $level->id,
+        'billing_period' => 'yearly',
+        'price_cents' => 19900,
+        'name' => 'Growth',
+    ]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/packages/{$package->id}", [
+        'monthly_price_cents' => 1990,
+    ])->assertOk()->assertJsonPath('data.prices.0.price_cents', 1990);
+
+    $monthly = Package::query()
+        ->where('journey_level_id', $level->id)
+        ->where('billing_period', 'monthly')
+        ->first();
+    expect($monthly)->not->toBeNull();
+    expect($monthly->price_cents)->toBe(1990);
+    expect($monthly->name)->toBe('Growth');
+});
+
+it('does not materialize a sibling when no price is submitted for the missing period', function () {
+    $level = JourneyLevel::factory()->create();
+    $package = Package::factory()->create([
+        'journey_level_id' => $level->id,
+        'billing_period' => 'yearly',
+        'price_cents' => 19900,
+    ]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/packages/{$package->id}", [
+        'name' => 'Renamed',
+    ])->assertOk();
+
+    expect(Package::query()->where('journey_level_id', $level->id)->count())->toBe(1);
+});
+
 // ─── Delete ──────────────────────────────────────────────────────────────────
 
 it('lets an admin archive a package', function () {
