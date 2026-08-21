@@ -20,7 +20,6 @@ import {
   MenuButtonBlockquote,
   MenuButtonHorizontalRule,
   MenuButtonEditLink,
-  MenuButtonImageUpload,
   MenuButtonRedo,
   MenuButtonUndo,
   MenuButtonRemoveFormatting,
@@ -40,8 +39,14 @@ interface RichTextEditorFieldProps {
   onChange: (html: string) => void;
   error?: boolean;
   helperText?: string;
-  placeholder?: string;
   minHeight?: number;
+  /**
+   * Bump to force the editor to re-apply `value`. Dialogs pass a nonce that
+   * changes when the form resets for a different target — without this, the
+   * editor would either go stale or (worse) sync on every keystroke and risk
+   * a setContent/onUpdate feedback loop.
+   */
+  resetKey?: string | number;
 }
 
 export function RichTextEditorField({
@@ -50,8 +55,8 @@ export function RichTextEditorField({
   onChange,
   error,
   helperText,
-  placeholder,
   minHeight = 220,
+  resetKey,
 }: RichTextEditorFieldProps) {
   const editor = useEditor({
     immediatelyRender: false,
@@ -61,6 +66,8 @@ export function RichTextEditorField({
       Link.configure({ openOnClick: false }),
       Image,
     ],
+    // Tiptap treats content as initial only; current content is later driven by
+    // the resetKey effect below for subsequent targets.
     content: value || '',
     onUpdate: ({ editor }) => {
       const isEmpty = editor.getText().trim().length === 0;
@@ -72,7 +79,8 @@ export function RichTextEditorField({
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value || '');
     }
-  }, [value, editor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey, editor]);
 
   return (
     <Box>
@@ -101,11 +109,6 @@ export function RichTextEditorField({
                   <MenuButtonCode />
                   <MenuButtonCodeBlock />
                   <MenuButtonEditLink />
-                  <MenuButtonImageUpload
-                    onUploadFiles={async () => {
-                      return [];
-                    }}
-                  />
                   <MenuButtonAddTable />
                   <TableMenuControls />
                   <MenuButtonHorizontalRule />
@@ -114,9 +117,6 @@ export function RichTextEditorField({
               </MenuBar>
             }
           />
-          {placeholder && editor && editor.getText().trim().length === 0 && (
-            <Box className="pointer-events-none -mt-14 px-3 text-sm text-gray-400">{placeholder}</Box>
-          )}
         </RichTextEditorProvider>
       </Box>
       {helperText && <FormHelperText error={error}>{helperText}</FormHelperText>}

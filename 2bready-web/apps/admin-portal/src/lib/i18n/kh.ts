@@ -698,8 +698,6 @@ const kh: Record<keyof typeof en, string> = {
   'sop.version': 'កម្រិតការកំណត់',
   'sop.content_en': 'មាតិការអង់គ្លេស',
   'sop.content_kh': 'មាតិកាខ្មែរ',
-  'sop.content_en_placeholder': 'បញ្ចូលមាតិការ SOP ជាភាសាអង់គ្លេស...',
-  'sop.content_kh_placeholder': 'បញ្ចូលមាតិការ SOP ជាភាសាខ្មែរ...',
   'sop.effective_at': 'កាលបរិច្ឆេទមានប្រសិទ្ធ',
   'sop.is_active': 'សកម្ម',
   'sop.company_id': 'ក្រុមហ្គ្រុប',

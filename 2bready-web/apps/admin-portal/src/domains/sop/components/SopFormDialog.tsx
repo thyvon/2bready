@@ -36,6 +36,9 @@ export function SopFormDialog({ open, onClose, onSubmit, initialData, title }: S
   const { t } = useTranslation();
   const isEdit = !!initialData;
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Changes whenever the dialog opens for a (possibly different) target — drives
+  // RichTextEditorField to re-apply the reset content without a setState-in-effect.
+  const contentResetKey = open ? (initialData?.id ?? 'create') : 'closed';
 
   const {
     control,
@@ -131,8 +134,8 @@ export function SopFormDialog({ open, onClose, onSubmit, initialData, title }: S
             onChange={(html) => setValue('content_en', html, { shouldValidate: true })}
             error={!!errors.content_en}
             helperText={errors.content_en?.message}
-            placeholder={t('sop.content_en_placeholder')}
             minHeight={200}
+            resetKey={contentResetKey}
           />
 
           <RichTextEditorField
@@ -141,8 +144,8 @@ export function SopFormDialog({ open, onClose, onSubmit, initialData, title }: S
             onChange={(html) => setValue('content_kh', html || null, { shouldValidate: true })}
             error={!!errors.content_kh}
             helperText={errors.content_kh?.message}
-            placeholder={t('sop.content_kh_placeholder')}
             minHeight={200}
+            resetKey={contentResetKey}
           />
 
           <FormControlLabel

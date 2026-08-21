@@ -28,6 +28,7 @@ export function SopAdoptDialog({ open, onClose, onAdopted, sop }: SopAdoptDialog
   const { t } = useTranslation();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const contentResetKey = open ? (sop?.id ?? 'adopt') : 'closed';
 
   const {
     handleSubmit,
@@ -97,8 +98,8 @@ export function SopAdoptDialog({ open, onClose, onAdopted, sop }: SopAdoptDialog
               onChange={(html) => setValue('override_content_en', html)}
               error={!!errors.override_content_en}
               helperText={errors.override_content_en?.message}
-              placeholder={t('sop.content_en_placeholder')}
               minHeight={180}
+              resetKey={contentResetKey}
             />
 
             <RichTextEditorField
@@ -107,8 +108,8 @@ export function SopAdoptDialog({ open, onClose, onAdopted, sop }: SopAdoptDialog
               onChange={(html) => setValue('override_content_kh', html || null)}
               error={!!errors.override_content_kh}
               helperText={errors.override_content_kh?.message}
-              placeholder={t('sop.content_kh_placeholder')}
               minHeight={180}
+              resetKey={contentResetKey}
             />
           </Box>
         </DialogContent>
