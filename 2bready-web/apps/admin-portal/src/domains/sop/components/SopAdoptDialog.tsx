@@ -6,16 +6,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { adoptSopSchema, type AdoptSopInput } from '../schemas';
 import { useTranslation } from '@/lib/i18n';
 import { getApiError } from '@/lib/utils';
 import { adoptSop } from '../api';
 import type { Sop } from '../types';
+import { RichTextEditorField } from '@/components/forms/RichTextEditor';
 
 interface SopAdoptDialogProps {
   open: boolean;
@@ -30,20 +30,24 @@ export function SopAdoptDialog({ open, onClose, onAdopted, sop }: SopAdoptDialog
   const [submitting, setSubmitting] = useState(false);
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
+    setValue,
+    control,
   } = useForm<AdoptSopInput>({
     resolver: zodResolver(adoptSopSchema),
     defaultValues: {
-      override_content_en: null,
-      override_content_kh: null,
+      override_content_en: '',
+      override_content_kh: '',
     },
   });
 
+  const overrideEn = useWatch({ control, name: 'override_content_en' });
+  const overrideKh = useWatch({ control, name: 'override_content_kh' });
+
   useEffect(() => {
-    reset({ override_content_en: null, override_content_kh: null });
+    reset({ override_content_en: '', override_content_kh: '' });
   }, [reset, open, sop?.id]);
 
   function handleClose() {
@@ -87,24 +91,24 @@ export function SopAdoptDialog({ open, onClose, onAdopted, sop }: SopAdoptDialog
               {t('sop.override_note')}
             </Typography>
 
-            <TextField
-              fullWidth
-              multiline
-              minRows={4}
+            <RichTextEditorField
               label={t('sop.content_en')}
-              {...register('override_content_en')}
+              value={overrideEn ?? ''}
+              onChange={(html) => setValue('override_content_en', html)}
               error={!!errors.override_content_en}
               helperText={errors.override_content_en?.message}
+              placeholder={t('sop.content_en_placeholder')}
+              minHeight={180}
             />
 
-            <TextField
-              fullWidth
-              multiline
-              minRows={4}
+            <RichTextEditorField
               label={t('sop.content_kh')}
-              {...register('override_content_kh')}
+              value={overrideKh ?? ''}
+              onChange={(html) => setValue('override_content_kh', html || null)}
               error={!!errors.override_content_kh}
               helperText={errors.override_content_kh?.message}
+              placeholder={t('sop.content_kh_placeholder')}
+              minHeight={180}
             />
           </Box>
         </DialogContent>

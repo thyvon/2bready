@@ -17,6 +17,7 @@ import { createSopSchema, type CreateSopInput } from '../schemas';
 import { useTranslation } from '@/lib/i18n';
 import { getApiError } from '@/lib/utils';
 import type { Sop } from '../types';
+import { RichTextEditorField } from '@/components/forms/RichTextEditor';
 
 // The form always submits the full field set (create and edit share the same
 // shape); edit just appends the id. The partial update schema exists for other
@@ -57,6 +58,8 @@ export function SopFormDialog({ open, onClose, onSubmit, initialData, title }: S
 
   const effectiveAt = useWatch({ control, name: 'effective_at' });
   const isActive = useWatch({ control, name: 'is_active' });
+  const contentEn = useWatch({ control, name: 'content_en' });
+  const contentKh = useWatch({ control, name: 'content_kh' });
 
   useEffect(() => {
     reset({
@@ -122,24 +125,24 @@ export function SopFormDialog({ open, onClose, onSubmit, initialData, title }: S
             helperText={t('sop.effective_at_hint')}
           />
 
-          <TextField
-            fullWidth
-            multiline
-            minRows={4}
+          <RichTextEditorField
             label={t('sop.content_en')}
-            {...register('content_en')}
+            value={contentEn ?? ''}
+            onChange={(html) => setValue('content_en', html, { shouldValidate: true })}
             error={!!errors.content_en}
             helperText={errors.content_en?.message}
+            placeholder={t('sop.content_en_placeholder')}
+            minHeight={200}
           />
 
-          <TextField
-            fullWidth
-            multiline
-            minRows={4}
+          <RichTextEditorField
             label={t('sop.content_kh')}
-            {...register('content_kh')}
+            value={contentKh ?? ''}
+            onChange={(html) => setValue('content_kh', html || null, { shouldValidate: true })}
             error={!!errors.content_kh}
             helperText={errors.content_kh?.message}
+            placeholder={t('sop.content_kh_placeholder')}
+            minHeight={200}
           />
 
           <FormControlLabel

@@ -694,6 +694,8 @@ const en = {
   'sop.version': 'Version',
   'sop.content_en': 'Content (English)',
   'sop.content_kh': 'Content (Khmer)',
+  'sop.content_en_placeholder': 'Enter SOP content in English...',
+  'sop.content_kh_placeholder': 'Enter SOP content in Khmer...',
   'sop.effective_at': 'Effective date',
   'sop.is_active': 'Active',
   'sop.company_id': 'Company',
