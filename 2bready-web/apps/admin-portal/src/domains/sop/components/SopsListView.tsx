@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
@@ -20,19 +20,19 @@ import { useToast } from '@/components/feedback/ToastProvider';
 import { ConfirmDialog } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { getApiError, formatDate } from '@/lib/utils';
-import { listSops, deleteSop, createSop, updateSop } from '../api';
+import { deleteSop, createSop, updateSop } from '../api';
 import type { Sop } from '../types';
 import { getSopStatus } from '../types';
 import type { SopFormValues } from './SopFormDialog';
 import { SopFormDialog } from './SopFormDialog';
 import { SopAdoptDialog } from './SopAdoptDialog';
+import { useSops } from '../hooks';
 
 export function SopsListView() {
   const toast = useToast();
   const { t } = useTranslation();
 
-  const [sops, setSops] = useState<Sop[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { sops, loading, refetch } = useSops();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editSop, setEditSop] = useState<Sop | null>(null);
@@ -40,39 +40,9 @@ export function SopsListView() {
   const [deleteSopCandidate, setDeleteSopCandidate] = useState<Sop | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  async function refresh() {
-    setLoading(true);
-    try {
-      setSops(await listSops());
-    } catch (err) {
-      toast.error(getApiError(err).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      setLoading(true);
-      try {
-        const data = await listSops();
-        if (!cancelled) setSops(data);
-      } catch (err) {
-        if (!cancelled) toast.error(getApiError(err).message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const refresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   async function handleCreate(data: SopFormValues) {
     await createSop(data);

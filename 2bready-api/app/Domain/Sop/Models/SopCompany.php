@@ -6,6 +6,7 @@ namespace App\Domain\Sop\Models;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\User\Models\User;
+use App\Support\Concerns\BelongsToCompany;
 use App\Support\Concerns\HasUlid;
 use Database\Factories\SopCompanyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SopCompany extends Model
 {
     /** @use HasFactory<SopCompanyFactory> */
-    use HasFactory, HasUlid;
+    use BelongsToCompany, HasFactory, HasUlid;
 
     protected $table = 'sop_company';
 

@@ -21,9 +21,15 @@ class CreateSopAction
     public function execute(SopData $data, User $createdBy): Sop
     {
         return DB::transaction(function () use ($data, $createdBy) {
+            // Resolve company_id based on the creator's role:
+            // - company_owner: forced to their current company (policy forbids global)
+            // - admin/staff: use provided company_id (or null for global)
+            // - others: policy already forbids creation
+            $companyId = $this->resolveCompanyId($data, $createdBy);
+
             // If activating this SOP, deactivate any other active SOP for the same company
             if ($data->is_active) {
-                $this->deactivateOthers($data->company_id, $data->title);
+                $this->deactivateOthers($companyId, $data->title);
             }
 
             return Sop::create([
@@ -33,10 +39,21 @@ class CreateSopAction
                 'content_kh' => $data->content_kh,
                 'effective_at' => $data->effective_at,
                 'is_active' => $data->is_active,
-                'company_id' => $data->company_id,
+                'company_id' => $companyId,
                 'created_by_user_id' => $createdBy->id,
             ]);
         });
+    }
+
+    private function resolveCompanyId(SopData $data, User $user): ?string
+    {
+        // Company owners can only create for their own company; request omits company_id
+        if ($user->hasRole('company_owner')) {
+            return $user->current_company_id;
+        }
+
+        // Admin/staff: use provided company_id (null = global)
+        return $data->company_id;
     }
 
     private function deactivateOthers(?string $companyId, string $title): void

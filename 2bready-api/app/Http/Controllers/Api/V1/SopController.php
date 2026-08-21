@@ -38,11 +38,8 @@ class SopController extends Controller
 
         $query = Sop::query()->withoutGlobalScope('company')->with(['company', 'createdBy', 'adoptions.company']);
 
-        // Admin/staff/finance see all SOPs; company users see only their company's
-        if ($request->user()->hasAnyRole(['admin', 'staff', 'finance'])) {
-            // No additional scope — BelongsToCompany handles company scoping
-        } else {
-            // Company users: their company's SOPs + global SOPs they've adopted
+        // Company users see their company's SOPs + global SOPs they've adopted
+        if (! $request->user()->hasAnyRole(['admin', 'staff', 'finance'])) {
             $companyId = $request->user()->current_company_id;
             $query->where(function ($q) use ($companyId) {
                 $q->where('company_id', $companyId)
@@ -73,20 +70,8 @@ class SopController extends Controller
     {
         $this->authorize('create', Sop::class);
 
-        $companyId = $request->user()->hasRole('company_owner')
-            ? $request->user()->current_company_id
-            : $request->validated('company_id') ?? null;
-
         $sop = $action->execute(
-            SopData::fromRequest([
-                'title' => $request->validated('title'),
-                'version' => $request->validated('version'),
-                'content_en' => $request->validated('content_en'),
-                'content_kh' => $request->validated('content_kh'),
-                'effective_at' => $request->validated('effective_at'),
-                'is_active' => $request->boolean('is_active'),
-                'company_id' => $companyId,
-            ]),
+            SopData::fromRequest($request->validated()),
             $request->user(),
         );
 
@@ -168,10 +153,6 @@ class SopController extends Controller
     {
         $this->authorize('adopt', $sop);
 
-        if ($sop->company_id !== null) {
-            return ApiResponse::error('Only global SOPs can be adopted.', [], 422);
-        }
-
         $adoption = $action->execute(
             $sop,
             $request->user()->current_company_id,
@@ -195,18 +176,13 @@ class SopController extends Controller
 
     public function unadopt(Request $request, SopCompany $sopCompany, UnadoptSopAction $action): JsonResponse
     {
-        // The adopted SOP is (almost always) a global template — load it without
-        // the tenant scope, otherwise SopPolicy::adopt receives null for global SOPs.
+        // Load the SOP without tenant scope so the Policy can evaluate it
         $sop = Sop::withoutGlobalScope('company')->find($sopCompany->sop_id);
         if (! $sop) {
             return ApiResponse::error('SOP not found.', [], 404);
         }
 
-        $this->authorize('adopt', $sop);
-
-        if ($sopCompany->company_id !== $request->user()->current_company_id) {
-            return ApiResponse::error('You can only unadopt SOPs for your own company.', [], 403);
-        }
+        $this->authorize('unadopt', $sopCompany);
 
         $action->execute($sopCompany);
 

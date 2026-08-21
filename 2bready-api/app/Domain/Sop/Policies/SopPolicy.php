@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Sop\Policies;
 
 use App\Domain\Sop\Models\Sop;
+use App\Domain\Sop\Models\SopCompany;
 use App\Domain\User\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -115,6 +116,23 @@ class SopPolicy
 
         if ($user->hasRole('company_owner')) {
             return $sop->company_id === null; // Only global SOPs can be adopted
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can unadopt an SOP.
+     * Only the company that adopted it can unadopt.
+     */
+    public function unadopt(User $user, SopCompany $sopCompany): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ($user->hasRole('company_owner')) {
+            return $sopCompany->company_id === $user->current_company_id;
         }
 
         return false;
