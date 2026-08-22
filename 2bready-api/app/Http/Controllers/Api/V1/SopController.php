@@ -8,6 +8,7 @@ use App\Domain\AuditLog\Events\AuditableActionOccurred;
 use App\Domain\Sop\Actions\ActivateSopAction;
 use App\Domain\Sop\Actions\CreateSopAction;
 use App\Domain\Sop\Actions\DeleteSopAction;
+use App\Domain\Sop\Actions\GetEffectiveSopContentAction;
 use App\Domain\Sop\Actions\UnadoptSopAction;
 use App\Domain\Sop\Actions\UpdateSopAction;
 use App\Domain\Sop\Actions\UpsertSopAdoptionAction;
@@ -16,8 +17,10 @@ use App\Domain\Sop\Models\Sop;
 use App\Domain\Sop\Models\SopCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Sop\AdoptSopRequest;
+use App\Http\Requests\Api\V1\Sop\EffectiveSopContentRequest;
 use App\Http\Requests\Api\V1\Sop\StoreSopRequest;
 use App\Http\Requests\Api\V1\Sop\UpdateSopRequest;
+use App\Http\Resources\Api\V1\EffectiveSopContentResource;
 use App\Http\Resources\Api\V1\SopResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -95,6 +98,23 @@ class SopController extends Controller
         $this->authorize('view', $sop);
 
         return ApiResponse::success(new SopResource($sop->load(['company', 'createdBy', 'adoptions.company'])));
+    }
+
+    /**
+     * Content a company should actually follow: its adoption override when one
+     * exists, else the SOP's own content (Khmer falls back to English).
+     */
+    public function effectiveContent(EffectiveSopContentRequest $request, Sop $sop, GetEffectiveSopContentAction $action): JsonResponse
+    {
+        $this->authorize('view', $sop);
+
+        $resolved = $action->execute(
+            $sop,
+            $request->user()->current_company_id,
+            $request->validated('locale') ?? 'en',
+        );
+
+        return ApiResponse::success(new EffectiveSopContentResource($sop, $resolved));
     }
 
     public function update(UpdateSopRequest $request, Sop $sop, UpdateSopAction $action): JsonResponse

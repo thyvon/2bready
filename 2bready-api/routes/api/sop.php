@@ -16,6 +16,10 @@ Route::prefix('sops')->group(function () {
     Route::put('{sop}', [SopController::class, 'update'])->middleware('permission:sop.manage');
     Route::delete('{sop}', [SopController::class, 'destroy'])->middleware('permission:sop.manage');
 
+    // Effective content: the company's adoption override when present, else the
+    // SOP's own content — what a company member actually reads and follows.
+    Route::get('{sop}/effective-content', [SopController::class, 'effectiveContent'])->middleware('permission:sop.view');
+
     Route::post('{sop}/activate', [SopController::class, 'activate'])->middleware('permission:sop.manage');
 
     // Adoption: company_owner adopts a global SOP for their company

@@ -18,6 +18,7 @@ const kh: Record<keyof typeof en, string> = {
   'nav.more': 'ច្រើនទៀត',
   'nav.open_menu': 'បើកម៉ឺនុយ',
   'common.cancel': 'បោះបង់',
+  'common.close': 'បិទ',
   'common.save': 'រក្សាទុក',
   'common.delete': 'លុប',
   'common.retry': 'ព្យាយាមម្តងទៀត',
@@ -180,6 +181,21 @@ const kh: Record<keyof typeof en, string> = {
   'data_room.toast_revoked': 'តំណភ្ជាប់ត្រូវបានដកហូត។',
 
   // ─── Data Room — public PIN-entry page (unauthenticated) ────────────────
+  // ─── SOPs page ──────────────────────────────────────────────────────────
+  'sop.yours_title': 'SOP របស់អ្នក',
+  'sop.yours_subtitle': 'នីតិវិធីដែលក្រុមហ៊ុនអ្នកអនុវត្ត — គំរូដែលបានអនុម័ត និងរបស់ខ្លួនឯង។',
+  'sop.read': 'អាន',
+  'sop.empty': 'មិនមាន SOP ឡើយ',
+  'sop.empty_desc': 'នៅពេលដែលគំរូត្រូវបានអនុម័ត ឬក្រុមហ៊ុនអ្នកបន្ថែមនីតិវិធីផ្ទាល់ខ្លួន វានឹងបង្ហាញនៅទីនេះសម្រាប់ក្រុមការងារអ្នក។',
+  'sop.type.adopted': 'គំរូដែលបានអនុម័ត',
+  'sop.type.company': 'នីតិវិធីក្រុមហ៊ុន',
+  'sop.effective_from': 'មានប្រសិទ្ធ {date}',
+  'sop.effective_immediately': 'មានប្រសិទ្ធភ្លាមៗ',
+  'sop.override_note': 'កំណែនេះមានការកែប្រែសម្រួលសម្រាប់ក្រុមហ៊ុនរបស់អ្នក។',
+  'sop.load_error': 'មិនអាចផ្ទុក SOP បានទេ។ សូមព្យាយាមម្តងទៀត។',
+  'sop.content_error': 'មិនអាចផ្ទុកមាតិកា SOP បានទេ។',
+  'sop.draft_note': 'SOP នេះមិនទាន់ដំណើរការទេ — បង្ហាញសម្រាប់ពិនិត្យតែប៉ុណ្ណោះ។',
+
   'public_data_room.title': 'Smart Data Room',
   'public_data_room.subtitle': 'បញ្ចូលពាក្យសម្ងាត់ដែលបានចែករំលែកជាមួយតំណភ្ជាប់នេះ ដើម្បីមើលឯកសារ។',
   'public_data_room.password_label': 'ពាក្យសម្ងាត់',

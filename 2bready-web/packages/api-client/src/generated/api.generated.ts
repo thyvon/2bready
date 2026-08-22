@@ -1343,6 +1343,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sops/{sop}/effective-content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Content a company should actually follow: its adoption override when one
+         *     exists, else the SOP's own content (Khmer falls back to English)
+         */
+        get: operations["sop.effectiveContent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sops/{sop}/activate": {
         parameters: {
             query?: never;
@@ -1765,6 +1785,11 @@ export interface components {
             /** @enum {string} */
             journey_level: "L3" | "L4";
         };
+        /** AdoptSopRequest */
+        AdoptSopRequest: {
+            override_content_en?: string | null;
+            override_content_kh?: string | null;
+        };
         /** AssignAuditorRequest */
         AssignAuditorRequest: {
             auditor_id: string;
@@ -1962,6 +1987,18 @@ export interface components {
             sort_order: number;
             latest_document: components["schemas"]["DocumentResource"] | null;
             children?: components["schemas"]["DocumentTemplateResource"][];
+        };
+        /** EffectiveSopContentResource */
+        EffectiveSopContentResource: {
+            sop_id: string;
+            title: string;
+            version: string;
+            is_active: boolean;
+            is_global: boolean;
+            effective_at: string;
+            locale: string;
+            source: string;
+            content: string;
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -2367,9 +2404,9 @@ export interface components {
             title: string;
             version: string;
             content_en: string;
-            content_kh: string;
+            content_kh: string | null;
             effective_at: string;
-            is_active: string;
+            is_active: boolean;
             is_global: boolean;
             company?: {
                 id: string;
@@ -2379,9 +2416,22 @@ export interface components {
                 id: string;
                 name: string;
             };
-            adoptions?: string;
-            created_at: string;
-            updated_at: string;
+            adoptions?: {
+                id: string;
+                company: {
+                    id: string;
+                    name: string;
+                };
+                override_content_en: string | null;
+                override_content_kh: string | null;
+                adopted_at: string | null;
+                adopted_by: {
+                    id: string;
+                    name: string;
+                } | null;
+            }[];
+            created_at: string | null;
+            updated_at: string | null;
         };
         /** StoreAuditRequest */
         StoreAuditRequest: {
@@ -6261,6 +6311,37 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "sop.effectiveContent": {
+        parameters: {
+            query?: {
+                locale?: "en" | "kh" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["EffectiveSopContentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "sop.activate": {
         parameters: {
             query?: never;
@@ -6306,7 +6387,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AdoptSopRequest"];
+            };
+        };
         responses: {
             201: {
                 headers: {
@@ -6324,18 +6409,7 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        message: "Only global SOPs can be adopted.";
-                        errors: string[];
-                    };
-                };
-            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "sop.unadopt": {

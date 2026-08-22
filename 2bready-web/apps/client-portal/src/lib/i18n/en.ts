@@ -13,6 +13,7 @@ const en = {
   'nav.more': 'More',
   'nav.open_menu': 'Open menu',
   'common.cancel': 'Cancel',
+  'common.close': 'Close',
   'common.save': 'Save',
   'common.delete': 'Delete',
   'common.retry': 'Retry',
@@ -173,6 +174,21 @@ const en = {
   'data_room.confirm_revoke_action': 'Revoke',
   'data_room.toast_generated': 'Secure link generated.',
   'data_room.toast_revoked': 'Link revoked.',
+
+  // ─── SOPs page ──────────────────────────────────────────────────────────
+  'sop.yours_title': 'Your SOPs',
+  'sop.yours_subtitle': 'The procedures your company follows — adopted platform templates and your own.',
+  'sop.read': 'Read',
+  'sop.empty': 'No SOPs yet',
+  'sop.empty_desc': 'When platform templates are adopted or your company adds its own procedures, they appear here for your team to follow.',
+  'sop.type.adopted': 'Adopted template',
+  'sop.type.company': 'Company procedure',
+  'sop.effective_from': 'Effective {date}',
+  'sop.effective_immediately': 'Effective immediately',
+  'sop.override_note': 'This version includes changes customized for your company.',
+  'sop.load_error': 'Could not load your SOPs. Please try again.',
+  'sop.content_error': 'Could not load the SOP content.',
+  'sop.draft_note': 'This SOP is not active yet — shown for review only.',
 
   // ─── Data Room — public PIN-entry page (unauthenticated) ────────────────
   'public_data_room.title': 'Smart Data Room',

@@ -116,8 +116,16 @@ class Sop extends Model
         return $this->hasMany(SopCompany::class);
     }
 
-    /** Returns the effective content for a given company (global + override) */
-    public function getEffectiveContent(string $companyId, string $locale = 'en'): ?string
+    /**
+     * Resolves the content a given company should see: its adoption override
+     * if one exists for the locale, else the SOP's own content. Khmer falls
+     * back to English when no Khmer variant exists (content_kh is nullable).
+     *
+     * @param  string  $companyId  The adopting/owning company.
+     * @param  'en'|'kh'  $locale
+     * @return array{content: ?string, source: 'override'|'base'}
+     */
+    public function effectiveContentFor(string $companyId, string $locale = 'en'): array
     {
         if ($this->company_id === null) {
             // Global SOP: check for company-specific override
@@ -126,13 +134,19 @@ class Sop extends Model
                 ->first();
 
             if ($adoption) {
-                return $locale === 'kh'
-                    ? ($adoption->override_content_kh ?? $this->content_kh)
-                    : ($adoption->override_content_en ?? $this->content_en);
+                $override = $locale === 'kh'
+                    ? $adoption->override_content_kh
+                    : $adoption->override_content_en;
+
+                if ($override !== null && $override !== '') {
+                    return ['content' => $override, 'source' => 'override'];
+                }
             }
         }
 
-        return $locale === 'kh' ? $this->content_kh : $this->content_en;
+        $base = $locale === 'kh' ? ($this->content_kh ?: $this->content_en) : $this->content_en;
+
+        return ['content' => $base, 'source' => 'base'];
     }
 
     /** Checks if this SOP is active for a given company */

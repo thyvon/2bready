@@ -216,6 +216,116 @@ it('lets a company owner unadopt their own adoption', function () {
     expect(SopCompany::query()->find($adoption->id))->toBeNull();
 });
 
+// ─── Effective content ──────────────────────────────────────────────────────
+
+it('returns the adoption override as effective content', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create(['content_en' => 'Global English procedure']);
+    SopCompany::factory()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'override_content_en' => 'Company-tuned English',
+    ]);
+
+    $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/effective-content")
+        ->assertOk()
+        ->assertJsonPath('data.content', 'Company-tuned English')
+        ->assertJsonPath('data.source', 'override')
+        ->assertJsonPath('data.locale', 'en');
+});
+
+it('returns the base content when the adoption has no override', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create(['content_en' => 'Global English procedure']);
+    SopCompany::factory()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'override_content_en' => null,
+    ]);
+
+    $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/effective-content")
+        ->assertOk()
+        ->assertJsonPath('data.content', 'Global English procedure')
+        ->assertJsonPath('data.source', 'base');
+});
+
+it('falls back to English when no Khmer variant exists', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create([
+        'content_en' => 'Global English procedure',
+        'content_kh' => null,
+    ]);
+    SopCompany::factory()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'override_content_kh' => null,
+    ]);
+
+    $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/effective-content?locale=kh")
+        ->assertOk()
+        ->assertJsonPath('data.locale', 'kh')
+        ->assertJsonPath('data.content', 'Global English procedure');
+});
+
+it('returns the Khmer override for the kh locale', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create(['content_en' => 'Global English procedure']);
+    SopCompany::factory()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'override_content_kh' => 'ដំណើរការខ្មែរ',
+    ]);
+
+    $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/effective-content?locale=kh")
+        ->assertOk()
+        ->assertJsonPath('data.content', 'ដំណើរការខ្មែរ')
+        ->assertJsonPath('data.source', 'override');
+});
+
+it('lets a company owner read their own company SOP content', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->forCompany($company)->create(['content_en' => 'Our internal steps']);
+
+    $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/effective-content")
+        ->assertOk()
+        ->assertJsonPath('data.content', 'Our internal steps')
+        ->assertJsonPath('data.source', 'base')
+        ->assertJsonPath('data.is_global', false);
+});
+
+it('gives admins without a company context the base content', function () {
+    $admin = User::factory()->admin()->create();
+    $sop = Sop::factory()->global()->create(['content_en' => 'Global English procedure']);
+
+    $this->actingAs($admin)->getJson("/api/v1/sops/{$sop->id}/effective-content")
+        ->assertOk()
+        ->assertJsonPath('data.content', 'Global English procedure')
+        ->assertJsonPath('data.source', 'base');
+});
+
+it('forbids reading a global SOP the company has not adopted', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+
+    $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/effective-content")
+        ->assertForbidden();
+});
+
+it('rejects an unknown locale for effective content', function () {
+    $admin = User::factory()->admin()->create();
+    $sop = Sop::factory()->global()->create();
+
+    $this->actingAs($admin)->getJson("/api/v1/sops/{$sop->id}/effective-content?locale=fr")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['locale']);
+});
+
 // ─── Audit log ──────────────────────────────────────────────────────────────
 
 it('records SOP lifecycle actions in the audit log', function () {
