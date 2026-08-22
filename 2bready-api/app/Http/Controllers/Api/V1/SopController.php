@@ -9,6 +9,7 @@ use App\Domain\Sop\Actions\AcknowledgeSopSignoffAction;
 use App\Domain\Sop\Actions\ActivateSopAction;
 use App\Domain\Sop\Actions\CreateSopAction;
 use App\Domain\Sop\Actions\DeleteSopAction;
+use App\Domain\Sop\Actions\GenerateSopPdfAction;
 use App\Domain\Sop\Actions\GetEffectiveSopContentAction;
 use App\Domain\Sop\Actions\SendSopSignoffAction;
 use App\Domain\Sop\Actions\UnadoptSopAction;
@@ -30,6 +31,8 @@ use App\Http\Resources\Api\V1\SopSignoffResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 /**
  * SOP management — platform-wide templates (admin) + company-specific SOPs.
@@ -120,6 +123,46 @@ class SopController extends Controller
         );
 
         return ApiResponse::success(new EffectiveSopContentResource($sop, $resolved));
+    }
+
+    /**
+     * A4 PDF rendering of the SOP for the detail page's embedded viewer and
+     * download — mirrors the on-screen view (both language sections).
+     */
+    public function pdf(Request $request, Sop $sop, GenerateSopPdfAction $action): Response
+    {
+        $this->authorize('view', $sop);
+
+        // Company users get their effective copy (adoption overrides applied);
+        // internal roles without a company context see the SOP as authored.
+        $companyId = $request->user()->current_company_id;
+        $contentEn = $companyId
+            ? $sop->effectiveContentFor($companyId, 'en')['content']
+            : $sop->content_en;
+        $contentKh = $sop->content_kh;
+        if ($companyId && $sop->company_id === null) {
+            $resolvedKh = $sop->effectiveContentFor($companyId, 'kh');
+            // Only carry the Khmer section into the PDF when it's genuinely
+            // customized — otherwise the raw global Khmer (or EN fallback) stands.
+            if ($resolvedKh['source'] === 'override') {
+                $contentKh = $resolvedKh['content'];
+            }
+        }
+
+        $pdf = $action->execute(
+            $sop,
+            $contentEn ?? '',
+            $contentKh !== null && $contentKh !== '' ? $contentKh : null,
+            enLabel: 'Content (English)',
+            khLabel: 'Content (Khmer)',
+        );
+
+        $filename = sprintf('sop-%s-v%s.pdf', Str::slug($sop->title), $sop->version);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
     public function update(UpdateSopRequest $request, Sop $sop, UpdateSopAction $action): JsonResponse

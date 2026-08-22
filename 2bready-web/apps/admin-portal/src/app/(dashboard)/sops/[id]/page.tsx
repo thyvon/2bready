@@ -9,22 +9,24 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useToast } from '@/components/feedback/ToastProvider';
+import api from '@/lib/api';
 import { getSop } from '@/domains/sop/api';
 import type { Sop } from '@/domains/sop/types';
 import { getSopStatus } from '@/domains/sop/types';
 import { SopFormDialog } from '@/domains/sop/components/SopFormDialog';
-import { RichTextContentViewer } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { getApiError, formatDate } from '@/lib/utils';
 
-// Read-only detail view for a single SOP — content rendered as rich text
-// instead of the edit dialog's input fields. Editing reuses SopFormDialog.
+// Read-only detail view for a single SOP — content rendered as an embedded A4
+// PDF (GET /sops/{id}/pdf, streamed on demand so it always reflects the latest
+// edits) with a download action. Editing reuses SopFormDialog.
 export default function SopDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { t } = useTranslation();
@@ -34,6 +36,13 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editOpen, setEditOpen] = useState(false);
+
+  // Bumped after an edit save so the PDF blob refetches and the iframe shows
+  // the fresh render instead of a stale document.
+  const [pdfVersion, setPdfVersion] = useState(0);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(true);
+  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +65,37 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
     };
   }, [id]);
 
-  // Silent in-place refetch after an edit save — no spinner flash.
+  // Fetch the PDF as a blob through the authenticated axios instance and
+  // expose it via an object URL for the inline viewer.
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    async function load() {
+      setLoadingPdf(true);
+      setPdfError(false);
+      try {
+        const res = await api.get(`/sops/${id}/pdf`, { responseType: 'blob' });
+        if (!cancelled) {
+          objectUrl = URL.createObjectURL(res.data as Blob);
+          setPdfUrl(objectUrl);
+        }
+      } catch {
+        if (!cancelled) setPdfError(true);
+      } finally {
+        if (!cancelled) setLoadingPdf(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [id, pdfVersion]);
+
+  // Refresh meta + PDF in place after an edit save — no spinner flash.
   async function handleUpdate() {
     toast.success(t('sop.updated'));
     try {
@@ -64,6 +103,7 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
     } catch {
       // keep showing the stale copy; the dialog already surfaced the error
     }
+    setPdfVersion((n) => n + 1);
   }
 
   if (loading) {
@@ -177,15 +217,35 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
         )}
       </SectionCard>
 
-      <SectionCard title={t('sop.content_en')}>
-        <RichTextContentViewer html={sop.content_en} />
+      <SectionCard
+        title={t('sop.pdf_title')}
+        subtitle={t('sop.pdf_subtitle')}
+        action={
+          pdfUrl && (
+            <Button
+              size="small"
+              startIcon={<DownloadOutlinedIcon />}
+              href={pdfUrl}
+              download={`sop-${sop.title}-v${sop.version}.pdf`}
+            >
+              {t('sop.pdf_download')}
+            </Button>
+          )
+        }
+        noPadding
+      >
+        {loadingPdf ? (
+          <Box className="flex justify-center" sx={{ py: 10 }}>
+            <CircularProgress />
+          </Box>
+        ) : pdfError ? (
+          <Box sx={{ p: 3 }}>
+            <Alert severity="error">{t('sop.pdf_error')}</Alert>
+          </Box>
+        ) : (
+          <iframe src={pdfUrl ?? ''} className="w-full rounded-b-xl" style={{ height: '78vh', border: 'none' }} title={sop.title} />
+        )}
       </SectionCard>
-
-      {sop.content_kh && (
-        <SectionCard title={t('sop.content_kh')}>
-          <RichTextContentViewer html={sop.content_kh} />
-        </SectionCard>
-      )}
 
       <SopFormDialog
         open={editOpen}

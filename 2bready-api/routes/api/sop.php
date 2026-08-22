@@ -20,6 +20,9 @@ Route::prefix('sops')->group(function () {
     // SOP's own content — what a company member actually reads and follows.
     Route::get('{sop}/effective-content', [SopController::class, 'effectiveContent'])->middleware('permission:sop.view');
 
+    // A4 PDF rendering for the detail page's embedded viewer and download
+    Route::get('{sop}/pdf', [SopController::class, 'pdf'])->middleware('permission:sop.view');
+
     Route::post('{sop}/activate', [SopController::class, 'activate'])->middleware('permission:sop.manage');
 
     // Adoption: company_owner adopts a global SOP for their company
