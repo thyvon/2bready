@@ -56,6 +56,7 @@ const kh: Record<keyof typeof en, string> = {
   'nav.desc_tp_partners': 'ក្រុមហ៊ុនសវនកម្មភាគីទីបី និងការជួលរបស់ពួកគេ',
   'nav.desc_documents': 'ផ្ទៀងផ្ទាត់ឯកសារអនុលោមភាពដែលបានផ្ទុកឡើង',
   'nav.desc_journey_templates': 'គ្រប់គ្រងពុម្ពដំណើរ និងឯកសារ',
+  'nav.desc_sops': 'សរសេរគំរូ SOP និងតាមដានការទទួលស្គាល់ពីបុគ្គលិក',
   'nav.desc_audits': 'សវនកម្មអនុលោមភាពពីភាគីទីបី',
   'nav.desc_audit_logs': 'រាល់ការផ្លាស់ប្តូរ អ្នកធ្វើ និងពេលវេលា',
   'nav.settings': 'ការកំណត់',

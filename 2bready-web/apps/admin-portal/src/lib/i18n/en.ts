@@ -52,6 +52,7 @@ const en = {
   'nav.desc_tp_partners': 'Third-party audit firms and their hires',
   'nav.desc_documents': 'Verify uploaded compliance documents',
   'nav.desc_journey_templates': 'Manage the journey/document taxonomy',
+  'nav.desc_sops': 'Author SOP templates and track employee sign-offs',
   'nav.desc_audits': 'Third-party compliance audits',
   'nav.desc_audit_logs': 'Every change, who made it, and when',
   'nav.settings': 'Settings',
