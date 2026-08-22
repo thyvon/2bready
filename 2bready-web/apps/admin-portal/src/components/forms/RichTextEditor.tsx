@@ -24,6 +24,7 @@ import {
   MenuButtonUndo,
   MenuButtonRemoveFormatting,
   MenuSelectHeading,
+  MenuSelectTextAlign,
   MenuButtonAddTable,
   TableMenuControls,
 } from 'mui-tiptap';
@@ -35,6 +36,9 @@ import Image from '@tiptap/extension-image';
 // StarterKit does not bundle tables — required by MenuButtonAddTable /
 // TableMenuControls, whose can().insertTable() checks crash without it.
 import { TableKit } from '@tiptap/extension-table';
+// StarterKit does not bundle text alignment either — required by the
+// MenuButtonAlign* toolbar buttons.
+import TextAlign from '@tiptap/extension-text-align';
 
 interface RichTextEditorFieldProps {
   label?: string;
@@ -69,6 +73,7 @@ export function RichTextEditorField({
       Link.configure({ openOnClick: false }),
       Image,
       TableKit.configure({ table: { resizable: true } }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     // Tiptap treats content as initial only; current content is later driven by
     // the resetKey effect below for subsequent targets.
@@ -112,6 +117,7 @@ export function RichTextEditorField({
                   <MenuButtonBlockquote />
                   <MenuButtonCode />
                   <MenuButtonCodeBlock />
+                  <MenuSelectTextAlign />
                   <MenuButtonEditLink />
                   <MenuButtonAddTable />
                   <TableMenuControls />

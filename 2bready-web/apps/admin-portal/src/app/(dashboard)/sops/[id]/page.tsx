@@ -14,6 +14,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
+import { useToast } from '@/components/feedback/ToastProvider';
 import { getSop } from '@/domains/sop/api';
 import type { Sop } from '@/domains/sop/types';
 import { getSopStatus } from '@/domains/sop/types';
@@ -26,6 +27,7 @@ import { getApiError, formatDate } from '@/lib/utils';
 export default function SopDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { t } = useTranslation();
+  const toast = useToast();
 
   const [sop, setSop] = useState<Sop | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,7 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
 
   // Silent in-place refetch after an edit save — no spinner flash.
   async function handleUpdate() {
+    toast.success(t('sop.updated'));
     try {
       setSop(await getSop(id));
     } catch {
