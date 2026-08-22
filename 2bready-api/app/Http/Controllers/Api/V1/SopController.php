@@ -5,23 +5,28 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\AuditLog\Events\AuditableActionOccurred;
+use App\Domain\Sop\Actions\AcknowledgeSopSignoffAction;
 use App\Domain\Sop\Actions\ActivateSopAction;
 use App\Domain\Sop\Actions\CreateSopAction;
 use App\Domain\Sop\Actions\DeleteSopAction;
 use App\Domain\Sop\Actions\GetEffectiveSopContentAction;
+use App\Domain\Sop\Actions\SendSopSignoffAction;
 use App\Domain\Sop\Actions\UnadoptSopAction;
 use App\Domain\Sop\Actions\UpdateSopAction;
 use App\Domain\Sop\Actions\UpsertSopAdoptionAction;
 use App\Domain\Sop\DTOs\SopData;
 use App\Domain\Sop\Models\Sop;
 use App\Domain\Sop\Models\SopCompany;
+use App\Domain\Sop\Models\SopSignoff;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Sop\AdoptSopRequest;
 use App\Http\Requests\Api\V1\Sop\EffectiveSopContentRequest;
+use App\Http\Requests\Api\V1\Sop\SendSopSignoffRequest;
 use App\Http\Requests\Api\V1\Sop\StoreSopRequest;
 use App\Http\Requests\Api\V1\Sop\UpdateSopRequest;
 use App\Http\Resources\Api\V1\EffectiveSopContentResource;
 use App\Http\Resources\Api\V1\SopResource;
+use App\Http\Resources\Api\V1\SopSignoffResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -215,5 +220,78 @@ class SopController extends Controller
         ));
 
         return ApiResponse::success(['unadopted' => true]);
+    }
+
+    // ─── Sign-offs (v3 Sprint 8: read & acknowledge workflow) ──────────────
+
+    /** Tracking list: every employee assigned to this SOP and their status. */
+    public function signoffIndex(Request $request, Sop $sop): JsonResponse
+    {
+        // Route binding bypasses the tenant scope for global SOPs; the policy
+        // re-checks ownership/adoption at object level.
+        $this->authorize('view', $sop);
+
+        $signoffs = $sop->signoffs()->with(['user', 'sentBy'])->orderBy('created_at')->get();
+
+        return ApiResponse::success(SopSignoffResource::collection($signoffs));
+    }
+
+    /** Assign employees (of the current company) to read & acknowledge. */
+    public function signoffStore(SendSopSignoffRequest $request, Sop $sop, SendSopSignoffAction $action): JsonResponse
+    {
+        $this->authorize('manageSignoffs', $sop);
+
+        $companyId = $request->user()->current_company_id;
+        if ($companyId === null) {
+            return ApiResponse::error('No active company context.', [], 422);
+        }
+
+        $signoffs = $action->execute($sop, $companyId, $request->validated('user_ids'), $request->user());
+
+        event(new AuditableActionOccurred(
+            action: 'sop_signoffs_sent',
+            companyId: $companyId,
+            auditableType: Sop::class,
+            auditableId: $sop->id,
+            metadata: ['user_ids' => $request->validated('user_ids')],
+        ));
+
+        return ApiResponse::success(SopSignoffResource::collection($signoffs));
+    }
+
+    /** The current employee's own sign-offs across all SOPs. */
+    public function signoffMine(Request $request): JsonResponse
+    {
+        // Inherently self-scoped: only the user's own rows, tenant scope on top.
+        // Pending acknowledgments first — Postgres ASC puts NULLs last.
+        $signoffs = SopSignoff::query()
+            ->where('user_id', $request->user()->id)
+            ->with(['sop', 'sentBy'])
+            ->orderByRaw('signed_at asc nulls first')
+            ->orderBy('created_at')
+            ->get();
+
+        return ApiResponse::success(SopSignoffResource::collection($signoffs));
+    }
+
+    /** The assigned employee reads & acknowledges their sign-off. */
+    public function signoffAcknowledge(Request $request, SopSignoff $signoff, AcknowledgeSopSignoffAction $action): JsonResponse
+    {
+        $wasAcknowledged = $signoff->signed_at !== null;
+
+        $this->authorize('acknowledge', $signoff);
+
+        $signoff = $action->execute($signoff, $request->user());
+
+        if (! $wasAcknowledged) {
+            event(new AuditableActionOccurred(
+                action: 'sop_signoff_acknowledged',
+                companyId: $signoff->company_id,
+                auditableType: SopSignoff::class,
+                auditableId: $signoff->id,
+            ));
+        }
+
+        return ApiResponse::success(new SopSignoffResource($signoff->load(['user', 'sentBy'])));
     }
 }

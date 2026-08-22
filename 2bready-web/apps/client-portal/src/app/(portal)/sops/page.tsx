@@ -7,70 +7,73 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import MarkEmailReadOutlinedIcon from '@mui/icons-material/MarkEmailReadOutlined';
-import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
 import { Breadcrumbs, SectionCard, GlowButton, EmptyState } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
-import { useJourney } from '@/components/JourneyProvider';
+import { useToast } from '@/components/ToastProvider';
+import { useAuthStore } from '@/store/auth.store';
 import { PageLoader } from '@/components/PageLoader';
-import { toDocStatus } from '@/lib/journey-api';
-import { listSops, getSopEffectiveContent, type Sop, type EffectiveSopContent } from '@/lib/sop-api';
+import {
+  listSops,
+  getSopEffectiveContent,
+  listMySignoffs,
+  listSopSignoffs,
+  sendSopSignoffs,
+  acknowledgeSignoff,
+  type Sop,
+  type EffectiveSopContent,
+  type SopSignoff,
+} from '@/lib/sop-api';
+import { listCompanyUsers } from '@/lib/company-api';
 import { formatDate } from '@/lib/utils';
 
-const FEATURES = [
-  { icon: <MarkEmailReadOutlinedIcon fontSize="small" />, title: 'Send to any employee', desc: 'Email a verified SOP document directly to an employee for read & acknowledge sign-off.' },
-  { icon: <PendingActionsOutlinedIcon fontSize="small" />, title: 'Track acknowledgment', desc: 'See who has acknowledged and who is still pending at a glance, per document.' },
-  { icon: <HistoryOutlinedIcon fontSize="small" />, title: 'Full audit trail', desc: 'Every send and acknowledgment is logged — useful evidence for your next audit.' },
-];
+// Scramble types spatie roles as `Record<string, never>` — runtime check with
+// a local narrow instead of a blind cast.
+function isCompanyOwner(user: ReturnType<typeof useAuthStore.getState>['user']): boolean {
+  return (
+    Array.isArray(user?.roles) &&
+    user.roles.some((r) => typeof r === 'object' && r !== null && 'name' in r && r.name === 'company_owner')
+  );
+}
 
-// Real mechanic from the owner's concept file (sopSignoffCard): only
-// verified L2/L3 documents can be sent for employee sign-off — the dropdown
-// there is populated exclusively from docs with status === 'verified'.
-// Verification is now a real admin/auditor action and the counts below are
-// real, but the send-to-employee flow itself isn't built yet, so that section
-// stays honestly locked regardless of verified count until that flow
-// exists — same pattern as the Data Room page. Reading adopted/company SOPs,
-// by contrast, is live: the backend resolves each company's effective content
-// (adoption override > SOP content, Khmer falls back to English).
 export default function SopsPage() {
   const { t, locale } = useTranslation();
+  const toast = useToast();
+  const user = useAuthStore((s) => s.user);
   const { all } = useNavItems();
   const item = all.find((i) => i.href === '/sops');
-  const { journey, loading } = useJourney();
-  const l3 = journey?.levels.find((level) => level.code === 'L3') ?? null;
-  const sopMilestone = l3?.milestones.find((m) => m.name === 'SOP & Structure') ?? null;
-  const sopVerifiedDocs = sopMilestone?.documents.filter((doc) => toDocStatus(doc.status) === 'verified').length ?? 0;
+  const canManage = isCompanyOwner(user);
 
+  // ─── Data ──────────────────────────────────────────────────────────────
   const [sops, setSops] = useState<Sop[]>([]);
-  const [loadingSops, setLoadingSops] = useState(true);
-  const [sopsError, setSopsError] = useState('');
-
-  const [readingSop, setReadingSop] = useState<Sop | null>(null);
-  const [content, setContent] = useState<EffectiveSopContent | null>(null);
-  const [loadingContent, setLoadingContent] = useState(false);
-  const [contentError, setContentError] = useState('');
+  const [mySignoffs, setMySignoffs] = useState<SopSignoff[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
 
     async function run() {
       try {
-        const data = await listSops();
-        if (!cancelled) setSops(data);
+        const [sopsData, signoffsData] = await Promise.all([listSops(), listMySignoffs()]);
+        if (!cancelled) {
+          setSops(sopsData);
+          setMySignoffs(signoffsData);
+        }
       } catch {
-        if (!cancelled) setSopsError(t('sop.load_error'));
+        if (!cancelled) setLoadError(t('sop.load_error'));
       } finally {
-        if (!cancelled) setLoadingSops(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -82,12 +85,20 @@ export default function SopsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    // Guards against a stale response overwriting the reader when the user
+  // ─── Reader dialog ─────────────────────────────────────────────────────
+  const [readingSop, setReadingSop] = useState<{ id: string; title: string; version: string } | null>(null);
+  // Set when the reader was opened from a pending sign-off — shows the
+  // Acknowledge action once the user has read the content.
+  const [pendingSignoffToAck, setPendingSignoffToAck] = useState<SopSignoff | null>(null);
+  const [content, setContent] = useState<EffectiveSopContent | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState('');
+  // Guards against a stale response overwriting the reader when the user
   // opens SOPs back-to-back — only the latest request may land.
   const readRequestRef = useRef(0);
 
   const openReader = useCallback(
-    (sop: Sop) => {
+    (sop: { id: string; title: string; version: string }) => {
       setReadingSop(sop);
       setContent(null);
       setContentError('');
@@ -109,11 +120,78 @@ export default function SopsPage() {
     [locale],
   );
 
+  function openReaderForSignoff(signoff: SopSignoff) {
+    if (!signoff.sop) return;
+    setPendingSignoffToAck(signoff);
+    openReader(signoff.sop);
+  }
+
   function closeReader() {
     setReadingSop(null);
+    setPendingSignoffToAck(null);
     setContent(null);
     setContentError('');
   }
+
+  // ─── Acknowledge ───────────────────────────────────────────────────────
+  const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
+
+  async function handleAcknowledge(signoff: SopSignoff) {
+    setAcknowledgingId(signoff.id);
+    try {
+      await acknowledgeSignoff(signoff.id);
+      toast.success(t('sop.ack_success'));
+      setMySignoffs((prev) => prev.map((s) => (s.id === signoff.id ? { ...s, signed_at: new Date().toISOString() } : s)));
+    } finally {
+      setAcknowledgingId(null);
+    }
+  }
+
+  // ─── Manage sign-offs dialog (owner) ───────────────────────────────────
+  const [managingSop, setManagingSop] = useState<Sop | null>(null);
+  const [signoffRows, setSignoffRows] = useState<SopSignoff[]>([]);
+  const [employees, setEmployees] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [loadingManage, setLoadingManage] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  async function openManager(sop: Sop) {
+    setManagingSop(sop);
+    setLoadingManage(true);
+    setSelectedIds([]);
+    try {
+      const rows = await listSopSignoffs(sop.id);
+      setSignoffRows(rows);
+      if (user?.current_company_id) {
+        setEmployees(await listCompanyUsers(user.current_company_id));
+      }
+    } finally {
+      setLoadingManage(false);
+    }
+  }
+
+  function closeManager() {
+    setManagingSop(null);
+    setSignoffRows([]);
+    setEmployees([]);
+    setSelectedIds([]);
+  }
+
+  async function handleSend() {
+    if (!managingSop || selectedIds.length === 0) return;
+    setSending(true);
+    try {
+      const rows = await sendSopSignoffs(managingSop.id, selectedIds);
+      setSignoffRows(rows);
+      setSelectedIds([]);
+      toast.success(t('sop.send_success'));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const pendingSignoffs = mySignoffs.filter((s) => !s.signed_at);
+  const doneSignoffs = mySignoffs.filter((s) => s.signed_at);
 
   if (loading) return <PageLoader />;
 
@@ -140,15 +218,58 @@ export default function SopsPage() {
         items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'SOPs' }]}
       />
 
-      {/* ─── Reading view — live ─────────────────────────────────────────── */}
-      <SectionCard title={t('sop.yours_title')} subtitle={t('sop.yours_subtitle')}>
-        {loadingSops ? (
-          <Box className="flex justify-center" sx={{ py: 4 }}>
-            <CircularProgress size={28} />
+      {loadError && <Alert severity="error">{loadError}</Alert>}
+
+      {/* ─── Your acknowledgments ────────────────────────────────────────── */}
+      <SectionCard title={t('sop.acknowledgments_title')} subtitle={t('sop.acknowledgments_subtitle')}>
+        {!loadError && pendingSignoffs.length === 0 && doneSignoffs.length === 0 ? (
+          <EmptyState icon={<TaskAltOutlinedIcon />} title={t('sop.no_assignments')} description={t('sop.no_assignments_desc')} />
+        ) : (
+          <Box className="flex flex-col">
+            {[...pendingSignoffs, ...doneSignoffs].map((signoff, index) => (
+              <Box key={signoff.id}>
+                {index > 0 && <Divider />}
+                <Box className="flex items-center justify-between gap-4" sx={{ py: 2 }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      {signoff.sop?.title ?? signoff.sop_id}
+                    </Typography>
+                    <Box className="flex items-center gap-2" sx={{ mt: 0.5 }}>
+                      <Chip
+                        label={signoff.signed_at ? t('sop.acknowledged') : t('sop.pending')}
+                        size="small"
+                        color={signoff.signed_at ? 'success' : 'warning'}
+                        variant={signoff.signed_at ? 'filled' : 'outlined'}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {signoff.signed_at
+                          ? t('sop.acknowledged_at', { date: formatDate(signoff.signed_at) })
+                          : signoff.sent_by
+                            ? t('sop.sent_by', { name: signoff.sent_by.name })
+                            : ''}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {!signoff.signed_at && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={acknowledgingId === signoff.id}
+                      onClick={() => openReaderForSignoff(signoff)}
+                    >
+                      {t('sop.read')}
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+            ))}
           </Box>
-        ) : sopsError ? (
-          <Alert severity="error">{sopsError}</Alert>
-        ) : sops.length === 0 ? (
+        )}
+      </SectionCard>
+
+      {/* ─── Reading view ────────────────────────────────────────────────── */}
+      <SectionCard title={t('sop.yours_title')} subtitle={t('sop.yours_subtitle')}>
+        {!loadError && sops.length === 0 ? (
           <EmptyState
             icon={<MenuBookOutlinedIcon />}
             title={t('sop.empty')}
@@ -184,67 +305,21 @@ export default function SopsPage() {
                       </Typography>
                     </Box>
                   </Box>
-                  <Button variant="outlined" size="small" onClick={() => openReader(sop)}>
-                    {t('sop.read')}
-                  </Button>
+                  <Box className="flex items-center gap-2">
+                    {canManage && (
+                      <Button variant="outlined" size="small" onClick={() => void openManager(sop)}>
+                        {t('sop.manage_signoffs')}
+                      </Button>
+                    )}
+                    <Button variant="outlined" size="small" onClick={() => openReader(sop)}>
+                      {t('sop.read')}
+                    </Button>
+                  </Box>
                 </Box>
               </Box>
             ))}
           </Box>
         )}
-      </SectionCard>
-
-      {/* ─── Sign-off workflow — honestly locked until built (Sprint 8) ──── */}
-      <SectionCard>
-        <Box className="flex flex-col items-center text-center gap-3" sx={{ py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 72,
-              height: 72,
-              borderRadius: '50%',
-              border: '2px solid',
-              borderColor: 'divider',
-              color: 'text.disabled',
-            }}
-          >
-            <LockOutlinedIcon sx={{ fontSize: '2.25rem' }} />
-          </Box>
-          <Box>
-            <Typography variant="h6">Locked</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 460, mt: 0.5 }}>
-              Requires at least one verified document from L3 · {l3?.name ?? 'Gold'}&apos;s {sopMilestone?.name ?? 'SOP & Structure'}{' '}
-              milestone — {sopMilestone?.documents.map((doc) => doc.name).join(', ') ?? ''}. {sopVerifiedDocs} verified today.
-            </Typography>
-          </Box>
-          <Box sx={{ mt: 1 }}>
-            <GlowButton href="/journey" size="medium">
-              View Compliance Journey →
-            </GlowButton>
-          </Box>
-        </Box>
-      </SectionCard>
-
-      <SectionCard title="What you'll get" subtitle="Available once a SOP & Structure document is verified">
-        <Box className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {FEATURES.map((f) => (
-            <Box key={f.title} className="flex items-start gap-3" sx={{ opacity: 0.7 }}>
-              <Box sx={{ width: 32, height: 32, borderRadius: '8px', bgcolor: 'action.selected', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary', flexShrink: 0 }}>
-                {f.icon}
-              </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {f.title}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {f.desc}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
       </SectionCard>
 
       <SectionCard>
@@ -284,7 +359,7 @@ export default function SopsPage() {
             <Alert severity="error">{contentError}</Alert>
           ) : (
             <>
-              {!content?.is_active && (
+              {pendingSignoffToAck && content?.sop_id === pendingSignoffToAck.sop_id && !content.is_active && (
                 <Alert severity="info" sx={{ mb: 2 }}>
                   {t('sop.draft_note')}
                 </Alert>
@@ -304,7 +379,88 @@ export default function SopsPage() {
           )}
         </DialogContent>
         <DialogActions>
+          {pendingSignoffToAck && (
+            <Button
+              variant="contained"
+              disabled={acknowledgingId !== null}
+              onClick={() => {
+                if (pendingSignoffToAck) void handleAcknowledge(pendingSignoffToAck);
+                closeReader();
+              }}
+            >
+              {t('sop.acknowledge')}
+            </Button>
+          )}
           <Button onClick={closeReader}>{t('common.close')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ─── Manage sign-offs dialog (owner) ─────────────────────────────── */}
+      <Dialog open={!!managingSop} onClose={closeManager} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('sop.track_title', { title: managingSop?.title ?? '' })}</DialogTitle>
+        <DialogContent dividers className="flex flex-col gap-4">
+          {loadingManage ? (
+            <Box className="flex justify-center" sx={{ py: 4 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : (
+            <>
+              <Box className="flex flex-col">
+                {signoffRows.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    {t('sop.track_empty')}
+                  </Typography>
+                ) : (
+                  signoffRows.map((row, index) => (
+                    <Box key={row.id}>
+                      {index > 0 && <Divider />}
+                      <Box className="flex items-center justify-between gap-3" sx={{ py: 1.5 }}>
+                        <Typography variant="body2">{row.user?.name ?? row.user?.id}</Typography>
+                        <Chip
+                          label={row.signed_at ? t('sop.acknowledged') : t('sop.pending')}
+                          size="small"
+                          color={row.signed_at ? 'success' : 'warning'}
+                          variant={row.signed_at ? 'filled' : 'outlined'}
+                        />
+                      </Box>
+                    </Box>
+                  ))
+                )}
+              </Box>
+
+              {employees.length > 0 && (
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                    {t('sop.select_employees')}
+                  </Typography>
+                  <Box className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                    {employees.map((emp) => (
+                      <FormControlLabel
+                        key={emp.id}
+                        control={
+                          <Checkbox
+                            checked={selectedIds.includes(emp.id)}
+                            onChange={(e) =>
+                              setSelectedIds((prev) =>
+                                e.target.checked ? [...prev, emp.id] : prev.filter((id) => id !== emp.id),
+                              )
+                            }
+                          />
+                        }
+                        label={<Typography variant="body2">{emp.name}</Typography>}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeManager}>{t('common.close')}</Button>
+          <Button variant="contained" disabled={sending || selectedIds.length === 0} onClick={() => void handleSend()}>
+            {t('sop.send')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

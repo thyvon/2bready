@@ -137,4 +137,28 @@ class SopPolicy
 
         return false;
     }
+
+    /**
+     * Determine whether the user can send this SOP for employee sign-off
+     * (v3 Sprint 8): admin/staff, or the company owner whose company owns
+     * the SOP / has adopted it. Tracking-list visibility is the SOP's own
+     * `view` ability.
+     */
+    public function manageSignoffs(User $user, Sop $sop): bool
+    {
+        if ($user->hasAnyRole(['admin', 'staff'])) {
+            return true;
+        }
+
+        if ($user->hasRole('company_owner')) {
+            if ($sop->company_id !== null) {
+                return $sop->company_id === $user->current_company_id;
+            }
+
+            // Global SOP: only for companies that adopted it
+            return $sop->adoptions()->where('company_id', $user->current_company_id)->exists();
+        }
+
+        return false;
+    }
 }

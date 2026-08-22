@@ -6,6 +6,7 @@ use App\Domain\AuditLog\Models\AuditLog;
 use App\Domain\Company\Models\Company;
 use App\Domain\Sop\Models\Sop;
 use App\Domain\Sop\Models\SopCompany;
+use App\Domain\Sop\Models\SopSignoff;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -324,6 +325,180 @@ it('rejects an unknown locale for effective content', function () {
     $this->actingAs($admin)->getJson("/api/v1/sops/{$sop->id}/effective-content?locale=fr")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['locale']);
+});
+
+// ─── Sign-offs (read & acknowledge) ─────────────────────────────────────────
+
+it('lets a company owner assign employees for sign-off', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $employee = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+    SopCompany::factory()->create(['sop_id' => $sop->id, 'company_id' => $company->id]);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/sops/{$sop->id}/signoffs", [
+        'user_ids' => [$employee->id],
+    ]);
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.user.id', $employee->id)
+        ->assertJsonPath('data.0.signed_at', null);
+
+    expect(SopSignoff::query()->where('sop_id', $sop->id)->where('user_id', $employee->id)->exists())->toBeTrue();
+});
+
+it('keeps a single sign-off row per employee when re-sending', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $employee = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+    SopCompany::factory()->create(['sop_id' => $sop->id, 'company_id' => $company->id]);
+
+    foreach ([1, 2] as $i) {
+        $this->actingAs($owner)->postJson("/api/v1/sops/{$sop->id}/signoffs", [
+            'user_ids' => [$employee->id],
+        ])->assertOk();
+    }
+
+    expect(SopSignoff::query()->where('sop_id', $sop->id)->count())->toBe(1);
+});
+
+it('rejects assigning users outside the company', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $outsider = User::factory()->withRole('company_member')->withCompany(Company::factory()->create())->create();
+    $sop = Sop::factory()->global()->create();
+    SopCompany::factory()->create(['sop_id' => $sop->id, 'company_id' => $company->id]);
+
+    $this->actingAs($owner)->postJson("/api/v1/sops/{$sop->id}/signoffs", [
+        'user_ids' => [$outsider->id],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['user_ids.0']);
+});
+
+it('rejects sending without user_ids', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+    SopCompany::factory()->create(['sop_id' => $sop->id, 'company_id' => $company->id]);
+
+    $this->actingAs($owner)->postJson("/api/v1/sops/{$sop->id}/signoffs", [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['user_ids']);
+});
+
+it('forbids a company owner from sending sign-offs on an unadopted global SOP', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $employee = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+
+    $this->actingAs($owner)->postJson("/api/v1/sops/{$sop->id}/signoffs", [
+        'user_ids' => [$employee->id],
+    ])->assertForbidden();
+});
+
+it('lets the assigned employee acknowledge their sign-off', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $employee = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+    $signoff = SopSignoff::factory()->pending()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'user_id' => $employee->id,
+        'sent_by_user_id' => $owner->id,
+    ]);
+
+    $response = $this->actingAs($employee)->postJson("/api/v1/signoffs/{$signoff->id}/acknowledge");
+
+    $response->assertOk()->assertJsonPath('data.id', $signoff->id);
+    expect($signoff->fresh()->signed_at)->not->toBeNull();
+
+    $actions = AuditLog::query()->where('auditable_id', $signoff->id)->pluck('action');
+    expect($actions)->toContain('sop_signoff_acknowledged');
+});
+
+it('is idempotent when acknowledging twice', function () {
+    $company = Company::factory()->create();
+    $employee = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+    $signoff = SopSignoff::factory()->acknowledged()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'user_id' => $employee->id,
+    ]);
+    $originalSignedAt = $signoff->signed_at;
+
+    $this->actingAs($employee)->postJson("/api/v1/signoffs/{$signoff->id}/acknowledge")->assertOk();
+
+    expect($signoff->fresh()->signed_at?->equalTo($originalSignedAt))->toBeTrue();
+});
+
+it('forbids acknowledging someone else\'s sign-off', function () {
+    $company = Company::factory()->create();
+    // A member of another company can't even see the record — the
+    // BelongsToCompany scope 404s it before any policy check.
+    $other = User::factory()->withRole('company_member')->withCompany(Company::factory()->create())->create();
+    $sop = Sop::factory()->global()->create();
+    $signoff = SopSignoff::factory()->pending()->create([
+        'sop_id' => $sop->id,
+        'company_id' => $company->id,
+        'user_id' => User::factory()->create()->id,
+    ]);
+
+    $this->actingAs($other)->postJson("/api/v1/signoffs/{$signoff->id}/acknowledge")
+        ->assertNotFound();
+});
+
+it('shows the tracking list with employee status', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $employeeA = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sop = Sop::factory()->global()->create();
+    SopCompany::factory()->create(['sop_id' => $sop->id, 'company_id' => $company->id]);
+    SopSignoff::factory()->pending()->create([
+        'sop_id' => $sop->id, 'company_id' => $company->id, 'user_id' => $employeeA->id,
+    ]);
+
+    $response = $this->actingAs($owner)->getJson("/api/v1/sops/{$sop->id}/signoffs");
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.user.id', $employeeA->id)
+        ->assertJsonPath('data.0.signed_at', null);
+});
+
+it('requires authentication for sign-off endpoints', function () {
+    $sop = Sop::factory()->global()->create();
+
+    $this->getJson("/api/v1/sops/{$sop->id}/signoffs")->assertUnauthorized();
+    $this->postJson("/api/v1/sops/{$sop->id}/signoffs", [])->assertUnauthorized();
+});
+
+it('lists only my own sign-offs on the mine endpoint', function () {
+    $company = Company::factory()->create();
+    $employee = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $colleague = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $sopA = Sop::factory()->global()->create(['title' => 'Safety Procedure']);
+    $sopB = Sop::factory()->global()->create(['title' => 'Hygiene Procedure']);
+    SopSignoff::factory()->pending()->create([
+        'sop_id' => $sopA->id, 'company_id' => $company->id, 'user_id' => $employee->id,
+    ]);
+    SopSignoff::factory()->acknowledged()->create([
+        'sop_id' => $sopB->id, 'company_id' => $company->id, 'user_id' => $employee->id,
+    ]);
+    SopSignoff::factory()->pending()->create([
+        'sop_id' => $sopA->id, 'company_id' => $company->id, 'user_id' => $colleague->id,
+    ]);
+
+    $response = $this->actingAs($employee)->getJson('/api/v1/signoffs/mine')->assertOk();
+
+    expect(collect($response->json('data')))->toHaveCount(2);
+    // Pending first (ordered by signed_at nulls first), with SOP nested
+    expect($response->json('data.0.signed_at'))->toBeNull();
+    expect($response->json('data.0.sop.title'))->toBe('Safety Procedure');
 });
 
 // ─── Audit log ──────────────────────────────────────────────────────────────

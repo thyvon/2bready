@@ -116,6 +116,13 @@ class Sop extends Model
         return $this->hasMany(SopCompany::class);
     }
 
+    /** Employees assigned to read & acknowledge this SOP */
+    /** @return HasMany<SopSignoff, $this> */
+    public function signoffs(): HasMany
+    {
+        return $this->hasMany(SopSignoff::class);
+    }
+
     /**
      * Resolves the content a given company should see: its adoption override
      * if one exists for the locale, else the SOP's own content. Khmer falls

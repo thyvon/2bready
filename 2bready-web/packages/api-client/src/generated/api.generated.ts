@@ -1395,6 +1395,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sops/{sop}/signoffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tracking list: every employee assigned to this SOP and their status */
+        get: operations["sop.signoffIndex"];
+        put?: never;
+        /** Assign employees (of the current company) to read & acknowledge */
+        post: operations["sop.signoffStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sops/sop-companies/{sopCompany}": {
         parameters: {
             query?: never;
@@ -1406,6 +1424,40 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["sop.unadopt"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signoffs/{signoff}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The assigned employee reads & acknowledges their sign-off */
+        post: operations["sop.signoffAcknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signoffs/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The current employee's own sign-offs across all SOPs */
+        get: operations["sop.signoffMine"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2373,6 +2425,10 @@ export interface components {
             name: string;
             permissions: unknown[];
         };
+        /** SendSopSignoffRequest */
+        SendSopSignoffRequest: {
+            user_ids: string[];
+        };
         /**
          * SetVaultPinRequest
          * @description Admin-only: set/rotate a company's vault PIN. The digit-count comes from
@@ -2432,6 +2488,27 @@ export interface components {
             }[];
             created_at: string | null;
             updated_at: string | null;
+        };
+        /** SopSignoffResource */
+        SopSignoffResource: {
+            id: string;
+            sop_id: string;
+            company_id: string;
+            sop?: {
+                id: string;
+                title: string;
+                version: string;
+            } | null;
+            user?: {
+                id: string;
+                name: string;
+            } | null;
+            signed_at: string;
+            sent_by?: {
+                id: string;
+                name: string;
+            } | null;
+            created_at: string;
         };
         /** StoreAuditRequest */
         StoreAuditRequest: {
@@ -6412,6 +6489,67 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "sop.signoffIndex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopSignoffResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sop.signoffStore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendSopSignoffRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopSignoffResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "sop.unadopt": {
         parameters: {
             query?: never;
@@ -6440,6 +6578,57 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sop.signoffAcknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The signoff ID */
+                signoff: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopSignoffResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sop.signoffMine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SopSignoffResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
         };
     };
     "subscription.index": {

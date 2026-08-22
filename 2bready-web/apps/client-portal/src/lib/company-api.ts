@@ -22,3 +22,14 @@ export async function switchActiveCompany(companyId: string): Promise<AuthUser> 
   const res = await api.post<{ data: AuthUser }>(`/companies/${companyId}/switch`);
   return res.data.data;
 }
+
+// Team members of a company (company_owner + company_member roles) — used for
+// e.g. the SOP sign-off employee picker.
+export async function listCompanyUsers(
+  companyId: string,
+): Promise<Array<{ id: string; name: string; email: string }>> {
+  const res = await api.get<{ data: Array<{ id: string; name: string; email: string }> }>(
+    `/companies/${companyId}/users`,
+  );
+  return res.data.data;
+}

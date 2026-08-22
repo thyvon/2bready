@@ -15,6 +15,17 @@ export type EffectiveSopContent = components['schemas']['EffectiveSopContentReso
   content: string | null;
 };
 
+export type SopSignoff = {
+  id: string;
+  sop_id: string;
+  company_id: string;
+  sop?: { id: string; title: string; version: string } | null;
+  user?: { id: string; name: string } | null;
+  signed_at: string | null;
+  sent_by?: { id: string; name: string } | null;
+  created_at: string | null;
+};
+
 export async function listSops(): Promise<Sop[]> {
   const res = await api.get<{ data: Sop[] }>('/sops');
   return res.data.data;
@@ -24,5 +35,27 @@ export async function getSopEffectiveContent(sopId: string, locale: 'en' | 'kh')
   const res = await api.get<{ data: EffectiveSopContent }>(`/sops/${sopId}/effective-content`, {
     params: { locale },
   });
+  return res.data.data;
+}
+
+// ─── Sign-offs (v3 Sprint 8: read & acknowledge) ───────────────────────────
+
+export async function listMySignoffs(): Promise<SopSignoff[]> {
+  const res = await api.get<{ data: SopSignoff[] }>('/signoffs/mine');
+  return res.data.data;
+}
+
+export async function listSopSignoffs(sopId: string): Promise<SopSignoff[]> {
+  const res = await api.get<{ data: SopSignoff[] }>(`/sops/${sopId}/signoffs`);
+  return res.data.data;
+}
+
+export async function sendSopSignoffs(sopId: string, userIds: string[]): Promise<SopSignoff[]> {
+  const res = await api.post<{ data: SopSignoff[] }>(`/sops/${sopId}/signoffs`, { user_ids: userIds });
+  return res.data.data;
+}
+
+export async function acknowledgeSignoff(signoffId: string): Promise<SopSignoff> {
+  const res = await api.post<{ data: SopSignoff }>(`/signoffs/${signoffId}/acknowledge`);
   return res.data.data;
 }
