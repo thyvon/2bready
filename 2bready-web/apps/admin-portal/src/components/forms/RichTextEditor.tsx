@@ -32,6 +32,9 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+// StarterKit does not bundle tables — required by MenuButtonAddTable /
+// TableMenuControls, whose can().insertTable() checks crash without it.
+import { TableKit } from '@tiptap/extension-table';
 
 interface RichTextEditorFieldProps {
   label?: string;
@@ -65,6 +68,7 @@ export function RichTextEditorField({
       Underline,
       Link.configure({ openOnClick: false }),
       Image,
+      TableKit.configure({ table: { resizable: true } }),
     ],
     // Tiptap treats content as initial only; current content is later driven by
     // the resetKey effect below for subsequent targets.
