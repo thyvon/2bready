@@ -17,7 +17,7 @@ import Typography from '@mui/material/Typography';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
-import { Breadcrumbs, SectionCard, GlowButton, EmptyState } from '@2bready/ui-core';
+import { Breadcrumbs, SectionCard, GlowButton, EmptyState, RichTextContentViewer } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { useNavItems } from '@/components/layout/nav-items';
 import { useToast } from '@/components/ToastProvider';
@@ -369,12 +369,7 @@ export default function SopsPage() {
                   {t('sop.override_note')}
                 </Alert>
               )}
-              {content?.content && (
-                <Box
-                  className="[&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-bold [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
-                  dangerouslySetInnerHTML={{ __html: content.content }}
-                />
-              )}
+              {content?.content && <RichTextContentViewer html={content.content} />}
             </>
           )}
         </DialogContent>

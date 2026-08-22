@@ -1,6 +1,7 @@
 export { SectionCard, type SectionCardProps } from './SectionCard';
 export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './Breadcrumbs';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { RichTextContentViewer, type RichTextContentViewerProps } from './RichTextContentViewer';
 export { ErrorState, type ErrorStateProps } from './ErrorState';
 export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { StatusBadge, type StatusBadgeProps } from './StatusBadge';

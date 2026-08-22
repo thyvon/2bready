@@ -19,6 +19,7 @@ import { getSop } from '@/domains/sop/api';
 import type { Sop } from '@/domains/sop/types';
 import { getSopStatus } from '@/domains/sop/types';
 import { SopFormDialog } from '@/domains/sop/components/SopFormDialog';
+import { RichTextContentViewer } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { getApiError, formatDate } from '@/lib/utils';
 
@@ -177,18 +178,12 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
       </SectionCard>
 
       <SectionCard title={t('sop.content_en')}>
-        <Box
-          className="[&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-bold [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
-          dangerouslySetInnerHTML={{ __html: sop.content_en }}
-        />
+        <RichTextContentViewer html={sop.content_en} />
       </SectionCard>
 
       {sop.content_kh && (
         <SectionCard title={t('sop.content_kh')}>
-          <Box
-            className="[&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-bold [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
-            dangerouslySetInnerHTML={{ __html: sop.content_kh }}
-          />
+          <RichTextContentViewer html={sop.content_kh} />
         </SectionCard>
       )}
 
