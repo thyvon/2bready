@@ -18,6 +18,7 @@ import { useTranslation } from '@/lib/i18n';
 import { getApiError } from '@/lib/utils';
 import type { Sop } from '../types';
 import { RichTextEditorField } from '@/components/forms/RichTextEditor';
+import { FormDatePicker } from '@2bready/ui-core';
 
 // The form always submits the full field set (create and edit share the same
 // shape); edit just appends the id. The partial update schema exists for other
@@ -118,14 +119,14 @@ export function SopFormDialog({ open, onClose, onSubmit, initialData, title }: S
             />
           </Box>
 
-          <TextField
-            fullWidth
-            type="date"
+          <FormDatePicker
+            value={effectiveAt ?? null}
+            onChange={(value) => setValue('effective_at', value || null)}
+            name="effective_at"
             label={t('sop.effective_at')}
-            value={effectiveAt ?? ''}
-            onChange={(e) => setValue('effective_at', e.target.value || null)}
-            slotProps={{ inputLabel: { shrink: true } }}
-            helperText={t('sop.effective_at_hint')}
+            fullWidth
+            error={!!errors.effective_at}
+            helperText={errors.effective_at?.message ?? t('sop.effective_at_hint')}
           />
 
           <RichTextEditorField

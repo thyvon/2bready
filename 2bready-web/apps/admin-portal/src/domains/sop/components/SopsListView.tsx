@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
@@ -31,6 +32,7 @@ import { useSops } from '../hooks';
 export function SopsListView() {
   const toast = useToast();
   const { t } = useTranslation();
+  const router = useRouter();
 
   const { sops, loading, refetch } = useSops();
 
@@ -106,7 +108,7 @@ export function SopsListView() {
       render: (s) => (
         <Box className="flex items-center justify-end gap-1">
           <Tooltip title={t('common.view')}>
-            <IconButton size="small" onClick={() => setEditSop(s)}>
+            <IconButton size="small" onClick={() => router.push(`/sops/${s.id}`)}>
               <VisibilityOutlined fontSize="small" />
             </IconButton>
           </Tooltip>
