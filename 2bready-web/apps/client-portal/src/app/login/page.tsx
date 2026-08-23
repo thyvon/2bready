@@ -21,8 +21,10 @@ import { loginSchema, loginDefaults, type LoginInput } from '@/lib/login-schema'
 import { login, googleAuthStatus, googleAuthRedirectUrl } from '@/lib/auth-api';
 import { completeLogin } from '@/lib/complete-login';
 import { useAuthStore } from '@/store/auth.store';
+import { useTranslation } from '@/lib/i18n';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setAuth, setPendingTotp } = useAuthStore();
   const [serverError, setServerError] = useState('');
@@ -118,13 +120,13 @@ export default function LoginPage() {
                 mb: 2,
               }}
             >
-              Comply. Scale. Lead.
+              {t('login.brand_tagline')}
             </Typography>
             <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 2, color: '#fff' }}>
-              The Digital Trust Engine for ASEAN.
+              {t('login.headline')}
             </Typography>
             <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              Continue building verifiable trust with customers, banks, and investors.
+              {t('login.subheadline')}
             </Typography>
           </Box>
         </Box>

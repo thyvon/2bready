@@ -88,6 +88,41 @@ const en = {
   'legal_consent.desc': 'This document is restricted. You must confirm you are authorized to use it before continuing.',
   'legal_consent.accept': 'I agree — continue',
 
+  // ─── Login ───────────────────────────────────────────────────────────────
+  'login.brand_tagline': 'Verify. Connect. Grow.',
+  'login.headline': 'The Digital Trust Engine for ASEAN.',
+  'login.subheadline': 'Your gateway to verified growth. Build verifiable trust to seamlessly connect with regional markets and scale your enterprise.',
+
+  // ─── Overview (home) ─────────────────────────────────────────────────────
+  'journey.hero_eyebrow': 'Trust Journey',
+  'journey.hero_word_verify': 'Verify.',
+  'journey.hero_word_connect': 'Connect.',
+  'journey.hero_word_grow': 'Grow.',
+  'journey.hero_subtitle': 'Your gateway to verified growth. Build verifiable trust to seamlessly connect with regional markets and scale your enterprise.',
+  'journey.audit_ready': 'Audit Ready',
+  'journey.trust_level': 'Trust Level',
+  'journey.pending': 'Pending',
+  'journey.unlocked': 'Unlocked',
+  'journey.active_plan': 'Active Plan',
+  'journey.upgrade': 'Upgrade',
+  // Per-level marketing copy for the Overview level cards (keyed by code —
+  // names themselves come from the DB taxonomy, only flavor copy is i18n).
+  'journey.level_l1_desc': 'Precision in GDT, MoC, MLVT compliance. Mitigate risk and achieve full regulatory alignment.',
+  'journey.level_l2_desc': 'Standardize SOPs and establish foundational financial clarity to unlock B2B operational scaling.',
+  'journey.level_l3_desc': 'Verify quality standards, safety protocols, and IP to build consumer trust.',
+  'journey.level_l4_desc': 'Market authority, investor confidence, and regional expansion readiness beyond Cambodia.',
+  'journey.level_l1_score': '🛡️ Compliance readiness score:',
+  'journey.level_l2_score': '⚙️ Operational readiness score:',
+  'journey.level_l3_score': '📦 Product readiness score:',
+  'journey.level_l4_score': '🌍 Global readiness score:',
+  'overview.readiness_scores': 'Readiness Scores',
+  'overview.next_upload_title': 'Upload {name}',
+  'overview.next_upload_sub': 'Part of the {milestone} milestone in {level}.',
+  'overview.next_upload_cta': 'Upload →',
+  'overview.nudge_title': 'Stuck getting started?',
+  'overview.nudge_desc': "ADMIT Unit's compliance experts can prepare your L1 documents for you — book a free consultation.",
+  'overview.nudge_cta': 'Request Consultation',
+
   // ─── Billing ─────────────────────────────────────────────────────────────
   'billing.view_bank_details': 'View Bank Details',
 

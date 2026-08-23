@@ -3,9 +3,10 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
+import { useTranslation } from '@/lib/i18n';
 
 export interface TrustJourneyHeroProps {
-  /** Overall % verified across every level — honestly 0 until real verification exists. */
+  /** Overall % verified across every level. */
   overallPct: number;
   /** The current active level code, e.g. "L1". */
   currentLevel: string;
@@ -39,9 +40,11 @@ function StatTile({ value, label }: { value: string; label: string }) {
 // A deliberate departure from the rest of the app's monochrome+blue
 // chrome — this is the one "hero moment" on the dashboard, matching the
 // navy+gold reference the owner shared, not a template for other pages.
-// Real numbers throughout (0% / L1 / pendingDocs computed from the actual
-// taxonomy), not the reference mockup's own placeholder figures.
+// Real numbers throughout (computed from the actual taxonomy), not the
+// reference mockup's own placeholder figures.
 export function TrustJourneyHero({ overallPct, currentLevel, pendingDocs }: TrustJourneyHeroProps) {
+  const { t } = useTranslation();
+
   return (
     <Box
       sx={{
@@ -78,28 +81,28 @@ export function TrustJourneyHero({ overallPct, currentLevel, pendingDocs }: Trus
             }}
           >
             <FlagOutlinedIcon sx={{ fontSize: '0.8125rem' }} />
-            Your Trust Journey
+            {t('journey.hero_eyebrow')}
           </Box>
           <Typography sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', md: '2rem' }, letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
             <Box component="span" sx={{ color: '#fff' }}>
-              Comply.
+              {t('journey.hero_word_verify')}
             </Box>{' '}
             <Box component="span" sx={{ color: '#f0b429' }}>
-              Scale.
+              {t('journey.hero_word_connect')}
             </Box>{' '}
             <Box component="span" sx={{ color: '#fff' }}>
-              Lead.
+              {t('journey.hero_word_grow')}
             </Box>
           </Typography>
           <Typography sx={{ mt: 0.5, maxWidth: 480, color: 'rgba(255,255,255,0.65)', fontSize: '0.875rem' }}>
-            Build a resilient, audit-ready foundation. Automate operations. Become a legacy brand.
+            {t('journey.hero_subtitle')}
           </Typography>
         </Box>
 
         <Box className="flex items-center gap-2.5" sx={{ flexShrink: 0 }}>
-          <StatTile value={`${overallPct}%`} label="Audit Ready" />
-          <StatTile value={currentLevel} label="Trust Level" />
-          <StatTile value={String(pendingDocs)} label="Pending" />
+          <StatTile value={`${overallPct}%`} label={t('journey.audit_ready')} />
+          <StatTile value={currentLevel} label={t('journey.trust_level')} />
+          <StatTile value={String(pendingDocs)} label={t('journey.pending')} />
         </Box>
       </Box>
     </Box>
