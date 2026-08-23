@@ -35,6 +35,17 @@ class TpHirePolicy
     }
 
     /**
+     * Editing a hire is a pre-payment correction only — once money has moved
+     * (active/completed) or the engagement is cancelled, the snapshot trio
+     * (price/commission/payout) is history and must not be rewritten.
+     */
+    public function update(User $user, TpHire $tpHire): bool
+    {
+        return $user->can('marketplace.manage')
+            && $tpHire->status === TpHireStatus::PendingPayment;
+    }
+
+    /**
      * Self-service hiring — deliberately independent of marketplace.manage
      * (the admin-override permission used by create() above). A company_owner
      * hires a firm for their own company, mirroring

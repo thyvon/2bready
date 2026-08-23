@@ -9,12 +9,14 @@ use App\Domain\Marketplace\Actions\CompleteTpHireAction;
 use App\Domain\Marketplace\Actions\CreateTpHireAction;
 use App\Domain\Marketplace\Actions\MarkTpHirePaidOutAction;
 use App\Domain\Marketplace\Actions\RateTpHireAction;
+use App\Domain\Marketplace\Actions\UpdateTpHireAction;
 use App\Domain\Marketplace\DTOs\TpHireData;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Marketplace\HireTpPartnerRequest;
 use App\Http\Requests\Api\V1\Marketplace\RateTpHireRequest;
 use App\Http\Requests\Api\V1\Marketplace\StoreTpHireRequest;
+use App\Http\Requests\Api\V1\Marketplace\UpdateTpHireRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
 use App\Http\Resources\Api\V1\TpHireResource;
 use App\Http\Resources\Api\V1\TpRatingResource;
@@ -80,6 +82,19 @@ class TpHireController extends Controller
             'payment' => new PaymentResource($result['payment']),
             'gateway_data' => $result['gateway_data'],
         ]);
+    }
+
+    // Pre-payment correction (admin only, TpHirePolicy::update) — changing
+    // the level re-snapshots the price/commission/payout trio and keeps the
+    // open payment aligned. Scoped implicit binding is fine: no TP-firm or
+    // company caller is ever authorized to edit.
+    public function update(UpdateTpHireRequest $request, TpHire $tpHire, UpdateTpHireAction $action): JsonResponse
+    {
+        $this->authorize('update', $tpHire);
+
+        $tpHire = $action->execute($tpHire, $request->validated('journey_level'));
+
+        return ApiResponse::success(new TpHireResource($tpHire));
     }
 
     // Resolved manually with withoutGlobalScope('company'), same reasoning as

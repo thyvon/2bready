@@ -11,6 +11,7 @@ use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Journey\Models\Milestone;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\Package\Models\Package;
+use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\User\Models\User;
@@ -815,6 +816,108 @@ it('hides another company\'s hire from a company_owner cancelling (404, not 403)
     // Tenant isolation: the scoped binding makes the other company's hire
     // invisible — 404 (can't even probe its existence), not 403.
     $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertNotFound();
+});
+
+// ─── Edit (pre-payment correction) ──────────────────────────────────────────
+
+it('lets an admin edit a pending_payment hire and re-snapshots price, commission and payout', function () {
+    $company = Company::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $tpPartner = TpPartner::factory()->create(); // factory prices: L2 19900 / L3 39900 / L4 79900
+
+    $hire = TpHire::factory()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+        'journey_level' => 'L2',
+        'price_agreed_cents' => 19900,
+    ]);
+    /** @var Payment $payment */
+    $payment = $hire->payments()->create([
+        'company_id' => $company->id,
+        'amount_cents' => 19900,
+        'currency' => 'USD',
+        'method' => 'manual_bank_transfer',
+        'status' => 'pending',
+        'gateway_reference' => 'EDITEST01',
+    ]);
+
+    $this->actingAs($admin)->patchJson("/api/v1/tp-hires/{$hire->id}", ['journey_level' => 'L4'])
+        ->assertOk()
+        ->assertJsonPath('data.journey_level', 'L4')
+        ->assertJsonPath('data.price_agreed_cents', 79900);
+
+    // 15% default commission from platform_settings.
+    expect($hire->fresh()->platform_commission_cents)->toBe(11985)
+        ->and($hire->fresh()->tp_payout_cents)->toBe(67915)
+        ->and($hire->fresh()->status->value)->toBe('pending_payment')
+        // The open payment must follow the new amount — same reference,
+        // no duplicate payment rows created.
+        ->and($hire->payments()->count())->toBe(1)
+        ->and($payment->fresh()->amount_cents)->toBe(79900)
+        ->and($payment->fresh()->gateway_reference)->toBe('EDITEST01');
+});
+
+it('recreates a payable payment when editing a pending_payment hire that has none', function () {
+    $company = Company::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $tpPartner = TpPartner::factory()->create();
+    // The TpHire factory creates no Payment row (only CreateTpHireAction does).
+    $hire = TpHire::factory()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+
+    $this->actingAs($admin)->patchJson("/api/v1/tp-hires/{$hire->id}", ['journey_level' => 'L3'])
+        ->assertOk()
+        ->assertJsonPath('data.journey_level', 'L3');
+
+    expect($hire->payments()->count())->toBe(1)
+        ->and($hire->payments()->first()->amount_cents)->toBe(39900)
+        ->and($hire->payments()->first()->status->value)->toBe('pending');
+});
+
+it('forbids editing a hire once it is active', function () {
+    $company = Company::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $tpPartner = TpPartner::factory()->create();
+    $hire = TpHire::factory()->active()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+
+    $this->actingAs($admin)->patchJson("/api/v1/tp-hires/{$hire->id}", ['journey_level' => 'L4'])
+        ->assertForbidden();
+
+    expect($hire->fresh()->journey_level)->toBe($hire->journey_level);
+});
+
+it('forbids a company_owner from editing a hire', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $tpPartner = TpPartner::factory()->create();
+    $hire = TpHire::factory()->create(['company_id' => $company->id, 'tp_partner_id' => $tpPartner->id]);
+
+    $this->actingAs($owner)->patchJson("/api/v1/tp-hires/{$hire->id}", ['journey_level' => 'L4'])
+        ->assertForbidden();
+});
+
+it('validates the journey level when editing a hire', function () {
+    $company = Company::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $tpPartner = TpPartner::factory()->create();
+    $hire = TpHire::factory()->create(['company_id' => $company->id, 'tp_partner_id' => $tpPartner->id]);
+
+    $this->actingAs($admin)->patchJson("/api/v1/tp-hires/{$hire->id}", ['journey_level' => 'L9'])
+        ->assertUnprocessable();
+    $this->actingAs($admin)->patchJson("/api/v1/tp-hires/{$hire->id}", [])->assertUnprocessable();
+});
+
+it('requires authentication to edit a hire', function () {
+    $company = Company::factory()->create();
+    $tpPartner = TpPartner::factory()->create();
+    $hire = TpHire::factory()->create(['company_id' => $company->id, 'tp_partner_id' => $tpPartner->id]);
+
+    $this->patchJson("/api/v1/tp-hires/{$hire->id}", ['journey_level' => 'L4'])->assertUnauthorized();
 });
 
 it('lets an admin cancel a hire as the back-office override', function () {
