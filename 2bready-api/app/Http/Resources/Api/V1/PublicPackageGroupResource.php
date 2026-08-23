@@ -42,7 +42,26 @@ class PublicPackageGroupResource extends JsonResource
             'journey_level_code' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->code),
             'pathway_name' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->pathway_name),
             'pillar' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->pillar),
-            'milestones' => $this->whenLoaded('journeyLevel', fn () => MilestoneResource::collection($this->journeyLevel->milestones ?? collect())),            'tier' => $this->tier,
+            // Slimmed-down milestone list for the landing card: each milestone
+            // carries only its MAIN (top-level, platform-owned) document
+            // template names — the public "what you'll need" taxonomy. No
+            // company-added extras, sub-documents, or internal metadata.
+            'milestones' => $this->whenLoaded('journeyLevel', function () {
+                return collect($this->journeyLevel?->milestones ?? [])->map(function ($milestone) {
+                    return [
+                        'id' => $milestone->id,
+                        'name' => $milestone->name,
+                        'sort_order' => $milestone->sort_order,
+                        'document_templates' => collect($milestone->documentTemplates ?? [])
+                            ->filter(fn ($template) => $template->parent_id === null && $template->company_id === null)
+                            ->sortBy('sort_order')
+                            ->map(fn ($template) => ['id' => $template->id, 'name' => $template->name])
+                            ->values()
+                            ->all(),
+                    ];
+                })->values()->all();
+            }),
+            'tier' => $this->tier,
             'sort_order' => $this->sort_order,
             'prices' => PublicPackagePriceResource::collection($this->whenLoaded('prices', $this->prices ?? collect())),
         ];

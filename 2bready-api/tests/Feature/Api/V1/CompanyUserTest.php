@@ -40,6 +40,90 @@ it('forbids listing users for a company neither internal nor a member of', funct
     $this->actingAs($owner)->getJson("/api/v1/companies/{$companyB->id}/users")->assertForbidden();
 });
 
+// ─── Create ──────────────────────────────────────────────────────────────────
+
+it('lets an admin add a new member to a company team', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+
+    $response = $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users", [
+        'name' => 'New Member',
+        'email' => 'new.member@example.org',
+        'password' => 'Secret123!',
+        'password_confirmation' => 'Secret123!',
+        'role' => 'company_member',
+    ]);
+
+    $response->assertCreated()->assertJsonPath('data.email', 'new.member@example.org');
+
+    $user = User::where('email', 'new.member@example.org')->first();
+    expect($user->hasRole('company_member'))->toBeTrue()
+        ->and($user->companies->pluck('id'))->toContain($company->id)
+        ->and($user->status->value)->toBe('active');
+});
+
+it('lets an admin add a second owner to a company team', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users", [
+        'name' => 'Second Owner',
+        'email' => 'second.owner@example.org',
+        'password' => 'Secret123!',
+        'password_confirmation' => 'Secret123!',
+        'role' => 'company_owner',
+    ])->assertCreated();
+
+    expect(User::where('email', 'second.owner@example.org')->first()->hasRole('company_owner'))->toBeTrue();
+});
+
+it('rejects adding a company user with an email that already exists', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $existing = User::factory()->companyOwner()->withCompany($company)->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users", [
+        'name' => 'Duplicate',
+        'email' => $existing->email,
+        'password' => 'Secret123!',
+        'password_confirmation' => 'Secret123!',
+        'role' => 'company_member',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['email']);
+});
+
+it('validates the payload when adding a company user', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users", [
+        'name' => '',
+        'email' => 'not-an-email',
+        'password' => 'weak',
+        'role' => 'superadmin',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['name', 'email', 'password', 'role']);
+});
+
+it('forbids a company_owner from adding users to their own company via the back office', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+
+    // Adding accounts is back-office work (user.manage) — company owners
+    // manage their own team in client-portal, not here.
+    $this->actingAs($owner)->postJson("/api/v1/companies/{$company->id}/users", [
+        'name' => 'X', 'email' => 'x@example.org', 'password' => 'Secret123!', 'password_confirmation' => 'Secret123!', 'role' => 'company_member',
+    ])->assertForbidden();
+});
+
+it('requires authentication to add a company user', function () {
+    $company = Company::factory()->create();
+
+    $this->postJson("/api/v1/companies/{$company->id}/users", [
+        'name' => 'X', 'email' => 'x@example.org', 'password' => 'Secret123!', 'role' => 'company_member',
+    ])->assertUnauthorized();
+});
+
 // ─── Update: status ──────────────────────────────────────────────────────────
 
 it('lets an admin suspend a company member', function () {

@@ -38,7 +38,7 @@ class PackageController extends Controller
     public function publicIndex(Request $request): JsonResponse
     {
         $query = Package::query()
-            ->with(['industry', 'journeyLevel.milestones'])
+            ->with(['industry', 'journeyLevel.milestones.documentTemplates'])
             ->where('is_active', true)
             ->orderBy('sort_order');
 

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Company\Actions\AddCompanyUserAction;
 use App\Domain\Company\Actions\UpdateCompanyUserAction;
 use App\Domain\Company\Models\Company;
 use App\Domain\User\Models\User;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Company\StoreCompanyUserRequest;
 use App\Http\Requests\Api\V1\Company\UpdateCompanyUserRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Support\ApiResponse;
@@ -39,6 +41,24 @@ class CompanyUserController extends Controller
             ->get();
 
         return ApiResponse::success(UserResource::collection($users));
+    }
+
+    // Back-office creation of a brand-new company-side account (admin/staff
+    // only, CompanyPolicy::createUser → user.manage). The account is created
+    // pre-verified and attached straight to this company's team.
+    public function store(StoreCompanyUserRequest $request, Company $company, AddCompanyUserAction $action): JsonResponse
+    {
+        $this->authorize('createUser', $company);
+
+        $user = $action->execute(
+            $company,
+            $request->validated('name'),
+            $request->validated('email'),
+            $request->validated('password'),
+            $request->validated('role'),
+        );
+
+        return ApiResponse::created(new UserResource($user));
     }
 
     public function update(UpdateCompanyUserRequest $request, Company $company, User $user, UpdateCompanyUserAction $action): JsonResponse

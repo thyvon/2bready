@@ -19,5 +19,6 @@ Route::prefix('companies')->group(function () {
     // already independently blocks switching INTO a suspended one.
     Route::post('{company}/switch', [CompanyController::class, 'switch'])->withoutMiddleware('company.active');
     Route::get('{company}/users', [CompanyUserController::class, 'index']);
+    Route::post('{company}/users', [CompanyUserController::class, 'store']);
     Route::patch('{company}/users/{user}', [CompanyUserController::class, 'update']);
 });

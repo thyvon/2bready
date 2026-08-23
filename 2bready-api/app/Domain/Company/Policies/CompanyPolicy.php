@@ -52,6 +52,16 @@ class CompanyPolicy
         return $user->can('company.edit') && ($this->isInternal($user) || $this->isMember($user, $company));
     }
 
+    /**
+     * Adding a brand-new account to a company's team — same gate as editing
+     * an existing member (UserPolicy::update → user.manage), expressed on the
+     * Company policy so the route reads naturally.
+     */
+    public function createUser(User $user, Company $company): bool
+    {
+        return $user->can('user.manage') && $this->isInternal($user);
+    }
+
     public function delete(User $user, Company $company): bool
     {
         return $user->can('company.delete') && $this->isInternal($user);

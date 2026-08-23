@@ -80,6 +80,52 @@ it('forbids subscribing to an inactive package', function () {
     ])->assertNotFound();
 });
 
+it('prevents a duplicate subscription while one is live for the same journey level', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $monthly = Package::factory()->create(['billing_period' => 'monthly']);
+    $yearly = Package::factory()->create(['billing_period' => 'yearly', 'journey_level_id' => $monthly->journey_level_id]);
+    Subscription::factory()->active()->create(['company_id' => $company->id, 'package_id' => $monthly->id]);
+
+    // Different package row (yearly), same level — still a duplicate
+    // entitlement and must be rejected.
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $yearly->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertStatus(409);
+});
+
+it('allows resubscribing once the previous subscription expired or was cancelled', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $package = Package::factory()->create();
+
+    Subscription::factory()->create(['company_id' => $company->id, 'package_id' => $package->id, 'status' => 'expired']);
+    Subscription::factory()->create(['company_id' => $company->id, 'package_id' => $package->id, 'status' => 'cancelled']);
+
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertCreated();
+});
+
+it('prevents stacking a second pending subscription for the same level', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $package = Package::factory()->create();
+
+    // First subscribe → payment still pending.
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertCreated();
+
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'stripe',
+    ])->assertStatus(409);
+});
+
 it('forbids a company_owner without a company from subscribing', function () {
     $owner = User::factory()->companyOwner()->create();
     $package = Package::factory()->create();
