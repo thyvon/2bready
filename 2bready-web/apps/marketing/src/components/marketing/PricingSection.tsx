@@ -30,12 +30,6 @@ const PLAN_ICONS = {
 type BillingPeriod = 'monthly' | 'yearly';
 
 // SAMPLE tooltip copy — the API doesn't carry milestone/document-template
-// descriptions yet. Swap these for the real fields once they exist.
-const sampleMilestoneTip = (name: string): string =>
-  `${name} — one of the compliance areas verified at this level. Hover any document below to see what it covers.`;
-
-const sampleDocumentTip = (name: string): string =>
-  `${name} — a required document proving this requirement. Upload it in the portal and ADMIT auditors verify it automatically.`;
 
 function PeriodToggle({
   value,
@@ -288,8 +282,8 @@ export default function PricingSection() {
                   <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mb: 4 }}>
                     {plan.milestones.map((milestone) => (
                       <Box component="li" key={milestone.name} sx={{ mb: 2 }}>
-                        <Tooltip title={milestone.description ?? sampleMilestoneTip(milestone.name)} arrow placement="top">
-                          <Box className="milestone-row" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, cursor: 'help' }}>
+                        <Tooltip title={milestone.description ?? ''} arrow placement="top" disableHoverListener={!milestone.description}>
+                          <Box className="milestone-row" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, cursor: milestone.description ? 'help' : 'default' }}>
                             <CheckIcon sx={{ fontSize: 18, color: 'success.main', mt: 0.25 }} />
                             <Typography variant="body2" color="text.secondary">
                               {milestone.name}
@@ -312,7 +306,7 @@ export default function PricingSection() {
                             sx={{ listStyle: 'none', p: 0, m: 0, mt: 1, ml: 3.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}
                           >
                             {milestone.documents.map((doc) => (
-                              <Tooltip key={doc.name} title={doc.description ?? sampleDocumentTip(doc.name)} arrow placement="right">
+                              <Tooltip key={doc.name} title={doc.description ?? ''} arrow placement="right" disableHoverListener={!doc.description}>
                                 <Box
                                   component="li"
                                   className="doc-row"

@@ -138,6 +138,7 @@ export default function JourneyTemplateDetailPage() {
       code: level.code,
       name: level.name,
       pathway_name: level.pathway_name,
+      description: level.description ?? '',
       pillar: level.pillar,
       sort_order: level.sort_order,
     });
@@ -183,7 +184,7 @@ export default function JourneyTemplateDetailPage() {
     setMilestoneDialog({ levelId, editing: null });
   };
   const openEditMilestone = (levelId: string, milestone: Milestone) => {
-    milestoneForm.reset({ name: milestone.name, sort_order: milestone.sort_order });
+    milestoneForm.reset({ name: milestone.name, description: milestone.description ?? '', sort_order: milestone.sort_order });
     setServerError('');
     setMilestoneDialog({ levelId, editing: milestone });
   };
@@ -676,6 +677,17 @@ export default function JourneyTemplateDetailPage() {
               />
             </Box>
             <Box>
+              <FieldLabel>{t('journey_template.level_description')}</FieldLabel>
+              <FormTextField
+                fullWidth
+                multiline
+                minRows={2}
+                error={!!levelForm.formState.errors.description}
+                helperText={levelForm.formState.errors.description?.message ?? t('journey_template.description_hint')}
+                {...levelForm.register('description')}
+              />
+            </Box>
+            <Box>
               <FieldLabel>{t('journey_template.pillar_col')}</FieldLabel>
               <Controller
                 name="pillar"
@@ -741,6 +753,17 @@ export default function JourneyTemplateDetailPage() {
                 error={!!milestoneForm.formState.errors.name}
                 helperText={milestoneForm.formState.errors.name?.message}
                 {...milestoneForm.register('name')}
+              />
+            </Box>
+            <Box>
+              <FieldLabel>{t('journey_template.milestone_description')}</FieldLabel>
+              <FormTextField
+                fullWidth
+                multiline
+                minRows={2}
+                error={!!milestoneForm.formState.errors.description}
+                helperText={milestoneForm.formState.errors.description?.message ?? t('journey_template.description_hint')}
+                {...milestoneForm.register('description')}
               />
             </Box>
             <Box>

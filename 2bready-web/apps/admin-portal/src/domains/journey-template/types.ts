@@ -19,6 +19,7 @@ export type StoreJourneyLevelPayload = {
   code: string;
   name: string;
   pathway_name: string;
+  description?: string;
   pillar: JourneyPillar;
   sort_order?: number;
 };
@@ -26,6 +27,7 @@ export type UpdateJourneyLevelPayload = Partial<StoreJourneyLevelPayload>;
 
 export type StoreMilestonePayload = {
   name: string;
+  description?: string;
   sort_order?: number;
 };
 export type UpdateMilestonePayload = Partial<StoreMilestonePayload>;

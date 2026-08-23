@@ -424,7 +424,7 @@ export interface paths {
         };
         get: operations["companyUser.index"];
         put?: never;
-        post?: never;
+        post: operations["companyUser.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2138,6 +2138,7 @@ export interface components {
             code: string;
             name: string;
             pathway_name: string;
+            description: string | null;
             pillar: components["schemas"]["JourneyPillar"];
             sort_order: number;
             /**
@@ -2286,6 +2287,7 @@ export interface components {
             id: string;
             journey_level_id: string;
             name: string;
+            description: string | null;
             sort_order: number;
             document_templates?: components["schemas"]["DocumentTemplateResource"][];
         };
@@ -2415,7 +2417,24 @@ export interface components {
             journey_level_code?: string;
             pathway_name?: string;
             pillar?: string;
-            milestones?: components["schemas"]["MilestoneResource"][];
+            /**
+             * @description Slimmed-down milestone list for the landing card: each milestone
+             *     carries its description and its MAIN (top-level, platform-owned)
+             *     document template names + descriptions — the public "what you'll
+             *      need" taxonomy. No company-added extras, sub-documents, or
+             *     internal metadata.
+             */
+            milestones?: {
+                id: string;
+                name: string;
+                description: string;
+                sort_order: string;
+                document_templates: {
+                    id: string;
+                    name: string;
+                    description: string;
+                }[];
+            }[];
             tier: components["schemas"]["Tier"];
             sort_order: number;
             prices?: components["schemas"]["PublicPackagePriceResource"][];
@@ -2581,6 +2600,20 @@ export interface components {
             /** @enum {string} */
             default_locale?: "en" | "kh";
         };
+        /** StoreCompanyUserRequest */
+        StoreCompanyUserRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            password: string;
+            /**
+             * @description Company-side accounts only — internal roles are created via the
+             *     Users page, never as a side effect of filling a company team.
+             * @enum {string}
+             */
+            role: "company_owner" | "company_member";
+            password_confirmation: string;
+        };
         /** StoreDocumentRequest */
         StoreDocumentRequest: {
             document_template_id: string;
@@ -2632,6 +2665,7 @@ export interface components {
         StoreJourneyLevelRequest: {
             code: string;
             name: string;
+            description?: string | null;
             pathway_name: string;
             /** @enum {string} */
             pillar: "comply" | "scale" | "lead";
@@ -2648,6 +2682,7 @@ export interface components {
         /** StoreMilestoneRequest */
         StoreMilestoneRequest: {
             name: string;
+            description?: string | null;
             sort_order?: number;
         };
         /** StorePackageRequest */
@@ -2900,6 +2935,7 @@ export interface components {
         UpdateJourneyLevelRequest: {
             code?: string;
             name?: string;
+            description?: string | null;
             pathway_name?: string;
             /** @enum {string} */
             pillar?: "comply" | "scale" | "lead";
@@ -2933,6 +2969,7 @@ export interface components {
         /** UpdateMilestoneRequest */
         UpdateMilestoneRequest: {
             name?: string;
+            description?: string | null;
             sort_order?: number;
         };
         /** UpdatePackageRequest */
@@ -4073,6 +4110,39 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "companyUser.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCompanyUserRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "companyUser.update": {
@@ -6803,6 +6873,17 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string[];
+                    };
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };

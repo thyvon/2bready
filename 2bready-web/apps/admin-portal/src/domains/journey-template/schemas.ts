@@ -34,6 +34,7 @@ export const journeyLevelFormSchema = z.object({
   code: z.string().min(1, 'Code is required').max(10),
   name: z.string().min(1, 'Name is required').max(255),
   pathway_name: z.string().min(1, 'Pathway name is required').max(255),
+  description: z.string().max(2000).optional().or(z.literal('')),
   pillar: z.enum(['comply', 'scale', 'lead']),
   sort_order: sortOrder,
 });
@@ -42,17 +43,20 @@ export const journeyLevelFormDefaults: JourneyLevelFormInput = {
   code: '',
   name: '',
   pathway_name: '',
+  description: '',
   pillar: 'comply',
   sort_order: 0,
 };
 
 export const milestoneFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
+  description: z.string().max(2000).optional().or(z.literal('')),
   sort_order: sortOrder,
 });
 export type MilestoneFormInput = z.input<typeof milestoneFormSchema>;
 export const milestoneFormDefaults: MilestoneFormInput = {
   name: '',
+  description: '',
   sort_order: 0,
 };
 
