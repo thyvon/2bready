@@ -13,6 +13,7 @@ class StoreMilestoneRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
     }

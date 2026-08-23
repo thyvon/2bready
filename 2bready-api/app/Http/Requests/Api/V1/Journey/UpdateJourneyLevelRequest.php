@@ -24,6 +24,7 @@ class UpdateJourneyLevelRequest extends FormRequest
                     ->ignore($journeyLevel->id),
             ],
             'name' => ['sometimes', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'pathway_name' => ['sometimes', 'string', 'max:255'],
             'pillar' => ['sometimes', 'string', 'in:comply,scale,lead'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
