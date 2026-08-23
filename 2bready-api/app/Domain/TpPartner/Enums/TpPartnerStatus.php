@@ -6,6 +6,7 @@ namespace App\Domain\TpPartner\Enums;
 
 enum TpPartnerStatus: string
 {
+    case PendingApproval = 'pending_approval';
     case Active = 'active';
     case Suspended = 'suspended';
 }

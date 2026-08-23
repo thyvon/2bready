@@ -19,6 +19,7 @@ class TpPartnerFactory extends Factory
         return [
             'name' => fake()->company(),
             'status' => 'active',
+
             'price_l2_cents' => 19900,
             'price_l3_cents' => 39900,
             'price_l4_cents' => 79900,
@@ -28,5 +29,10 @@ class TpPartnerFactory extends Factory
     public function suspended(): static
     {
         return $this->state(fn (array $attributes) => ['status' => 'suspended']);
+    }
+
+    public function pendingApproval(): static
+    {
+        return $this->state(fn (array $attributes) => ['status' => 'pending_approval']);
     }
 }

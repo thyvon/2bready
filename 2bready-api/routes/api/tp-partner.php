@@ -15,6 +15,8 @@ Route::prefix('tp-partners')->group(function () {
     Route::post('/', [TpPartnerController::class, 'store']);
     Route::get('{tpPartner}', [TpPartnerController::class, 'show']);
     Route::patch('{tpPartner}', [TpPartnerController::class, 'update']);
+    // Sprint 7 onboarding approval — pending_approval → active (admin only).
+    Route::post('{tpPartner}/approve', [TpPartnerController::class, 'approve']);
     Route::patch('{tpPartner}/pricing', [TpPartnerController::class, 'updatePricing']);
     Route::patch('{tpPartner}/profile', [TpPartnerController::class, 'updateProfile']);
     Route::delete('{tpPartner}', [TpPartnerController::class, 'destroy']);
@@ -33,6 +35,9 @@ Route::post('tp-hires/hire', [TpHireController::class, 'hire']);
 Route::prefix('tp-hires')->group(function () {
     Route::get('/', [TpHireController::class, 'index']);
     Route::post('/', [TpHireController::class, 'store']);
+    // Pre-payment correction only (TpHirePolicy::update) — level changes
+    // re-snapshot the price trio while the hire is still pending_payment.
+    Route::patch('{tpHire}', [TpHireController::class, 'update']);
     Route::post('{tpHire}/complete', [TpHireController::class, 'complete']);
     Route::post('{tpHire}/mark-paid-out', [TpHireController::class, 'markPaidOut']);
     // Marketplace self-service: the company_owner's unhire + rating flows

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\TpPartner\Policies;
 
+use App\Domain\TpPartner\Enums\TpPartnerStatus;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\User\Models\User;
 
@@ -35,6 +36,17 @@ class TpPartnerPolicy
     public function update(User $user, TpPartner $tpPartner): bool
     {
         return $user->can('tp_partner.manage');
+    }
+
+    /**
+     * Sprint 7 onboarding approval — admin-only, and only a pending
+     * application can be approved (active/suspended firms are managed
+     * through update()'s status field instead).
+     */
+    public function approve(User $user, TpPartner $tpPartner): bool
+    {
+        return $user->can('tp_partner.manage')
+            && $tpPartner->status === TpPartnerStatus::PendingApproval;
     }
 
     /**

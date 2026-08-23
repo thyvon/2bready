@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\TpPartner\Actions\ApproveTpPartnerAction;
 use App\Domain\TpPartner\Actions\DeleteTpPartnerAction;
 use App\Domain\TpPartner\Actions\RegisterTpAuditorAction;
 use App\Domain\TpPartner\Actions\RegisterTpPartnerAction;
@@ -62,6 +63,17 @@ class TpPartnerController extends Controller
         $tpPartner = $action->execute(TpPartnerData::from($request->validated()));
 
         return ApiResponse::created(new TpPartnerResource($tpPartner));
+    }
+
+    // Sprint 7 onboarding approval — pending_approval → active. Scoped
+    // implicit binding is fine: only internal admins pass the policy.
+    public function approve(TpPartner $tpPartner, ApproveTpPartnerAction $action): JsonResponse
+    {
+        $this->authorize('approve', $tpPartner);
+
+        $tpPartner = $action->execute($tpPartner);
+
+        return ApiResponse::success(new TpPartnerResource($tpPartner));
     }
 
     public function show(TpPartner $tpPartner): JsonResponse

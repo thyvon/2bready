@@ -24,8 +24,53 @@ it('lets an admin register a TP firm', function () {
         'price_l2_cents' => 19900,
     ]);
 
-    $response->assertCreated()->assertJsonPath('data.name', 'Sabay Audit Co.');
+    $response->assertCreated()->assertJsonPath('data.name', 'Sabay Audit Co.')
+        // Sprint 7 onboarding: new firms start pending_approval, not active.
+        ->assertJsonPath('data.status', 'pending_approval');
     expect(TpPartner::where('name', 'Sabay Audit Co.')->exists())->toBeTrue();
+});
+
+// ─── Approval (Sprint 7 onboarding) ─────────────────────────────────────────
+
+it('lets an admin approve a pending firm, making it browsable by companies', function () {
+    $admin = User::factory()->admin()->create();
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+    $partner = TpPartner::factory()->pendingApproval()->create();
+
+    $this->actingAs($owner)->getJson('/api/v1/tp-partners')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+
+    $this->actingAs($admin)->postJson("/api/v1/tp-partners/{$partner->id}/approve")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'active');
+
+    expect($partner->fresh()->status->value)->toBe('active');
+
+    // Now visible to the company-side marketplace browse.
+    $this->actingAs($owner)->getJson('/api/v1/tp-partners')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $partner->id);
+});
+
+it('forbids a company_owner from approving a firm', function () {
+    $owner = User::factory()->companyOwner()->withCompany(Company::factory()->create())->create();
+    $partner = TpPartner::factory()->pendingApproval()->create();
+
+    $this->actingAs($owner)->postJson("/api/v1/tp-partners/{$partner->id}/approve")->assertForbidden();
+});
+
+it('forbids approving a firm that is not pending approval', function () {
+    $admin = User::factory()->admin()->create();
+    $partner = TpPartner::factory()->create(); // factory default: active
+
+    $this->actingAs($admin)->postJson("/api/v1/tp-partners/{$partner->id}/approve")->assertForbidden();
+});
+
+it('requires authentication to approve a firm', function () {
+    $partner = TpPartner::factory()->pendingApproval()->create();
+
+    $this->postJson("/api/v1/tp-partners/{$partner->id}/approve")->assertUnauthorized();
 });
 
 it('rejects TP firm creation without a name', function () {
