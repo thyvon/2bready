@@ -43,19 +43,25 @@ class PublicPackageGroupResource extends JsonResource
             'pathway_name' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->pathway_name),
             'pillar' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->pillar),
             // Slimmed-down milestone list for the landing card: each milestone
-            // carries only its MAIN (top-level, platform-owned) document
-            // template names — the public "what you'll need" taxonomy. No
-            // company-added extras, sub-documents, or internal metadata.
+            // carries its description and its MAIN (top-level, platform-owned)
+            // document template names + descriptions — the public "what you'll
+            // need" taxonomy. No company-added extras, sub-documents, or
+            // internal metadata.
             'milestones' => $this->whenLoaded('journeyLevel', function () {
                 return collect($this->journeyLevel?->milestones ?? [])->map(function ($milestone) {
                     return [
                         'id' => $milestone->id,
                         'name' => $milestone->name,
+                        'description' => $milestone->description,
                         'sort_order' => $milestone->sort_order,
                         'document_templates' => collect($milestone->documentTemplates ?? [])
                             ->filter(fn ($template) => $template->parent_id === null && $template->company_id === null)
                             ->sortBy('sort_order')
-                            ->map(fn ($template) => ['id' => $template->id, 'name' => $template->name])
+                            ->map(fn ($template) => [
+                                'id' => $template->id,
+                                'name' => $template->name,
+                                'description' => $template->description,
+                            ])
                             ->values()
                             ->all(),
                     ];

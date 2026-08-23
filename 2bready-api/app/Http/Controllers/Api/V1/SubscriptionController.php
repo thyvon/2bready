@@ -15,10 +15,11 @@ use App\Http\Resources\Api\V1\PaymentResource;
 use App\Http\Resources\Api\V1\SubscriptionResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Subscription::class);
 

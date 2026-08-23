@@ -36,6 +36,7 @@ class JourneyLevel extends Model
         'code',
         'name',
         'pathway_name',
+        'description',
         'pillar',
         'sort_order',
         'medal_image_path',

@@ -16,7 +16,7 @@ class DuplicateSubscriptionException extends DomainException
     public function __construct(Package $package)
     {
         parent::__construct(
-            "This company already has a live subscription for this journey level ({$package->name}). Cancel it or let it expire before subscribing again."
+            "This company already has a live subscription for this journey level ({$package->name}). Cancel it or let it expire before subscribing again.",
         );
     }
 }

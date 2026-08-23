@@ -21,6 +21,7 @@ class JourneyLevelResource extends JsonResource
             'code' => $this->code,
             'name' => $this->name,
             'pathway_name' => $this->pathway_name,
+            'description' => $this->description,
             'pillar' => $this->pillar,
             'sort_order' => $this->sort_order,
             // Guarded — only sign a URL when an image actually exists,

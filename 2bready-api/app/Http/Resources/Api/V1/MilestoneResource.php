@@ -18,6 +18,7 @@ class MilestoneResource extends JsonResource
             'id' => $this->id,
             'journey_level_id' => $this->journey_level_id,
             'name' => $this->name,
+            'description' => $this->description,
             'sort_order' => $this->sort_order,
             'document_templates' => DocumentTemplateResource::collection($this->whenLoaded('documentTemplates')),
         ];

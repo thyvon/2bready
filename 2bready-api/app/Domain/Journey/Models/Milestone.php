@@ -32,6 +32,7 @@ class Milestone extends Model
     protected $fillable = [
         'journey_level_id',
         'name',
+        'description',
         'sort_order',
     ];
 
