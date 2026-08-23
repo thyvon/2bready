@@ -142,8 +142,11 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
     // over the same data. The badge that used to live on a Documents tab
     // moves here since this is now where that action actually happens.
     { label: <TabLabel text={t('nav.journey')} count={pendingDocuments} />, href: `/companies/${params.id}/journey` },
-    { label: <TabLabel text={t('nav.payments')} count={pendingPayments} />, href: `/companies/${params.id}/payments` },
-    { label: t('nav.users'), href: `/companies/${params.id}/users` },
+    // Billing merges the old Payments tab (transaction queue, kept intact
+    // below the subscriptions list) with subscription tracking — one money
+    // view instead of two overlapping tabs. The Users tab is gone for good:
+    // its table + edit/add dialogs now live on the Overview team card.
+    { label: <TabLabel text={t('nav.billing')} count={pendingPayments} />, href: `/companies/${params.id}/billing` },
   ];
   // Overview's href is a prefix of every other tab's href, so it needs an
   // exact match; the rest are fine with startsWith (nested routes still

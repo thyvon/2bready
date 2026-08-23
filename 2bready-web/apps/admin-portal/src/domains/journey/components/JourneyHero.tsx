@@ -80,13 +80,13 @@ export function JourneyHero({ overallPct, currentLevel, pendingDocs }: JourneyHe
           </Box>
           <Typography sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', md: '2rem' }, letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
             <Box component="span" sx={{ color: '#fff' }}>
-              {t('journey.hero_word_comply')}
+              {t('journey.hero_word_verify')}
             </Box>{' '}
             <Box component="span" sx={{ color: '#f0b429' }}>
-              {t('journey.hero_word_scale')}
+              {t('journey.hero_word_connect')}
             </Box>{' '}
             <Box component="span" sx={{ color: '#fff' }}>
-              {t('journey.hero_word_lead')}
+              {t('journey.hero_word_grow')}
             </Box>
           </Typography>
           <Typography sx={{ mt: 0.5, maxWidth: 480, color: 'rgba(255,255,255,0.65)', fontSize: '0.875rem' }}>

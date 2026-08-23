@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
-import { motion } from 'framer-motion';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
-import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import EditIcon from '@mui/icons-material/EditOutlined';
+import AddIcon from '@mui/icons-material/Add';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import TranslateOutlinedIcon from '@mui/icons-material/TranslateOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
@@ -26,25 +24,29 @@ import EmptyState from '@/components/ui/EmptyState';
 import StatusBadge from '@/components/ui/StatusBadge';
 import UserAvatar from '@/components/ui/UserAvatar';
 import CompanyEditDialog from '@/domains/company/components/CompanyEditDialog';
+import CompanyUserEditDialog from '@/domains/company/components/CompanyUserEditDialog';
+import AddCompanyUserDialog from '@/domains/company/components/AddCompanyUserDialog';
 import { useIndustries } from '@/domains/company/hooks';
-import { listCompanyUsers } from '@/domains/company/api';
+import { listCompanyUsers, listCompanySubscriptions } from '@/domains/company/api';
 import { industryLabel, optionLabel, companyRoleOf, COUNTRY_OPTIONS } from '@/domains/company/constants';
 import type { User } from '@/domains/user/types';
 import { formatDate, getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import { useCompanyWorkspace } from '@/domains/company/workspace-context';
 import { getCompanyJourney } from '@/domains/journey/api';
-import type { Journey } from '@/domains/journey/types';
+import type { Journey, JourneyLevel } from '@/domains/journey/types';
 import { JourneyHero } from '@/domains/journey/components/JourneyHero';
-import { PillarCard } from '@/domains/journey/components/PillarCard';
-import { PILLARS } from '@/domains/journey/pillars';
-import { pillarLevels, allDocuments, countVerified } from '@/domains/journey/helpers';
-import { cardGridContainer, cardGridItem } from '@/lib/motion';
+import { LevelCardsGrid } from '@/domains/journey/components/LevelCardsGrid';
+import { allDocuments, countVerified } from '@/domains/journey/helpers';
+import { flattenDocuments } from '@/domains/journey/types';
 
-const PILLAR_ICONS = {
-  comply: <ShieldOutlinedIcon fontSize="small" />,
-  scale: <TrendingUpOutlinedIcon fontSize="small" />,
-  lead: <WorkspacePremiumOutlinedIcon fontSize="small" />,
+// Same per-level emoji as the grid cards; score labels are explicit keys so
+// the i18n dict typing stays exact (no template-literal keys).
+const LEVEL_SCORE_KEYS: Record<string, 'journey.level_l1_score' | 'journey.level_l2_score' | 'journey.level_l3_score' | 'journey.level_l4_score'> = {
+  L1: 'journey.level_l1_score',
+  L2: 'journey.level_l2_score',
+  L3: 'journey.level_l3_score',
+  L4: 'journey.level_l4_score',
 };
 
 function DetailField({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -66,9 +68,15 @@ export default function CompanyOverviewPage() {
   const { industries } = useIndustries();
 
   const [journey, setJourney] = useState<Journey | null>(null);
-  const [owners, setOwners] = useState<User[]>([]);
+  // All company users — rendered in the team card, owners first.
+  const [members, setMembers] = useState<User[]>([]);
+  const [activeLevelCodes, setActiveLevelCodes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+
+  // Team-card inline edit — opens the shared CompanyUserEditDialog.
+  const [editingMember, setEditingMember] = useState<User | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +84,7 @@ export default function CompanyOverviewPage() {
     async function load() {
       setLoading(true);
       try {
-        const [journeyData, users] = await Promise.all([
+        const [journeyData, users, subscriptions] = await Promise.all([
           getCompanyJourney(params.id).catch((err) => {
             // No journey template for this company's country/industry yet is
             // an expected state (see the Journey tab's own handling of this),
@@ -85,10 +93,18 @@ export default function CompanyOverviewPage() {
             throw err;
           }),
           listCompanyUsers(params.id),
+          listCompanySubscriptions(params.id),
         ]);
         if (!cancelled) {
           setJourney(journeyData);
-          setOwners(users.filter((u) => companyRoleOf(u) === 'company_owner'));
+          setMembers(users);
+          setActiveLevelCodes(
+            new Set(
+              subscriptions
+                .filter((s) => s.status === 'active' && s.package?.journey_level_code)
+                .map((s) => s.package!.journey_level_code!),
+            ),
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -103,6 +119,17 @@ export default function CompanyOverviewPage() {
   }, [params.id]);
 
   const industry = industries.find((i) => i.id === company.industry_id);
+
+  // Owners on top, then members — alphabetical within each group.
+  const sortedMembers = useMemo(
+    () =>
+      [...members].sort((a, b) => {
+        const aOwner = companyRoleOf(a) === 'company_owner' ? 0 : 1;
+        const bOwner = companyRoleOf(b) === 'company_owner' ? 0 : 1;
+        return aOwner - bOwner || a.name.localeCompare(b.name);
+      }),
+    [members],
+  );
 
   const documents = allDocuments(journey);
   const totalDocs = documents.length;
@@ -134,24 +161,27 @@ export default function CompanyOverviewPage() {
         <>
           <JourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
 
-          <motion.div variants={cardGridContainer} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {PILLARS.map((pillar) => {
-              const levels = pillarLevels(journey, pillar.id);
-              const docs = levels.flatMap((level) => level.milestones.flatMap((m) => m.documents));
-              return (
-                <motion.div key={pillar.id} variants={cardGridItem} style={{ height: '100%' }}>
-                  <PillarCard
-                    pillar={pillar}
-                    icon={PILLAR_ICONS[pillar.id]}
-                    verifiedDocs={countVerified(docs)}
-                    totalDocs={docs.length}
-                    activeLevelCodes={levels.filter((level) => level.unlocked).map((level) => level.code)}
-                    unlocked={levels.some((level) => level.unlocked)}
-                  />
-                </motion.div>
-              );
-            })}
-          </motion.div>
+          <LevelCardsGrid journey={journey} activeLevelCodes={activeLevelCodes} />
+
+          <SectionCard title={t('overview.readiness_scores')}>
+            <Box className="flex flex-col gap-3">
+              {journey.levels.map((level: JourneyLevel) => {
+                const docs = flattenDocuments(level.milestones.flatMap((m) => m.documents));
+                const pct = docs.length === 0 ? 0 : Math.round((countVerified(docs) / docs.length) * 100);
+                return (
+                  <Box key={level.id} className="flex items-center gap-3">
+                    <Typography variant="body2" sx={{ width: 220, flexShrink: 0 }}>
+                      {t(LEVEL_SCORE_KEYS[level.code] ?? 'company.compliance_score')}
+                    </Typography>
+                    <Box sx={{ flexGrow: 1, height: 8, borderRadius: 4, bgcolor: 'action.hover', overflow: 'hidden' }}>
+                      <Box sx={{ width: `${pct}%`, height: '100%', borderRadius: 4, bgcolor: 'primary.main' }} />
+                    </Box>
+                    <Typography variant="body2" sx={{ width: 48, textAlign: 'right', fontWeight: 600 }}>{pct}%</Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </SectionCard>
         </>
       )}
 
@@ -195,8 +225,16 @@ export default function CompanyOverviewPage() {
           </Box>
         </SectionCard>
 
-        <SectionCard title={t('company.owner_title')} className="lg:col-span-1">
-          {owners.length === 0 ? (
+        <SectionCard
+          title={t('company.team_title')}
+          className="lg:col-span-1"
+          action={
+            <IconButton size="small" aria-label={t('company_users.add_user')} onClick={() => setAddOpen(true)}>
+              <AddIcon fontSize="small" />
+            </IconButton>
+          }
+        >
+          {members.length === 0 ? (
             <EmptyState
               title={t('company.no_owner')}
               description={t('company.no_owner_desc')}
@@ -204,31 +242,63 @@ export default function CompanyOverviewPage() {
             />
           ) : (
             <Box className="flex flex-col gap-4">
-              {owners.map((owner, i) => (
-                <Box
-                  key={owner.id}
-                  className="flex items-start gap-3"
-                  sx={i > 0 ? { pt: 2, borderTop: '1px solid', borderColor: 'divider' } : undefined}
-                >
-                  <UserAvatar name={owner.name} size={40} />
-                  <Box className="min-w-0 flex-1">
-                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{owner.name}</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>{owner.email}</Typography>
-                    <Box className="flex items-center gap-2" sx={{ mt: 0.75 }}>
-                      <StatusBadge status={owner.status ?? 'active'} />
-                      {owner.created_at && (
-                        <Typography variant="caption" color="text.secondary">
-                          {t('company.owner_joined', { date: formatDate(owner.created_at) })}
-                        </Typography>
-                      )}
+              {sortedMembers.map((member, i) => {
+                const isOwner = companyRoleOf(member) === 'company_owner';
+                return (
+                  <Box
+                    key={member.id}
+                    className="flex items-start gap-3"
+                    sx={i > 0 ? { pt: 2, borderTop: '1px solid', borderColor: 'divider' } : undefined}
+                  >
+                    <UserAvatar name={member.name} size={40} />
+                    <Box className="min-w-0 flex-1">
+                      <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{member.name}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>{member.email}</Typography>
+                      <Box className="flex items-center gap-2" sx={{ mt: 0.75 }}>
+                        <Chip
+                          size="small"
+                          color={isOwner ? 'primary' : 'default'}
+                          variant="outlined"
+                          label={t(isOwner ? 'company_users.role_company_owner' : 'company_users.role_company_member')}
+                        />
+                        <StatusBadge status={member.status ?? 'active'} />
+                        {member.created_at && (
+                          <Typography variant="caption" color="text.secondary">
+                            {t('company.owner_joined', { date: formatDate(member.created_at) })}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
+<IconButton size="small" aria-label={t('common.edit')} onClick={() => setEditingMember(member)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
                   </Box>
-                </Box>
-              ))}
+                );
+              })}
             </Box>
           )}
         </SectionCard>
       </Box>
+
+      {/* Member edit — the same shared dialog the Users tab uses
+          (CompanyUserEditDialog), surfaced inline so fixing a role doesn't
+          require leaving the Overview tab. */}
+      <CompanyUserEditDialog
+        companyId={company.id}
+        user={editingMember}
+        onClose={() => setEditingMember(null)}
+        onSaved={(updated) => {
+          setEditingMember(null);
+          setMembers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+        }}
+      />
+
+      <AddCompanyUserDialog
+        companyId={company.id}
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSaved={(user) => setMembers((prev) => [...prev, user])}
+      />
 
       <CompanyEditDialog
         open={editOpen}

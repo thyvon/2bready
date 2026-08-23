@@ -59,3 +59,40 @@ export async function updateCompanyUser(companyId: string, userId: string, paylo
   const res = await api.patch<{ data: User }>(`/companies/${companyId}/users/${userId}`, payload);
   return res.data.data;
 }
+
+// A company's subscriptions — backend now supports ?company_id= (same
+// deliberate-filter pattern as GET /payments), used by the Billing tab.
+export interface CompanySubscription {
+  id: string;
+  company_id: string;
+  status: 'pending' | 'active' | 'expired' | 'cancelled';
+  package?: {
+    name?: string | null;
+    journey_level_code?: string | null;
+    billing_period?: 'monthly' | 'yearly' | 'one_time' | null;
+    tier?: 'free' | 'starter' | 'pro' | 'enterprise' | null;
+  } | null;
+  started_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export async function listCompanySubscriptions(companyId: string): Promise<CompanySubscription[]> {
+  const res = await api.get<{ data: CompanySubscription[] }>('/subscriptions', { params: { company_id: companyId } });
+  return res.data.data;
+}
+
+export type AddCompanyUserPayload = {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  role: 'company_owner' | 'company_member';
+};
+
+// Back-office creation of a brand-new company-side account, attached
+// straight to this company's team.
+export async function addCompanyUser(companyId: string, payload: AddCompanyUserPayload): Promise<User> {
+  const res = await api.post<{ data: User }>(`/companies/${companyId}/users`, payload);
+  return res.data.data;
+}
