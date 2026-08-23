@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Skeleton from '@mui/material/Skeleton';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import CheckIcon from '@mui/icons-material/Check';
@@ -24,6 +28,14 @@ const PLAN_ICONS = {
 };
 
 type BillingPeriod = 'monthly' | 'yearly';
+
+// SAMPLE tooltip copy — the API doesn't carry milestone/document-template
+// descriptions yet. Swap these for the real fields once they exist.
+const sampleMilestoneTip = (name: string): string =>
+  `${name} — one of the compliance areas verified at this level. Hover any document below to see what it covers.`;
+
+const sampleDocumentTip = (name: string): string =>
+  `${name} — a required document proving this requirement. Upload it in the portal and ADMIT auditors verify it automatically.`;
 
 function PeriodToggle({
   value,
@@ -116,8 +128,11 @@ function PeriodToggle({
 }
 
 export default function PricingSection() {
-  const pricingPlans = usePublicPricing();
+  const { plans: pricingPlans, loading } = usePublicPricing();
   const [period, setPeriod] = useState<BillingPeriod>('yearly');
+  // One shared "Show details" toggle across the grid — visitors compare
+  // levels side by side, so the detail expansion should be all-or-nothing.
+  const [showDetails, setShowDetails] = useState(false);
 
   // The toggle's "Save %" tag mirrors the yearly cadence's discount. Every
   // level shares the same ratio today (data-driven), so one representative
@@ -148,6 +163,37 @@ export default function PricingSection() {
 
       <PeriodToggle value={period} onChange={setPeriod} savePct={toggleSavePct} />
 
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+        <Box
+          onClick={() => setShowDetails((v) => !v)}
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.75,
+            cursor: 'pointer',
+            userSelect: 'none',
+            px: 2,
+            py: 0.75,
+            borderRadius: '9999px',
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            fontSize: '0.8125rem',
+            fontWeight: 700,
+            color: showDetails ? 'primary.main' : 'text.secondary',
+          }}
+        >
+          {showDetails ? 'Hide document details' : 'Show document details'}
+          <ExpandMoreIcon
+            sx={{
+              fontSize: 18,
+              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: showDetails ? 'rotate(180deg)' : 'none',
+            }}
+          />
+        </Box>
+      </Box>
+
       <Box
         sx={{
           display: 'grid',
@@ -156,7 +202,18 @@ export default function PricingSection() {
           alignItems: 'stretch',
         }}
       >
-        {pricingPlans.map((plan, i) => {
+        {loading &&
+          [0, 1, 2, 3].map((i) => (
+            <SpotlightCard key={i} sx={{ height: '100%', p: 'clamp(1.25rem, 0.875rem + 1.5vw, 2rem)' }}>
+              <Skeleton variant="rounded" width="70%" height={32} sx={{ mb: 3.5 }} />
+              <Skeleton variant="text" width="45%" height={36} />
+              <Skeleton variant="text" width="90%" />
+              <Skeleton variant="text" width="95%" />
+              <Skeleton variant="text" width="85%" />
+              <Skeleton variant="rectangular" height={40} sx={{ mt: 4, borderRadius: 2 }} />
+            </SpotlightCard>
+          ))}
+        {!loading && pricingPlans.map((plan, i) => {
           const Icon = PLAN_ICONS[plan.icon];
           const monthly = plan.monthlyCents;
           const yearly = plan.yearlyCents;
@@ -230,11 +287,63 @@ export default function PricingSection() {
 
                   <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mb: 4 }}>
                     {plan.milestones.map((milestone) => (
-                      <Box component="li" key={milestone} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
-                        <CheckIcon sx={{ fontSize: 18, color: 'success.main', mt: 0.25 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {milestone}
-                        </Typography>
+                      <Box component="li" key={milestone.name} sx={{ mb: 2 }}>
+                        <Tooltip title={sampleMilestoneTip(milestone.name)} arrow placement="top">
+                          <Box className="milestone-row" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, cursor: 'help' }}>
+                            <CheckIcon sx={{ fontSize: 18, color: 'success.main', mt: 0.25 }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {milestone.name}
+                            </Typography>
+                            <InfoOutlinedIcon
+                              sx={{
+                                fontSize: 14,
+                                color: 'text.disabled',
+                                mt: 0.4,
+                                opacity: 0,
+                                transition: 'opacity 0.15s',
+                                '.milestone-row:hover &': { opacity: 1 },
+                              }}
+                            />
+                          </Box>
+                        </Tooltip>
+                        {showDetails && milestone.documents.length > 0 && (
+                          <Box
+                            component="ul"
+                            sx={{ listStyle: 'none', p: 0, m: 0, mt: 1, ml: 3.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}
+                          >
+                            {milestone.documents.map((doc) => (
+                              <Tooltip key={doc} title={sampleDocumentTip(doc)} arrow placement="right">
+                                <Box
+                                  component="li"
+                                  className="doc-row"
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.75,
+                                    pl: 1.25,
+                                    borderLeft: '2px solid',
+                                    borderColor: 'divider',
+                                    cursor: 'help',
+                                  }}
+                                >
+                                  <DescriptionIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {doc}
+                                  </Typography>
+                                  <InfoOutlinedIcon
+                                    sx={{
+                                      fontSize: 12,
+                                      color: 'text.disabled',
+                                      opacity: 0,
+                                      transition: 'opacity 0.15s',
+                                      '.doc-row:hover &': { opacity: 1 },
+                                    }}
+                                  />
+                                </Box>
+                              </Tooltip>
+                            ))}
+                          </Box>
+                        )}
                       </Box>
                     ))}
                   </Box>

@@ -17,7 +17,7 @@ import { clientPortalUrl } from '@/lib/client-portal-url';
 
 const NAV_LINKS = [
   { label: 'Built For', href: '/#stakeholders' },
-  { label: 'Pathways', href: '/#pricing' },
+  { label: 'Pricing', href: '/#pricing' },
   { label: 'How It Works', href: '/#how-it-works' },
 ];
 
