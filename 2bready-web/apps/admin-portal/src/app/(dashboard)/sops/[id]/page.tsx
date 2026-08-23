@@ -17,10 +17,10 @@ import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useToast } from '@/components/feedback/ToastProvider';
 import api from '@/lib/api';
-import { getSop } from '@/domains/sop/api';
+import { getSop, updateSop } from '@/domains/sop/api';
 import type { Sop } from '@/domains/sop/types';
 import { getSopStatus } from '@/domains/sop/types';
-import { SopFormDialog } from '@/domains/sop/components/SopFormDialog';
+import { SopFormDialog, type SopFormValues } from '@/domains/sop/components/SopFormDialog';
 import { useTranslation } from '@/lib/i18n';
 import { getApiError, formatDate } from '@/lib/utils';
 
@@ -95,8 +95,10 @@ export default function SopDetailPage({ params }: { params: Promise<{ id: string
     };
   }, [id, pdfVersion]);
 
-  // Refresh meta + PDF in place after an edit save — no spinner flash.
-  async function handleUpdate() {
+  // Persist the dialog's changes, then refresh meta + PDF in place — no
+  // spinner flash.
+  async function handleUpdate(data: SopFormValues) {
+    await updateSop(id, data);
     toast.success(t('sop.updated'));
     try {
       setSop(await getSop(id));
