@@ -30,6 +30,14 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    // Chrome-based HTML→PDF microservice (Gotenberg). When set, PDF
+    // rendering goes through Chromium for full complex-script shaping
+    // (Khmer) — DomPDF cannot shape Khmer correctly (no GSUB/GPOS), so
+    // combining marks render as dotted circles. Unset → DomPDF fallback.
+    'gotenberg' => [
+        'url' => env('GOTENBERG_URL'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -24,6 +24,7 @@ import {
   MenuButtonUndo,
   MenuButtonRemoveFormatting,
   MenuSelectHeading,
+  MenuSelectFontFamily,
   MenuSelectTextAlign,
   MenuButtonAddTable,
   TableMenuControls,
@@ -39,6 +40,21 @@ import { TableKit } from '@tiptap/extension-table';
 // StarterKit does not bundle text alignment either — required by the
 // MenuButtonAlign* toolbar buttons.
 import TextAlign from '@tiptap/extension-text-align';
+// TextStyle is the mark carrier FontFamily writes into (span style="...").
+import { TextStyle } from '@tiptap/extension-text-style';
+import { FontFamily } from '@tiptap/extension-font-family';
+
+// Curated so every choice renders IDENTICALLY in the browser and in the
+// Gotenberg PDF: each stack's final family is installed in the PDF container
+// (Khmer OS Muol/Siemreap mounted, Caladea/Carlito/DejaVu ship with it).
+// Web-safe fallbacks keep browser rendering sane before those names resolve.
+const FONT_FAMILY_OPTIONS = [
+  { label: 'Khmer OS Muol', value: "'Khmer OS Muol', KhmerOSmuol, serif" },
+  { label: 'Khmer OS Siemreap', value: "'Khmer OS Siemreap', KhmerOSsiemreap, sans-serif" },
+  { label: 'Serif (Cambria)', value: 'Caladea, Cambria, Georgia, serif' },
+  { label: 'Sans (Calibri)', value: 'Carlito, Calibri, Arial, sans-serif' },
+  { label: 'Monospace', value: '"DejaVu Sans Mono", "Courier New", monospace' },
+];
 
 interface RichTextEditorFieldProps {
   label?: string;
@@ -74,6 +90,8 @@ export function RichTextEditorField({
       Image,
       TableKit.configure({ table: { resizable: true } }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextStyle,
+      FontFamily.configure({ types: ['textStyle'] }),
     ],
     // Tiptap treats content as initial only; current content is later driven by
     // the resetKey effect below for subsequent targets.
@@ -108,6 +126,7 @@ export function RichTextEditorField({
                   <MenuButtonUndo />
                   <MenuButtonRedo />
                   <MenuSelectHeading />
+                  <MenuSelectFontFamily options={FONT_FAMILY_OPTIONS} />
                   <MenuButtonBold />
                   <MenuButtonItalic />
                   <MenuButtonUnderline />

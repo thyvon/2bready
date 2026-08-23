@@ -4,17 +4,18 @@
     <meta charset="utf-8">
     <style>
         /* A4 portrait document rendering of an SOP's editor-authored content.
-           Mirrors the certificate template's conventions: explicit font-family
-           per block (KhmerOSmuol carries both Latin and Khmer glyphs), plain
-           flow layout only — DomPDF supports a limited CSS subset (no
-           flex/grid), so element styles below mirror what
-           ui-core's RichTextContentViewer applies on screen. */
+           Font stack covers both engines: Gotenberg/Chrome resolves the
+           fontconfig family name ('Khmer OS Muol'), DomPDF the registrar
+           alias ('KhmerOSmuol') — one family carries Latin + Khmer glyphs.
+           Plain flow layout only: DomPDF supports a limited CSS subset (no
+           flex/grid), so element styles mirror what ui-core's
+           RichTextContentViewer applies on screen. */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: KhmerOSmuol, DejaVu Sans, sans-serif;
+            font-family: 'Khmer OS Muol', KhmerOSmuol, 'DejaVu Sans', sans-serif;
             color: #1a1a2e;
             font-size: 12px;
-            line-height: 1.6;
+            line-height: 1.7;
             padding: 36px 44px;
         }
         .doc-header { border-bottom: 2px solid #1a1a2e; padding-bottom: 12px; margin-bottom: 20px; }

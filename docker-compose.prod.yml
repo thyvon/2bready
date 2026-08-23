@@ -22,6 +22,9 @@ services:
       APP_ENV: production
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
+      # Chrome HTML→PDF service for SOP documents — required for correct
+      # Khmer shaping (DomPDF cannot shape complex scripts)
+      GOTENBERG_URL: ${GOTENBERG_URL:-http://gotenberg:3000}
       # This is an explicit allowlist, not env_file — a var only existing in
       # .env.production is invisible to the container until it's added here
       # too. Read by AppServiceProvider's VerifyEmail::createUrlUsing and
@@ -107,6 +110,16 @@ services:
         # publicApi.ts — without the API URL baked in, those fetches went to
         # "undefined/api/v1/..." and silently failed.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    networks:
+      - 2bready
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    # Khmer OS fonts (committed under resources/fonts) mounted into the
+    # system font dir so Chromium shapes SOP PDF text correctly. Internal
+    # network only — never exposed to the host.
+    volumes:
+      - ./2bready-api/resources/fonts:/usr/share/fonts/custom:ro
     networks:
       - 2bready
 
