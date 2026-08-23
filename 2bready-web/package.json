@@ -38,5 +38,9 @@
     "@tiptap/react": "^3.30.2",
     "@tiptap/starter-kit": "^3.30.2",
     "mui-tiptap": "^1.31.0"
+  },
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }
