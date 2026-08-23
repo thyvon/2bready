@@ -71,20 +71,18 @@ Scramble (Laravel) → OpenAPI (`/docs/api.json`) → `packages/api-client/src/g
 - Auth'd: companies (+ register/switch/users), industries, users/roles, packages, subscriptions, payments (submit/confirm/reject), leads, journey (+ templates/levels/milestones/medals/complete), documents (+ templates/preview/verify/reject), data-room, audit-logs, settings (+ google-oauth/mail/mail-test), me, tp-partners (+ auditors), tp-hires (hire/complete/mark-paid-out), tp (TP-portal: companies, company journey)
 - Stub route files awaiting implementation: `audit.php`, `notification.php`, `support.php`, `sop.php`, `report.php`
 
-## Build state vs. v3 proposal (Aug 2026)
+## Build state vs. v3 proposal (Aug 2026, refreshed 2026-08-23)
 
-**Exists (do not rebuild):** auth+TOTP+Google, RBAC, multi-company (`company_user`+`current_company_id`), industries, packages/leads, subscriptions/payments (FakeStripe + ManualBankTransfer gateways), journey templates/levels/milestones + builder, documents (recurring, periods, expiry, malware scan job), data-room (7-day links, PIN), platform_settings machinery, audit logs, tp_partners + auditors, tp_hires (hire/complete/payout, commission), TP marketplace frontend (client audits page + admin tp-partners), company bypass evaluator, client portal pages (journey/billing/audits/data-room/sops/support/trust-badge/settings), admin portal full back office, tp-portal review flow, marketing landing page.
+**Exists (do not rebuild):** auth+TOTP+Google, RBAC, multi-company (`company_user`+`current_company_id`), industries, packages/leads, subscriptions/payments (FakeStripe + ManualBankTransfer gateways + payment lifecycle state guards → 409), journey templates/levels/milestones + builder, documents (recurring, periods, expiry, malware scan job), data-room (7-day links, PIN), Vault domain (PIN/auto-lock/unlock-log/expiry job), LegalConsent services, platform_settings machinery, audit logs, **Sprint 6 complete**: Audit domain (full review workflow pending→in_progress→submitted→approved/rejected+cancel, per-firm auditor guards, 27 tests) · ComplianceScoreCalculator→companies.compliance_score via `AuditDecisionMade` · TrustBadge issuance on approval · certificates (DomPDF bilingual w/ Khmer fonts + QR encoding `{verify_base_url}/{auditId}` + `master_verifier_stamp` snapshot from platform_settings, queued idempotent job) · public throttled `/api/v1/public/verify/{auditId}` + marketing app `(public)/verify/[verificationId]` page. **Sprint 7 complete**: tp_partners with onboarding approval (`pending_approval` → approve endpoint; companies browse active-only), per-level pricing self-service, tp_hires (hire/edit-pre-payment/cancel/complete/paid-out, commission), tp_ratings + rating dialog in client portal, matchmaking list w/ rating aggregates, admin partner suspend/activate toggle. SOP workflow shipped (editor, adoption, sign-off send/acknowledge, Gotenberg A4 PDF). Client portal pages (journey/billing/audits/data-room/sops/support/trust-badge/settings), admin portal full back office, tp-portal review flow, marketing landing page.
 
-**MISSING (the real backlog — in rough priority order):**
-1. **Audit domain** (empty scaffold) — auditor assignment, review workflow, compliance score (`ComplianceScoreCalculator` + `ComplianceScoreService`), `AuditDecisionMade` event wiring. Routes file `audit.php` stubbed.
-2. **Certificates + PublicVerification** — `CertificateGenerationService` (PDF+QR, bilingual), `certificates` table with `master_verifier_stamp` snapshot, `/verify/{auditId}` public route + `(public)` Next route group (marketing app), platform cert settings.
-3. **TrustBadge domain** (empty scaffold) — badge issuance tied to audit completion.
-4. **Vault domain** — 6-digit PIN, auto-lock (configurable timeout), finance-role restricted to self-uploaded docs.
-5. **LegalConsent domain** — P3/P4 document gating, versioned consent text, consent = audit-log entry too.
-6. **tp_ratings** — rate a completed hire (1–5 + review).
-7. **MilestoneUnlockRuleEngine** — consume `CompanyBypassEvaluator` bypass flags (documented, not implemented).
-8. **Sop / Support / Notification / Report** domains — empty scaffolds + stub routes.
-9. **ADMIT Unit lead-upsell trigger** (14 days, 0% progress — from platform_settings), platform cert stamp settings.
+**MISSING (the real backlog — rough priority order):**
+1. **Support ticketing backend** — Models/Enums/DTOs scaffolded, `support.php` still `// TODO: add routes`; needs endpoints/actions/policies/tests.
+2. **Notification domain wiring** — folder structure exists but no Actions/routes; hook listeners onto existing events (payment confirmed, audit approved…), email channel via Mailpit.
+3. **Report/Report & analytics dashboard** — no Report domain at all; `report.php` stubbed.
+4. **Subscription expiry** — nothing flips `active`→`expired`; entitlements never lapse (`JourneyProgressService` MAX-cap makes accumulation permanent).
+5. **Stale `companies.active_subscription_id`** — written by `ConfirmPaymentAction`, read by nothing (cap logic moved to multi-subscription MAX); decide delete-vs-repurpose; tests still bless it.
+6. **ADMIT Unit lead-upsell trigger** (14 days, 0% progress — from platform_settings).
+7. Minor debt: submit/confirm/reject have guards but no optimistic locking under concurrency; admin payments filter omits `failed`; client billing page i18n + `PricingCard` inline cents division violations; empty scaffold dirs (`TrustBadge/DTOs`, `Audit/QueryFilters`).
 
 ## Day-to-day commands
 
