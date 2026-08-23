@@ -126,6 +126,45 @@ it('still requires milestone completion within the subscription-capped range', f
     expect($levels['L3']['unlocked'])->toBeFalse();
 });
 
+it('accumulates entitlements across ALL active subscriptions instead of following the last confirmed payment', function () {
+    // À la carte pricing: the company holds an active L2 subscription, then
+    // later activates the cheaper L1. The cap must be MAX(sort_order) across
+    // all active subs — not companies.active_subscription_id, which points at
+    // the newest (L1) payment and would DEMOTE L2 back to locked (the Demo
+    // Bakery Co. production bug).
+    $l2Package = Package::factory()->create([
+        'industry_id' => $this->industry->id,
+        'tier' => Tier::Pro,
+        'journey_level_id' => $this->l2->id,
+    ]);
+    $l1Package = Package::factory()->create([
+        'industry_id' => $this->industry->id,
+        'tier' => Tier::Starter,
+        'journey_level_id' => $this->l1->id,
+    ]);
+
+    $l2Subscription = Subscription::factory()->active()->create([
+        'company_id' => $this->company->id,
+        'package_id' => $l2Package->id,
+    ]);
+    $l1Subscription = Subscription::factory()->active()->create([
+        'company_id' => $this->company->id,
+        'package_id' => $l1Package->id,
+    ]);
+
+    // Simulate last-payment-wins bookkeeping: the pointer names the OLDER,
+    // lower-level subscription — exactly the state that used to demote L2.
+    $this->company->update(['active_subscription_id' => $l1Subscription->id]);
+
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+
+    $response = $this->actingAs($owner)->getJson('/api/v1/journey');
+
+    $levels = collect($response->json('data.levels'))->keyBy('code');
+    expect($levels['L1']['unlocked'])->toBeTrue()
+        ->and($levels['L2']['unlocked'])->toBeTrue();
+});
+
 it('returns 404 when the current company has no journey yet', function () {
     $otherCompany = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($otherCompany)->create();

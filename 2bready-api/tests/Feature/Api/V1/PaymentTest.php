@@ -177,6 +177,77 @@ it('lets an admin reject a payment', function () {
         ->assertJsonPath('data.status', 'rejected');
 });
 
+it('forbids double-confirming a payment and does not extend the subscription expiry', function () {
+    $company = Company::factory()->create();
+    $package = Package::factory()->create(['billing_period' => 'monthly']);
+    $subscription = Subscription::factory()->create(['company_id' => $company->id, 'package_id' => $package->id]);
+    $payment = Payment::factory()->create([
+        'company_id' => $company->id,
+        'payable_type' => 'subscription', 'payable_id' => $subscription->id,
+        'status' => 'awaiting_confirmation',
+    ]);
+    $finance = User::factory()->withRole('finance')->create();
+
+    $this->actingAs($finance)->postJson("/api/v1/payments/{$payment->id}/confirm")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'confirmed');
+
+    $expiresAt = $subscription->fresh()->expires_at;
+    $confirmedAt = $payment->fresh()->confirmed_at;
+    expect($expiresAt)->not->toBeNull()->and($confirmedAt)->not->toBeNull();
+
+    $this->actingAs($finance)->postJson("/api/v1/payments/{$payment->id}/confirm")
+        ->assertStatus(409);
+
+    // Re-confirming must be a no-op, not a silent renewal.
+    expect($payment->fresh()->confirmed_at->toString())->toBe($confirmedAt->toString())
+        ->and($subscription->fresh()->expires_at->toString())->toBe($expiresAt->toString());
+});
+
+it('forbids submitting an already-confirmed payment', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $subscription = Subscription::factory()->create(['company_id' => $company->id]);
+    $payment = Payment::factory()->confirmed()->create([
+        'company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id,
+    ]);
+
+    // Reverting confirmed → awaiting_confirmation would desynchronize the
+    // payment from its already-active subscription.
+    $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")
+        ->assertStatus(409);
+
+    expect($payment->fresh()->status->value)->toBe('confirmed');
+});
+
+it('forbids submitting a stripe-method payment through the manual transfer endpoint', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $subscription = Subscription::factory()->create(['company_id' => $company->id]);
+    $payment = Payment::factory()->create([
+        'company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id,
+        'method' => 'stripe',
+    ]);
+
+    $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")->assertStatus(409);
+});
+
+it('forbids rejecting an already-confirmed payment and leaves the subscription active', function () {
+    $company = Company::factory()->create();
+    $package = Package::factory()->create(['billing_period' => 'monthly']);
+    $subscription = Subscription::factory()->active()->create(['company_id' => $company->id, 'package_id' => $package->id]);
+    $payment = Payment::factory()->confirmed()->create([
+        'company_id' => $company->id, 'payable_type' => 'subscription', 'payable_id' => $subscription->id,
+    ]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/payments/{$payment->id}/reject")
+        ->assertStatus(409);
+
+    expect($payment->fresh()->status->value)->toBe('confirmed')
+        ->and($subscription->fresh()->status->value)->toBe('active');
+});
+
 // ─── List ────────────────────────────────────────────────────────────────────
 
 it('lets a company_owner list only their own payments', function () {

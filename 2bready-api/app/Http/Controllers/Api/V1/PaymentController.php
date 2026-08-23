@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Payment\Actions\ConfirmPaymentAction;
 use App\Domain\Payment\Actions\RejectPaymentAction;
 use App\Domain\Payment\Actions\SubmitManualPaymentAction;
+use App\Domain\Payment\Exceptions\InvalidPaymentTransitionException;
 use App\Domain\Payment\Models\Payment;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\PaymentResource;
@@ -43,7 +44,11 @@ class PaymentController extends Controller
     {
         $this->authorize('submit', $payment);
 
-        $payment = $action->execute($payment);
+        try {
+            $payment = $action->execute($payment);
+        } catch (InvalidPaymentTransitionException $e) {
+            return ApiResponse::error($e->getMessage(), [], 409);
+        }
 
         return ApiResponse::success(new PaymentResource($payment));
     }
@@ -52,7 +57,11 @@ class PaymentController extends Controller
     {
         $this->authorize('confirm', $payment);
 
-        $payment = $action->execute($payment, $request->user());
+        try {
+            $payment = $action->execute($payment, $request->user());
+        } catch (InvalidPaymentTransitionException $e) {
+            return ApiResponse::error($e->getMessage(), [], 409);
+        }
 
         return ApiResponse::success(new PaymentResource($payment));
     }
@@ -61,7 +70,11 @@ class PaymentController extends Controller
     {
         $this->authorize('reject', $payment);
 
-        $payment = $action->execute($payment);
+        try {
+            $payment = $action->execute($payment);
+        } catch (InvalidPaymentTransitionException $e) {
+            return ApiResponse::error($e->getMessage(), [], 409);
+        }
 
         return ApiResponse::success(new PaymentResource($payment));
     }

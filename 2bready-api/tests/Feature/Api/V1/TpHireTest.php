@@ -721,7 +721,7 @@ it('forbids a company_owner from self-cancelling once the payment is confirmed',
     expect($hire->fresh()->status->value)->toBe('active');
 });
 
-it('cannot resurrect a cancelled hire by confirming its payment afterwards', function () {
+it('cannot resurrect a cancelled hire — cancelling fails its in-flight payments, so they cannot be submitted or confirmed', function () {
     $company = Company::factory()->create();
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $finance = User::factory()->withRole('finance')->create();
@@ -740,9 +740,40 @@ it('cannot resurrect a cancelled hire by confirming its payment afterwards', fun
         'gateway_reference' => 'PAYTEST03',
     ]);
 
+    // Cancelling marks the still-unresolved payment failed (money never moved).
     $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
-    $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")->assertOk();
+    expect($payment->fresh()->status->value)->toBe('failed');
 
+    // A failed payment is resolved — neither submit nor confirm may touch it.
+    $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")->assertStatus(409);
+    $this->actingAs($finance)->postJson("/api/v1/payments/{$payment->id}/confirm")->assertStatus(409);
+
+    expect(TpHire::find($hire->id)->status->value)->toBe('cancelled');
+});
+
+it('cannot resurrect a cancelled hire by confirming a freshly created payment for it', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $finance = User::factory()->withRole('finance')->create();
+    $tpPartner = TpPartner::factory()->create();
+
+    $hire = TpHire::factory()->create([
+        'company_id' => $company->id,
+        'tp_partner_id' => $tpPartner->id,
+    ]);
+    $this->actingAs($owner)->postJson("/api/v1/tp-hires/{$hire->id}/cancel")->assertOk();
+
+    // A payment created AFTER the cancel isn't covered by its sweep — this is
+    // the path that must stay blocked by ActivateTpHireAction's own guard.
+    $payment = $hire->payments()->create([
+        'company_id' => $company->id,
+        'amount_cents' => $hire->price_agreed_cents,
+        'currency' => 'USD',
+        'method' => 'manual_bank_transfer',
+        'status' => 'pending',
+        'gateway_reference' => 'PAYTEST05',
+    ]);
+    $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/submit")->assertOk();
     $this->actingAs($finance)->postJson("/api/v1/payments/{$payment->id}/confirm")->assertOk();
 
     expect(TpHire::find($hire->id)->status->value)->toBe('cancelled');
