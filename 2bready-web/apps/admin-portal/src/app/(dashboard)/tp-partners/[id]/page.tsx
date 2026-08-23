@@ -11,7 +11,11 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import MenuItem from '@mui/material/MenuItem';
+import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import CancelIcon from '@mui/icons-material/Cancel';
+import PaymentsIcon from '@mui/icons-material/Payments';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
@@ -21,11 +25,14 @@ import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 import FormSelect from '@/components/forms/FormSelect';
 import { useToast } from '@/components/feedback/ToastProvider';
+import { ConfirmDialog } from '@2bready/ui-core';
 import { getTpPartner, listAuditors, registerAuditor } from '@/domains/tp-partner/api';
 import type { TpPartner, User as AuditorUser } from '@/domains/tp-partner/types';
 import { registerAuditorFormSchema, type RegisterAuditorFormInput } from '@/domains/tp-partner/schemas';
-import { listTpHires, createTpHire, markTpHirePaidOut } from '@/domains/marketplace/api';
+import { listTpHires, createTpHire, markTpHirePaidOut, updateTpHire, completeTpHire, cancelTpHire } from '@/domains/marketplace/api';
 import type { TpHire } from '@/domains/marketplace/types';
+import { listPayments } from '@/domains/payment/api';
+import type { Payment } from '@/domains/payment/types';
 import { listCompanies } from '@/domains/company/api';
 import type { Company } from '@/domains/company/types';
 import { getApiError, formatCents, formatDate } from '@/lib/utils';
@@ -37,6 +44,13 @@ const hireFormSchema = z.object({
   method: z.enum(['manual_bank_transfer', 'stripe']),
 });
 type HireFormInput = z.infer<typeof hireFormSchema>;
+
+// Editing is a pre-payment correction: only the level changes (the company
+// and firm are fixed once created), and the backend re-snapshots pricing.
+const editHireFormSchema = z.object({
+  journey_level: z.enum(['L2', 'L3', 'L4']),
+});
+type EditHireFormInput = z.infer<typeof editHireFormSchema>;
 
 export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: tpPartnerId } = use(params);
@@ -50,6 +64,13 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
   const [loading, setLoading] = useState(true);
   const [staffDialogOpen, setStaffDialogOpen] = useState(false);
   const [hireDialogOpen, setHireDialogOpen] = useState(false);
+  const [editingHire, setEditingHire] = useState<TpHire | null>(null);
+  const [pendingCancelHire, setPendingCancelHire] = useState<TpHire | null>(null);
+  // "Send payment" — the open payment of a pending_payment hire, so the
+  // admin can relay the bank transfer instructions to the company.
+  const [paymentInfoHire, setPaymentInfoHire] = useState<TpHire | null>(null);
+  const [paymentInfoLoading, setPaymentInfoLoading] = useState(false);
+  const [hirePayment, setHirePayment] = useState<Payment | null>(null);
   const [serverError, setServerError] = useState('');
   const [actingOn, setActingOn] = useState<string | null>(null);
 
@@ -111,6 +132,10 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
     resolver: zodResolver(hireFormSchema),
     defaultValues: { company_id: '', journey_level: 'L3', method: 'manual_bank_transfer' },
   });
+  const editHireForm = useForm<EditHireFormInput>({
+    resolver: zodResolver(editHireFormSchema),
+    defaultValues: { journey_level: 'L3' },
+  });
 
   const onRegisterStaff = async (data: RegisterAuditorFormInput) => {
     setServerError('');
@@ -151,6 +176,72 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
     }
   };
 
+  const openEditHire = (hire: TpHire) => {
+    setServerError('');
+    setEditingHire(hire);
+    editHireForm.reset({ journey_level: hire.journey_level as EditHireFormInput['journey_level'] });
+  };
+
+  const openPaymentInfo = async (hire: TpHire) => {
+    setServerError('');
+    setHirePayment(null);
+    setPaymentInfoHire(hire);
+    setPaymentInfoLoading(true);
+    try {
+      // Backend filters by company_id; the hire's own payment is matched by
+      // the morph pair client-side (a company can have several payments).
+      const payments = await listPayments(undefined, hire.company_id);
+      setHirePayment(payments.find((p) => p.payable_type === 'tp_hire' && p.payable_id === hire.id) ?? null);
+    } catch (err) {
+      toast.error(getApiError(err).message);
+      setPaymentInfoHire(null);
+    } finally {
+      setPaymentInfoLoading(false);
+    }
+  };
+
+  const onEditHire = async (data: EditHireFormInput) => {
+    if (!editingHire) return;
+    setServerError('');
+    try {
+      await updateTpHire(editingHire.id, data);
+      toast.success(t('tp_partner.hire_update_success'));
+      setEditingHire(null);
+      load();
+    } catch (err) {
+      setServerError(getApiError(err).message);
+    }
+  };
+
+  const handleCompleteHire = async (hire: TpHire) => {
+    setActingOn(hire.id);
+    try {
+      await completeTpHire(hire.id);
+      toast.success(t('tp_partner.complete_hire_success'));
+      load();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setActingOn(null);
+    }
+  };
+
+  const handleCancelHire = async () => {
+    if (!pendingCancelHire) return;
+    const hire = pendingCancelHire;
+    setPendingCancelHire(null);
+    setActingOn(hire.id);
+    try {
+      await cancelTpHire(hire.id);
+      toast.success(t('tp_partner.cancel_hire_success'));
+      load();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setActingOn(null);
+    }
+  };
+
   const staffColumns: Column<AuditorUser>[] = [
     { key: 'name', label: t('tp_partner.staff_name'), render: (u) => u.name },
     { key: 'email', label: t('tp_partner.staff_email'), render: (u) => u.email },
@@ -166,14 +257,61 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
     { key: 'hired_at', label: t('admin.submitted_col'), render: (h) => (h.hired_at ? formatDate(h.hired_at) : '—') },
     {
       key: 'actions',
-      label: '',
+      label: t('common.actions'),
       align: 'right',
-      render: (h) =>
-        h.status === 'completed' && h.payout_status === 'unpaid' ? (
-          <Button size="small" variant="outlined" loading={actingOn === h.id} onClick={() => handleMarkPaidOut(h)}>
-            {t('tp_partner.mark_paid_out')}
-          </Button>
-        ) : null,
+      render: (h) => (
+        <Box className="flex justify-end gap-1">
+          {h.status === 'pending_payment' && (
+            <IconButton
+              size="small"
+              disabled={actingOn === h.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                void openPaymentInfo(h);
+              }}
+              aria-label={t('tp_partner.send_payment')}
+            >
+              <PaymentsIcon fontSize="small" />
+            </IconButton>
+          )}
+          {h.status === 'pending_payment' && (
+            <IconButton
+              size="small"
+              disabled={actingOn === h.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                openEditHire(h);
+              }}
+              aria-label={t('common.edit')}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          )}
+          {h.status === 'active' && (
+            <Button size="small" variant="outlined" loading={actingOn === h.id} onClick={() => handleCompleteHire(h)}>
+              {t('tp_partner.complete_hire')}
+            </Button>
+          )}
+          {h.status === 'completed' && h.payout_status === 'unpaid' && (
+            <Button size="small" variant="outlined" loading={actingOn === h.id} onClick={() => handleMarkPaidOut(h)}>
+              {t('tp_partner.mark_paid_out')}
+            </Button>
+          )}
+          {(h.status === 'pending_payment' || h.status === 'active') && (
+            <IconButton
+              size="small"
+              disabled={actingOn === h.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPendingCancelHire(h);
+              }}
+              aria-label={t('tp_partner.cancel_hire')}
+            >
+              <CancelIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      ),
     },
   ];
 
@@ -303,6 +441,74 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
           </DialogActions>
         </Box>
       </Dialog>
+      <Dialog open={editingHire !== null} onClose={() => setEditingHire(null)} maxWidth="xs" fullWidth>
+        <Box component="form" onSubmit={editHireForm.handleSubmit(onEditHire)} noValidate>
+          <DialogTitle>{t('tp_partner.edit_hire')}</DialogTitle>
+          <DialogContent className="flex flex-col gap-5" sx={{ pt: '8px !important' }}>
+            {serverError && <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>{serverError}</Box>}
+            <Box>
+              <FieldLabel>{t('tp_partner.hire_level')}</FieldLabel>
+              <Controller
+                name="journey_level"
+                control={editHireForm.control}
+                render={({ field }) => (
+                  <FormSelect {...field} fullWidth autoFocus>
+                    <MenuItem value="L2">L2 {tpPartner?.price_l2_cents != null ? `(${formatCents(tpPartner.price_l2_cents)})` : ''}</MenuItem>
+                    <MenuItem value="L3">L3 {tpPartner?.price_l3_cents != null ? `(${formatCents(tpPartner.price_l3_cents)})` : ''}</MenuItem>
+                    <MenuItem value="L4">L4 {tpPartner?.price_l4_cents != null ? `(${formatCents(tpPartner.price_l4_cents)})` : ''}</MenuItem>
+                  </FormSelect>
+                )}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button variant="text" onClick={() => setEditingHire(null)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="contained" loading={editHireForm.formState.isSubmitting}>{t('common.save')}</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={paymentInfoHire !== null} onClose={() => setPaymentInfoHire(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('tp_partner.send_payment')}</DialogTitle>
+        <DialogContent className="flex flex-col gap-3">
+          {paymentInfoLoading || !hirePayment ? (
+            <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              {paymentInfoLoading ? t('common.loading') : t('tp_partner.no_open_payment')}
+            </Box>
+          ) : (
+            <>
+              <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{t('tp_partner.payment_details_desc')}</Box>
+              {[
+                [t('tp_partner.pay_amount'), formatCents(hirePayment.amount_cents)],
+                [t('tp_partner.pay_status'), hirePayment.status],
+                [t('tp_partner.pay_bank'), hirePayment.bank_name ?? '—'],
+                [t('tp_partner.pay_account_name'), hirePayment.account_name ?? '—'],
+                [t('tp_partner.pay_account_number'), hirePayment.account_number ?? '—'],
+                [t('tp_partner.pay_reference'), hirePayment.gateway_reference ?? '—'],
+              ].map(([label, value]) => (
+                <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, fontSize: '0.875rem' }}>
+                  <Box sx={{ color: 'text.secondary' }}>{label}</Box>
+                  <Box sx={{ fontWeight: 500, textAlign: 'right' }}>{value}</Box>
+                </Box>
+              ))}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="text" onClick={() => setPaymentInfoHire(null)}>{t('common.close')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <ConfirmDialog
+        open={pendingCancelHire !== null}
+        title={t('tp_partner.cancel_hire_confirm_title')}
+        description={t('tp_partner.cancel_hire_confirm')}
+        confirmLabel={t('tp_partner.cancel_hire')}
+        cancelLabel={t('common.cancel')}
+        danger
+        onConfirm={() => { void handleCancelHire(); }}
+        onCancel={() => setPendingCancelHire(null)}
+      />
     </>
   );
 }

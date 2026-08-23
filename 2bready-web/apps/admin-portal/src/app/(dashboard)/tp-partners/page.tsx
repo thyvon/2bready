@@ -23,7 +23,7 @@ import { ConfirmDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 import { useToast } from '@/components/feedback/ToastProvider';
-import { listTpPartners, createTpPartner, updateTpPartner, deleteTpPartner } from '@/domains/tp-partner/api';
+import { listTpPartners, createTpPartner, updateTpPartner, deleteTpPartner, approveTpPartner } from '@/domains/tp-partner/api';
 import type { TpPartner } from '@/domains/tp-partner/types';
 import { tpPartnerFormSchema, tpPartnerFormDefaults, type TpPartnerFormInput } from '@/domains/tp-partner/schemas';
 import { getApiError, formatCents } from '@/lib/utils';
@@ -41,6 +41,7 @@ export default function TpPartnersPage() {
   const [serverError, setServerError] = useState('');
   const [pendingDelete, setPendingDelete] = useState<TpPartner | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -143,6 +144,32 @@ export default function TpPartnersPage() {
     }
   };
 
+  const handleApprove = async (partner: TpPartner) => {
+    setStatusUpdatingId(partner.id);
+    try {
+      await approveTpPartner(partner.id);
+      toast.success(t('tp_partner.approve_success'));
+      load();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const toggleStatus = async (partner: TpPartner) => {
+    setStatusUpdatingId(partner.id);
+    try {
+      await updateTpPartner(partner.id, { status: partner.status === 'active' ? 'suspended' : 'active' });
+      toast.success(t('tp_partner.status_change_success'));
+      load();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
   const columns: Column<TpPartner>[] = [
     { key: 'name', label: t('tp_partner.name_col'), render: (p) => p.name },
     { key: 'price_l2_cents', label: 'L2', render: (p) => (p.price_l2_cents != null ? formatCents(p.price_l2_cents) : '—') },
@@ -151,10 +178,29 @@ export default function TpPartnersPage() {
     { key: 'status', label: t('common.status'), render: (p) => <StatusBadge status={p.status} /> },
     {
       key: 'actions',
-      label: '',
+      label: t('common.actions'),
       align: 'right',
       render: (p) => (
-        <Box className="flex justify-end gap-1">
+        <Box className="flex items-center justify-end gap-1">
+          {p.status === 'pending_approval' && (
+            <Button size="small" variant="contained" loading={statusUpdatingId === p.id} onClick={(e) => { e.stopPropagation(); void handleApprove(p); }}>
+              {t('tp_partner.approve')}
+            </Button>
+          )}
+          {(p.status === 'active' || p.status === 'suspended') && (
+            <Button
+              size="small"
+              variant="outlined"
+              color={p.status === 'active' ? 'error' : 'success'}
+              disabled={statusUpdatingId === p.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                void toggleStatus(p);
+              }}
+            >
+              {p.status === 'active' ? t('tp_partner.suspend') : t('tp_partner.activate')}
+            </Button>
+          )}
           <IconButton
             size="small"
             onClick={(e) => {

@@ -1363,6 +1363,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sops/{sop}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A4 PDF rendering of the SOP for the detail page's embedded viewer and
+         *     download — mirrors the on-screen view (both language sections)
+         */
+        get: operations["sop.pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sops/{sop}/activate": {
         parameters: {
             query?: never;
@@ -1572,6 +1592,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/tp-hires/{tpHire}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["tpHire.update"];
+        trace?: never;
+    };
     "/v1/tp-hires/{tpHire}/complete": {
         parameters: {
             query?: never;
@@ -1666,6 +1702,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["tpPartner.update"];
+        trace?: never;
+    };
+    "/v1/tp-partners/{tpPartner}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tpPartner.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/tp-partners/{tpPartner}/pricing": {
@@ -2752,7 +2804,7 @@ export interface components {
          * TpPartnerStatus
          * @enum {string}
          */
-        TpPartnerStatus: "active" | "suspended";
+        TpPartnerStatus: "pending_approval" | "active" | "suspended";
         /** TpRatingResource */
         TpRatingResource: {
             id: string;
@@ -2919,6 +2971,11 @@ export interface components {
             effective_at?: string | null;
             is_active?: boolean;
             company_id?: string;
+        };
+        /** UpdateTpHireRequest */
+        UpdateTpHireRequest: {
+            /** @enum {string} */
+            journey_level: "L2" | "L3" | "L4";
         };
         /**
          * UpdateTpPartnerPricingRequest
@@ -5905,6 +5962,17 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string[];
+                    };
+                };
+            };
         };
     };
     "payment.confirm": {
@@ -5933,6 +6001,17 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string[];
+                    };
+                };
+            };
         };
     };
     "payment.reject": {
@@ -5961,6 +6040,17 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        errors: string[];
+                    };
+                };
+            };
         };
     };
     "platformSetting.index": {
@@ -6417,6 +6507,32 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "sop.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sop ID */
+                sop: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "sop.activate": {
@@ -6905,6 +7021,39 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "tpHire.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp hire ID */
+                tpHire: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTpHireRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpHireResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "tpHire.complete": {
         parameters: {
             query?: never;
@@ -7161,6 +7310,34 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "tpPartner.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The tp partner ID */
+                tpPartner: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TpPartnerResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "tpPartner.updatePricing": {

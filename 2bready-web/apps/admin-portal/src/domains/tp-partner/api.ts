@@ -21,6 +21,12 @@ export async function updateTpPartner(id: string, data: UpdateTpPartnerPayload):
   return res.data.data;
 }
 
+/** Sprint 7 onboarding — pending_approval → active (admin only). */
+export async function approveTpPartner(id: string): Promise<TpPartner> {
+  const res = await api.post<{ data: TpPartner }>(`/tp-partners/${id}/approve`);
+  return res.data.data;
+}
+
 export async function deleteTpPartner(id: string): Promise<void> {
   await api.delete(`/tp-partners/${id}`);
 }

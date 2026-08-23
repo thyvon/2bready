@@ -17,3 +17,19 @@ export async function markTpHirePaidOut(id: string): Promise<TpHire> {
   const res = await api.post<{ data: TpHire }>(`/tp-hires/${id}/mark-paid-out`);
   return res.data.data;
 }
+
+/** Pre-payment correction only — backend 403s once the hire is active. */
+export async function updateTpHire(id: string, data: { journey_level: 'L2' | 'L3' | 'L4' }): Promise<TpHire> {
+  const res = await api.patch<{ data: TpHire }>(`/tp-hires/${id}`, data);
+  return res.data.data;
+}
+
+export async function completeTpHire(id: string): Promise<TpHire> {
+  const res = await api.post<{ data: TpHire }>(`/tp-hires/${id}/complete`);
+  return res.data.data;
+}
+
+export async function cancelTpHire(id: string): Promise<TpHire> {
+  const res = await api.post<{ data: TpHire }>(`/tp-hires/${id}/cancel`);
+  return res.data.data;
+}

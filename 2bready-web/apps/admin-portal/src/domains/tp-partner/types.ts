@@ -12,6 +12,7 @@ export type StoreTpPartnerPayload = {
 };
 
 export type UpdateTpPartnerPayload = Partial<StoreTpPartnerPayload> & { status?: 'active' | 'suspended' };
+export type TpPartnerStatus = 'pending_approval' | 'active' | 'suspended';
 
 export type RegisterAuditorPayload = {
   name: string;

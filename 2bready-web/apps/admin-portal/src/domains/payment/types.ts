@@ -22,6 +22,11 @@ export type Payment = {
   method: PaymentMethod;
   status: PaymentStatus;
   gateway_reference: string | null;
+  // Bank transfer instructions — persisted on every manual_bank_transfer
+  // payment row (see PaymentResource); null for Stripe-method payments.
+  bank_name?: string | null;
+  account_name?: string | null;
+  account_number?: string | null;
   submitted_at: string | null;
   confirmed_at: string | null;
   created_at: string;
