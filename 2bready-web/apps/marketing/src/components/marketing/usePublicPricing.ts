@@ -13,11 +13,13 @@ const PUBLIC_PACKAGES_ENDPOINT = '/pricing';
 type ApiDocumentTemplate = {
   id: string;
   name: string;
+  description?: string | null;
 };
 
 type ApiMilestone = {
   id: string;
   name: string;
+  description?: string | null;
   sort_order: number;
   document_templates?: ApiDocumentTemplate[];
 };
@@ -42,11 +44,19 @@ type ApiPackageGroup = {
   }>;
 };
 
+export type PlanDocument = {
+  name: string;
+  /** Real description from the taxonomy when seeded; null falls back to
+   * sample tooltip copy. */
+  description: string | null;
+};
+
 export type PlanMilestone = {
   name: string;
-  /** MAIN document template names under this milestone — shown by the
-   * card's "Show details" toggle. */
-  documents: string[];
+  description: string | null;
+  /** MAIN document templates under this milestone — shown by the card's
+   * "Show details" toggle. */
+  documents: PlanDocument[];
 };
 
 export type PricingPlan = {
@@ -91,7 +101,8 @@ function buildPlans(apiGroups: ApiPackageGroup[]): PricingPlan[] {
     const findPrice = (period: 'monthly' | 'yearly') => prices.find((p) => p.billing_period === period)?.price_cents ?? null;
     const milestones: PlanMilestone[] = (pkg.milestones ?? []).map((m) => ({
       name: m.name,
-      documents: (m.document_templates ?? []).map((t) => t.name),
+      description: m.description ?? null,
+      documents: (m.document_templates ?? []).map((t) => ({ name: t.name, description: t.description ?? null })),
     }));
     const auditFeeCents = Number(pkg.audit_fee_cents ?? 0);
 

@@ -288,7 +288,7 @@ export default function PricingSection() {
                   <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mb: 4 }}>
                     {plan.milestones.map((milestone) => (
                       <Box component="li" key={milestone.name} sx={{ mb: 2 }}>
-                        <Tooltip title={sampleMilestoneTip(milestone.name)} arrow placement="top">
+                        <Tooltip title={milestone.description ?? sampleMilestoneTip(milestone.name)} arrow placement="top">
                           <Box className="milestone-row" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, cursor: 'help' }}>
                             <CheckIcon sx={{ fontSize: 18, color: 'success.main', mt: 0.25 }} />
                             <Typography variant="body2" color="text.secondary">
@@ -312,7 +312,7 @@ export default function PricingSection() {
                             sx={{ listStyle: 'none', p: 0, m: 0, mt: 1, ml: 3.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}
                           >
                             {milestone.documents.map((doc) => (
-                              <Tooltip key={doc} title={sampleDocumentTip(doc)} arrow placement="right">
+                              <Tooltip key={doc.name} title={doc.description ?? sampleDocumentTip(doc.name)} arrow placement="right">
                                 <Box
                                   component="li"
                                   className="doc-row"
@@ -328,7 +328,7 @@ export default function PricingSection() {
                                 >
                                   <DescriptionIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
                                   <Typography variant="caption" color="text.secondary">
-                                    {doc}
+                                    {doc.name}
                                   </Typography>
                                   <InfoOutlinedIcon
                                     sx={{
