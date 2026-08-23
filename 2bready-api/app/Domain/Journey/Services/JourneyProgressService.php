@@ -8,6 +8,7 @@ use App\Domain\Company\Models\Company;
 use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\Milestone;
+use App\Domain\Payment\Enums\SubscriptionStatus;
 use App\Domain\Payment\Models\Subscription;
 
 /**
@@ -86,31 +87,30 @@ class JourneyProgressService
 
     /**
      * The highest level's sort_order this company is entitled to see as
-     * unlocked, based on their currently active (paid) subscription's
-     * package. `Company::activeSubscription` only ever points to a
-     * Subscription once ConfirmPaymentAction has activated it, so a null
-     * here genuinely means "hasn't checked out yet" rather than "pending."
+     * unlocked, taken across ALL of their active subscriptions — levels are
+     * priced independently (à la carte), so entitlements accumulate: a
+     * company holding L3 + L4 keeps L4 even after later activating L1.
      *
-     * Every level is now a paid tier (L1 is the paid 'starter' tier, $19/mo
-     * — see the seeder), so a company with no active subscription is not
-     * entitled to anything: return 0 so not a single level surfaces as
-     * unlocked until they check out.
+     * (This used to follow Company::active_subscription_id — the last
+     * confirmed payment only. Activating a lower level then DEMOTED the cap
+     * and locked previously-paid higher levels, e.g. production's
+     * Demo Bakery Co. holding L4 while capped at L3.)
+     *
+     * Every level is a paid tier, so no active subscription → 0: nothing
+     * unlocks until they check out.
      */
     private function subscriptionCapSortOrder(Company $company): int
     {
-        // Not $company->activeSubscription — Subscription is also
+        // withoutGlobalScope('company') — Subscription is also
         // BelongsToCompany-scoped, and that scope applies to relation
-        // queries too, so the same TP-caller null-current_company_id issue
-        // documented above would silently make this relation resolve to
-        // null even when a real active subscription exists.
-        $entitledLevel = $company->active_subscription_id
-            ? Subscription::query()->withoutGlobalScope('company')->find($company->active_subscription_id)?->package?->journeyLevel
-            : null;
-
-        if ($entitledLevel) {
-            return $entitledLevel->sort_order;
-        }
-
-        return 0;
+        // queries too, so a TP-caller's null-current_company_id would
+        // otherwise silently match nothing regardless of real subscriptions.
+        return (int) Subscription::query()
+            ->withoutGlobalScope('company')
+            ->where('subscriptions.company_id', $company->id)
+            ->where('subscriptions.status', SubscriptionStatus::Active)
+            ->join('packages', 'packages.id', '=', 'subscriptions.package_id')
+            ->join('journey_levels', 'journey_levels.id', '=', 'packages.journey_level_id')
+            ->max('journey_levels.sort_order');
     }
 }
