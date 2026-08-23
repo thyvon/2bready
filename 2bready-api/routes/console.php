@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Document\Jobs\ExpireOverdueDocumentsJob;
 use App\Domain\Document\Jobs\SendDocumentExpiryRemindersJob;
+use App\Domain\Payment\Jobs\ExpireSubscriptionsJob;
 use App\Domain\Vault\Jobs\ExpireIdleVaultSessionsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -27,3 +28,9 @@ Schedule::job(new SendDocumentExpiryRemindersJob)->dailyAt('01:15');
 // session can't outlive its idle window between access checks (which also
 // expire lazily; this is the belt-and-suspenders sweep, v3 §4.2).
 Schedule::job(new ExpireIdleVaultSessionsJob)->everyMinute();
+
+// Subscription entitlement sweep — flips active → expired once expires_at
+// passes, so à-la-carte entitlements actually lapse instead of accumulating
+// forever. Runs right after the document expiry sweep (same "overnight"
+// window, one queue burst).
+Schedule::job(new ExpireSubscriptionsJob)->dailyAt('01:30');
