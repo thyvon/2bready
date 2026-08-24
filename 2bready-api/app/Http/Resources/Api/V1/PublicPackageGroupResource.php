@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Domain\Document\Models\DocumentTemplate;
+use App\Domain\Journey\Models\Milestone;
 use App\Domain\Package\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -48,16 +50,22 @@ class PublicPackageGroupResource extends JsonResource
             // need" taxonomy. No company-added extras, sub-documents, or
             // internal metadata.
             'milestones' => $this->whenLoaded('journeyLevel', function () {
-                return collect($this->journeyLevel?->milestones ?? [])->map(function ($milestone) {
+                /** @var Milestone[] $milestones */
+                $milestones = $this->journeyLevel->milestones ?? [];
+
+                return collect($milestones)->map(function (Milestone $milestone) {
+                    /** @var DocumentTemplate[] $templates */
+                    $templates = $milestone->documentTemplates ?? [];
+
                     return [
                         'id' => $milestone->id,
                         'name' => $milestone->name,
                         'description' => $milestone->description,
                         'sort_order' => $milestone->sort_order,
-                        'document_templates' => collect($milestone->documentTemplates ?? [])
-                            ->filter(fn ($template) => $template->parent_id === null && $template->company_id === null)
+                        'document_templates' => collect($templates)
+                            ->filter(fn (DocumentTemplate $template) => $template->parent_id === null && $template->company_id === null)
                             ->sortBy('sort_order')
-                            ->map(fn ($template) => [
+                            ->map(fn (DocumentTemplate $template) => [
                                 'id' => $template->id,
                                 'name' => $template->name,
                                 'description' => $template->description,
