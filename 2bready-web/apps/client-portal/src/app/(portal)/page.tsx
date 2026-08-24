@@ -12,6 +12,8 @@ import { PageLoader } from '@/components/PageLoader';
 import { useJourney } from '@/components/JourneyProvider';
 import { allDocuments, countVerified, levelTotalDocs, levelVerifiedDocs, toDocStatus, type Journey } from '@/lib/journey-api';
 import { listMySubscriptions } from '@/lib/subscription-api';
+import { listTrustBadges } from '@/lib/trust-badge-api';
+import type { LevelBadgeLink } from '@/components/dashboard/LevelCardsGrid';
 import { useTranslation } from '@/lib/i18n';
 
 // Score-row labels are explicit keys so the i18n dict typing stays exact.
@@ -41,6 +43,7 @@ export default function OverviewPage() {
 
   // Active subscriptions drive the "Active Plan" chips on the level cards.
   const [activeLevelCodes, setActiveLevelCodes] = useState<Set<string>>(new Set());
+  const [badgesByLevel, setBadgesByLevel] = useState<Map<string, LevelBadgeLink>>(new Map());
   const [subsLoading, setSubsLoading] = useState(true);
 
   useEffect(() => {
@@ -63,6 +66,26 @@ export default function OverviewPage() {
       })
       .finally(() => {
         if (!cancelled) setSubsLoading(false);
+      });
+
+    // Earned badges power the Certificate/Report buttons on completed
+    // level cards. Failure is non-fatal — cards render without them.
+    listTrustBadges()
+      .then((badges) => {
+        if (cancelled) return;
+        const map = new Map<string, LevelBadgeLink>();
+        for (const badge of badges) {
+          if (!map.has(badge.level)) {
+            map.set(badge.level, {
+              pdfUrl: badge.certificate?.pdf_url ?? null,
+              verifyUrl: badge.qr_payload_url ?? null,
+            });
+          }
+        }
+        setBadgesByLevel(map);
+      })
+      .catch(() => {
+        /* ignore — buttons just won't deep-link */
       });
 
     return () => {
@@ -90,7 +113,7 @@ export default function OverviewPage() {
 
       {journey && (
         <>
-          <LevelCardsGrid journey={journey} activeLevelCodes={activeLevelCodes} />
+          <LevelCardsGrid journey={journey} activeLevelCodes={activeLevelCodes} badgesByLevel={badgesByLevel} />
 
           <SectionCard title={t('overview.readiness_scores')}>
             <Box className="flex flex-col gap-3">
