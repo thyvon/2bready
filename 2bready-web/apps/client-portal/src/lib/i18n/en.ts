@@ -244,6 +244,9 @@ const en = {
   'sop.employee_col': 'Employee',
 
   // ─── Data Room — public PIN-entry page (unauthenticated) ────────────────
+    'public_data_room.empty_title': 'Nothing shared yet',
+  'public_data_room.empty_desc': 'This company has not published any verified documents to its data room.',
+
   'public_data_room.title': 'Smart Data Room',
   'public_data_room.subtitle': 'Enter the password shared with this link to view the documents.',
   'public_data_room.password_label': 'Password',

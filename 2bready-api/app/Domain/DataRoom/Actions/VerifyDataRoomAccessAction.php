@@ -42,7 +42,16 @@ class VerifyDataRoomAccessAction
                 metadata: ['ip' => $ip, 'granted' => false, 'reason' => $link ? $link->status()->value : 'not_found'],
             ));
 
-            throw new DataRoomLinkInvalidException('This link is no longer valid.');
+            // Distinct copy so the public viewer can tell an expired link
+            // from a revoked one from a typo — all still 404, never leaking
+            // whether a token exists.
+            $reason = $link?->status()->value ?? 'not_found';
+
+            throw new DataRoomLinkInvalidException(match ($reason) {
+                'expired' => 'This link has expired.',
+                'revoked' => 'This link was revoked by the company.',
+                default => 'This link does not exist.',
+            });
         }
 
         // Uppercase defensively — the PIN is always generated uppercase

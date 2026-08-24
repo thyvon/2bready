@@ -7,9 +7,12 @@ use App\Domain\Company\Models\Company;
 use App\Domain\DataRoom\Models\DataRoomLink;
 use App\Domain\Document\Models\Document;
 use App\Domain\Document\Models\DocumentTemplate;
+use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Journey\Models\Milestone;
+use App\Domain\Package\Models\Package;
+use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +29,10 @@ beforeEach(function () {
     // One document per level (L1-L4), all verified except where noted —
     // only L3/L4 should ever be shareable via a data room link.
     $template = JourneyTemplate::factory()->create();
+    // ComplianceScoreCalculator (the L4-completeness gate) reads evidence
+    // through the company's Journey — without this row it sees zero
+    // requirements and every link request would be rejected.
+    Journey::factory()->create(['company_id' => $this->company->id, 'journey_template_id' => $template->id]);
     $this->levels = collect(['L1', 'L2', 'L3', 'L4'])->mapWithKeys(function (string $code) use ($template) {
         $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => $code]);
         $milestone = Milestone::factory()->create(['journey_level_id' => $level->id]);
@@ -39,6 +46,15 @@ beforeEach(function () {
 
         return [$code => $document];
     });
+
+    // Data-room entitlement — most tests exercise link management itself, so
+    // the company starts Enterprise-subscribed; the dedicated gate tests
+    // below remove/break each condition explicitly.
+    $enterprisePackage = Package::factory()->create(['tier' => 'enterprise']);
+    Subscription::factory()->active()->create([
+        'company_id' => $this->company->id,
+        'package_id' => $enterprisePackage->id,
+    ]);
 });
 
 // ─── Authenticated: create/show/revoke ──────────────────────────────────────
@@ -50,6 +66,27 @@ it('lets a company_owner generate a data room link', function () {
         ->assertCreated()
         ->assertJsonPath('data.status', 'active')
         ->assertJsonStructure(['data' => ['token', 'url', 'pin', 'expires_at', 'status']]);
+});
+
+it('forbids creating a data room link without an active enterprise subscription', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    Subscription::query()->delete();
+
+    // Frontend lock screen mirrors this rule; the backend is the boundary.
+    $this->actingAs($owner)->postJson('/api/v1/data-room')
+        ->assertStatus(422)
+        ->assertJsonFragment(['message' => 'An active Enterprise subscription is required to share a data room.']);
+
+    expect(DataRoomLink::query()->where('company_id', $this->company->id)->count())->toBe(0);
+});
+
+it('forbids creating a data room link while L4 evidence is incomplete', function () {
+    $owner = User::factory()->companyOwner()->withCompany($this->company)->create();
+    Document::where('id', $this->levels['L4']->id)->update(['status' => 'review']);
+
+    $this->actingAs($owner)->postJson('/api/v1/data-room')
+        ->assertStatus(422)
+        ->assertJsonFragment(['message' => 'Your L4 documents must be fully verified before you can share a data room.']);
 });
 
 it('generating a new link revokes the previous one', function () {

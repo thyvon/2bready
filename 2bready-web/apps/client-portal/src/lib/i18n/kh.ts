@@ -247,6 +247,9 @@ const kh: Record<keyof typeof en, string> = {
   'sop.status_col': 'ស្ថានភាព',
   'sop.employee_col': 'បុគ្គលិក',
 
+    'public_data_room.empty_title': 'មិនទាន់មានឯកសាររួចហើយ',
+  'public_data_room.empty_desc': 'ក្រុមហ៊ុននេះមិនទាន់បានបោះពុម្ពផ្សាយឯកសារដែលបានផ្ទៀងផ្ទាត់ទៅក្នុង data room របស់ខ្លួនទេ។',
+
   'public_data_room.title': 'Smart Data Room',
   'public_data_room.subtitle': 'បញ្ចូលពាក្យសម្ងាត់ដែលបានចែករំលែកជាមួយតំណភ្ជាប់នេះ ដើម្បីមើលឯកសារ។',
   'public_data_room.password_label': 'ពាក្យសម្ងាត់',

@@ -66,7 +66,16 @@ export default function DataRoomPublicPage() {
       setDocuments(result.documents);
     } catch (err) {
       const status = isAxiosError(err) ? err.response?.status : undefined;
-      setServerError(status === 403 ? t('public_data_room.incorrect_pin') : t('public_data_room.generic_error'));
+      if (status === 403) {
+        setServerError(t('public_data_room.incorrect_pin'));
+      } else if (status === 404) {
+        // Backend sends distinct copy for expired vs revoked vs unknown —
+        // surface it verbatim so the viewer knows what happened to the link.
+        const message = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+        setServerError(message ?? t('public_data_room.generic_error'));
+      } else {
+        setServerError(t('public_data_room.generic_error'));
+      }
     }
   };
 
@@ -116,16 +125,26 @@ export default function DataRoomPublicPage() {
         </Typography>
 
         <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '16px', bgcolor: 'background.paper' }}>
-          <List disablePadding>
-            {documents.map((doc) => (
-              <ListItemButton key={doc.id} onClick={() => handlePreview(doc)} divider>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <DescriptionOutlinedIcon color="action" />
-                </ListItemIcon>
-                <ListItemText primary={doc.name} />
-              </ListItemButton>
-            ))}
-          </List>
+          {documents.length === 0 ? (
+            <Box className="flex flex-col items-center gap-2 py-10 px-4">
+              <DescriptionOutlinedIcon color="disabled" fontSize="large" />
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>{t('public_data_room.empty_title')}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                {t('public_data_room.empty_desc')}
+              </Typography>
+            </Box>
+          ) : (
+            <List disablePadding>
+              {documents.map((doc) => (
+                <ListItemButton key={doc.id} onClick={() => handlePreview(doc)} divider>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <DescriptionOutlinedIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText primary={doc.name} />
+                </ListItemButton>
+              ))}
+            </List>
+          )}
         </Box>
       </Box>
 
