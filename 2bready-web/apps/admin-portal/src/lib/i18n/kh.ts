@@ -348,6 +348,7 @@ const kh: Record<keyof typeof en, string> = {
   'tp_partner.name': 'ឈ្មោះក្រុមហ៊ុន',
   'tp_partner.name_kh': 'ឈ្មោះក្រុមហ៊ុន (ខ្មែរ)',
   'tp_partner.name_col': 'ឈ្មោះ',
+  'tp_partner.price_l1': 'តម្លៃ L1 (ដុល្លារ)',
   'tp_partner.price_l2': 'តម្លៃ L2 (ដុល្លារ)',
   'tp_partner.price_l3': 'តម្លៃ L3 (ដុល្លារ)',
   'tp_partner.price_l4': 'តម្លៃ L4 (ដុល្លារ)',

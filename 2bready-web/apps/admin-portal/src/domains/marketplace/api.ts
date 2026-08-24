@@ -19,7 +19,7 @@ export async function markTpHirePaidOut(id: string): Promise<TpHire> {
 }
 
 /** Pre-payment correction only — backend 403s once the hire is active. */
-export async function updateTpHire(id: string, data: { journey_level: 'L2' | 'L3' | 'L4' }): Promise<TpHire> {
+export async function updateTpHire(id: string, data: { journey_level: 'L1' | 'L2' | 'L3' | 'L4' }): Promise<TpHire> {
   const res = await api.patch<{ data: TpHire }>(`/tp-hires/${id}`, data);
   return res.data.data;
 }

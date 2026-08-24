@@ -169,6 +169,7 @@ const en = {
   // ─── Firm pricing (Sprint 7 self-service) ────────────────────────────────
   'firm.pricing_card_title': 'Per-level pricing',
   'firm.pricing_subtitle': 'Set the per-level prices companies see when they hire your firm. Changes take effect immediately.',
+  'firm.level_1': 'Level 1 (L1)',
   'firm.level_2': 'Level 2 (L2)',
   'firm.level_3': 'Level 3 (L3)',
   'firm.level_4': 'Level 4 (L4)',

@@ -96,6 +96,7 @@ export default function TpPartnersPage() {
     reset({
       name: partner.name,
       name_kh: partner.name_kh ?? '',
+      price_l1: partner.price_l1_cents != null ? String(partner.price_l1_cents / 100) : '',
       price_l2: partner.price_l2_cents != null ? String(partner.price_l2_cents / 100) : '',
       price_l3: partner.price_l3_cents != null ? String(partner.price_l3_cents / 100) : '',
       price_l4: partner.price_l4_cents != null ? String(partner.price_l4_cents / 100) : '',
@@ -110,6 +111,7 @@ export default function TpPartnersPage() {
       const payload = {
         name: data.name,
         name_kh: data.name_kh || undefined,
+        price_l1_cents: data.price_l1 ? Math.round(Number(data.price_l1) * 100) : undefined,
         price_l2_cents: data.price_l2 ? Math.round(Number(data.price_l2) * 100) : undefined,
         price_l3_cents: data.price_l3 ? Math.round(Number(data.price_l3) * 100) : undefined,
         price_l4_cents: data.price_l4 ? Math.round(Number(data.price_l4) * 100) : undefined,
@@ -172,6 +174,7 @@ export default function TpPartnersPage() {
 
   const columns: Column<TpPartner>[] = [
     { key: 'name', label: t('tp_partner.name_col'), render: (p) => p.name },
+    { key: 'price_l1_cents', label: 'L1', render: (p) => (p.price_l1_cents != null ? formatCents(p.price_l1_cents) : '—') },
     { key: 'price_l2_cents', label: 'L2', render: (p) => (p.price_l2_cents != null ? formatCents(p.price_l2_cents) : '—') },
     { key: 'price_l3_cents', label: 'L3', render: (p) => (p.price_l3_cents != null ? formatCents(p.price_l3_cents) : '—') },
     { key: 'price_l4_cents', label: 'L4', render: (p) => (p.price_l4_cents != null ? formatCents(p.price_l4_cents) : '—') },
@@ -267,6 +270,8 @@ export default function TpPartnersPage() {
 
             <Box className="flex gap-4">
               <Box className="flex-1">
+                <FieldLabel>{t('tp_partner.price_l1')}</FieldLabel>
+                <FormTextField type="number" fullWidth slotProps={{ htmlInput: { step: '0.01', min: 0 } }} {...register('price_l1')} />
                 <FieldLabel>{t('tp_partner.price_l2')}</FieldLabel>
                 <FormTextField type="number" fullWidth slotProps={{ htmlInput: { step: '0.01', min: 0 } }} {...register('price_l2')} />
               </Box>

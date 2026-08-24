@@ -7,6 +7,7 @@ import { z } from 'zod';
 export const tpPartnerFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   name_kh: z.string().max(255).optional().or(z.literal('')),
+  price_l1: z.string().optional(),
   price_l2: z.string().optional(),
   price_l3: z.string().optional(),
   price_l4: z.string().optional(),
@@ -15,6 +16,7 @@ export const tpPartnerFormSchema = z.object({
 export const tpPartnerFormDefaults = {
   name: '',
   name_kh: '',
+  price_l1: '',
   price_l2: '',
   price_l3: '',
   price_l4: '',

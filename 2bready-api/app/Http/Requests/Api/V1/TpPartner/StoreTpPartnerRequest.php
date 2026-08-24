@@ -17,6 +17,7 @@ class StoreTpPartnerRequest extends FormRequest
             'price_l2_cents' => ['nullable', 'integer', 'min:0'],
             'price_l3_cents' => ['nullable', 'integer', 'min:0'],
             'price_l4_cents' => ['nullable', 'integer', 'min:0'],
+            'price_l1_cents' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

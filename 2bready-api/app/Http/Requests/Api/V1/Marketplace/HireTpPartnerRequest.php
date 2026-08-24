@@ -21,7 +21,7 @@ class HireTpPartnerRequest extends FormRequest
     {
         return [
             'tp_partner_id' => ['required', 'string', 'exists:tp_partners,id'],
-            'journey_level' => ['required', 'string', Rule::in(['L2', 'L3', 'L4'])],
+            'journey_level' => ['required', 'string', Rule::in(['L1', 'L2', 'L3', 'L4'])],
             'method' => ['required', 'string', Rule::in(['manual_bank_transfer', 'stripe'])],
         ];
     }
@@ -30,7 +30,7 @@ class HireTpPartnerRequest extends FormRequest
     {
         $validator->after(function (ValidatorContract $validator) {
             $level = $this->input('journey_level');
-            if (! in_array($level, ['L2', 'L3', 'L4'], true)) {
+            if (! in_array($level, ['L1', 'L2', 'L3', 'L4'], true)) {
                 return; // shape already caught by the journey_level 'in' rule above
             }
 

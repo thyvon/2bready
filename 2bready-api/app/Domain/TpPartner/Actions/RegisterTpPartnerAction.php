@@ -24,6 +24,7 @@ class RegisterTpPartnerAction
             'price_l2_cents' => $data->price_l2_cents,
             'price_l3_cents' => $data->price_l3_cents,
             'price_l4_cents' => $data->price_l4_cents,
+            'price_l1_cents' => $data->price_l1_cents,
         ]);
     }
 }

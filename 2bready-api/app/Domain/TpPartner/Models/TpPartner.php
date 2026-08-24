@@ -45,6 +45,7 @@ class TpPartner extends Model
         'price_l2_cents',
         'price_l3_cents',
         'price_l4_cents',
+        'price_l1_cents',
     ];
 
     /** @return array<string, string> */
@@ -67,6 +68,7 @@ class TpPartner extends Model
     public function priceFor(string $journeyLevel): ?int
     {
         return match ($journeyLevel) {
+            'L1' => $this->price_l1_cents,
             'L2' => $this->price_l2_cents,
             'L3' => $this->price_l3_cents,
             'L4' => $this->price_l4_cents,

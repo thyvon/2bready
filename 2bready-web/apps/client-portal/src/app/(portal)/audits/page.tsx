@@ -29,10 +29,11 @@ import { useToast } from '@/components/ToastProvider';
 import { useJourney } from '@/components/JourneyProvider';
 import { listActiveTpPartners, listMyTpHires, hireTpPartner, cancelTpHire, rateTpHire, type TpPartner, type TpHire } from '@/lib/marketplace-api';
 
-const LEVELS = ['L2', 'L3', 'L4'] as const;
+const LEVELS = ['L1', 'L2', 'L3', 'L4'] as const;
 type Level = (typeof LEVELS)[number];
 
 const LEVEL_PRICE_FIELD: Record<Level, keyof TpPartner> = {
+  L1: 'price_l1_cents',
   L2: 'price_l2_cents',
   L3: 'price_l3_cents',
   L4: 'price_l4_cents',

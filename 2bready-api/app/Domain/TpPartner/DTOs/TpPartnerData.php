@@ -14,5 +14,6 @@ class TpPartnerData extends Data
         public readonly ?int $price_l2_cents,
         public readonly ?int $price_l3_cents,
         public readonly ?int $price_l4_cents,
+        public readonly ?int $price_l1_cents,
     ) {}
 }

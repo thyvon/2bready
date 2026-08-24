@@ -15,7 +15,8 @@ import { useToast } from '@/components/feedback/ToastProvider';
 import { getApiError, formatCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
-const LEVELS: Array<{ key: 'price_l2' | 'price_l3' | 'price_l4'; labelKey: 'firm.level_2' | 'firm.level_3' | 'firm.level_4' }> = [
+const LEVELS: Array<{ key: 'price_l1' | 'price_l2' | 'price_l3' | 'price_l4'; labelKey: 'firm.level_1' | 'firm.level_2' | 'firm.level_3' | 'firm.level_4' }> = [
+  { key: 'price_l1', labelKey: 'firm.level_1' },
   { key: 'price_l2', labelKey: 'firm.level_2' },
   { key: 'price_l3', labelKey: 'firm.level_3' },
   { key: 'price_l4', labelKey: 'firm.level_4' },
@@ -36,7 +37,7 @@ export default function FirmPricingPage() {
     formState: { errors, isSubmitting },
   } = useForm<PricingFormInput>({
     resolver: zodResolver(pricingSchema),
-    defaultValues: { price_l2: '', price_l3: '', price_l4: '' },
+    defaultValues: { price_l1: '', price_l2: '', price_l3: '', price_l4: '' },
   });
 
   useEffect(() => {
@@ -48,11 +49,13 @@ export default function FirmPricingPage() {
         if (cancelled) return;
         setFirmId(firm.id);
         setCurrentCents({
+          price_l1: firm.price_l1_cents,
           price_l2: firm.price_l2_cents,
           price_l3: firm.price_l3_cents,
           price_l4: firm.price_l4_cents,
         });
         reset({
+          price_l1: firm.price_l1_cents != null ? String(firm.price_l1_cents / 100) : '',
           price_l2: firm.price_l2_cents != null ? String(firm.price_l2_cents / 100) : '',
           price_l3: firm.price_l3_cents != null ? String(firm.price_l3_cents / 100) : '',
           price_l4: firm.price_l4_cents != null ? String(firm.price_l4_cents / 100) : '',

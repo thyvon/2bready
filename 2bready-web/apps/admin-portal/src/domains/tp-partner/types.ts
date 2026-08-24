@@ -6,6 +6,7 @@ export type User = components['schemas']['UserResource'];
 export type StoreTpPartnerPayload = {
   name: string;
   name_kh?: string;
+  price_l1_cents?: number;
   price_l2_cents?: number;
   price_l3_cents?: number;
   price_l4_cents?: number;

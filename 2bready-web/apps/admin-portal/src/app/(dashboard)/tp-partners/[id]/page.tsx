@@ -40,7 +40,7 @@ import { useTranslation } from '@/lib/i18n';
 
 const hireFormSchema = z.object({
   company_id: z.string().min(1, 'Company is required'),
-  journey_level: z.enum(['L2', 'L3', 'L4']),
+  journey_level: z.enum(['L1', 'L2', 'L3', 'L4']),
   method: z.enum(['manual_bank_transfer', 'stripe']),
 });
 type HireFormInput = z.infer<typeof hireFormSchema>;
@@ -48,7 +48,7 @@ type HireFormInput = z.infer<typeof hireFormSchema>;
 // Editing is a pre-payment correction: only the level changes (the company
 // and firm are fixed once created), and the backend re-snapshots pricing.
 const editHireFormSchema = z.object({
-  journey_level: z.enum(['L2', 'L3', 'L4']),
+  journey_level: z.enum(['L1', 'L2', 'L3', 'L4']),
 });
 type EditHireFormInput = z.infer<typeof editHireFormSchema>;
 
@@ -414,6 +414,7 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
                 control={hireForm.control}
                 render={({ field }) => (
                   <FormSelect {...field} fullWidth>
+                    <MenuItem value="L1">L1 {tpPartner?.price_l1_cents != null ? `(${formatCents(tpPartner.price_l1_cents)})` : ''}</MenuItem>
                     <MenuItem value="L2">L2 {tpPartner?.price_l2_cents != null ? `(${formatCents(tpPartner.price_l2_cents)})` : ''}</MenuItem>
                     <MenuItem value="L3">L3 {tpPartner?.price_l3_cents != null ? `(${formatCents(tpPartner.price_l3_cents)})` : ''}</MenuItem>
                     <MenuItem value="L4">L4 {tpPartner?.price_l4_cents != null ? `(${formatCents(tpPartner.price_l4_cents)})` : ''}</MenuItem>
@@ -453,6 +454,7 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
                 control={editHireForm.control}
                 render={({ field }) => (
                   <FormSelect {...field} fullWidth autoFocus>
+                    <MenuItem value="L1">L1 {tpPartner?.price_l1_cents != null ? `(${formatCents(tpPartner.price_l1_cents)})` : ''}</MenuItem>
                     <MenuItem value="L2">L2 {tpPartner?.price_l2_cents != null ? `(${formatCents(tpPartner.price_l2_cents)})` : ''}</MenuItem>
                     <MenuItem value="L3">L3 {tpPartner?.price_l3_cents != null ? `(${formatCents(tpPartner.price_l3_cents)})` : ''}</MenuItem>
                     <MenuItem value="L4">L4 {tpPartner?.price_l4_cents != null ? `(${formatCents(tpPartner.price_l4_cents)})` : ''}</MenuItem>

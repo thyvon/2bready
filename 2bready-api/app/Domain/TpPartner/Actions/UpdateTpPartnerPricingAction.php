@@ -19,7 +19,7 @@ class UpdateTpPartnerPricingAction
     /** @param array<string, int|null> $prices */
     public function execute(TpPartner $tpPartner, array $prices): TpPartner
     {
-        $tpPartner->fill(Arr::only($prices, ['price_l2_cents', 'price_l3_cents', 'price_l4_cents']));
+        $tpPartner->fill(Arr::only($prices, ['price_l1_cents', 'price_l2_cents', 'price_l3_cents', 'price_l4_cents']));
         $tpPartner->save();
 
         return $tpPartner;

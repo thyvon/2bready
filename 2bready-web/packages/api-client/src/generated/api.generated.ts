@@ -1499,6 +1499,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["supportTicket.index"];
+        put?: never;
+        post: operations["supportTicket.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support/tickets/{ticket}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["supportTicket.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support/tickets/{ticket}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["supportTicket.reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support/tickets/{ticket}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["supportTicket.assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support/tickets/{ticket}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["supportTicket.updateStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/tp/me": {
         parameters: {
             query?: never;
@@ -1898,6 +1978,11 @@ export interface components {
         AssignAuditorRequest: {
             auditor_id: string;
         };
+        /** AssignSupportTicketRequest */
+        AssignSupportTicketRequest: {
+            /** @description Null clears the assignment. */
+            assigned_to?: string | null;
+        };
         /** AuditLogResource */
         AuditLogResource: {
             id: string;
@@ -2113,7 +2198,7 @@ export interface components {
         HireTpPartnerRequest: {
             tp_partner_id: string;
             /** @enum {string} */
-            journey_level: "L2" | "L3" | "L4";
+            journey_level: "L1" | "L2" | "L3" | "L4";
             /** @enum {string} */
             method: "manual_bank_transfer" | "stripe";
         };
@@ -2427,12 +2512,12 @@ export interface components {
             milestones?: {
                 id: string;
                 name: string;
-                description: string;
-                sort_order: string;
+                description: string | null;
+                sort_order: number;
                 document_templates: {
                     id: string;
                     name: string;
-                    description: string;
+                    description: string | null;
                 }[];
             }[];
             tier: components["schemas"]["Tier"];
@@ -2711,12 +2796,24 @@ export interface components {
             is_active?: boolean;
             company_id?: string;
         };
+        /** StoreSupportTicketMessageRequest */
+        StoreSupportTicketMessageRequest: {
+            message: string;
+        };
+        /** StoreSupportTicketRequest */
+        StoreSupportTicketRequest: {
+            /** @enum {string} */
+            category: "general" | "billing" | "technical" | "consultation";
+            subject: string;
+            /** @description The opening post of the thread. */
+            message: string;
+        };
         /** StoreTpHireRequest */
         StoreTpHireRequest: {
             company_id: string;
             tp_partner_id: string;
             /** @enum {string} */
-            journey_level: "L2" | "L3" | "L4";
+            journey_level: "L1" | "L2" | "L3" | "L4";
             /** @enum {string} */
             method: "manual_bank_transfer" | "stripe";
         };
@@ -2727,6 +2824,7 @@ export interface components {
             price_l2_cents?: number | null;
             price_l3_cents?: number | null;
             price_l4_cents?: number | null;
+            price_l1_cents?: number | null;
         };
         /** StoreUserRequest */
         StoreUserRequest: {
@@ -2766,6 +2864,44 @@ export interface components {
          * @enum {string}
          */
         SubscriptionStatus: "pending" | "active" | "expired" | "cancelled";
+        /** SupportTicketMessageResource */
+        SupportTicketMessageResource: {
+            id: string;
+            support_ticket_id: string;
+            user_id: string;
+            /** @description The thread UI distinguishes company replies from team replies. */
+            author_name?: string;
+            author_is_team?: boolean;
+            message: string;
+            /** Format: date-time */
+            created_at: string | null;
+        };
+        /** SupportTicketResource */
+        SupportTicketResource: {
+            id: string;
+            company_id: string;
+            company?: {
+                id: string;
+                name: string;
+            };
+            created_by: string;
+            creator_name?: string;
+            assigned_to: string | null;
+            assignee_name?: string;
+            category: string;
+            subject: string;
+            status: string;
+            /**
+             * @description Reply count for the queue list — only loaded where the
+             *     controller asks for it (withCount), null otherwise.
+             */
+            messages_count?: number;
+            messages?: components["schemas"]["SupportTicketMessageResource"][];
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
         /**
          * Tier
          * @enum {string}
@@ -2823,6 +2959,7 @@ export interface components {
             price_l2_cents: number | null;
             price_l3_cents: number | null;
             price_l4_cents: number | null;
+            price_l1_cents: number | null;
             /**
              * @description Aggregates are computed on read (withAvg/withCount) — never
              *     stored on tp_partners, so there is no denormalized number to
@@ -3009,10 +3146,18 @@ export interface components {
             is_active?: boolean;
             company_id?: string;
         };
+        /** UpdateSupportTicketStatusRequest */
+        UpdateSupportTicketStatusRequest: {
+            /**
+             * @description resolve/close are the team's moves; reopen is the company's.
+             * @enum {string}
+             */
+            status: "open" | "pending" | "resolved" | "closed";
+        };
         /** UpdateTpHireRequest */
         UpdateTpHireRequest: {
             /** @enum {string} */
-            journey_level: "L2" | "L3" | "L4";
+            journey_level: "L1" | "L2" | "L3" | "L4";
         };
         /**
          * UpdateTpPartnerPricingRequest
@@ -3025,6 +3170,7 @@ export interface components {
             price_l2_cents?: number | null;
             price_l3_cents?: number | null;
             price_l4_cents?: number | null;
+            price_l1_cents?: number | null;
         };
         /**
          * UpdateTpPartnerProfileRequest
@@ -3046,6 +3192,7 @@ export interface components {
             price_l2_cents?: number | null;
             price_l3_cents?: number | null;
             price_l4_cents?: number | null;
+            price_l1_cents?: number | null;
         };
         /** UpdateUserRequest */
         UpdateUserRequest: {
@@ -6884,6 +7031,187 @@ export interface operations {
                     };
                 };
             };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "supportTicket.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportTicketResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "supportTicket.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreSupportTicketRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportTicketResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "supportTicket.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ticket ID */
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportTicketResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "supportTicket.reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ticket ID */
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreSupportTicketMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description A reply is a creation — 201 like every other POST resource here. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportTicketMessageResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "supportTicket.assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ticket ID */
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AssignSupportTicketRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportTicketResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "supportTicket.updateStatus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ticket ID */
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSupportTicketStatusRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportTicketResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };

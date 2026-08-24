@@ -6,7 +6,7 @@ export type Payment = components['schemas']['PaymentResource'];
 export type CreateTpHirePayload = {
   company_id: string;
   tp_partner_id: string;
-  journey_level: 'L2' | 'L3' | 'L4';
+  journey_level: 'L1' | 'L2' | 'L3' | 'L4';
   method: 'manual_bank_transfer' | 'stripe';
 };
 

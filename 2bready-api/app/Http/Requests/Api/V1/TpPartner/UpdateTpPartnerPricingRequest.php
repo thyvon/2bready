@@ -21,6 +21,7 @@ class UpdateTpPartnerPricingRequest extends FormRequest
             'price_l2_cents' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'price_l3_cents' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'price_l4_cents' => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'price_l1_cents' => ['sometimes', 'nullable', 'integer', 'min:0'],
         ];
     }
 }

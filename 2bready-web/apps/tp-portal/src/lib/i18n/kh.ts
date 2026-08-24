@@ -173,6 +173,7 @@ const kh: Record<keyof typeof en, string> = {
   // ─── Firm pricing (Sprint 7 self-service) ────────────────────────────────
   'firm.pricing_card_title': 'តម្លៃតាមកម្រិត',
   'firm.pricing_subtitle': 'កំណត់តម្លៃតាមកម្រិតដែលក្រុមហ៊ុននានាមើលឃើញពេលជ្រើសរើសក្រុមហ៊ុនអ្នក។ ការផ្លាស់ប្តូរមានប្រសិទ្ធភាពភ្លាមៗ។',
+  'firm.level_1': 'កម្រិត ១ (L1)',
   'firm.level_2': 'កម្រិត 2 (L2)',
   'firm.level_3': 'កម្រិត 3 (L3)',
   'firm.level_4': 'កម្រិត 4 (L4)',

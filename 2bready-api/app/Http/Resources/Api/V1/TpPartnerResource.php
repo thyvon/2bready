@@ -22,6 +22,7 @@ class TpPartnerResource extends JsonResource
             'price_l2_cents' => $this->price_l2_cents,
             'price_l3_cents' => $this->price_l3_cents,
             'price_l4_cents' => $this->price_l4_cents,
+            'price_l1_cents' => $this->price_l1_cents,
             // Aggregates are computed on read (withAvg/withCount) — never
             // stored on tp_partners, so there is no denormalized number to
             // drift out of sync with tp_ratings. Keys are omitted unless the

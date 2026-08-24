@@ -15,7 +15,7 @@ class StoreTpHireRequest extends FormRequest
         return [
             'company_id' => ['required', 'string', 'exists:companies,id'],
             'tp_partner_id' => ['required', 'string', 'exists:tp_partners,id'],
-            'journey_level' => ['required', 'string', Rule::in(['L2', 'L3', 'L4'])],
+            'journey_level' => ['required', 'string', Rule::in(['L1', 'L2', 'L3', 'L4'])],
             'method' => ['required', 'string', Rule::in(['manual_bank_transfer', 'stripe'])],
         ];
     }

@@ -13,7 +13,7 @@ class UpdateTpHireRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'journey_level' => ['required', 'string', Rule::in(['L2', 'L3', 'L4'])],
+            'journey_level' => ['required', 'string', Rule::in(['L1', 'L2', 'L3', 'L4'])],
         ];
     }
 }

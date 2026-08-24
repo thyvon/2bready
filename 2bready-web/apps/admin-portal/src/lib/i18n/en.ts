@@ -346,6 +346,7 @@ const en = {
   'tp_partner.name': 'Firm name',
   'tp_partner.name_kh': 'Firm name (Khmer)',
   'tp_partner.name_col': 'Name',
+  'tp_partner.price_l1': 'L1 Price (USD)',
   'tp_partner.price_l2': 'L2 price (USD)',
   'tp_partner.price_l3': 'L3 price (USD)',
   'tp_partner.price_l4': 'L4 price (USD)',
