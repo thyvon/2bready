@@ -76,6 +76,8 @@ Scramble (Laravel) → OpenAPI (`/docs/api.json`) → `packages/api-client/src/g
 **Exists (do not rebuild):** auth+TOTP+Google, RBAC, multi-company (`company_user`+`current_company_id`), industries, packages/leads, subscriptions/payments (FakeStripe + ManualBankTransfer gateways + payment lifecycle state guards → 409), journey templates/levels/milestones + builder, documents (recurring, periods, expiry, malware scan job), data-room (7-day links, PIN), Vault domain (PIN/auto-lock/unlock-log/expiry job), LegalConsent services, platform_settings machinery, audit logs, **Sprint 6 complete**: Audit domain (full review workflow pending→in_progress→submitted→approved/rejected+cancel, per-firm auditor guards, 27 tests) · ComplianceScoreCalculator→companies.compliance_score via `AuditDecisionMade` · TrustBadge issuance on approval · certificates (DomPDF bilingual w/ Khmer fonts + QR encoding `{verify_base_url}/{auditId}` + `master_verifier_stamp` snapshot from platform_settings, queued idempotent job) · public throttled `/api/v1/public/verify/{auditId}` + marketing app `(public)/verify/[verificationId]` page. **Sprint 7 complete**: tp_partners with onboarding approval (`pending_approval` → approve endpoint; companies browse active-only), per-level pricing self-service, tp_hires (hire/edit-pre-payment/cancel/complete/paid-out, commission), tp_ratings + rating dialog in client portal, matchmaking list w/ rating aggregates, admin partner suspend/activate toggle. SOP workflow shipped (editor, adoption, sign-off send/acknowledge, Gotenberg A4 PDF). Client portal pages (journey/billing/audits/data-room/sops/support/trust-badge/settings), admin portal full back office, tp-portal review flow, marketing landing page.
 
 **MISSING (the real backlog — rough priority order):**
+0. **Sprint 8 remainder**: support.php / notification.php / report.php still stubbed (Support & Notification domains have scaffold structure only); SOP portion of Sprint 8 is done.
+0b. **Data Room leftover decision**: does LegalConsent gate external data-room viewers for P3/P4 docs? Currently not consulted (defensible per v3 isolation mandate) — owner to confirm.
 1. **Support ticketing backend** — Models/Enums/DTOs scaffolded, `support.php` still `// TODO: add routes`; needs endpoints/actions/policies/tests.
 2. **Notification domain wiring** — folder structure exists but no Actions/routes; hook listeners onto existing events (payment confirmed, audit approved…), email channel via Mailpit.
 3. **Report/Report & analytics dashboard** — no Report domain at all; `report.php` stubbed.
@@ -97,8 +99,26 @@ Local ports: admin 3000, client 3001, marketing 3002, API 8080, Mailpit 8026, Mi
 - CI exists only for the API (`.github/workflows/ci.yml` in 2bready-api): Pint --test, Larastan, Pest parallel with coverage min 80%.
 - git remote: https://github.com/thyvon/2bready.git
 
+## Session memory protocol (long-term understanding rule)
+
+`AGENTS.md` is the ONLY memory that survives between sessions. Conversation history does not persist. Both owner and AI assistant must follow this protocol:
+
+1. **Write it down or lose it.** Any durable decision, preference, correction, or "things learned the hard way" from a session MUST be added to this file in the same session it happens — not "later".
+2. **What to record:**
+   - Product/business decisions (what + why + date) → under *Build state* or a decision list.
+   - Technical conventions and gotchas → *Working conventions* section below.
+   - New backlog items / discovered bugs → *Build state* MISSING/debt lists.
+   - Owner preferences on workflow, communication, or code style.
+3. **How to record:** one bullet per fact, dated when non-obvious (`(2026-08)`), terse, no prose paragraphs. Keep this file a map, not a diary — delete entries that are obsolete.
+4. **Trigger phrases:** when the owner says "remember this", "from now on", "always/never do X", or corrects a mistake — the assistant MUST propose adding it here before ending the session.
+5. **Session close check:** before wrapping up significant work, ask: *"Did anything from this session belong in AGENTS.md?"* If yes, write it.
+6. **Read first:** every session starts by reading this file fully; if instructions here conflict with what the owner says live, the live instruction wins — then update this file.
+
 ## Working conventions for this session (things learned the hard way)
 
+- Local gotenberg runs as a standalone container on the sail network (not in compose.yaml) — it dies on Docker daemon restarts; when SOP PDF tests fail with "Could not resolve host: gotenberg", run `docker start gotenberg`.
+- Dev npm is corepack-managed (wrapper at ~/.local/bin/npm), pinned to npm@11 because apt's node 22.22.1 < npm 12's floor; npm 12 blocked sharp/unrs-resolver install scripts until approved via root package.json `allowScripts`.
+- Production containers are named `<project>-<service>-1` (e.g. `2bready-api-1`, compose service `api`) — exec commands on the server use those, not dev's `laravel.test`.
 - When touching money display, `utils.ts` canonical file must stay byte-identical across the 3 portals.
 - Keep audits/billing-style pages: search + level filter (PillToggle), ConfirmDialog for destructive/hire actions, StatusBadge for statuses, cardRestShadow/cardHoverGlow from ui-core, EmptyState for all empty branches.
 - Nginx path-routing means no hardcoded absolute URLs across apps — use env-configured cross-app URL vars (marketing does this).
