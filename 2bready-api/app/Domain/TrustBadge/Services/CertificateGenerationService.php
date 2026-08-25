@@ -111,7 +111,7 @@ class CertificateGenerationService
     }
 
     /** @return string data:image/png;base64,... for embedding in the Blade template */
-    private function qrDataUri(string $payload): string
+    public function qrDataUri(string $payload): string
     {
         $qrCode = new EndroidQrCode(
             data: $payload,

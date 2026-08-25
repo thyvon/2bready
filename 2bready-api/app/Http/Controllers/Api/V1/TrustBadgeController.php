@@ -9,6 +9,7 @@ use App\Domain\Document\Models\Document;
 use App\Domain\Document\Models\DocumentTemplate;
 use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\TrustBadge\Models\TrustBadge;
+use App\Domain\TrustBadge\Services\CertificateGenerationService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\TrustBadgeResource;
 use App\Support\ApiResponse;
@@ -104,7 +105,10 @@ class TrustBadgeController extends Controller
                 'label' => "{$trustBadge->level}: {$level->pathway_name} — {$level->name}",
                 'issued_at' => $trustBadge->issued_at?->toISOString(),
                 'verify_url' => $trustBadge->qr_payload_url,
-                'qr_code' => $trustBadge->certificate?->qr_payload_url,
+                // Live-generated QR of the verify URL — certificates.qr_payload_url
+                // stores the URL itself, not an image, so the dialog needs this.
+                'qr_code' => app(CertificateGenerationService::class)
+                    ->qrDataUri($trustBadge->qr_payload_url),
             ],
             'company' => [
                 'name' => $company->name,
