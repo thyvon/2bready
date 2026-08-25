@@ -17,6 +17,7 @@ import type { Journey, JourneyLevel } from '@/lib/journey-api';
 import { levelVerifiedDocs, levelTotalDocs } from '@/lib/journey-api';
 import { cardGridContainer, cardGridItem } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
+import { marketingUrl } from '@/lib/marketing-url';
 
 // Per-level marketing emoji + description keys (explicit so the i18n dict
 // typing stays exact) — matches the Overview mockup. Distinct from
@@ -34,8 +35,8 @@ const LEVEL_DESC_KEYS: Record<string, LevelDescKey> = {
 export interface LevelBadgeLink {
   /** Certificate PDF signed URL — null until the audit is approved. */
   pdfUrl: string | null;
-  /** Public verification page for the level's audit. */
-  verifyUrl: string | null;
+  /** The approved audit id — builds this environment's verify URL. */
+  auditId: string;
 }
 
 interface LevelCardsGridProps {
@@ -112,6 +113,8 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
     // A completed level sticks its two payoff actions on the card: the
     // certificate PDF (once its audit is approved) and the public
     // verification report.
+    const verifyReportUrl = badge ? marketingUrl(`/verify/${badge.auditId}`) : '/audits';
+
     const actions =
       complete && badgesByLevel ? (
         <Box className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
@@ -135,9 +138,9 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
               size="small"
               variant="text"
               startIcon={<BarChartOutlinedIcon fontSize="small" />}
-              href={badge?.verifyUrl ?? '/audits'}
-              target={badge?.verifyUrl ? '_blank' : undefined}
-              component={badge?.verifyUrl ? 'a' : 'button'}
+              href={verifyReportUrl}
+              target='_blank'
+              component='a'
               sx={{ minWidth: 0 }}
             >
               {t('overview.report_btn')}

@@ -78,7 +78,7 @@ export default function OverviewPage() {
           if (!map.has(badge.level)) {
             map.set(badge.level, {
               pdfUrl: badge.certificate?.pdf_url ?? null,
-              verifyUrl: badge.qr_payload_url ?? null,
+              auditId: badge.audit_id,
             });
           }
         }
