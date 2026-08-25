@@ -10,4 +10,5 @@ use Illuminate\Support\Facades\Route;
 // The public verify page is a separate unauthenticated route in api.php.
 Route::prefix('trust-badges')->group(function () {
     Route::get('/', [TrustBadgeController::class, 'index'])->middleware('permission:trust_badge.view');
+    Route::get('{trustBadge}/report', [TrustBadgeController::class, 'report']);
 });

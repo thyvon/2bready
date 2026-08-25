@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
@@ -12,17 +12,11 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import { motion } from 'framer-motion';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 
 import type { Journey, JourneyLevel } from '@/lib/journey-api';
 import { levelVerifiedDocs, levelTotalDocs } from '@/lib/journey-api';
-import { cardGridContainer, cardGridItem, DocumentPreviewDialog } from '@2bready/ui-core';
+import { cardGridContainer, cardGridItem } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
-import { marketingUrl } from '@/lib/marketing-url';
 
 // Per-level marketing emoji + description keys (explicit so the i18n dict
 // typing stays exact) — matches the Overview mockup. Distinct from
@@ -50,6 +44,10 @@ interface LevelCardsGridProps {
   activeLevelCodes: Set<string>;
   /** Earned badges keyed by level code — powers the Certificate/Report buttons. */
   badgesByLevel?: Map<string, LevelBadgeLink>;
+  /** Opens the certificate-style verification report for a level's badge. */
+  onOpenReport?: (levelCode: string) => void;
+  /** Opens the level's certificate PDF in the shared preview dialog. */
+  onOpenCertificate?: (levelCode: string) => void;
 }
 
 /**
@@ -57,18 +55,9 @@ interface LevelCardsGridProps {
  * from `journey.levels` by code — they arrive sorted by sort_order across all
  * pillars, which is exactly the reading order this view wants.
  */
-interface LevelViewerState {
-  title: string;
-  url: string;
-  mimeType: string | null;
-}
-
-export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: LevelCardsGridProps) {
+export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel, onOpenReport, onOpenCertificate }: LevelCardsGridProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  // In-dialog viewer (same pattern as DocumentPreviewDialog / SOP PDF render)
-  // instead of opening new tabs.
-  const [viewer, setViewer] = useState<LevelViewerState | null>(null);
 
   const cards = useMemo(
     () =>
@@ -89,39 +78,11 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
           pct={pct}
           isActivePlan={activeLevelCodes.has(level.code)}
           badge={badgesByLevel?.get(level.code)}
+          onOpenReport={onOpenReport}
+          onOpenCertificate={onOpenCertificate}
         />
       ))}
 
-      <DocumentPreviewDialog
-        open={viewer?.mimeType === 'application/pdf'}
-        onClose={() => setViewer(null)}
-        title={viewer?.title ?? ''}
-        url={viewer?.url ?? null}
-        mimeType={viewer?.mimeType ?? null}
-      />
-
-      {/* The public verification report is an HTML page — same chrome as the
-          PDF dialog but rendered through a plain iframe. */}
-      <Dialog open={viewer !== null && viewer.mimeType === 'text/html'} onClose={() => setViewer(null)} maxWidth="md" fullWidth>
-        <DialogTitle className="flex items-center justify-between gap-2">
-          <Typography variant="h6" component="span" sx={{ fontWeight: 700 }} noWrap>
-            {viewer?.title ?? ''}
-          </Typography>
-          <IconButton size="small" onClick={() => setViewer(null)}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0, height: '75vh' }}>
-          {viewer && (
-            <Box
-              component="iframe"
-              src={viewer.url}
-              title={viewer.title}
-              sx={{ width: '100%', height: '100%', border: 'none' }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </motion.div>
   );
 
@@ -130,11 +91,15 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
     pct,
     isActivePlan,
     badge,
+    onOpenCertificate,
+    onOpenReport,
   }: {
     level: JourneyLevel;
     pct: number;
     isActivePlan: boolean;
     badge?: LevelBadgeLink;
+    onOpenCertificate?: (levelCode: string) => void;
+    onOpenReport?: (levelCode: string) => void;
   }) {
     const chip = isActivePlan ? (
       <Chip size="small" color="success" variant="outlined" label={t('journey.active_plan')} />
@@ -158,9 +123,6 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
     // A completed level sticks its two payoff actions on the card: the
     // certificate PDF (once its audit is approved) and the public
     // verification report.
-    // Defensive against stale HMR state: no audit id -> no deep link.
-    const verifyReportUrl = badge?.auditId ? marketingUrl(`/verify/${badge.auditId}`) : '/audits';
-
     const actions =
       complete && badgesByLevel ? (
         <Box className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
@@ -172,8 +134,8 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
                 startIcon={<WorkspacePremiumOutlinedIcon fontSize="small" />}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (badge?.pdfUrl) {
-                    setViewer({ title: `${level.code} — ${level.name} certificate`, url: badge.pdfUrl, mimeType: 'application/pdf' });
+                  if (badge?.pdfUrl && onOpenCertificate) {
+                    onOpenCertificate(level.code);
                   } else {
                     router.push('/trust-badge');
                   }
@@ -191,8 +153,8 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
               startIcon={<BarChartOutlinedIcon fontSize="small" />}
               onClick={(e) => {
                 e.stopPropagation();
-                if (badge?.auditId) {
-                  setViewer({ title: `${level.code} — ${level.name} verification report`, url: verifyReportUrl, mimeType: 'text/html' });
+                if (badge?.auditId && onOpenReport) {
+                  onOpenReport(level.code);
                 } else {
                   router.push('/audits');
                 }

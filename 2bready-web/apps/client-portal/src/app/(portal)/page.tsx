@@ -12,9 +12,12 @@ import { PageLoader } from '@/components/PageLoader';
 import { useJourney } from '@/components/JourneyProvider';
 import { allDocuments, countVerified, levelTotalDocs, levelVerifiedDocs, toDocStatus, type Journey } from '@/lib/journey-api';
 import { listMySubscriptions } from '@/lib/subscription-api';
-import { listTrustBadges } from '@/lib/trust-badge-api';
+import { listTrustBadges, fetchTrustBadgeReport, type TrustBadgeReport } from '@/lib/trust-badge-api';
 import type { LevelBadgeLink } from '@/components/dashboard/LevelCardsGrid';
+import VerificationReportDialog from '@/components/dashboard/VerificationReportDialog';
+import { DocumentPreviewDialog } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
+import { getApiError } from '@/lib/utils';
 
 // Score-row labels are explicit keys so the i18n dict typing stays exact.
 type LevelScoreKey = 'journey.level_l1_score' | 'journey.level_l2_score' | 'journey.level_l3_score' | 'journey.level_l4_score';
@@ -43,7 +46,13 @@ export default function OverviewPage() {
 
   // Active subscriptions drive the "Active Plan" chips on the level cards.
   const [activeLevelCodes, setActiveLevelCodes] = useState<Set<string>>(new Set());
+  const [trustBadges, setTrustBadges] = useState<Awaited<ReturnType<typeof listTrustBadges>>>([]);
   const [badgesByLevel, setBadgesByLevel] = useState<Map<string, LevelBadgeLink>>(new Map());
+  const [reportBadgeId, setReportBadgeId] = useState<string | null>(null);
+  const [certPreview, setCertPreview] = useState<{ title: string; url: string } | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportData, setReportData] = useState<TrustBadgeReport | null>(null);
+  const [reportError, setReportError] = useState('');
   const [subsLoading, setSubsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,6 +82,7 @@ export default function OverviewPage() {
     listTrustBadges()
       .then((badges) => {
         if (cancelled) return;
+        setTrustBadges(badges);
         const map = new Map<string, LevelBadgeLink>();
         for (const badge of badges) {
           if (!map.has(badge.level)) {
@@ -107,13 +117,43 @@ export default function OverviewPage() {
   const currentLevel = unlockedLevels.length > 0 ? unlockedLevels[unlockedLevels.length - 1].code : '—';
   const nextDoc = nextPendingDocument(journey);
 
+  // The Report button opens the certificate-style verification report for
+  // the level's badge (owner-concept MVP 6.3.3.2), fetched on demand.
+  // Certificate button — opens the level's PDF in the shared preview dialog.
+  const openCertificate = (levelCode: string) => {
+    const badge = trustBadges.find((b) => b.level === levelCode);
+    if (badge?.certificate?.pdf_url) {
+      setCertPreview({ title: `${levelCode} — ${t('overview.certificate_btn')}`, url: badge.certificate.pdf_url });
+    }
+  };
+
+  const openVerificationReport = (badgeId: string) => {
+    setReportError('');
+    setReportData(null);
+    setReportLoading(true);
+    setReportBadgeId(badgeId);
+    fetchTrustBadgeReport(badgeId)
+      .then(setReportData)
+      .catch((err) => setReportError(getApiError(err).message))
+      .finally(() => setReportLoading(false));
+  };
+
   return (
     <Box className="flex flex-col gap-6">
       <TrustJourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
 
       {journey && (
         <>
-          <LevelCardsGrid journey={journey} activeLevelCodes={activeLevelCodes} badgesByLevel={badgesByLevel} />
+          <LevelCardsGrid
+            journey={journey}
+            activeLevelCodes={activeLevelCodes}
+            badgesByLevel={badgesByLevel}
+            onOpenCertificate={openCertificate}
+            onOpenReport={(level) => {
+              const badgeId = trustBadges.find((b) => b.level === level)?.id;
+              if (badgeId) openVerificationReport(badgeId);
+            }}
+          />
 
           <SectionCard title={t('overview.readiness_scores')}>
             <Box className="flex flex-col gap-3">
@@ -181,6 +221,22 @@ export default function OverviewPage() {
           </GlowButton>
         </Box>
       </SectionCard>
+
+      <VerificationReportDialog
+        open={reportBadgeId !== null}
+        onClose={() => setReportBadgeId(null)}
+        report={reportData}
+        loading={reportLoading}
+        error={reportError}
+      />
+
+      <DocumentPreviewDialog
+        open={certPreview !== null}
+        onClose={() => setCertPreview(null)}
+        title={certPreview?.title ?? ''}
+        url={certPreview?.url ?? null}
+        mimeType={certPreview ? 'application/pdf' : null}
+      />
     </Box>
   );
 }
