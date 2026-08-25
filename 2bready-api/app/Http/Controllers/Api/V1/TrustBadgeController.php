@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Audit\Models\Audit;
+use App\Domain\Document\Models\Document;
+use App\Domain\Document\Models\DocumentTemplate;
+use App\Domain\Journey\Models\JourneyLevel;
 use App\Domain\TrustBadge\Models\TrustBadge;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\TrustBadgeResource;
@@ -41,8 +45,8 @@ class TrustBadgeController extends Controller
     public function report(Request $request, TrustBadge $trustBadge): JsonResponse
     {
         $company = $trustBadge->company;
-        $level = \App\Domain\Journey\Models\JourneyLevel::query()->findOrFail($trustBadge->journey_level_id);
-        $audit = \App\Domain\Audit\Models\Audit::query()->find($trustBadge->audit_id);
+        $level = JourneyLevel::query()->findOrFail($trustBadge->journey_level_id);
+        $audit = Audit::query()->find($trustBadge->audit_id);
 
         // Ledger: every main document template at this level with its
         // current state for this company. Bypass flags (e.g. <8 employees
@@ -52,7 +56,7 @@ class TrustBadgeController extends Controller
         $ledger = [];
 
         foreach ($level->milestones->sortBy('sort_order') as $milestone) {
-            $templates = \App\Domain\Document\Models\DocumentTemplate::query()
+            $templates = DocumentTemplate::query()
                 ->where('milestone_id', $milestone->id)
                 ->whereNull('parent_id')
                 ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $company->id))
@@ -66,7 +70,7 @@ class TrustBadgeController extends Controller
                     $status = 'Bypassed';
                     $method = 'Auto-bypass rule';
                 } else {
-                    $latest = \App\Domain\Document\Models\Document::query()
+                    $latest = Document::query()
                         ->where('company_id', $company->id)
                         ->where('document_template_id', $template->id)
                         ->latest('id')
