@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf as DomPdf;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode as EndroidQrCode;
 use Endroid\QrCode\Writer\PngWriter;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -48,9 +49,8 @@ class CertificateGenerationService
 
         $qrDataUri = $this->qrDataUri($verifyUrl);
 
-        $this->fontRegistrar->register();
-
-        $pdf = DomPdf::loadView('certificates.trust-audit', [
+        /** @var array<string, mixed> $viewData */
+        $viewData = [
             'companyName' => $company->name,
             'companyNameKh' => $company->name_kh,
             'level' => $badge->level,
@@ -60,9 +60,17 @@ class CertificateGenerationService
             'verifyUrl' => $verifyUrl,
             'qrDataUri' => $qrDataUri,
             'stamp' => $stamp,
-        ])
-            ->setPaper('a4', 'landscape')
-            ->output();
+        ];
+
+        // Gotenberg/Chromium first — it shapes Khmer script correctly
+        // (cluster reordering + stacking) where DomPDF can only lay out raw
+        // glyphs. DomPDF with the registered KhmerOSmuol faces stays as the
+        // fallback when no Gotenberg service is configured.
+        $gotenbergUrl = rtrim((string) config('services.gotenberg.url'), '/');
+
+        $pdf = $gotenbergUrl !== ''
+            ? $this->renderViaGotenberg($gotenbergUrl, view('certificates.trust-audit', $viewData)->render())
+            : $this->renderViaDomPdf($viewData);
 
         $path = sprintf('certificates/%s.pdf', $badge->audit_id);
         Storage::disk(config('filesystems.documents_disk'))->put($path, $pdf);
@@ -108,6 +116,41 @@ class CertificateGenerationService
             'approved_by' => 'ADMIT Global Executive',
             'prepared_by' => '2bReady Trust Engine Powered by ADMIT Global',
         ];
+    }
+
+    /** Chromium render — A4 landscape, backgrounds on (the QR + badge chip rely on them). */
+    private function renderViaGotenberg(string $baseUrl, string $html): string
+    {
+        $response = Http::asMultipart()
+            ->attach('files', $html, 'index.html')
+            ->post($baseUrl.'/forms/chromium/convert/html', [
+                'paperWidth' => '11.69in',
+                'paperHeight' => '8.27in',
+                'marginTop' => '0in',
+                'marginBottom' => '0in',
+                'marginLeft' => '0in',
+                'marginRight' => '0in',
+                'printBackground' => 'true',
+            ]);
+
+        if (! $response->successful() || ! str_starts_with($response->body(), '%PDF')) {
+            throw new \RuntimeException('Gotenberg certificate render failed: '.$response->status());
+        }
+
+        return $response->body();
+    }
+
+    /** Fallback when no Gotenberg service is configured.
+     *
+     * @param  array<string, mixed>  $viewData
+     */
+    private function renderViaDomPdf(array $viewData): string
+    {
+        $this->fontRegistrar->register();
+
+        return DomPdf::loadView('certificates.trust-audit', $viewData)
+            ->setPaper('a4', 'landscape')
+            ->output();
     }
 
     /** @return string data:image/png;base64,... for embedding in the Blade template */

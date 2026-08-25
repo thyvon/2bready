@@ -3,12 +3,13 @@
 <head>
     <meta charset="utf-8">
     <style>
-        /* Mirrors the blueprint's certificate layout (showCertificate). DomPDF
-           needs explicit font-family per block — KhmerOSmuol covers both Latin
-           and Khmer glyphs, so a single family carries the bilingual copy. */
+        /* Mirrors the blueprint's certificate layout (showCertificate). Font
+           stack covers both engines: Gotenberg/Chrome resolves the fontconfig
+           family name ('Khmer OS Muol'), DomPDF the registrar alias
+           ('KhmerOSmuol') — one family carries Latin + Khmer glyphs. */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: KhmerOSmuol, DejaVu Sans, sans-serif;
+            font-family: 'Khmer OS Muol', KhmerOSmuol, 'DejaVu Sans', sans-serif;
             color: #1a1a2e;
             padding: 34px 40px;
         }

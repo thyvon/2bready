@@ -13,8 +13,10 @@ use App\Domain\TrustBadge\Services\CertificateGenerationService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\TrustBadgeResource;
 use App\Support\ApiResponse;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 /**
  * Trust badges for the current company — the client portal's "my badges"
@@ -80,9 +82,17 @@ class TrustBadgeController extends Controller
                         ->latest('id')
                         ->first();
 
-                    $status = $latest?->status?->value === 'verified' ? 'Verified' : ucfirst((string) ($latest?->status?->value ?? 'Pending'));
+                    $statusValue = $latest !== null ? $latest->status->value : null;
+                    $status = $statusValue === 'verified'
+                        ? 'Verified'
+                        : ucfirst((string) ($statusValue ?? 'Pending'));
                     $method = 'Auditor review';
-                    $verifiedAt = $latest?->verified_at?->toISOString();
+                    // Read the raw attribute — the cast returns Carbon at
+                    // runtime, but this keeps static analysis honest.
+                    $raw = $latest?->getAttributes()['verified_at'] ?? null;
+                    $verifiedAt = is_string($raw) && $raw !== ''
+                        ? Carbon::parse($raw)->toISOString()
+                        : null;
                 }
 
                 $ledger[] = [
@@ -118,10 +128,12 @@ class TrustBadgeController extends Controller
                 'employee_count' => $company->employee_count,
             ],
             'audit' => [
-                'id' => $audit?->id ?? $trustBadge->audit_id,
-                'score' => $audit?->score ?? $score,
+                'id' => $audit !== null ? $audit->id : $trustBadge->audit_id,
+                'score' => $audit !== null ? $audit->score : $score,
                 'feedback' => $audit?->feedback,
-                'approved_at' => $audit?->updated_at?->toISOString(),
+                'approved_at' => $audit?->updated_at instanceof CarbonInterface
+                    ? $audit->updated_at->toISOString()
+                    : null,
             ],
             // The certificate-style headline block mirrors the mockup's copy.
             'summary' => "This report confirms that the enterprise has successfully completed level {$trustBadge->level} data verification, achieving {$score}% mastery of its compliance requirements via the hybrid ADMIT UNIT mechanism.",
