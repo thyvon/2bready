@@ -33,7 +33,7 @@ export interface TrustBadgeReport {
   audit: { id: string; score: number | null; feedback: string | null; approved_at: string | null };
   summary: string;
   stamp: Array<Record<string, unknown>> | Record<string, unknown> | null;
-  ledger: Array<{ milestone: string; document: string; status: string; method: string }>;
+  ledger: Array<{ milestone: string; document: string; status: string; method: string; verified_at: string | null }>;
 }
 
 // The full certificate-style verification report behind a badge (enterprise

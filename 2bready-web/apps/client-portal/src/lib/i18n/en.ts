@@ -111,6 +111,7 @@ const en = {
   'trust_badge.report_country': 'Country',
   'trust_badge.report_ledger_title': 'Verification Ledger',
   'trust_badge.report_col_document': 'Document',
+  'trust_badge.report_col_verified_date': 'Date Verified',
   'trust_badge.report_col_method': 'Verification Method',
   'trust_badge.report_print': 'Print / PDF',
   'trust_badge.report_load_error': 'Could not load the verification report.',

@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 
 import type { TrustBadgeReport } from '@/lib/trust-badge-api';
 import { useTranslation } from '@/lib/i18n';
+import { formatDate } from '@/lib/utils';
 
 export interface VerificationReportDialogProps {
   open: boolean;
@@ -144,11 +145,36 @@ export default function VerificationReportDialog({ open, onClose, report, loadin
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.75 }}>
                     {milestone}
                   </Typography>
-                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', '& td, & th': { border: '1px solid', borderColor: 'divider', p: 0.75, fontSize: '0.78rem', textAlign: 'left' } }}>
+                  <Box
+                    component="table"
+                    sx={{
+                      width: '100%',
+                      tableLayout: 'fixed',
+                      borderCollapse: 'collapse',
+                      // Consistent alignment across every ledger column.
+                      '& td, & th': {
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        px: 1,
+                        py: 0.75,
+                        fontSize: '0.78rem',
+                        textAlign: 'left',
+                        verticalAlign: 'top',
+                        wordBreak: 'break-word',
+                      },
+                    }}
+                  >
+                    <colgroup>
+                      <col style={{ width: '40%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '22%' }} />
+                      <col style={{ width: '20%' }} />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>{t('trust_badge.report_col_document')}</th>
-                        <th>{t('common.status')}</th>
+                        <th align="center" style={{ textAlign: 'center' }}>{t('common.status')}</th>
+                        <th>{t('trust_badge.report_col_verified_date')}</th>
                         <th>{t('trust_badge.report_col_method')}</th>
                       </tr>
                     </thead>
@@ -157,6 +183,7 @@ export default function VerificationReportDialog({ open, onClose, report, loadin
                         <tr key={row.document}>
                           <td>{row.document}</td>
                           <td
+                            align="center"
                             style={{
                               color: row.status === 'Verified' ? 'var(--mui-palette-success-main)' : row.status === 'Bypassed' ? 'var(--mui-palette-info-main)' : 'var(--mui-palette-warning-main)',
                               fontWeight: 600,
@@ -164,6 +191,7 @@ export default function VerificationReportDialog({ open, onClose, report, loadin
                           >
                             {row.status === 'Verified' ? '✅ ' : ''}{row.status}
                           </td>
+                          <td>{row.verified_at ? formatDate(row.verified_at) : '—'}</td>
                           <td>{row.method}</td>
                         </tr>
                       ))}

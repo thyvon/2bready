@@ -116,6 +116,7 @@ const kh: Record<keyof typeof en, string> = {
   'trust_badge.report_country': 'ប្រទេស',
   'trust_badge.report_ledger_title': 'បញ្ជីការផ្ទៀងផ្ទាត់',
   'trust_badge.report_col_document': 'ឯកសារ',
+  'trust_badge.report_col_verified_date': 'កាលបរិច្ឆេទផ្ទៀងផ្ទាត់',
   'trust_badge.report_col_method': 'វិធីផ្ទៀងផ្ទាត់',
   'trust_badge.report_print': 'បោះពុម្ព / PDF',
   'trust_badge.report_load_error': 'មិនអាចផ្ទុករបាយការណ៍ត្រួតពិនិត្យបានទេ។',

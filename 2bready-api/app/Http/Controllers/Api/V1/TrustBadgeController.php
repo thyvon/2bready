@@ -66,9 +66,12 @@ class TrustBadgeController extends Controller
             foreach ($templates as $template) {
                 $bypassKey = $template->bypass_key;
 
+                $verifiedAt = null;
+
                 if ($bypassKey !== null && ($bypassFlags[$bypassKey] ?? false)) {
                     $status = 'Bypassed';
                     $method = 'Auto-bypass rule';
+                    $verifiedAt = null;
                 } else {
                     $latest = Document::query()
                         ->where('company_id', $company->id)
@@ -76,8 +79,9 @@ class TrustBadgeController extends Controller
                         ->latest('id')
                         ->first();
 
-                    $status = $latest?->status?->value === 'verified' ? 'Verified' : ucfirst((string) $latest?->status?->value ?? 'Pending');
+                    $status = $latest?->status?->value === 'verified' ? 'Verified' : ucfirst((string) ($latest?->status?->value ?? 'Pending'));
                     $method = 'Auditor review';
+                    $verifiedAt = $latest?->verified_at?->toISOString();
                 }
 
                 $ledger[] = [
@@ -85,6 +89,7 @@ class TrustBadgeController extends Controller
                     'document' => $template->name,
                     'status' => $status,
                     'method' => $method,
+                    'verified_at' => $verifiedAt,
                 ];
             }
         }
