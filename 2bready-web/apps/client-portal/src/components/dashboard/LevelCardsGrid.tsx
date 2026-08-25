@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
@@ -12,10 +12,15 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import { motion } from 'framer-motion';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 
 import type { Journey, JourneyLevel } from '@/lib/journey-api';
 import { levelVerifiedDocs, levelTotalDocs } from '@/lib/journey-api';
-import { cardGridContainer, cardGridItem } from '@2bready/ui-core';
+import { cardGridContainer, cardGridItem, DocumentPreviewDialog } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
 import { marketingUrl } from '@/lib/marketing-url';
 
@@ -52,9 +57,18 @@ interface LevelCardsGridProps {
  * from `journey.levels` by code — they arrive sorted by sort_order across all
  * pillars, which is exactly the reading order this view wants.
  */
+interface LevelViewerState {
+  title: string;
+  url: string;
+  mimeType: string | null;
+}
+
 export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: LevelCardsGridProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  // In-dialog viewer (same pattern as DocumentPreviewDialog / SOP PDF render)
+  // instead of opening new tabs.
+  const [viewer, setViewer] = useState<LevelViewerState | null>(null);
 
   const cards = useMemo(
     () =>
@@ -77,6 +91,37 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
           badge={badgesByLevel?.get(level.code)}
         />
       ))}
+
+      <DocumentPreviewDialog
+        open={viewer?.mimeType === 'application/pdf'}
+        onClose={() => setViewer(null)}
+        title={viewer?.title ?? ''}
+        url={viewer?.url ?? null}
+        mimeType={viewer?.mimeType ?? null}
+      />
+
+      {/* The public verification report is an HTML page — same chrome as the
+          PDF dialog but rendered through a plain iframe. */}
+      <Dialog open={viewer !== null && viewer.mimeType === 'text/html'} onClose={() => setViewer(null)} maxWidth="md" fullWidth>
+        <DialogTitle className="flex items-center justify-between gap-2">
+          <Typography variant="h6" component="span" sx={{ fontWeight: 700 }} noWrap>
+            {viewer?.title ?? ''}
+          </Typography>
+          <IconButton size="small" onClick={() => setViewer(null)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0, height: '75vh' }}>
+          {viewer && (
+            <Box
+              component="iframe"
+              src={viewer.url}
+              title={viewer.title}
+              sx={{ width: '100%', height: '100%', border: 'none' }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 
@@ -125,9 +170,14 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
                 size="small"
                 variant="outlined"
                 startIcon={<WorkspacePremiumOutlinedIcon fontSize="small" />}
-                href={badge?.pdfUrl ?? '/trust-badge'}
-                target={badge?.pdfUrl ? '_blank' : undefined}
-                component={badge?.pdfUrl ? 'a' : 'button'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (badge?.pdfUrl) {
+                    setViewer({ title: `${level.code} — ${level.name} certificate`, url: badge.pdfUrl, mimeType: 'application/pdf' });
+                  } else {
+                    router.push('/trust-badge');
+                  }
+                }}
                 sx={{ minWidth: 0 }}
               >
                 {t('overview.certificate_btn')}
@@ -139,9 +189,14 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
               size="small"
               variant="text"
               startIcon={<BarChartOutlinedIcon fontSize="small" />}
-              href={verifyReportUrl}
-              target={badge?.auditId ? '_blank' : undefined}
-              component={badge?.auditId ? 'a' : 'button'}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (badge?.auditId) {
+                  setViewer({ title: `${level.code} — ${level.name} verification report`, url: verifyReportUrl, mimeType: 'text/html' });
+                } else {
+                  router.push('/audits');
+                }
+              }}
               sx={{ minWidth: 0 }}
             >
               {t('overview.report_btn')}
