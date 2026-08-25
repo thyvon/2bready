@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1;
 use App\Domain\TrustBadge\Models\TrustBadge;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /** @mixin TrustBadge */
 class TrustBadgeResource extends JsonResource
@@ -24,7 +25,10 @@ class TrustBadgeResource extends JsonResource
             'certificate' => $this->whenLoaded('certificate', function () {
                 return $this->certificate ? [
                     'id' => $this->certificate->id,
-                    'pdf_url' => $this->certificate->pdf_url,
+                    // Signed URL (30-min), same delivery as the public verify
+                    // endpoint — a raw storage path would 404 for the browser.
+                    'pdf_url' => Storage::disk(config('filesystems.documents_disk'))
+                        ->temporaryUrl($this->certificate->pdf_url, now()->addMinutes(30)),
                     'qr_payload_url' => $this->certificate->qr_payload_url,
                     'master_verifier_stamp' => $this->certificate->master_verifier_stamp,
                     'issued_at' => $this->certificate->issued_at?->toISOString(),
