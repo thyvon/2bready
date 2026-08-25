@@ -113,7 +113,8 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
     // A completed level sticks its two payoff actions on the card: the
     // certificate PDF (once its audit is approved) and the public
     // verification report.
-    const verifyReportUrl = badge ? marketingUrl(`/verify/${badge.auditId}`) : '/audits';
+    // Defensive against stale HMR state: no audit id -> no deep link.
+    const verifyReportUrl = badge?.auditId ? marketingUrl(`/verify/${badge.auditId}`) : '/audits';
 
     const actions =
       complete && badgesByLevel ? (
@@ -139,8 +140,8 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel }: Lev
               variant="text"
               startIcon={<BarChartOutlinedIcon fontSize="small" />}
               href={verifyReportUrl}
-              target='_blank'
-              component='a'
+              target={badge?.auditId ? '_blank' : undefined}
+              component={badge?.auditId ? 'a' : 'button'}
               sx={{ minWidth: 0 }}
             >
               {t('overview.report_btn')}
