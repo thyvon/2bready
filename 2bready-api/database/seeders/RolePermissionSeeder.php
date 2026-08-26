@@ -114,9 +114,10 @@ class RolePermissionSeeder extends Seeder
             // actions; company_owner/member hold document.upload already, so
             // no separate permission is needed (routes gate on that).
 
-            // SOPs
-            'sop.view',
-            'sop.manage',
+            // Signed-off documents (replaces authored SOPs) — upload/send are
+            // role-based (company_owner/member), verify is the internal expert gate.
+            'signoff_document.view',
+            'signoff_document.manage',
 
             // Support
             'support.view',
@@ -188,7 +189,7 @@ class RolePermissionSeeder extends Seeder
             'audit.view', 'audit.manage',
             'trust_badge.view', 'trust_badge.manage',
             'data_room.view', 'data_room.manage', 'data_room.share',
-            'sop.view', 'sop.manage',
+            'signoff_document.view', 'signoff_document.manage',
             'tp_partner.manage', 'marketplace.manage',
             'support.view', 'support.create', 'support.manage',
             'notification.view',
@@ -229,11 +230,9 @@ class RolePermissionSeeder extends Seeder
             'audit.view', 'audit.request',
             'trust_badge.view',
             'data_room.view', 'data_room.manage', 'data_room.share',
-            // sop.manage: create/edit/activate own company SOPs + adopt global
-            // templates — SopPolicy restricts every action to the owner's own
-            // company (or, for adoption, global SOPs only), so this coarse
-            // route-level permission is safe to grant here.
-            'sop.view', 'sop.manage',
+            // Signed-off documents: upload/send are role-based in the policy
+            // (company_owner/member), so no extra permission needed here.
+            'signoff_document.view',
             'support.view', 'support.create',
             'notification.view',
             'report.view', 'audit_log.view',
@@ -249,7 +248,7 @@ class RolePermissionSeeder extends Seeder
             'audit.view',
             'trust_badge.view',
             'data_room.view',
-            'sop.view',
+            'signoff_document.view',
             'support.view', 'support.create',
             'notification.view',
         ]);

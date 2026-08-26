@@ -74,9 +74,9 @@ Route::prefix('v1')->group(function () {
         require __DIR__.'/api/document.php';
         require __DIR__.'/api/audit.php';
         require __DIR__.'/api/data-room.php';
+        require __DIR__.'/api/signoff-documents.php';
         require __DIR__.'/api/notification.php';
         require __DIR__.'/api/support.php';
-        require __DIR__.'/api/sop.php';
         require __DIR__.'/api/report.php';
         require __DIR__.'/api/audit-log.php';
         require __DIR__.'/api/settings.php';

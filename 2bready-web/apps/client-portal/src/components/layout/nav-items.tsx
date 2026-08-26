@@ -48,7 +48,7 @@ const PRIMARY_NAV_DEFS = [
 
 const SECONDARY_NAV_DEFS = [
   { labelKey: 'nav.data_room', href: '/data-room', descriptionKey: 'nav.data_room_desc', icon: <FolderSharedOutlinedIcon fontSize="small" /> },
-  { labelKey: 'nav.sops', href: '/sops', descriptionKey: 'nav.sops_desc', icon: <ArticleOutlinedIcon fontSize="small" /> },
+  { labelKey: 'nav.signoff_documents', href: '/signoff-documents', descriptionKey: 'nav.signoff_documents_desc', icon: <ArticleOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.billing', href: '/billing', descriptionKey: 'nav.billing_desc', icon: <CreditCardOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.settings', href: '/settings', descriptionKey: 'nav.settings_desc', icon: <SettingsOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.support', href: '/support', descriptionKey: 'nav.support_desc', icon: <HelpOutlineOutlinedIcon fontSize="small" /> },
