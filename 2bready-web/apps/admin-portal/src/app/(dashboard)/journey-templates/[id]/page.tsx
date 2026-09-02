@@ -19,7 +19,6 @@ import DialogActions from '@mui/material/DialogActions';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -27,6 +26,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import { cardRestShadow, cardHoverShadowNeutral } from '@/lib/card-elevation';
@@ -473,11 +473,7 @@ export default function JourneyTemplateDetailPage() {
   };
 
   if (loading || !journeyTemplate) {
-    return (
-      <Box className="flex justify-center py-16">
-        <CircularProgress size={28} />
-      </Box>
-    );
+    return <PageSkeleton sections={3} fieldsPerSection={3} />;
   }
 
   const levels = [...(journeyTemplate.levels ?? [])].sort((a, b) => a.sort_order - b.sort_order);

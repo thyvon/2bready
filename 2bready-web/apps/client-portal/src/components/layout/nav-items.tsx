@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
@@ -40,7 +41,7 @@ interface NavItemDef {
 // AssignmentIcon for audits, etc.) so the same domain reads consistently
 // across both apps.
 const PRIMARY_NAV_DEFS = [
-  { labelKey: 'nav.overview', href: '/' },
+  { labelKey: 'nav.overview', href: '/', icon: <DashboardOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.journey', href: '/journey', descriptionKey: 'nav.journey_desc', icon: <RouteOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.audits', href: '/audits', descriptionKey: 'nav.audits_desc', icon: <AssignmentOutlinedIcon fontSize="small" /> },
   { labelKey: 'nav.trust_badge', href: '/trust-badge', descriptionKey: 'nav.trust_badge_desc', icon: <VerifiedOutlinedIcon fontSize="small" /> },

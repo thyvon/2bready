@@ -28,7 +28,7 @@ class ProfileController extends Controller
     {
         $user = $action->execute($request->user(), UpdateOwnProfileData::from($request->validated()));
 
-        return ApiResponse::success(new UserResource($user->fresh()));
+        return ApiResponse::success(new UserResource($user->fresh()->load('companies')));
     }
 
     public function changePassword(ChangePasswordRequest $request, ChangeOwnPasswordAction $action): JsonResponse

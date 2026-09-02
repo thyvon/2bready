@@ -8,7 +8,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ConfirmDialog } from '@2bready/ui-core';
 import FormSelect from '@/components/forms/FormSelect';

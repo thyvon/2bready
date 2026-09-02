@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -25,6 +24,8 @@ import FeedbackOutlinedIcon from '@mui/icons-material/FeedbackOutlined';
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
+import DetailField from '@/components/ui/DetailField';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormSelect from '@/components/forms/FormSelect';
 import EmptyState from '@/components/ui/EmptyState';
@@ -36,28 +37,24 @@ import { listAuditors } from '@/domains/tp-partner/api';
 import type { AuditorUser } from '@/domains/audit/types';
 import { getApiError, formatDate } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
+import { useAuthStore } from '@/store/auth.store';
+import { useRouter } from 'next/navigation';
 
 const assignFormSchema = z.object({
   auditor_id: z.string().min(1, 'Auditor is required'),
 });
 type AssignFormInput = z.infer<typeof assignFormSchema>;
 
-function DetailField({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <Box className="flex items-start gap-3">
-      <Box sx={{ color: 'text.secondary', mt: '2px' }}>{icon}</Box>
-      <Box className="min-w-0">
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{label}</Typography>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>{value}</Typography>
-      </Box>
-    </Box>
-  );
-}
-
 export default function AuditDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: auditId } = use(params);
   const { t } = useTranslation();
   const toast = useToast();
+  const router = useRouter();
+  const { hasAnyRole } = useAuthStore();
+
+  useEffect(() => {
+    if (!hasAnyRole(['admin', 'staff', 'finance'])) router.replace('/dashboard');
+  }, [hasAnyRole, router]);
 
   const [audit, setAudit] = useState<Audit | null>(null);
   const [auditors, setAuditors] = useState<AuditorUser[]>([]);
@@ -69,22 +66,12 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
   const [pendingCancel, setPendingCancel] = useState(false);
 
   // Silent in-place refetch after assign/review/cancel — updates the audit
-  // detail and auditor dropdown without flipping `loading`, so the page
-  // never unmounts into a spinner or loses scroll. The mount effect below
-  // is the only loader.
+  // detail without flipping `loading`, so the page never unmounts into a
+  // spinner or loses scroll. The mount effect below is the only loader.
   const load = useCallback(async () => {
     try {
       const data = await getAudit(auditId);
       setAudit(data);
-      if (data.tp_partner?.id) {
-        try {
-          setAuditors(await listAuditors(data.tp_partner.id));
-        } catch {
-          setAuditors([]);
-        }
-      } else {
-        setAuditors([]);
-      }
     } catch (err) {
       toast.error(getApiError(err).message);
     }
@@ -97,19 +84,7 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
       setLoading(true);
       try {
         const data = await getAudit(auditId);
-        if (!cancelled) {
-          setAudit(data);
-          if (data.tp_partner?.id) {
-            try {
-              const staff = await listAuditors(data.tp_partner.id);
-              if (!cancelled) setAuditors(staff);
-            } catch {
-              if (!cancelled) setAuditors([]);
-            }
-          } else if (!cancelled) {
-            setAuditors([]);
-          }
-        }
+        if (!cancelled) setAudit(data);
       } catch (err) {
         if (!cancelled) toast.error(getApiError(err).message);
       } finally {
@@ -129,6 +104,20 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
     resolver: zodResolver(assignFormSchema),
     defaultValues: { auditor_id: '' },
   });
+
+  const openAssignDialog = async () => {
+    assignForm.reset();
+    setServerError('');
+    setAssignOpen(true);
+    if (audit?.tp_partner?.id) {
+      try {
+        const staff = await listAuditors(audit.tp_partner.id);
+        setAuditors(staff);
+      } catch {
+        setAuditors([]);
+      }
+    }
+  };
 
   const onAssign = async (data: AssignFormInput) => {
     setServerError('');
@@ -172,7 +161,7 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   if (loading || !audit) {
-    return <Box className="flex justify-center py-16"><CircularProgress /></Box>;
+    return <PageSkeleton sections={2} fieldsPerSection={4} />;
   }
 
   const status = audit.status;
@@ -188,7 +177,7 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
           <Box className="flex items-center gap-2">
             <StatusBadge status={audit.status} />
             {canAssign && (
-              <Button size="small" variant="contained" onClick={() => { assignForm.reset(); setServerError(''); setAssignOpen(true); }}>
+              <Button size="small" variant="contained" onClick={() => void openAssignDialog()}>
                 {t('audit.assign')}
               </Button>
             )}

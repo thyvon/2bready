@@ -1,44 +1,52 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getPublicPackages, type PackageGroup } from '@/lib/package-api';
 
 interface PackageContextValue {
   packages: PackageGroup[];
   loading: boolean;
+  error: boolean;
+  refetch: () => Promise<void>;
 }
 
 const PackageContext = createContext<PackageContextValue | null>(null);
 
-// Same reasoning as JourneyProvider: PillarCard, JourneyTree (via the
-// journey page), TrustBadgeJourney, and the Billing page all need the same
-// real per-level pricing/tier data — fetched once here and shared, instead
-// of each reaching for the old hardcoded LEVEL_META/PRICING_BY_LEVEL maps.
 export default function PackageProvider({ children }: { children: React.ReactNode }) {
   const [packages, setPackages] = useState<PackageGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchPackages = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await getPublicPackages();
+      setPackages(data);
+    } catch {
+      setError(true);
+      setPackages([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-
-    async function load() {
+    (async () => {
       try {
         const data = await getPublicPackages();
         if (!cancelled) setPackages(data);
       } catch {
-        if (!cancelled) setPackages([]);
+        if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const value = useMemo<PackageContextValue>(() => ({ packages, loading }), [packages, loading]);
+  const value = useMemo<PackageContextValue>(() => ({ packages, loading, error, refetch: fetchPackages }), [packages, loading, error, fetchPackages]);
 
   return <PackageContext.Provider value={value}>{children}</PackageContext.Provider>;
 }

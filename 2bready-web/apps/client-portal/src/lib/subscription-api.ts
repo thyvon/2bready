@@ -24,6 +24,20 @@ export interface SubscribeResult {
   gateway_data: BankTransferGatewayData;
 }
 
+// Simple TTL cache — avoids 3 pages fetching the same endpoint independently.
+let subscriptionsCache: Subscription[] | null = null;
+let subscriptionsCacheTs = 0;
+let paymentsCache: Payment[] | null = null;
+let paymentsCacheTs = 0;
+const SUBSCRIPTIONS_CACHE_TTL = 30_000; // 30s
+
+export function invalidateSubscriptionsCache(): void {
+  subscriptionsCache = null;
+  subscriptionsCacheTs = 0;
+  paymentsCache = null;
+  paymentsCacheTs = 0;
+}
+
 // Manual bank transfer only — Stripe is a disclosed backend stub
 // (FakeStripeGateway returns a meaningless fake client_secret, no real
 // Stripe Elements integration exists), so it isn't offered as a selectable
@@ -33,17 +47,30 @@ export async function subscribeToPackage(packageId: string): Promise<SubscribeRe
     package_id: packageId,
     method: 'manual_bank_transfer',
   });
+  invalidateSubscriptionsCache();
   return res.data.data;
 }
 
 export async function listMySubscriptions(): Promise<Subscription[]> {
+  const now = Date.now();
+  if (subscriptionsCache !== null && now - subscriptionsCacheTs < SUBSCRIPTIONS_CACHE_TTL) {
+    return subscriptionsCache;
+  }
   const res = await api.get<{ data: Subscription[] }>('/subscriptions');
-  return res.data.data;
+  subscriptionsCache = res.data.data;
+  subscriptionsCacheTs = now;
+  return subscriptionsCache;
 }
 
 export async function listMyPayments(): Promise<Payment[]> {
+  const now = Date.now();
+  if (paymentsCache !== null && now - paymentsCacheTs < SUBSCRIPTIONS_CACHE_TTL) {
+    return paymentsCache;
+  }
   const res = await api.get<{ data: Payment[] }>('/payments');
-  return res.data.data;
+  paymentsCache = res.data.data;
+  paymentsCacheTs = now;
+  return paymentsCache;
 }
 
 // Company self-reports having sent the transfer — a human (admin/finance)

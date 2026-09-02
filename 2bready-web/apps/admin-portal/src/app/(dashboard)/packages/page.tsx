@@ -18,7 +18,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ConfirmDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
@@ -27,13 +27,12 @@ import FormTextField from '@/components/forms/FormTextField';
 import FormSwitch from '@/components/forms/FormSwitch';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/feedback/ToastProvider';
-import { listPackages, createPackage, updatePackage, deletePackage } from '@/domains/package/api';
-import { useJourneyLevels } from '@/domains/package/hooks';
-import type { Package } from '@/domains/package/types';
+import { listPackages, createPackage, updatePackage, deletePackage, listJourneyLevels } from '@/domains/package/api';
+import type { Package, JourneyLevel } from '@/domains/package/types';
 import { packageFormSchema, packageFormDefaults, type PackageFormInput } from '@/domains/package/schemas';
 import { useIndustries } from '@/domains/company/hooks';
 import { industryLabel } from '@/domains/company/constants';
-import { getApiError, formatCents } from '@/lib/utils';
+import { getApiError, formatCents, centsToDecimal, decimalToCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
 export default function AdminPackagesPage() {
@@ -42,9 +41,9 @@ export default function AdminPackagesPage() {
   const toast = useToast();
   const { t, locale } = useTranslation();
   const { industries } = useIndustries();
-  const { journeyLevels } = useJourneyLevels();
 
   const [packages, setPackages] = useState<Package[]>([]);
+  const [journeyLevels, setJourneyLevels] = useState<JourneyLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Package | null>(null);
@@ -95,11 +94,17 @@ export default function AdminPackagesPage() {
     formState: { errors, isSubmitting },
   } = useForm<PackageFormInput>({ resolver: zodResolver(packageFormSchema), defaultValues: packageFormDefaults });
 
-  const openCreate = () => {
+  const openCreate = async () => {
     setEditing(null);
     reset(packageFormDefaults);
     setServerError('');
     setDialogOpen(true);
+    try {
+      const levels = await listJourneyLevels();
+      setJourneyLevels(levels);
+    } catch {
+      setJourneyLevels([]);
+    }
   };
 
   const priceFor = (pkg: Package, period: 'monthly' | 'yearly') => {
@@ -107,15 +112,14 @@ export default function AdminPackagesPage() {
     return price?.price_cents ?? null;
   };
 
-  const openEdit = (pkg: Package) => {
+  const openEdit = async (pkg: Package) => {
     setEditing(pkg);
     reset({
       name: pkg.name,
       name_kh: pkg.name_kh ?? '',
       description: pkg.description ?? '',
-      monthly_price: (priceFor(pkg, 'monthly') ?? 0) / 100,
-      yearly_price: (priceFor(pkg, 'yearly') ?? 0) / 100,
-      audit_fee: Number(pkg.audit_fee_cents ?? 0) / 100,
+      monthly_price: centsToDecimal(priceFor(pkg, 'monthly')),
+      yearly_price: centsToDecimal(priceFor(pkg, 'yearly')),
       industry_id: pkg.industry_id ?? '',
       journey_level_id: pkg.journey_level_id ?? '',
       tier: pkg.tier,
@@ -124,6 +128,12 @@ export default function AdminPackagesPage() {
     });
     setServerError('');
     setDialogOpen(true);
+    try {
+      const levels = await listJourneyLevels();
+      setJourneyLevels(levels);
+    } catch {
+      setJourneyLevels([]);
+    }
   };
 
   const onSubmit = async (data: PackageFormInput) => {
@@ -134,9 +144,8 @@ export default function AdminPackagesPage() {
         name: parsed.name,
         name_kh: parsed.name_kh || undefined,
         description: parsed.description || undefined,
-        monthly_price_cents: Math.round(parsed.monthly_price * 100),
-        yearly_price_cents: Math.round(parsed.yearly_price * 100),
-        audit_fee_cents: Math.round(parsed.audit_fee * 100),
+        monthly_price_cents: decimalToCents(String(parsed.monthly_price)),
+        yearly_price_cents: decimalToCents(String(parsed.yearly_price)),
         industry_id: parsed.industry_id || undefined,
         journey_level_id: parsed.journey_level_id || undefined,
         tier: parsed.tier,
@@ -301,19 +310,6 @@ export default function AdminPackagesPage() {
                   {...register('yearly_price')}
                 />
               </Box>
-            </Box>
-
-            <Box>
-              <FieldLabel>{t('package.audit_fee')}</FieldLabel>
-              <FormTextField
-                type="number"
-                placeholder="25.00"
-                fullWidth
-                slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
-                error={!!errors.audit_fee}
-                helperText={errors.audit_fee?.message}
-                {...register('audit_fee')}
-              />
             </Box>
 
             <Box className="flex gap-4">

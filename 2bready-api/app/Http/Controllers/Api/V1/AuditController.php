@@ -40,7 +40,7 @@ class AuditController extends Controller
         // branch resolves withoutGlobalScope('company') and is re-narrowed to
         // exactly this firm's active engagements (same pattern as
         // TpAssignmentController::myCompanies).
-        $query = Audit::query()->with(['company', 'tpHire', 'tpPartner', 'auditor']);
+        $query = Audit::query()->with(['company', 'tpHire', 'tpPartner', 'auditor.user.companies']);
 
         if ($user->auditor) {
             $firmId = $user->auditor->tp_partner_id;
@@ -71,7 +71,7 @@ class AuditController extends Controller
         // would 404 before AuditPolicy::view() ever ran (same reasoning as
         // TpHireController::complete).
         $audit = Audit::query()->withoutGlobalScope('company')
-            ->with(['company', 'tpHire', 'tpPartner', 'auditor', 'documents'])
+            ->with(['company', 'tpHire', 'tpPartner', 'auditor.user.companies', 'documents'])
             ->findOrFail($audit);
 
         $this->authorize('view', $audit);
@@ -95,7 +95,7 @@ class AuditController extends Controller
 
         $audit = $action->execute($audit, $request->validated('auditor_id'));
 
-        return ApiResponse::success(new AuditResource($audit->load(['company', 'tpHire', 'tpPartner', 'auditor'])));
+        return ApiResponse::success(new AuditResource($audit->load(['company', 'tpHire', 'tpPartner', 'auditor.user.companies'])));
     }
 
     public function submit(string $audit, SubmitAuditRequest $request, SubmitAuditAction $action): JsonResponse
@@ -105,7 +105,7 @@ class AuditController extends Controller
 
         $audit = $action->execute($audit, AuditDecisionData::from($request->validated()));
 
-        return ApiResponse::success(new AuditResource($audit->load(['company', 'tpHire', 'tpPartner', 'auditor'])));
+        return ApiResponse::success(new AuditResource($audit->load(['company', 'tpHire', 'tpPartner', 'auditor.user.companies'])));
     }
 
     public function review(string $audit, ReviewAuditRequest $request, ReviewAuditAction $action): JsonResponse
@@ -115,7 +115,7 @@ class AuditController extends Controller
 
         $audit = $action->execute($audit, $request->validated('decision') === 'approved', $request->user());
 
-        return ApiResponse::success(new AuditResource($audit->load(['company', 'tpHire', 'tpPartner', 'auditor'])));
+        return ApiResponse::success(new AuditResource($audit->load(['company', 'tpHire', 'tpPartner', 'auditor.user.companies'])));
     }
 
     public function cancel(string $audit, CancelAuditAction $action): JsonResponse

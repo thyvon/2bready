@@ -7,11 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 
 import SectionCard from '@/components/ui/SectionCard';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
 import FormSwitch from '@/components/forms/FormSwitch';
@@ -93,11 +93,7 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return (
-      <Box className="flex justify-center py-16">
-        <CircularProgress />
-      </Box>
-    );
+    return <PageSkeleton sections={1} fieldsPerSection={4} />;
   }
 
   const enabled = watch('enabled');

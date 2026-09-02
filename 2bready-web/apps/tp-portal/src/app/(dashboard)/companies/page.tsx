@@ -7,7 +7,7 @@ import Chip from '@mui/material/Chip';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import { listMyCompanies } from '@/domains/hires/api';
 import type { CompanyWithHiredLevels } from '@/domains/hires/types';
 import { useToast } from '@/components/feedback/ToastProvider';

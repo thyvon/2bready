@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { listAudits } from '@/domains/audit/api';
 import type { Audit } from '@/domains/audit/types';

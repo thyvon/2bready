@@ -12,7 +12,6 @@ export type StorePackagePayload = {
   description?: string;
   monthly_price_cents: number;
   yearly_price_cents: number;
-  audit_fee_cents: number;
   industry_id?: string;
   journey_level_id?: string;
   tier?: Tier;

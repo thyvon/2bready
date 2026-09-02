@@ -9,9 +9,26 @@ import type { components } from '@2bready/api-client';
 
 export type TrustBadge = components['schemas']['TrustBadgeResource'];
 
+// Simple TTL cache — JourneyProvider fetches these for the layout; the
+// trust-badge page falls through to this cache instead of re-hitting the API.
+let trustBadgesCache: TrustBadge[] | null = null;
+let trustBadgesCacheTs = 0;
+const TRUST_BADGES_CACHE_TTL = 30_000; // 30s
+
+export function invalidateTrustBadgesCache(): void {
+  trustBadgesCache = null;
+  trustBadgesCacheTs = 0;
+}
+
 export async function listTrustBadges(): Promise<TrustBadge[]> {
+  const now = Date.now();
+  if (trustBadgesCache !== null && now - trustBadgesCacheTs < TRUST_BADGES_CACHE_TTL) {
+    return trustBadgesCache;
+  }
   const res = await api.get<{ data: TrustBadge[] }>('/trust-badges');
-  return res.data.data;
+  trustBadgesCache = res.data.data;
+  trustBadgesCacheTs = now;
+  return trustBadgesCache;
 }
 export interface TrustBadgeReport {
   badge: {

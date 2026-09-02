@@ -61,7 +61,7 @@ class UserController extends Controller
 
         $user = $action->execute(CreateUserData::from($request->validated()));
 
-        return ApiResponse::created(new UserResource($user->load('roles')));
+        return ApiResponse::created(new UserResource($user->load(['roles', 'companies'])));
     }
 
     public function update(UpdateUserRequest $request, User $user, UpdateUserAction $action): JsonResponse
@@ -71,6 +71,6 @@ class UserController extends Controller
 
         $user = $action->execute($user, $request->validated());
 
-        return ApiResponse::success(new UserResource($user->load('roles')));
+        return ApiResponse::success(new UserResource($user->load(['roles', 'companies'])));
     }
 }

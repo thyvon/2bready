@@ -8,6 +8,7 @@ use App\Domain\SignOff\Actions\AcknowledgeSignoffDocumentUserAction;
 use App\Domain\SignOff\Models\SignoffDocumentUser;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\SignoffDocumentResource;
+use App\Http\Resources\Api\V1\SignoffDocumentUserResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,14 +28,12 @@ class MySignoffDocumentController extends Controller
             ->latest()
             ->get();
 
-        return ApiResponse::success(
-            SignoffDocumentResource::collection(
-                $rows->map(fn ($row) => $row->document)->filter()->unique('id')->values(),
-            ),
-        );
+        // Rows carry the per-user state (emailed/signed) plus the nested
+        // document — the UI needs both.
+        return ApiResponse::success(SignoffDocumentUserResource::collection($rows));
     }
 
-    public function acknowledge(Request $request, int $signoffDocumentUserId, AcknowledgeSignoffDocumentUserAction $action): JsonResponse
+    public function acknowledge(Request $request, string $signoffDocumentUserId, AcknowledgeSignoffDocumentUserAction $action): JsonResponse
     {
         /** @var SignoffDocumentUser|null $row */
         $row = SignoffDocumentUser::query()

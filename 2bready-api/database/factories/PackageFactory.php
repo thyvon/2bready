@@ -21,7 +21,6 @@ class PackageFactory extends Factory
             'name_kh' => null,
             'description' => fake()->sentence(),
             'price_cents' => fake()->randomElement([9900, 19900, 49900]),
-            'audit_fee_cents' => fake()->randomElement([0, 2500, 7500, 15000]),
             'billing_period' => 'monthly',
             'tier' => 'free',
             'is_active' => true,

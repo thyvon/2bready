@@ -144,7 +144,9 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return ApiResponse::success(new UserResource($request->user()), [], 200);
+        $user = $request->user()->load('companies');
+
+        return ApiResponse::success(new UserResource($user), [], 200);
     }
 
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse

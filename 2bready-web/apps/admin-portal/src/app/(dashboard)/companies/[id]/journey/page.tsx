@@ -14,7 +14,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -22,6 +21,7 @@ import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
 import StatusBadge from '@/components/ui/StatusBadge';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import { ConfirmDialog, DocumentUploadPreviewDialog, FormDatePicker } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
@@ -323,11 +323,7 @@ export default function CompanyJourneyPage() {
   );
 
   if (loading) {
-    return (
-      <Box className="flex justify-center py-16">
-        <CircularProgress />
-      </Box>
-    );
+    return <PageSkeleton sections={3} fieldsPerSection={3} />;
   }
 
   if (loadError) {

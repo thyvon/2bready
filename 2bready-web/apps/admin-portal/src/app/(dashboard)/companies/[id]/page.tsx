@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -22,6 +21,8 @@ import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined
 import SectionCard from '@/components/ui/SectionCard';
 import EmptyState from '@/components/ui/EmptyState';
 import StatusBadge from '@/components/ui/StatusBadge';
+import DetailField from '@/components/ui/DetailField';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import UserAvatar from '@/components/ui/UserAvatar';
 import CompanyEditDialog from '@/domains/company/components/CompanyEditDialog';
 import CompanyUserEditDialog from '@/domains/company/components/CompanyUserEditDialog';
@@ -48,18 +49,6 @@ const LEVEL_SCORE_KEYS: Record<string, 'journey.level_l1_score' | 'journey.level
   L3: 'journey.level_l3_score',
   L4: 'journey.level_l4_score',
 };
-
-function DetailField({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <Box className="flex items-start gap-3">
-      <Box sx={{ color: 'text.secondary', mt: '2px' }}>{icon}</Box>
-      <Box className="min-w-0">
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{label}</Typography>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>{value}</Typography>
-      </Box>
-    </Box>
-  );
-}
 
 export default function CompanyOverviewPage() {
   const params = useParams<{ id: string }>();
@@ -148,11 +137,7 @@ export default function CompanyOverviewPage() {
   const currentLevel = unlockedLevels.length > 0 ? unlockedLevels[unlockedLevels.length - 1].code : 'L1';
 
   if (loading) {
-    return (
-      <Box className="flex justify-center py-16">
-        <CircularProgress />
-      </Box>
-    );
+    return <PageSkeleton sections={2} fieldsPerSection={5} />;
   }
 
   return (

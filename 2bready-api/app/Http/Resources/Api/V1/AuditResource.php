@@ -28,7 +28,7 @@ class AuditResource extends JsonResource
                 return ['id' => $company->id, 'name' => $company->name];
             }),
             'tp_hire_id' => $this->tp_hire_id,
-            'tpHire' => $this->whenLoaded('tpHire', function () {
+            'tp_hire' => $this->whenLoaded('tpHire', function () {
                 /** @var TpHire $tpHire */
                 $tpHire = $this->tpHire;
 

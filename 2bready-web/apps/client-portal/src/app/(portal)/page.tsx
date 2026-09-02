@@ -1,19 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Skeleton from '@mui/material/Skeleton';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { SectionCard, GlowButton } from '@2bready/ui-core';
 import { LevelCardsGrid } from '@/components/dashboard/LevelCardsGrid';
 import { TrustJourneyHero } from '@/components/dashboard/TrustJourneyHero';
-import { PageLoader } from '@/components/PageLoader';
+import { PackageDialog } from '@/components/dashboard/PackageDialog';
 import { useJourney } from '@/components/JourneyProvider';
-import { allDocuments, countVerified, levelTotalDocs, levelVerifiedDocs, toDocStatus, type Journey } from '@/lib/journey-api';
-import { listMySubscriptions } from '@/lib/subscription-api';
-import { listTrustBadges, fetchTrustBadgeReport, type TrustBadgeReport } from '@/lib/trust-badge-api';
-import type { LevelBadgeLink } from '@/components/dashboard/LevelCardsGrid';
+import { toDocStatus, levelTotalDocs, levelVerifiedDocs, type Journey } from '@/lib/journey-api';
+import { fetchTrustBadgeReport, type TrustBadgeReport } from '@/lib/trust-badge-api';
 import VerificationReportDialog from '@/components/dashboard/VerificationReportDialog';
 import { DocumentPreviewDialog } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
@@ -41,74 +40,9 @@ const cardHoverSx = {
 };
 
 export default function OverviewPage() {
-  const { journey, loading } = useJourney();
+  const { journey, loading, totalDocs, verifiedDocs, overallPct, activeLevelCodes, trustBadges, badgesByLevel } = useJourney();
   const { t } = useTranslation();
 
-  // Active subscriptions drive the "Active Plan" chips on the level cards.
-  const [activeLevelCodes, setActiveLevelCodes] = useState<Set<string>>(new Set());
-  const [trustBadges, setTrustBadges] = useState<Awaited<ReturnType<typeof listTrustBadges>>>([]);
-  const [badgesByLevel, setBadgesByLevel] = useState<Map<string, LevelBadgeLink>>(new Map());
-  const [reportBadgeId, setReportBadgeId] = useState<string | null>(null);
-  const [certPreview, setCertPreview] = useState<{ title: string; url: string } | null>(null);
-  const [reportLoading, setReportLoading] = useState(false);
-  const [reportData, setReportData] = useState<TrustBadgeReport | null>(null);
-  const [reportError, setReportError] = useState('');
-  const [subsLoading, setSubsLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    listMySubscriptions()
-      .then((subs) => {
-        if (cancelled) return;
-        setActiveLevelCodes(
-          new Set(
-            subs
-              .filter((s) => s.status === 'active' && s.package?.journey_level_code)
-              .map((s) => s.package!.journey_level_code!),
-          ),
-        );
-      })
-      .catch(() => {
-        // Billing data failing to load shouldn't blank the whole dashboard —
-        // cards just render without "Active Plan" chips.
-      })
-      .finally(() => {
-        if (!cancelled) setSubsLoading(false);
-      });
-
-    // Earned badges power the Certificate/Report buttons on completed
-    // level cards. Failure is non-fatal — cards render without them.
-    listTrustBadges()
-      .then((badges) => {
-        if (cancelled) return;
-        setTrustBadges(badges);
-        const map = new Map<string, LevelBadgeLink>();
-        for (const badge of badges) {
-          if (!map.has(badge.level)) {
-            map.set(badge.level, {
-              pdfUrl: badge.certificate?.pdf_url ?? null,
-              auditId: badge.audit_id,
-            });
-          }
-        }
-        setBadgesByLevel(map);
-      })
-      .catch(() => {
-        /* ignore — buttons just won't deep-link */
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading || subsLoading) return <PageLoader />;
-
-  const documents = allDocuments(journey);
-  const totalDocs = documents.length;
-  const verifiedDocs = countVerified(documents);
-  const overallPct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
   const pendingDocs = totalDocs - verifiedDocs;
 
   // Highest unlocked level across every pillar — with à-la-carte levels the
@@ -117,9 +51,14 @@ export default function OverviewPage() {
   const currentLevel = unlockedLevels.length > 0 ? unlockedLevels[unlockedLevels.length - 1].code : '—';
   const nextDoc = nextPendingDocument(journey);
 
-  // The Report button opens the certificate-style verification report for
-  // the level's badge (owner-concept MVP 6.3.3.2), fetched on demand.
-  // Certificate button — opens the level's PDF in the shared preview dialog.
+  const [reportBadgeId, setReportBadgeId] = useState<string | null>(null);
+  const [certPreview, setCertPreview] = useState<{ title: string; url: string } | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportData, setReportData] = useState<TrustBadgeReport | null>(null);
+  const [reportError, setReportError] = useState('');
+  const [packageDialogOpen, setPackageDialogOpen] = useState(false);
+  const [upgradeLevelCode, setUpgradeLevelCode] = useState<string | undefined>(undefined);
+
   const openCertificate = (levelCode: string) => {
     const badge = trustBadges.find((b) => b.level === levelCode);
     if (badge?.certificate?.pdf_url) {
@@ -140,7 +79,29 @@ export default function OverviewPage() {
 
   return (
     <Box className="flex flex-col gap-6">
-      <TrustJourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
+      {/* Hero — skeleton circle + text lines when loading, real component when ready */}
+      {loading ? (
+        <Box
+          sx={{
+            borderRadius: '12px',
+            border: '1px solid',
+            borderColor: 'divider',
+            p: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 3,
+          }}
+        >
+          <Skeleton variant="circular" width={64} height={64} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width={180} height={24} />
+            <Skeleton variant="text" width={260} height={14} sx={{ opacity: 0.6 }} />
+          </Box>
+          <Skeleton variant="text" width={80} height={20} />
+        </Box>
+      ) : (
+        <TrustJourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
+      )}
 
       {journey && (
         <>
@@ -153,6 +114,7 @@ export default function OverviewPage() {
               const badgeId = trustBadges.find((b) => b.level === level)?.id;
               if (badgeId) openVerificationReport(badgeId);
             }}
+            onUpgrade={(code) => { setUpgradeLevelCode(code); setPackageDialogOpen(true); }}
           />
 
           <SectionCard title={t('overview.readiness_scores')}>
@@ -172,6 +134,33 @@ export default function OverviewPage() {
                   </Box>
                 );
               })}
+            </Box>
+          </SectionCard>
+        </>
+      )}
+
+      {/* Skeleton for API-dependent sections while loading */}
+      {loading && (
+        <>
+          <SectionCard>
+            <Box className="flex items-center gap-4">
+              <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: '8px', flexShrink: 0 }} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" height={18} />
+                <Skeleton variant="text" width="80%" height={14} sx={{ opacity: 0.6 }} />
+              </Box>
+              <Skeleton variant="rounded" width={100} height={36} sx={{ borderRadius: '20px', flexShrink: 0 }} />
+            </Box>
+          </SectionCard>
+          <SectionCard>
+            <Box className="flex flex-col gap-3">
+              {[0, 1, 2, 3].map((i) => (
+                <Box key={i} className="flex items-center gap-3">
+                  <Skeleton variant="text" width={140} height={14} />
+                  <Skeleton variant="rounded" height={8} sx={{ flexGrow: 1, borderRadius: 4 }} />
+                  <Skeleton variant="text" width={40} height={14} />
+                </Box>
+              ))}
             </Box>
           </SectionCard>
         </>
@@ -237,6 +226,8 @@ export default function OverviewPage() {
         url={certPreview?.url ?? null}
         mimeType={certPreview ? 'application/pdf' : null}
       />
+
+      <PackageDialog open={packageDialogOpen} onClose={() => setPackageDialogOpen(false)} levelCode={upgradeLevelCode} />
     </Box>
   );
 }

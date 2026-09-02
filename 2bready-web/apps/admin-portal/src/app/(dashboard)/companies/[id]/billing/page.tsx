@@ -6,7 +6,7 @@ import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 
 import { SectionCard } from '@2bready/ui-core';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PaymentsListView from '@/domains/payment/components/PaymentsListView';
 import { useCompanyWorkspace } from '@/domains/company/workspace-context';

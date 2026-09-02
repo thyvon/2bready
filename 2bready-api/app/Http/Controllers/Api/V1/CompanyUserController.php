@@ -58,7 +58,7 @@ class CompanyUserController extends Controller
             $request->validated('role'),
         );
 
-        return ApiResponse::created(new UserResource($user));
+        return ApiResponse::created(new UserResource($user->load('companies')));
     }
 
     public function update(UpdateCompanyUserRequest $request, Company $company, User $user, UpdateCompanyUserAction $action): JsonResponse

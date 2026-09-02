@@ -7,11 +7,11 @@ import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Badge from '@mui/material/Badge';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 
 import PageHeader from '@/components/ui/PageHeader';
 import StatusBadge from '@/components/ui/StatusBadge';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import { useAuthStore } from '@/store/auth.store';
 import { getCompany } from '@/domains/company/api';
 import CompanyStatusAction from '@/domains/company/components/CompanyStatusAction';
@@ -117,11 +117,7 @@ export default function CompanyWorkspaceLayout({ children }: { children: React.R
   }, [params.id, countsReloadKey]);
 
   if (loading) {
-    return (
-      <Box className="flex justify-center py-16">
-        <CircularProgress />
-      </Box>
-    );
+    return <PageSkeleton sections={1} fieldsPerSection={4} />;
   }
 
   if (loadError || !company) {

@@ -22,7 +22,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * The linked journey level's own display data rides along: its pathway name,
  * pillar, and milestones — the level's real compliance areas the landing card
  * renders as its feature checklist (the same data the client billing card
- * shows). The audit fee is the TP firm's charge for the level's manual audit.
+ * shows).
  *
  * Deliberately narrower than PackageResource — no timestamps, soft-delete
  * state, or other internal metadata.
@@ -39,7 +39,6 @@ class PublicPackageGroupResource extends JsonResource
             'name' => $this->name,
             'name_kh' => $this->name_kh,
             'description' => $this->description,
-            'audit_fee_cents' => $this->audit_fee_cents,
             'industry_code' => $this->whenLoaded('industry', fn () => $this->industry?->code),
             'journey_level_code' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->code),
             'pathway_name' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->pathway_name),

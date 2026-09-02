@@ -22,6 +22,7 @@ class IssueAuthTokenAction
     /** @return array{user: UserResource, token: string, totp_required: bool, totp_confirmed?: bool} */
     public function execute(User $user): array
     {
+        $user->load('companies');
         // Platform-wide kill switch (settings.manage, Settings > Security) — for
         // demos, overrides both the role-derived/per-user requiresTwoFactor()
         // check below AND prior enrollment (hasTwoFactorEnabled()), so a

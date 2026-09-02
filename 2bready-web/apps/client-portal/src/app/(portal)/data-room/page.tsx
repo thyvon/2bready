@@ -11,13 +11,11 @@ import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined';
-import { Breadcrumbs, SectionCard, GlowButton, ConfirmDialog, CopySecretField } from '@2bready/ui-core';
+import { SectionCard, GlowButton, ConfirmDialog, CopySecretField } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
-import { useNavItems } from '@/components/layout/nav-items';
 import { useJourney } from '@/components/JourneyProvider';
-import { PageLoader } from '@/components/PageLoader';
+import { PackageDialog } from '@/components/dashboard/PackageDialog';
 import { levelTotalDocs, levelVerifiedDocs } from '@/lib/journey-api';
-import { listMySubscriptions } from '@/lib/subscription-api';
 import {
   getMyDataRoomLink,
   createDataRoomLink,
@@ -25,14 +23,13 @@ import {
   type DataRoomLink,
 } from '@/lib/data-room-api';
 import { useToast } from '@/components/ToastProvider';
-import { getApiError } from '@2bready/api-client';
+import { getApiError } from '@/lib/utils';
 
 export default function DataRoomPage() {
   const { t } = useTranslation();
-  const { all } = useNavItems();
-  const item = all.find((i) => i.href === '/data-room');
-  const { journey, loading: journeyLoading } = useJourney();
+  const { journey, subscriptions } = useJourney();
   const toast = useToast();
+  const [packageDialogOpen, setPackageDialogOpen] = useState(false);
 
   const FEATURES = [
     { icon: <LinkOutlinedIcon fontSize="small" />, title: t('data_room.feature_one_link_title'), desc: t('data_room.feature_one_link_desc') },
@@ -47,8 +44,7 @@ export default function DataRoomPage() {
   const l4Milestones = l4?.milestones.length ?? 0;
   const l4Complete = l4TotalDocs > 0 && l4VerifiedDocs === l4TotalDocs;
 
-  const [subLoading, setSubLoading] = useState(true);
-  const [hasEnterprisePlan, setHasEnterprisePlan] = useState(false);
+  const hasEnterprisePlan = subscriptions.some((s) => s.status === 'active' && s.package?.tier === 'enterprise');
 
   const [link, setLink] = useState<DataRoomLink | null>(null);
   const [linkLoading, setLinkLoading] = useState(false);
@@ -59,26 +55,6 @@ export default function DataRoomPage() {
   const [pendingRevoke, setPendingRevoke] = useState(false);
 
   const unlocked = hasEnterprisePlan && l4Complete;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadSubscription() {
-      setSubLoading(true);
-      try {
-        const subs = await listMySubscriptions();
-        const active = subs.some((s) => s.status === 'active' && s.package?.tier === 'enterprise');
-        if (!cancelled) setHasEnterprisePlan(active);
-      } finally {
-        if (!cancelled) setSubLoading(false);
-      }
-    }
-
-    loadSubscription();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -130,36 +106,9 @@ export default function DataRoomPage() {
     }
   };
 
-  if (journeyLoading || subLoading) return <PageLoader />;
-
-  const breadcrumb = (
-    <Breadcrumbs
-      icon={
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 40,
-            height: 40,
-            borderRadius: '8px',
-            bgcolor: 'text.primary',
-            color: 'background.paper',
-            flexShrink: 0,
-          }}
-        >
-          {item?.icon}
-        </Box>
-      }
-      items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'Data Room' }]}
-    />
-  );
-
   if (!unlocked) {
     return (
       <Box className="flex flex-col gap-6">
-        {breadcrumb}
-
         <Typography variant="body2" color="text.secondary">
           {t('data_room.desc_locked')}
         </Typography>
@@ -193,7 +142,7 @@ export default function DataRoomPage() {
               </Typography>
             </Box>
             <Box sx={{ mt: 1 }}>
-              <GlowButton href="/billing" size="medium">
+              <GlowButton size="medium" onClick={() => setPackageDialogOpen(true)}>
                 {t('data_room.upgrade_cta')}
               </GlowButton>
             </Box>
@@ -230,8 +179,6 @@ export default function DataRoomPage() {
 
   return (
     <Box className="flex flex-col gap-6">
-      {breadcrumb}
-
       <Typography variant="body2" color="text.secondary">
         {t('data_room.desc_unlocked')}
       </Typography>
@@ -336,6 +283,8 @@ export default function DataRoomPage() {
         onCancel={() => setPendingRevoke(false)}
         onConfirm={doRevoke}
       />
+
+      <PackageDialog open={packageDialogOpen} onClose={() => setPackageDialogOpen(false)} levelCode="L4" />
     </Box>
   );
 }

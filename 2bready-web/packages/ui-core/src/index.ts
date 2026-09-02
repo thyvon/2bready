@@ -21,3 +21,4 @@ export { PillToggle, type PillToggleProps, type PillToggleOption } from './PillT
 export { TopProgressBar } from './TopProgressBar';
 export { easeOut, easeOutExpo, pageTransition, fadeIn, cardGridContainer, cardGridItem, stepTransition } from './motion';
 export { cardRestShadow, cardHoverShadowNeutral, cardHoverGlow } from './cardElevation';
+export { DataTable, type DataTableProps, type DataTablePagination, type Column } from './DataTable';

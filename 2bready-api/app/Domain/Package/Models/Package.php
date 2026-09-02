@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int $price_cents
- * @property int $audit_fee_cents
  * @property BillingPeriod $billing_period
  * @property Tier $tier
  * @property bool $is_active
@@ -46,7 +45,6 @@ class Package extends Model
         'name_kh',
         'description',
         'price_cents',
-        'audit_fee_cents',
         'billing_period',
         'tier',
         'is_active',
@@ -58,7 +56,6 @@ class Package extends Model
     {
         return [
             'price_cents' => 'integer',
-            'audit_fee_cents' => 'integer',
             'billing_period' => BillingPeriod::class,
             'tier' => Tier::class,
             'is_active' => 'boolean',

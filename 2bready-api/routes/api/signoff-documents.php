@@ -12,12 +12,14 @@ use Illuminate\Support\Facades\Route;
 // internal roles see the verification queue (policy-gated powers).
 Route::prefix('signoff-documents')->group(function () {
     Route::get('/', [SignOffDocumentController::class, 'index']);
+    Route::get('verified-journey-documents', [SignOffDocumentController::class, 'verifiedJourneyDocuments']);
     Route::post('/', [SignOffDocumentController::class, 'store'])->middleware('permission:portal.client.access');
     Route::get('{document}', [SignOffDocumentController::class, 'show']);
     Route::delete('{document}', [SignOffDocumentController::class, 'destroy']);
     Route::post('{document}/verify', [SignOffDocumentController::class, 'verify']);
     Route::post('{document}/reject', [SignOffDocumentController::class, 'reject']);
     Route::post('{document}/send', [SignOffDocumentController::class, 'send']);
+    Route::post('send-journey-document/{documentId}', [SignOffDocumentController::class, 'sendJourneyDocument']);
 });
 
 // Staff side — "shared with me" + acknowledge. Numeric param bound by hand

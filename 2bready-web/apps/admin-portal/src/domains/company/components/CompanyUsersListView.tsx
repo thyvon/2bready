@@ -5,7 +5,7 @@ import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/EditOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useToast } from '@/components/feedback/ToastProvider';
 import CompanyUserEditDialog from '@/domains/company/components/CompanyUserEditDialog';

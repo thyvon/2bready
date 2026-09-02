@@ -1,6 +1,7 @@
 import { levelTotalDocs, type JourneyLevel } from './journey-api';
 import type { PackageGroup, PackagePrice } from './package-api';
 import type { components } from '@2bready/api-client';
+import type { TranslationKey } from './i18n';
 
 // Real pricing now — the public /pricing endpoint returns one PackageGroup per
 // journey level with the monthly + yearly options nested under `prices`
@@ -56,7 +57,7 @@ export function buildLevelPricing(packages: PackageGroup[], levels: JourneyLevel
     .filter((p): p is LevelPricing => p !== null);
 }
 
-export function levelSummary(level: JourneyLevel | null): string {
+export function levelSummary(level: JourneyLevel | null, t: (key: TranslationKey, vars?: Record<string, string | number>) => string): string {
   if (!level) return '';
-  return `${level.milestones.length} milestones · ${levelTotalDocs(level)} documents`;
+  return t('billing.level_summary', { milestones: level.milestones.length, documents: levelTotalDocs(level) });
 }

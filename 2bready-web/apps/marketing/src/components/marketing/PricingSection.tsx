@@ -268,12 +268,6 @@ export default function PricingSection() {
                       </Typography>
                     )}
                   </Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: isFree ? 'success.main' : 'text.secondary', fontWeight: 700, mb: 3, display: 'block' }}
-                  >
-                    {plan.fee}
-                  </Typography>
 
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem', mb: 3, pb: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
                     {plan.description}

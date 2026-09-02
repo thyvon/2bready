@@ -1071,6 +1071,38 @@ export interface paths {
         patch: operations["milestone.update"];
         trace?: never;
     };
+    "/v1/my-signoff-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mySignoffDocument.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/my-signoff-documents/{signoffDocumentUserId}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mySignoffDocument.acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pricing": {
         parameters: {
             query?: never;
@@ -1311,39 +1343,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/sops": {
+    "/v1/signoff-documents": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["sop.index"];
+        get: operations["signOffDocument.index"];
         put?: never;
-        post: operations["sop.store"];
+        post: operations["signOffDocument.store"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/sops/{sop}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["sop.show"];
-        put: operations["sop.update"];
-        post?: never;
-        delete: operations["sop.destroy"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/sops/{sop}/effective-content": {
+    "/v1/signoff-documents/verified-journey-documents": {
         parameters: {
             query?: never;
             header?: never;
@@ -1351,10 +1367,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Content a company should actually follow: its adoption override when one
-         *     exists, else the SOP's own content (Khmer falls back to English)
+         * Lists verified journey documents eligible for signoff.
+         *     Excludes documents already linked to a signoff_document record
          */
-        get: operations["sop.effectiveContent"];
+        get: operations["signOffDocument.verifiedJourneyDocuments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1363,120 +1379,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/sops/{sop}/pdf": {
+    "/v1/signoff-documents/{document}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        get: operations["signOffDocument.show"];
+        put?: never;
+        post?: never;
+        delete: operations["signOffDocument.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signoff-documents/{document}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["signOffDocument.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signoff-documents/{document}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["signOffDocument.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signoff-documents/{document}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["signOffDocument.send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signoff-documents/send-journey-document/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
-         * A4 PDF rendering of the SOP for the detail page's embedded viewer and
-         *     download — mirrors the on-screen view (both language sections)
+         * Send a verified journey document to staff for signoff.
+         *     Creates a signoff_document record linked to the journey document
          */
-        get: operations["sop.pdf"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/sops/{sop}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["sop.activate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/sops/{sop}/adopt": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["sop.adopt"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/sops/{sop}/signoffs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Tracking list: every employee assigned to this SOP and their status */
-        get: operations["sop.signoffIndex"];
-        put?: never;
-        /** Assign employees (of the current company) to read & acknowledge */
-        post: operations["sop.signoffStore"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/sops/sop-companies/{sopCompany}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["sop.unadopt"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/signoffs/{signoff}/acknowledge": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** The assigned employee reads & acknowledges their sign-off */
-        post: operations["sop.signoffAcknowledge"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/signoffs/mine": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** The current employee's own sign-offs across all SOPs */
-        get: operations["sop.signoffMine"];
-        put?: never;
-        post?: never;
+        post: operations["signOffDocument.sendJourneyDocument"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1864,6 +1844,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/trust-badges/{trustBadge}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The verification report behind a badge (owner-concept MVP 6.3.3.2):
+         *     enterprise profile, executive summary and the per-document
+         *     verification ledger for the badge's level. Company users may only
+         *     read their own (BelongsToCompany scopes the binding); internal
+         *     roles bypass by role
+         */
+        get: operations["trustBadge.report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/users": {
         parameters: {
             query?: never;
@@ -1969,11 +1972,6 @@ export interface components {
             /** @enum {string} */
             journey_level: "L3" | "L4";
         };
-        /** AdoptSopRequest */
-        AdoptSopRequest: {
-            override_content_en?: string | null;
-            override_content_kh?: string | null;
-        };
         /** AssignAuditorRequest */
         AssignAuditorRequest: {
             auditor_id: string;
@@ -2007,7 +2005,7 @@ export interface components {
                 name: string;
             };
             tp_hire_id: string;
-            tpHire?: {
+            tp_hire?: {
                 id: string;
                 status: components["schemas"]["TpHireStatus"];
                 tp_partner_id: string;
@@ -2177,18 +2175,6 @@ export interface components {
             latest_document: components["schemas"]["DocumentResource"] | null;
             children?: components["schemas"]["DocumentTemplateResource"][];
         };
-        /** EffectiveSopContentResource */
-        EffectiveSopContentResource: {
-            sop_id: string;
-            title: string;
-            version: string;
-            is_active: boolean;
-            is_global: boolean;
-            effective_at: string;
-            locale: string;
-            source: string;
-            content: string;
-        };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Format: email */
@@ -2295,6 +2281,7 @@ export interface components {
                          */
                         effective_since: string | null;
                         status: string | "pending";
+                        verified_at: string;
                         /**
                          * @description Null = shared taxonomy; set = this one company's own extra
                          *     requirement. Staff's per-company Journey tab uses this to know
@@ -2382,7 +2369,6 @@ export interface components {
             name: string;
             name_kh: string | null;
             description: string | null;
-            audit_fee_cents: number;
             industry_id: string | null;
             industry_code?: string;
             journey_level_id: string | null;
@@ -2497,7 +2483,6 @@ export interface components {
             name: string;
             name_kh: string | null;
             description: string | null;
-            audit_fee_cents: number;
             industry_code?: string;
             journey_level_code?: string;
             pathway_name?: string;
@@ -2581,8 +2566,8 @@ export interface components {
             name: string;
             permissions: unknown[];
         };
-        /** SendSopSignoffRequest */
-        SendSopSignoffRequest: {
+        /** SendSignoffDocumentRequest */
+        SendSignoffDocumentRequest: {
             user_ids: string[];
         };
         /**
@@ -2595,76 +2580,37 @@ export interface components {
             company_id: string;
             pin: string;
         };
-        /** SopCompany */
-        SopCompany: {
+        /** SignoffDocumentResource */
+        SignoffDocumentResource: {
             id: string;
-            sop_id: string;
             company_id: string;
-            override_content_en: string | null;
-            override_content_kh: string | null;
-            /** Format: date-time */
-            adopted_at: string;
-            adopted_by_user_id: string | null;
-            /** Format: date-time */
-            created_at: string | null;
-            /** Format: date-time */
-            updated_at: string | null;
-        };
-        /** SopResource */
-        SopResource: {
-            id: string;
+            document_id: string | null;
+            category: string;
             title: string;
-            version: string;
-            content_en: string;
-            content_kh: string | null;
-            effective_at: string;
-            is_active: boolean;
-            is_global: boolean;
-            company?: {
-                id: string;
-                name: string;
-            };
-            created_by?: {
-                id: string;
-                name: string;
-            };
-            adoptions?: {
-                id: string;
-                company: {
-                    id: string;
-                    name: string;
-                };
-                override_content_en: string | null;
-                override_content_kh: string | null;
-                adopted_at: string | null;
-                adopted_by: {
-                    id: string;
-                    name: string;
-                } | null;
-            }[];
+            original_filename: string;
+            mime_type: string;
+            size_bytes: number;
+            status: string;
+            rejection_comment: string | null;
+            uploaded_by_user_id: string | null;
+            verified_by_user_id: string | null;
+            verifier_name?: string;
+            verified_at: string;
+            /** @description Signed preview URL for the browser — raw path would 404. */
+            preview_url: string;
+            users?: components["schemas"]["SignoffDocumentUserResource"][];
+            /** Format: date-time */
             created_at: string | null;
-            updated_at: string | null;
         };
-        /** SopSignoffResource */
-        SopSignoffResource: {
+        /** SignoffDocumentUserResource */
+        SignoffDocumentUserResource: {
             id: string;
-            sop_id: string;
-            company_id: string;
-            sop?: {
-                id: string;
-                title: string;
-                version: string;
-            } | null;
-            user?: {
-                id: string;
-                name: string;
-            } | null;
+            signoff_document_id: string;
+            user_id: string;
+            user_name?: string;
+            emailed_at: string;
             signed_at: string;
-            sent_by?: {
-                id: string;
-                name: string;
-            } | null;
-            created_at: string;
+            document?: components["schemas"]["SignoffDocumentResource"];
         };
         /** StoreAuditRequest */
         StoreAuditRequest: {
@@ -2777,7 +2723,6 @@ export interface components {
             description?: string | null;
             monthly_price_cents: number;
             yearly_price_cents: number;
-            audit_fee_cents: number;
             industry_id?: string | null;
             journey_level_id?: string | null;
             /** @enum {string} */
@@ -2785,16 +2730,17 @@ export interface components {
             is_active?: boolean;
             sort_order?: number;
         };
-        /** StoreSopRequest */
-        StoreSopRequest: {
+        /** StoreSignoffDocumentRequest */
+        StoreSignoffDocumentRequest: {
+            /** @enum {string} */
+            category: "sales" | "marketing" | "finance" | "production" | "hr" | "other";
             title: string;
-            version: string;
-            content_en: string;
-            content_kh?: string | null;
-            /** Format: date-time */
-            effective_at?: string | null;
-            is_active?: boolean;
-            company_id?: string;
+            /**
+             * Format: binary
+             * @description PDFs and common document formats only — same spirit as the
+             *     compliance upload flow.
+             */
+            file: string;
         };
         /** StoreSupportTicketMessageRequest */
         StoreSupportTicketMessageRequest: {
@@ -2997,6 +2943,10 @@ export interface components {
             audit_id: string;
             certificate?: {
                 id: string;
+                /**
+                 * @description Signed URL (30-min), same delivery as the public verify
+                 *     endpoint — a raw storage path would 404 for the browser.
+                 */
                 pdf_url: string;
                 qr_payload_url: string;
                 master_verifier_stamp: unknown[];
@@ -3116,7 +3066,6 @@ export interface components {
             description?: string | null;
             monthly_price_cents?: number;
             yearly_price_cents?: number;
-            audit_fee_cents?: number;
             industry_id?: string | null;
             journey_level_id?: string | null;
             /** @enum {string} */
@@ -3134,17 +3083,6 @@ export interface components {
             name: string;
             /** Format: email */
             email: string;
-        };
-        /** UpdateSopRequest */
-        UpdateSopRequest: {
-            title?: string;
-            version?: string;
-            content_en?: string;
-            content_kh?: string | null;
-            /** Format: date-time */
-            effective_at?: string | null;
-            is_active?: boolean;
-            company_id?: string;
         };
         /** UpdateSupportTicketStatusRequest */
         UpdateSupportTicketStatusRequest: {
@@ -3282,6 +3220,21 @@ export interface components {
          * @enum {string}
          */
         UserStatus: "active" | "inactive" | "suspended";
+        /** VerifiedJourneyDocumentResource */
+        VerifiedJourneyDocumentResource: {
+            id: string;
+            original_filename: string;
+            mime_type: string;
+            size_bytes: number;
+            status: string;
+            verified_at: string;
+            comment: string | null;
+            document_template?: {
+                id: string;
+                name: string;
+            };
+            preview_url: string;
+        };
         /** VerifyDataRoomAccessRequest */
         VerifyDataRoomAccessRequest: {
             pin: string;
@@ -5969,6 +5922,75 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "mySignoffDocument.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /**
+             * @description Rows carry the per-user state (emailed/signed) plus the nested
+             *     document — the UI needs both.
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SignoffDocumentUserResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "mySignoffDocument.acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                signoffDocumentUserId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            signoff_document_id: string;
+                            signed_at: string;
+                            document: components["schemas"]["SignoffDocumentResource"];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Sign-off request not found.";
+                        errors: string[];
+                    };
+                };
+            };
+        };
+    };
     "package.publicIndex": {
         parameters: {
             query?: never;
@@ -6549,11 +6571,9 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
-    "sop.index": {
+    "signOffDocument.index": {
         parameters: {
-            query?: {
-                is_active?: boolean;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -6566,7 +6586,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["SopResource"][];
+                        data: components["schemas"]["SignoffDocumentResource"][];
                         meta: string;
                     };
                 };
@@ -6575,7 +6595,7 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
-    "sop.store": {
+    "signOffDocument.store": {
         parameters: {
             query?: never;
             header?: never;
@@ -6584,7 +6604,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StoreSopRequest"];
+                "multipart/form-data": components["schemas"]["StoreSignoffDocumentRequest"];
             };
         };
         responses: {
@@ -6594,7 +6614,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["SopResource"];
+                        data: components["schemas"]["SignoffDocumentResource"];
                         meta: string;
                     };
                 };
@@ -6604,344 +6624,7 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
-    "sop.show": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["SopResource"];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.update": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["UpdateSopRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["SopResource"];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-            422: components["responses"]["ValidationException"];
-        };
-    };
-    "sop.destroy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            deleted: boolean;
-                        };
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.effectiveContent": {
-        parameters: {
-            query?: {
-                locale?: "en" | "kh" | null;
-            };
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["EffectiveSopContentResource"];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-            422: components["responses"]["ValidationException"];
-        };
-    };
-    "sop.pdf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    "Content-Disposition"?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/pdf": string;
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    /** @default false */
-                    active?: boolean;
-                };
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["SopResource"];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.adopt": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["AdoptSopRequest"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            sop_company: components["schemas"]["SopCompany"];
-                        };
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-            422: components["responses"]["ValidationException"];
-        };
-    };
-    "sop.signoffIndex": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["SopSignoffResource"][];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.signoffStore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop ID */
-                sop: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SendSopSignoffRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["SopSignoffResource"][];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-            422: components["responses"]["ValidationException"];
-        };
-    };
-    "sop.unadopt": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The sop company ID */
-                sopCompany: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            unadopted: boolean;
-                        };
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.signoffAcknowledge": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The signoff ID */
-                signoff: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["SopSignoffResource"];
-                        meta: string;
-                    };
-                };
-            };
-            401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
-            404: components["responses"]["ModelNotFoundException"];
-        };
-    };
-    "sop.signoffMine": {
+    "signOffDocument.verifiedJourneyDocuments": {
         parameters: {
             query?: never;
             header?: never;
@@ -6956,12 +6639,187 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["SopSignoffResource"][];
+                        data: components["schemas"]["VerifiedJourneyDocumentResource"][];
                         meta: string;
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "signOffDocument.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SignoffDocumentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "signOffDocument.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "signOffDocument.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SignoffDocumentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "signOffDocument.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SignoffDocumentResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "A rejection comment is required.";
+                        errors: string[];
+                    };
+                };
+            };
+        };
+    };
+    "signOffDocument.send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendSignoffDocumentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SignoffDocumentUserResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "signOffDocument.sendJourneyDocument": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendSignoffDocumentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SignoffDocumentUserResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "subscription.index": {
@@ -7897,6 +7755,71 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "trustBadge.report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The trust badge ID */
+                trustBadge: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            badge: {
+                                level: string;
+                                level_name: string;
+                                pathway_name: string;
+                                label: string;
+                                issued_at: string;
+                                verify_url: string | null;
+                                /**
+                                 * @description Live-generated QR of the verify URL — certificates.qr_payload_url
+                                 *     stores the URL itself, not an image, so the dialog needs this.
+                                 */
+                                qr_code: string;
+                            };
+                            company: {
+                                name: string;
+                                name_kh: string | null;
+                                sector: string;
+                                country: string;
+                                employee_count: number | null;
+                            };
+                            audit: {
+                                id: string;
+                                score: string | number;
+                                feedback: string;
+                                approved_at: string | null;
+                            };
+                            /** @description The certificate-style headline block mirrors the mockup's copy. */
+                            summary: string;
+                            stamp: string;
+                            ledger: {
+                                milestone: string;
+                                document: string;
+                                status: string;
+                                /** @constant */
+                                method: "Auditor review";
+                                verified_at: string | null;
+                            }[];
+                        };
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "user.index": {

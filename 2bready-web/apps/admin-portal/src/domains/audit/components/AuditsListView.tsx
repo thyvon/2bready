@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import InputAdornment from '@mui/material/InputAdornment';
 import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FormSelect from '@/components/forms/FormSelect';
 import { useToast } from '@/components/feedback/ToastProvider';
@@ -29,6 +30,7 @@ const AUDIT_STATUSES: { value: AuditStatus | ''; labelKey: TranslationKey }[] = 
 export default function AuditsListView() {
   const toast = useToast();
   const { t } = useTranslation();
+  const router = useRouter();
 
   const [audits, setAudits] = useState<Audit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export default function AuditsListView() {
         columns={columns}
         rows={audits}
         getRowId={(a) => a.id}
+        onRowClick={(a) => router.push(`/audits/${a.id}`)}
         loading={loading}
         emptyTitle={t('audit.no_audits')}
         emptyDescription={t('audit.no_audits_desc')}

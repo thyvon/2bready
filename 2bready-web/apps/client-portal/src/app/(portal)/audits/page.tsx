@@ -14,17 +14,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Rating from '@mui/material/Rating';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import Skeleton from '@mui/material/Skeleton';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import { Breadcrumbs, EmptyState, PillToggle, ConfirmDialog, SectionCard, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
+import { EmptyState, PillToggle, ConfirmDialog, SectionCard, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
 import { getApiError, formatCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-import { useNavItems } from '@/components/layout/nav-items';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { PageLoader } from '@/components/PageLoader';
 import { useToast } from '@/components/ToastProvider';
 import { useJourney } from '@/components/JourneyProvider';
 import { listActiveTpPartners, listMyTpHires, hireTpPartner, cancelTpHire, rateTpHire, type TpPartner, type TpHire } from '@/lib/marketplace-api';
@@ -72,14 +71,12 @@ function lowestPrice(partner: TpPartner): number | null {
 
 export default function AuditsPage() {
   const { t } = useTranslation();
-  const { all } = useNavItems();
-  const item = all.find((i) => i.href === '/audits');
   const toast = useToast();
-  const { journey, loading: journeyLoading } = useJourney();
+  const { journey } = useJourney();
 
   const [tpPartners, setTpPartners] = useState<TpPartner[]>([]);
   const [hires, setHires] = useState<TpHire[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [hiring, setHiring] = useState<string | null>(null);
   const [levelFilter, setLevelFilter] = useState<'all' | Level>('all');
   const [hireFilter, setHireFilter] = useState<'all' | 'pending_payment' | 'active' | 'completed'>('all');
@@ -114,7 +111,7 @@ export default function AuditsPage() {
       } catch {
         // No firms/hires yet is a valid empty state, not an error.
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadingInitial(false);
       }
     })();
     return () => {
@@ -217,31 +214,8 @@ export default function AuditsPage() {
     }
   }
 
-  if (loading || journeyLoading) return <PageLoader />;
-
   return (
     <Box className="flex flex-col gap-7">
-      <Breadcrumbs
-        icon={
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: '8px',
-              bgcolor: 'text.primary',
-              color: 'background.paper',
-              flexShrink: 0,
-            }}
-          >
-            {item?.icon}
-          </Box>
-        }
-        items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? t('nav.audits') }]}
-      />
-
       <Box component="section" className="flex flex-col gap-5">
         <PageHeader
           title={t('audits.marketplace_title')}
@@ -271,6 +245,7 @@ export default function AuditsPage() {
             <PillToggle
               options={[
                 { key: 'all', label: t('audits.filter_all_levels') },
+                { key: 'L1', label: 'L1' },
                 { key: 'L2', label: 'L2' },
                 { key: 'L3', label: 'L3' },
                 { key: 'L4', label: 'L4' },
@@ -294,7 +269,22 @@ export default function AuditsPage() {
           </Box>
         </SectionCard>
 
-        {tpPartners.length === 0 ? (
+        {loadingInitial ? (
+          <Box className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Box key={i} sx={{ borderRadius: '8px', boxShadow: cardRestShadow, bgcolor: 'background.paper', p: 2.5, display: 'flex', flexDirection: 'column', gap: 2.25 }}>
+                <Box className="flex items-center gap-2.5">
+                  <Skeleton variant="circular" width={44} height={44} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="70%" height={20} />
+                    <Skeleton variant="text" width="40%" height={14} />
+                  </Box>
+                </Box>
+                <Skeleton variant="rounded" height={120} sx={{ borderRadius: '8px' }} />
+              </Box>
+            ))}
+          </Box>
+        ) : tpPartners.length === 0 ? (
           <EmptyState title={t('audits.marketplace_empty_title')} description={t('audits.marketplace_empty_desc')} />
         ) : filteredPartners.length === 0 ? (
           <EmptyState title={t('audits.no_results_title')} description={t('audits.no_results_desc')} />

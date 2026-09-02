@@ -65,7 +65,7 @@ class CompanyController extends Controller
 
         return ApiResponse::created([
             'company' => new CompanyResource($company->load('industry')),
-            'user' => new UserResource($user->fresh()),
+            'user' => new UserResource($user->fresh()->load('companies')),
         ]);
     }
 
@@ -100,6 +100,6 @@ class CompanyController extends Controller
 
         $user = $action->execute($request->user(), $company);
 
-        return ApiResponse::success(new UserResource($user->fresh()));
+        return ApiResponse::success(new UserResource($user->fresh()->load('companies')));
     }
 }

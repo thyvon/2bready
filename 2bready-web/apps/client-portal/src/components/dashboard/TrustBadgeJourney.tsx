@@ -4,8 +4,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import { SectionCard } from '@2bready/ui-core';
-import { TIER_LABELS, type Tier } from '@/lib/journey-data';
+import { TIER_I18N, type Tier } from '@/lib/journey-data';
 import { LEVEL_EMOJI, type JourneyLevel } from '@/lib/journey-api';
+import { useTranslation, type TranslationKey } from '@/lib/i18n';
 
 export interface TrustBadgeJourneyProps {
   /** The real journey's levels — empty until a company has an activated journey. */
@@ -19,6 +20,7 @@ export interface TrustBadgeJourneyProps {
 }
 
 export function TrustBadgeJourney({ levels, unlockedLevels, tierByLevelCode, overallPct }: TrustBadgeJourneyProps) {
+  const { t } = useTranslation();
   return (
     <SectionCard
       title="Your Trust Badge Journey"
@@ -47,13 +49,13 @@ export function TrustBadgeJourney({ levels, unlockedLevels, tierByLevelCode, ove
                   {LEVEL_EMOJI[badge.code]} {badge.code} {badge.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {badge.pathway_name} · {tier ? TIER_LABELS[tier] : ''}
+                  {badge.pathway_name} · {tier ? t(TIER_I18N[tier] as TranslationKey) : ''}
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{ fontWeight: 600, mt: 0.5, color: unlocked ? 'success.main' : tier === 'free' ? 'text.secondary' : 'primary.main' }}
                 >
-                  {unlocked ? '✅ Unlocked' : tier === 'free' ? '🔒 Not started' : `🔒 Upgrade to ${tier ? TIER_LABELS[tier] : ''}`}
+                  {unlocked ? t('billing.status_unlocked' as TranslationKey) : tier === 'free' ? t('billing.status_not_started' as TranslationKey) : t('billing.status_upgrade_to' as TranslationKey, { tier: tier ? t(TIER_I18N[tier] as TranslationKey) : '' })}
                 </Typography>
               </Box>
             );

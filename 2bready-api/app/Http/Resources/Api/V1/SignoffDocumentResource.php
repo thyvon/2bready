@@ -20,6 +20,7 @@ class SignoffDocumentResource extends JsonResource
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
+            'document_id' => $this->document_id,
             'category' => $this->category->value,
             'title' => $this->title,
             'original_filename' => $this->original_filename,

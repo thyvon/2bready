@@ -124,6 +124,7 @@ class JourneyResource extends JsonResource
             // ComplianceAnchorResolver for what this actually drives.
             'effective_since' => $template->effective_since,
             'status' => $latestDocument?->status->value ?? 'pending',
+            'verified_at' => $latestDocument?->verified_at?->toISOString(),
             // Null = shared taxonomy; set = this one company's own extra
             // requirement. Staff's per-company Journey tab uses this to know
             // which nodes it may edit/delete here (client-portal ignores it

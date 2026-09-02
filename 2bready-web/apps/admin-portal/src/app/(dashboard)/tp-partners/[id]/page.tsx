@@ -19,7 +19,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FieldLabel from '@/components/forms/FieldLabel';
 import FormTextField from '@/components/forms/FormTextField';
@@ -79,16 +79,14 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
   // spinner or loses scroll. The mount effect below is the only loader.
   const load = useCallback(async () => {
     try {
-      const [partner, staff, hireList, { companies: companyList }] = await Promise.all([
+      const [partner, staff, hireList] = await Promise.all([
         getTpPartner(tpPartnerId),
         listAuditors(tpPartnerId),
         listTpHires(tpPartnerId),
-        listCompanies(),
       ]);
       setTpPartner(partner);
       setAuditors(staff);
       setHires(hireList);
-      setCompanies(companyList);
     } catch (err) {
       toast.error(getApiError(err).message);
     }
@@ -100,17 +98,15 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
     async function run() {
       setLoading(true);
       try {
-        const [partner, staff, hireList, { companies: companyList }] = await Promise.all([
+        const [partner, staff, hireList] = await Promise.all([
           getTpPartner(tpPartnerId),
           listAuditors(tpPartnerId),
           listTpHires(tpPartnerId),
-          listCompanies(),
         ]);
         if (!cancelled) {
           setTpPartner(partner);
           setAuditors(staff);
           setHires(hireList);
-          setCompanies(companyList);
         }
       } catch (err) {
         if (!cancelled) toast.error(getApiError(err).message);
@@ -126,6 +122,18 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tpPartnerId]);
+
+  const openHireDialog = async () => {
+    hireForm.reset();
+    setServerError('');
+    setHireDialogOpen(true);
+    try {
+      const { companies: companyList } = await listCompanies();
+      setCompanies(companyList);
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    }
+  };
 
   const staffForm = useForm<RegisterAuditorFormInput>({ resolver: zodResolver(registerAuditorFormSchema) });
   const hireForm = useForm<HireFormInput>({
@@ -342,7 +350,7 @@ export default function TpPartnerDetailPage({ params }: { params: Promise<{ id: 
         <SectionCard
           title={t('tp_partner.hires_title')}
           action={
-            <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => { hireForm.reset(); setServerError(''); setHireDialogOpen(true); }}>
+            <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => void openHireDialog()}>
               {t('tp_partner.new_hire')}
             </Button>
           }

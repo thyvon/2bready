@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import Box from '@mui/material/Box';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
@@ -25,7 +25,7 @@ import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { GlowButton, StatusBadge, LevelMedal, cardGridContainer, cardGridItem, cardRestShadow, cardHoverGlow } from '@2bready/ui-core';
 import { TIER_LABELS, type Tier } from '@/lib/journey-data';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, type TranslationKey } from '@/lib/i18n';
 import {
   DOC_STATUS_LABEL,
   levelTotalDocs,
@@ -37,7 +37,7 @@ import {
   type DocumentHistoryEntry,
 } from '@/lib/journey-api';
 
-const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
+const PILLAR_I18N_KEY: Record<string, string> = { comply: 'journey.pillar_comply', scale: 'journey.pillar_scale', lead: 'journey.pillar_lead' };
 
 // A milestone with any real progress (something uploaded, even if still
 // under review/rejected — anything past the untouched "pending" state)
@@ -47,14 +47,15 @@ function milestoneHasUpload(milestone: JourneyMilestone): boolean {
   return milestone.documents.some((doc) => toDocStatus(doc.status) !== 'pending');
 }
 
-function rollupStatus(verified: number, total: number): { label: string; color: 'success' | 'warning' | 'default' } {
-  if (total > 0 && verified === total) return { label: 'Complete', color: 'success' };
-  if (verified > 0) return { label: `${verified}/${total} verified`, color: 'warning' };
-  return { label: `0/${total} verified`, color: 'default' };
+function rollupStatus(verified: number, total: number, t: (key: TranslationKey, vars?: Record<string, string | number>) => string): { label: string; color: 'success' | 'warning' | 'default' } {
+  if (total > 0 && verified === total) return { label: t('journey.milestone_complete'), color: 'success' };
+  if (verified > 0) return { label: t('journey.milestone_verified_count', { verified: String(verified), total: String(total) }), color: 'warning' };
+  return { label: t('journey.milestone_zero_verified', { total: String(total) }), color: 'default' };
 }
 
 function StatusChip({ verified, total }: { verified: number; total: number }) {
-  const status = rollupStatus(verified, total);
+  const { t } = useTranslation();
+  const status = rollupStatus(verified, total, t);
   return <Chip label={status.label} size="small" color={status.color} variant="outlined" />;
 }
 
@@ -350,6 +351,7 @@ function DocumentRow({
   level,
   milestone,
   renderDocAction,
+  sentDocIds,
   onBackfillUpload,
   onPreviewDocument,
   isLastSibling,
@@ -359,10 +361,12 @@ function DocumentRow({
   level: JourneyLevel;
   milestone: JourneyMilestone;
   renderDocAction: RenderDocAction;
+  sentDocIds?: Set<string>;
   onBackfillUpload?: (doc: JourneyDocument, entry: DocumentHistoryEntry) => void;
   onPreviewDocument?: (documentId: string, title: string) => void;
   isLastSibling: boolean;
 }) {
+  const { t } = useTranslation();
   const recurrenceLabel = useRecurrenceLabel(doc);
 
   return (
@@ -384,10 +388,22 @@ function DocumentRow({
         ) : (
           <InsertDriveFileOutlinedIcon fontSize="small" sx={{ color: 'text.disabled', flexShrink: 0 }} />
         )}
-        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-          {doc.name}
-        </Typography>
+        <Box sx={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>
+            {doc.name}
+          </Typography>
+          {sentDocIds?.has(doc.document_id ?? '') && (
+            <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 500 }}>
+              {t('signoff_document.tab_sent')}
+            </Typography>
+          )}
+        </Box>
         {recurrenceLabel && <Chip label={recurrenceLabel} size="small" variant="outlined" />}
+        {toDocStatus(doc.status) === 'verified' && doc.verified_at && (
+          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+            {formatHistoryDate(doc.verified_at)}
+          </Typography>
+        )}
         {renderDocAction(doc, { level, milestone })}
       </Box>
       <DocumentHistory
@@ -396,13 +412,14 @@ function DocumentRow({
         onBackfillUpload={onBackfillUpload}
       />
       {doc.children.map((child, i) => (
-        <DocumentRow
+        <MemoizedDocumentRow
           key={child.id}
           doc={child}
           depth={depth + 1}
           level={level}
           milestone={milestone}
           renderDocAction={renderDocAction}
+          sentDocIds={sentDocIds}
           onBackfillUpload={onBackfillUpload}
           onPreviewDocument={onPreviewDocument}
           isLastSibling={i === doc.children.length - 1}
@@ -412,10 +429,13 @@ function DocumentRow({
   );
 }
 
+const MemoizedDocumentRow = memo(DocumentRow);
+
 function MilestoneRow({
   milestone,
   level,
   renderDocAction,
+  sentDocIds,
   onBackfillUpload,
   onPreviewDocument,
   defaultOpen,
@@ -423,6 +443,7 @@ function MilestoneRow({
   milestone: JourneyMilestone;
   level: JourneyLevel;
   renderDocAction: RenderDocAction;
+  sentDocIds?: Set<string>;
   onBackfillUpload?: (doc: JourneyDocument, entry: DocumentHistoryEntry) => void;
   onPreviewDocument?: (documentId: string, title: string) => void;
   defaultOpen: boolean;
@@ -461,13 +482,14 @@ function MilestoneRow({
       <Collapse in={open} timeout={180}>
         <Box sx={{ pl: 1, py: 0.5, display: 'flex', flexDirection: 'column' }}>
           {milestone.documents.map((doc, i) => (
-            <DocumentRow
+            <MemoizedDocumentRow
               key={doc.id}
               doc={doc}
               depth={0}
               level={level}
               milestone={milestone}
               renderDocAction={renderDocAction}
+              sentDocIds={sentDocIds}
               onBackfillUpload={onBackfillUpload}
               onPreviewDocument={onPreviewDocument}
               isLastSibling={i === milestone.documents.length - 1}
@@ -479,26 +501,35 @@ function MilestoneRow({
   );
 }
 
+const MemoizedMilestoneRow = memo(MilestoneRow);
+
 function LevelAccordion({
   badge,
   unlocked,
   tier,
   defaultMilestonesOpen,
   renderDocAction,
+  sentDocIds,
   onBackfillUpload,
   onPreviewDocument,
+  onUpgrade,
 }: {
   badge: JourneyLevel;
   unlocked: boolean;
   tier: Tier | undefined;
   defaultMilestonesOpen: boolean;
   renderDocAction: RenderDocAction;
+  sentDocIds?: Set<string>;
   onBackfillUpload?: (doc: JourneyDocument, entry: DocumentHistoryEntry) => void;
   onPreviewDocument?: (documentId: string, title: string) => void;
+  onUpgrade?: (levelCode: string) => void;
 }) {
+  const { t } = useTranslation();
   const totalDocs = levelTotalDocs(badge);
   const verifiedDocs = levelVerifiedDocs(badge);
   const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
+  const [userToggled, setUserToggled] = useState<boolean | null>(null);
+  const isExpanded = userToggled !== null ? userToggled : (unlocked || defaultMilestonesOpen);
 
   return (
     // Locked levels start collapsed — reduces the wall of content on first
@@ -507,7 +538,8 @@ function LevelAccordion({
     // levels open too, so a matching document never hides inside a
     // collapsed locked level.
     <Accordion
-      defaultExpanded={unlocked || defaultMilestonesOpen}
+      expanded={isExpanded}
+      onChange={(_, v) => setUserToggled(v)}
       sx={{
         borderRadius: '8px !important',
         // Resting state: quiet neutral elevation (same recipe as PillarCard).
@@ -535,11 +567,11 @@ function LevelAccordion({
               {badge.name} · {badge.pathway_name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {PILLAR_LABEL[badge.pillar] ?? badge.pillar} · {badge.milestones.length} milestones
+              {t((PILLAR_I18N_KEY[badge.pillar] ?? 'journey.pillar_comply') as TranslationKey)} · {badge.milestones.length} milestones
             </Typography>
           </Box>
           <Chip
-            label={unlocked ? 'UNLOCKED' : tier ? TIER_LABELS[tier] : 'LOCKED'}
+            label={unlocked ? t('journey.level_unlocked') : tier ? TIER_LABELS[tier] : t('journey.level_locked')}
             size="small"
             icon={unlocked ? <CheckCircleOutlinedIcon /> : <LockOutlinedIcon />}
             color={unlocked ? 'success' : undefined}
@@ -566,11 +598,12 @@ function LevelAccordion({
         </Box>
 
         {badge.milestones.map((milestone) => (
-          <MilestoneRow
+          <MemoizedMilestoneRow
             key={milestone.id}
             milestone={milestone}
             level={badge}
             renderDocAction={renderDocAction}
+            sentDocIds={sentDocIds}
             onBackfillUpload={onBackfillUpload}
             onPreviewDocument={onPreviewDocument}
             defaultOpen={defaultMilestonesOpen}
@@ -580,10 +613,10 @@ function LevelAccordion({
         {!unlocked && tier && (
           <Box className="flex items-center justify-between gap-3" sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Upgrade to {TIER_LABELS[tier]} to unlock this level.
+              {t('journey.upgrade_text', { tier: TIER_LABELS[tier] })}
             </Typography>
-            <GlowButton href="/billing" size="small">
-              Upgrade →
+            <GlowButton size="small" onClick={() => onUpgrade?.(badge.code)}>
+              {t('journey.upgrade_link')}
             </GlowButton>
           </Box>
         )}
@@ -591,6 +624,8 @@ function LevelAccordion({
     </Accordion>
   );
 }
+
+const MemoizedLevelAccordion = memo(LevelAccordion);
 
 export interface JourneyTreeProps {
   levels: JourneyLevel[];
@@ -601,10 +636,14 @@ export interface JourneyTreeProps {
   defaultMilestonesOpen?: boolean;
   /** What to render after each document's name — defaults to the plain status badge; the Documents page overrides this with real action buttons. */
   renderDocAction?: RenderDocAction;
+  /** Document IDs that have already been sent to staff — renders a small send icon badge next to the doc name. */
+  sentDocIds?: Set<string>;
   /** Called when the user picks a real past gap to file for — only offered on a periodic template's missing, non-current history entry. Omit to leave history read-only (e.g. a page with no upload flow of its own). */
   onBackfillUpload?: (doc: JourneyDocument, entry: DocumentHistoryEntry) => void;
   /** Opens the same preview dialog the main row's action uses, for a past history entry's document id — omitted anywhere history previewing isn't wired up (falls back to no preview icon on history rows). */
   onPreviewDocument?: (documentId: string, title: string) => void;
+  /** Opens the package selection dialog for an upgrade. */
+  onUpgrade?: (levelCode: string) => void;
 }
 
 // One Accordion per level, slim indented rows for milestones/documents —
@@ -619,21 +658,25 @@ export function JourneyTree({
   tierFor,
   defaultMilestonesOpen = false,
   renderDocAction = DefaultDocAction,
+  sentDocIds,
   onBackfillUpload,
   onPreviewDocument,
+  onUpgrade,
 }: JourneyTreeProps) {
   return (
     <Box component={motion.div} variants={cardGridContainer} initial="hidden" animate="show" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {levels.map((badge) => (
         <Box component={motion.div} key={badge.code} variants={cardGridItem}>
-          <LevelAccordion
+          <MemoizedLevelAccordion
             badge={badge}
             unlocked={isUnlocked(badge)}
             tier={tierFor?.(badge)}
             defaultMilestonesOpen={defaultMilestonesOpen}
             renderDocAction={renderDocAction}
+            sentDocIds={sentDocIds}
             onBackfillUpload={onBackfillUpload}
             onPreviewDocument={onPreviewDocument}
+            onUpgrade={onUpgrade}
           />
         </Box>
       ))}

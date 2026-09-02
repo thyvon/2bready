@@ -5,8 +5,9 @@ import Typography from '@mui/material/Typography';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import type { Pillar, Tier } from '@/lib/journey-data';
-import { TIER_LABELS } from '@/lib/journey-data';
+import { TIER_I18N } from '@/lib/journey-data';
 import { RadialMeter } from './RadialMeter';
+import { useTranslation, type TranslationKey } from '@/lib/i18n';
 
 export interface PillarCardProps {
   pillar: Pillar;
@@ -42,6 +43,7 @@ const TIER_ACCENT: Record<Tier, string> = {
 // preference is a light interface, this just gives the light card real
 // presence rather than reaching for a dark "black card" look.
 export function PillarCard({ pillar, icon, verifiedDocs, totalDocs, activeLevelCodes, unlocked }: PillarCardProps) {
+  const { t } = useTranslation();
   const pct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
   const levels = activeLevelCodes.join(' · ');
   const accent = TIER_ACCENT[pillar.tier];
@@ -120,7 +122,7 @@ export function PillarCard({ pillar, icon, verifiedDocs, totalDocs, activeLevelC
           }}
         >
           {unlocked ? <CheckCircleOutlinedIcon sx={{ fontSize: '0.875rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '0.875rem' }} />}
-          {unlocked ? 'UNLOCKED' : TIER_LABELS[pillar.tier]}
+          {unlocked ? t('billing.status_unlocked' as TranslationKey) : t(TIER_I18N[pillar.tier] as TranslationKey)}
         </Box>
       </Box>
 

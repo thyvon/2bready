@@ -12,6 +12,8 @@ import Paper from '@mui/material/Paper';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import MenuIcon from '@mui/icons-material/Menu';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { motion } from 'framer-motion';
 import Tooltip from '@mui/material/Tooltip';
 import { NavHoverLink } from '@2bready/ui-core';
@@ -24,12 +26,10 @@ import { UserMenu } from './UserMenu';
 import { useNavItems, isNavItemActive } from './nav-items';
 import { useTranslation } from '@/lib/i18n';
 import { useThemeBrandLogo } from '@/lib/branding';
+import { useLayoutStore, type NavMode } from '@/store/layout.store';
 import { useJourney } from '@/components/JourneyProvider';
 import { allDocuments, countVerified } from '@/lib/journey-api';
 
-// Delay before closing on mouse-leave — long enough that moving the cursor
-// from the trigger down into the panel (crossing the small gap between them)
-// doesn't flicker-close it, short enough that it doesn't feel sticky.
 const CLOSE_DELAY_MS = 150;
 
 interface NavPillItemProps {
@@ -42,18 +42,6 @@ interface NavPillItemProps {
   ariaExpanded?: boolean;
 }
 
-// Vercel-app-style nav item: a sliding pill background (framer-motion layoutId)
-// tracks whichever item is active, plus an immediate CSS hover pill on any
-// item — this is the dashboard/product-nav pattern (tabs with a highlight),
-// distinct from the marketing site's underline/roll-up nav. Shared by both
-// plain nav links (href) and the "More" dropdown trigger (onClick) so the
-// pill/hover/active styling lives in one place, not copy-pasted per usage.
-//
-// A plain-link item (href set) is natively focusable/keyboard-operable. A
-// trigger item (onClick, no href — only "More" today) is NOT, since it's a
-// bare div — give it button semantics (tabIndex/role/Enter+Space) so it's
-// reachable without a mouse; forwardRef lets the parent focus it back after
-// closing the dropdown with Escape.
 const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPillItem(
   { label, active, href, endIcon, onClick, ariaHasPopup, ariaExpanded },
   ref
@@ -116,12 +104,13 @@ const NavPillItem = forwardRef<HTMLDivElement, NavPillItemProps>(function NavPil
   );
 });
 
-export function PortalNavbar() {
+export function PortalNavbar({ mode = 'topbar' }: { mode?: NavMode }) {
   const pathname = usePathname();
   const logoUrl = useThemeBrandLogo();
   const { t } = useTranslation();
   const { primary, secondary, all } = useNavItems();
   const { journey } = useJourney();
+  const { sidebarCollapsed, toggleSidebarCollapsed } = useLayoutStore();
   const documents = allDocuments(journey);
   const overallPct = documents.length === 0 ? 0 : Math.round((countVerified(documents) / documents.length) * 100);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -150,9 +139,6 @@ export function PortalNavbar() {
     setMoreOpen(false);
     moreTriggerRef.current?.focus();
   };
-  // Keyboard activation (Enter/Space on the trigger) also moves focus into
-  // the panel — mouse-hover/click open doesn't, so hovering never hijacks a
-  // keyboard user's focus elsewhere on the page.
   const openMoreViaKeyboard = () => {
     openMore();
     requestAnimationFrame(() => firstItemRef.current?.focus());
@@ -167,9 +153,6 @@ export function PortalNavbar() {
         height: 56,
         display: 'flex',
         alignItems: 'center',
-        // On mobile, the flex children are just [logo, spacer, icon-cluster,
-        // hamburger] — 40px between each of those on a ~375px screen was
-        // enough on its own to push the hamburger button off-screen.
         gap: { xs: 2, md: 3 },
         px: { xs: 1.5, md: 3 },
         borderBottom: '1px solid',
@@ -180,111 +163,121 @@ export function PortalNavbar() {
         zIndex: 10,
       }}
     >
-      <Typography
-        component={Link}
-        href="/"
-        variant="body1"
-        sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none', flexShrink: 0 }}
-      >
-        <BrandLogo
-          logoUrl={logoUrl}
-          height={56}
-          maxWidth={180}
-          fallback={<BrandMark size={22} />}
-        />
-      </Typography>
-
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
-        {primary.map((item) => (
-          <NavPillItem key={item.href} href={item.href} label={item.label} active={isNavItemActive(pathname, item)} />
-        ))}
-
-        <Box
-          ref={moreAnchorRef}
-          onMouseEnter={openMore}
-          onMouseLeave={scheduleCloseMore}
-          sx={{ position: 'relative' }}
+      {/* Logo — visible only in topbar mode (sidebar mode has its own logo) */}
+      {mode === 'topbar' && (
+        <Typography
+          component={Link}
+          href="/"
+          variant="body1"
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', textDecoration: 'none', flexShrink: 0 }}
         >
-          <NavPillItem
-            ref={moreTriggerRef}
-            label={t('nav.more')}
-            active={secondaryActive}
-            onClick={openMoreViaKeyboard}
-            endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-            ariaHasPopup
-            ariaExpanded={moreOpen}
+          <BrandLogo
+            logoUrl={logoUrl}
+            height={56}
+            maxWidth={180}
+            fallback={<BrandMark size={22} />}
           />
+        </Typography>
+      )}
 
-          <Popper open={moreOpen} anchorEl={moreAnchor} placement="bottom-start" sx={{ zIndex: 20 }}>
-            <ClickAwayListener onClickAway={() => setMoreOpen(false)}>
-              <Paper
-                onMouseEnter={openMore}
-                onMouseLeave={scheduleCloseMore}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    e.stopPropagation();
-                    closeMoreAndRefocusTrigger();
-                  }
-                }}
-                sx={{
-                  mt: 1,
-                  width: 280,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05)',
-                  overflow: 'hidden',
-                }}
-              >
-                {secondary.map((item, index) => (
-                  <Box
-                    key={item.href}
-                    ref={index === 0 ? firstItemRef : undefined}
-                    component={Link}
-                    href={item.href}
-                    onClick={() => setMoreOpen(false)}
-                    sx={{
-                      display: 'block',
-                      textDecoration: 'none',
-                      px: 2,
-                      py: 1.25,
-                      bgcolor: isNavItemActive(pathname, item) ? 'action.selected' : 'transparent',
-                      transition: 'background-color 0.1s ease',
-                      '&:hover': { bgcolor: 'action.hover' },
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                      {item.label}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {item.description}
-                    </Typography>
-                  </Box>
-                ))}
-              </Paper>
-            </ClickAwayListener>
-          </Popper>
+      {/* Nav pills + More dropdown — only in topbar mode on desktop.
+          In sidebar mode the sidebar carries all navigation. */}
+      {mode === 'topbar' && (
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
+          {primary.map((item) => (
+            <NavPillItem key={item.href} href={item.href} label={item.label} active={isNavItemActive(pathname, item)} />
+          ))}
+
+          <Box
+            ref={moreAnchorRef}
+            onMouseEnter={openMore}
+            onMouseLeave={scheduleCloseMore}
+            sx={{ position: 'relative' }}
+          >
+            <NavPillItem
+              ref={moreTriggerRef}
+              label={t('nav.more')}
+              active={secondaryActive}
+              onClick={openMoreViaKeyboard}
+              endIcon={<KeyboardArrowDownIcon fontSize="small" />}
+              ariaHasPopup
+              ariaExpanded={moreOpen}
+            />
+
+            <Popper open={moreOpen} anchorEl={moreAnchor} placement="bottom-start" sx={{ zIndex: 20 }}>
+              <ClickAwayListener onClickAway={() => setMoreOpen(false)}>
+                <Paper
+                  onMouseEnter={openMore}
+                  onMouseLeave={scheduleCloseMore}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.stopPropagation();
+                      closeMoreAndRefocusTrigger();
+                    }
+                  }}
+                  sx={{
+                    mt: 1,
+                    width: 280,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {secondary.map((item, index) => (
+                    <Box
+                      key={item.href}
+                      ref={index === 0 ? firstItemRef : undefined}
+                      component={Link}
+                      href={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      sx={{
+                        display: 'block',
+                        textDecoration: 'none',
+                        px: 2,
+                        py: 1.25,
+                        bgcolor: isNavItemActive(pathname, item) ? 'action.selected' : 'transparent',
+                        transition: 'background-color 0.1s ease',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                        {item.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {item.description}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Paper>
+              </ClickAwayListener>
+            </Popper>
+          </Box>
         </Box>
-      </Box>
+      )}
 
+      {/* Sidebar collapse toggle — only in sidebar mode */}
+      {mode === 'sidebar' && (
+        <Tooltip title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          <IconButton
+            size="small"
+            onClick={toggleSidebarCollapsed}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+          >
+            {sidebarCollapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {/* Spacer */}
       <Box sx={{ flex: 1 }} />
 
-      {/* The header's own `gap: 5` is meant to separate broad groups (logo,
-          nav links, this cluster) — without its own tighter gap, these four
-          icon buttons would inherit that same 40px between each other. */}
+      {/* Right-side actions — always visible */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        {/* CompanySwitcher's text (a company name, potentially long) and the
-            donut together don't fit next to the hamburger button on a
-            narrow phone — they overflowed the viewport in production.
-            Notification/account stay icon-only (bounded width, no overflow
-            risk) so those remain reachable on mobile; company switching
-            isn't available there yet — a mobile-drawer entry for it is a
-            reasonable follow-up, not assumed here. */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
           <CompanySwitcher />
-          {/* Same verified/total ratio as the Overview hero (allDocuments +
-              countVerified over the real journey) — was a hardcoded 0% here
-              before real per-document status existed; that's no longer true. */}
           <Tooltip title="Audit Ready">
             <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
               <RadialMeter percent={overallPct} size={32} strokeWidth={4} fillColor="var(--mui-palette-primary-main)" />
@@ -295,12 +288,14 @@ export function PortalNavbar() {
         <UserMenu />
       </Box>
 
+      {/* Mobile hamburger — always visible */}
       <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
         <IconButton size="small" onClick={() => setMobileOpen(true)} aria-label={t('nav.open_menu')}>
           <MenuIcon />
         </IconButton>
       </Box>
 
+      {/* Mobile drawer — all nav items */}
       <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
         <Box sx={{ width: 260, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {all.map((item) => (

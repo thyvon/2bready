@@ -44,6 +44,8 @@ use App\Domain\Payment\Models\Subscription;
 use App\Domain\Payment\Policies\PaymentPolicy;
 use App\Domain\Payment\Policies\SubscriptionPolicy;
 use App\Domain\Shared\Services\MailSettingService;
+use App\Domain\SignOff\Models\SignoffDocument;
+use App\Domain\SignOff\Policies\SignOffDocumentPolicy;
 use App\Domain\TpPartner\Models\TpPartner;
 use App\Domain\TpPartner\Policies\TpPartnerPolicy;
 use App\Domain\TrustBadge\Listeners\IssueTrustBadgeListener;
@@ -118,6 +120,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lead::class, LeadPolicy::class);
         Gate::policy(TpPartner::class, TpPartnerPolicy::class);
         Gate::policy(TpHire::class, TpHirePolicy::class);
+        Gate::policy(SignoffDocument::class, SignOffDocumentPolicy::class);
 
         // Short, stable aliases for Payment::payable() instead of storing a
         // fully-qualified class name that breaks if a model is ever renamed

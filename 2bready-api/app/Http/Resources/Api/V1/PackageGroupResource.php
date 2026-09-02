@@ -28,7 +28,6 @@ class PackageGroupResource extends JsonResource
             'name' => $this->name,
             'name_kh' => $this->name_kh,
             'description' => $this->description,
-            'audit_fee_cents' => $this->audit_fee_cents,
             'industry_id' => $this->industry_id,
             'industry_code' => $this->whenLoaded('industry', fn () => $this->industry?->code),
             'journey_level_id' => $this->journey_level_id,

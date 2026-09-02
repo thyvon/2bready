@@ -39,6 +39,7 @@ export interface JourneyDocument {
   recurrence_type: RecurrenceType;
   expiry_months: number | null;
   status: string;
+  verified_at: string | null;
   company_id: string | null;
   history: DocumentHistoryEntry[];
   children: JourneyDocument[];

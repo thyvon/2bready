@@ -14,7 +14,6 @@ class PackageData extends Data
         public readonly ?string $description,
         public readonly int $monthly_price_cents,
         public readonly int $yearly_price_cents,
-        public readonly int $audit_fee_cents = 0,
         public readonly ?string $industry_id = null,
         public readonly ?string $journey_level_id = null,
         public readonly string $tier = 'free',

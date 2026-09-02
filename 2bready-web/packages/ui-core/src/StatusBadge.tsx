@@ -1,6 +1,7 @@
 'use client';
 
 import Chip from '@mui/material/Chip';
+import type { ReactElement } from 'react';
 
 type StatusKey =
   | 'active' | 'inactive' | 'suspended'
@@ -43,11 +44,13 @@ export interface StatusBadgeProps {
   status: string;
   /** Display text. Ui-core has no i18n of its own — pass the already-resolved label. */
   label?: string;
+  /** Optional icon to render before the label. */
+  icon?: ReactElement;
 }
 
 // Color mapping is the reusable part; text is always supplied by the caller
 // so this stays agnostic of whichever app's i18n system is calling it.
-export function StatusBadge({ status, label }: StatusBadgeProps) {
+export function StatusBadge({ status, label, icon }: StatusBadgeProps) {
   const color = STATUS_COLOR[status as StatusKey] ?? 'default';
-  return <Chip label={label ?? status} color={color} size="small" variant="outlined" />;
+  return <Chip icon={icon} label={label ?? status} color={color} size="small" variant="outlined" />;
 }

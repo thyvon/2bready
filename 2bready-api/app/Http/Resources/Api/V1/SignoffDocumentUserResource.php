@@ -23,6 +23,7 @@ class SignoffDocumentUserResource extends JsonResource
             'user_name' => $this->whenLoaded('user', fn () => $this->user?->name),
             'emailed_at' => $this->emailed_at?->toISOString(),
             'signed_at' => $this->signed_at?->toISOString(),
+            'document' => $this->whenLoaded('document', fn () => new SignoffDocumentResource($this->document)),
         ];
     }
 }

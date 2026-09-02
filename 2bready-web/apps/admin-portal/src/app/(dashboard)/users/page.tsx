@@ -24,7 +24,7 @@ import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ConfirmDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';

@@ -9,6 +9,15 @@
 // data (see project memory).
 export type Tier = 'free' | 'starter' | 'pro' | 'enterprise';
 
+/** i18n keys for tier labels — use `getTierLabel(t, tier)` for translated output. */
+export const TIER_I18N: Record<Tier, string> = {
+  free: 'billing.tier_free',
+  starter: 'billing.tier_starter',
+  pro: 'billing.tier_pro',
+  enterprise: 'billing.tier_enterprise',
+};
+
+/** @deprecated Use `getTierLabel(t, tier)` instead for translated output. */
 export const TIER_LABELS: Record<Tier, string> = {
   free: 'FREE',
   starter: 'STARTER',

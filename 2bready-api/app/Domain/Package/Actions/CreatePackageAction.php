@@ -31,7 +31,6 @@ class CreatePackageAction
                     'name_kh' => $data->name_kh,
                     'description' => $data->description,
                     'price_cents' => $period === BillingPeriod::Monthly ? $data->monthly_price_cents : $data->yearly_price_cents,
-                    'audit_fee_cents' => $data->audit_fee_cents,
                     'billing_period' => $period,
                     'tier' => $data->tier,
                     'is_active' => $data->is_active,

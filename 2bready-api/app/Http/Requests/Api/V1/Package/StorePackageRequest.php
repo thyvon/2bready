@@ -17,7 +17,6 @@ class StorePackageRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:2000'],
             'monthly_price_cents' => ['required', 'integer', 'min:0'],
             'yearly_price_cents' => ['required', 'integer', 'min:0'],
-            'audit_fee_cents' => ['required', 'integer', 'min:0'],
             'industry_id' => ['nullable', 'string', 'exists:industries,id'],
             'journey_level_id' => ['nullable', 'string', 'exists:journey_levels,id'],
             'tier' => ['sometimes', 'string', 'in:free,starter,pro,enterprise'],

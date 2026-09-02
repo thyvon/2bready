@@ -17,7 +17,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
 import PageHeader from '@/components/ui/PageHeader';
 import SectionCard from '@/components/ui/SectionCard';
-import DataTable, { type Column } from '@/components/ui/DataTable';
+import { DataTable, type Column } from '@2bready/ui-core';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ConfirmDialog } from '@2bready/ui-core';
 import FieldLabel from '@/components/forms/FieldLabel';
@@ -26,7 +26,7 @@ import { useToast } from '@/components/feedback/ToastProvider';
 import { listTpPartners, createTpPartner, updateTpPartner, deleteTpPartner, approveTpPartner } from '@/domains/tp-partner/api';
 import type { TpPartner } from '@/domains/tp-partner/types';
 import { tpPartnerFormSchema, tpPartnerFormDefaults, type TpPartnerFormInput } from '@/domains/tp-partner/schemas';
-import { getApiError, formatCents } from '@/lib/utils';
+import { getApiError, formatCents, centsToDecimal, decimalToCents } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
 export default function TpPartnersPage() {
@@ -96,10 +96,10 @@ export default function TpPartnersPage() {
     reset({
       name: partner.name,
       name_kh: partner.name_kh ?? '',
-      price_l1: partner.price_l1_cents != null ? String(partner.price_l1_cents / 100) : '',
-      price_l2: partner.price_l2_cents != null ? String(partner.price_l2_cents / 100) : '',
-      price_l3: partner.price_l3_cents != null ? String(partner.price_l3_cents / 100) : '',
-      price_l4: partner.price_l4_cents != null ? String(partner.price_l4_cents / 100) : '',
+      price_l1: centsToDecimal(partner.price_l1_cents),
+      price_l2: centsToDecimal(partner.price_l2_cents),
+      price_l3: centsToDecimal(partner.price_l3_cents),
+      price_l4: centsToDecimal(partner.price_l4_cents),
     });
     setServerError('');
     setDialogOpen(true);
@@ -111,10 +111,10 @@ export default function TpPartnersPage() {
       const payload = {
         name: data.name,
         name_kh: data.name_kh || undefined,
-        price_l1_cents: data.price_l1 ? Math.round(Number(data.price_l1) * 100) : undefined,
-        price_l2_cents: data.price_l2 ? Math.round(Number(data.price_l2) * 100) : undefined,
-        price_l3_cents: data.price_l3 ? Math.round(Number(data.price_l3) * 100) : undefined,
-        price_l4_cents: data.price_l4 ? Math.round(Number(data.price_l4) * 100) : undefined,
+        price_l1_cents: data.price_l1 ? decimalToCents(data.price_l1) : undefined,
+        price_l2_cents: data.price_l2 ? decimalToCents(data.price_l2) : undefined,
+        price_l3_cents: data.price_l3 ? decimalToCents(data.price_l3) : undefined,
+        price_l4_cents: data.price_l4 ? decimalToCents(data.price_l4) : undefined,
       };
 
       if (editing) {

@@ -123,7 +123,7 @@ class TpPartnerController extends Controller
     {
         $this->authorize('view', $tpPartner);
 
-        return ApiResponse::success(UserResource::collection($tpPartner->auditors()->with('user.auditor')->get()->pluck('user')));
+        return ApiResponse::success(UserResource::collection($tpPartner->auditors()->with(['user.auditor', 'user.companies'])->get()->pluck('user')));
     }
 
     public function registerAuditor(TpPartner $tpPartner, RegisterAuditorRequest $request, RegisterTpAuditorAction $action): JsonResponse
@@ -132,6 +132,6 @@ class TpPartnerController extends Controller
 
         $user = $action->execute($tpPartner, RegisterAuditorData::from($request->validated()));
 
-        return ApiResponse::created(new UserResource($user));
+        return ApiResponse::created(new UserResource($user->load('companies')));
     }
 }

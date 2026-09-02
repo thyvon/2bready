@@ -6,11 +6,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 
 import SectionCard from '@/components/ui/SectionCard';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import FormSwitch from '@/components/forms/FormSwitch';
 import { ConfirmDialog } from '@2bready/ui-core';
 import { useToast } from '@/components/feedback/ToastProvider';
@@ -97,11 +97,7 @@ export default function SecuritySettingsPage() {
   };
 
   if (loading) {
-    return (
-      <Box className="flex justify-center py-16">
-        <CircularProgress />
-      </Box>
-    );
+    return <PageSkeleton sections={1} fieldsPerSection={3} />;
   }
 
   return (

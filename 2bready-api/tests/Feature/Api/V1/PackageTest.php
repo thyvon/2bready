@@ -80,12 +80,10 @@ it('lets an admin create a package', function () {
         'name' => 'Growth',
         'monthly_price_cents' => 1990,
         'yearly_price_cents' => 19900,
-        'audit_fee_cents' => 2500,
     ]);
 
     $response->assertCreated()
         ->assertJsonPath('data.name', 'Growth')
-        ->assertJsonPath('data.audit_fee_cents', 2500)
         ->assertJsonPath('data.prices.0.price_cents', 1990)
         ->assertJsonPath('data.prices.1.price_cents', 19900);
 
@@ -102,7 +100,6 @@ it('lets an admin create a package scoped to an industry', function () {
         'name' => 'Retail Growth',
         'monthly_price_cents' => 1990,
         'yearly_price_cents' => 19900,
-        'audit_fee_cents' => 0,
         'industry_id' => $industry->id,
     ]);
 
@@ -116,7 +113,6 @@ it('rejects a package with an unknown industry_id', function () {
         'name' => 'Growth',
         'monthly_price_cents' => 1990,
         'yearly_price_cents' => 19900,
-        'audit_fee_cents' => 0,
         'industry_id' => 'not-a-real-id',
     ])->assertUnprocessable()->assertJsonValidationErrors(['industry_id']);
 });
@@ -126,18 +122,7 @@ it('rejects package creation without required fields', function () {
 
     $this->actingAs($admin)->postJson('/api/v1/packages', [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'monthly_price_cents', 'yearly_price_cents', 'audit_fee_cents']);
-});
-
-it('rejects a negative audit fee', function () {
-    $admin = User::factory()->admin()->create();
-
-    $this->actingAs($admin)->postJson('/api/v1/packages', [
-        'name' => 'Growth',
-        'monthly_price_cents' => 1990,
-        'yearly_price_cents' => 19900,
-        'audit_fee_cents' => -100,
-    ])->assertUnprocessable()->assertJsonValidationErrors(['audit_fee_cents']);
+        ->assertJsonValidationErrors(['name', 'monthly_price_cents', 'yearly_price_cents']);
 });
 
 it('forbids a company_owner from creating a package', function () {
@@ -147,7 +132,6 @@ it('forbids a company_owner from creating a package', function () {
         'name' => 'Growth',
         'monthly_price_cents' => 1990,
         'yearly_price_cents' => 19900,
-        'audit_fee_cents' => 0,
     ])->assertForbidden();
 });
 
@@ -240,7 +224,6 @@ it('lets an admin create a package with a tier and journey level', function () {
         'name' => 'Product Excellence',
         'monthly_price_cents' => 490,
         'yearly_price_cents' => 4900,
-        'audit_fee_cents' => 2500,
         'tier' => 'pro',
         'journey_level_id' => $level->id,
     ]);
@@ -257,7 +240,6 @@ it('rejects a package with an unknown journey_level_id', function () {
         'name' => 'Growth',
         'monthly_price_cents' => 1990,
         'yearly_price_cents' => 19900,
-        'audit_fee_cents' => 0,
         'journey_level_id' => 'not-a-real-id',
     ])->assertUnprocessable()->assertJsonValidationErrors(['journey_level_id']);
 });
@@ -269,7 +251,6 @@ it('rejects a package with an invalid tier', function () {
         'name' => 'Growth',
         'monthly_price_cents' => 1990,
         'yearly_price_cents' => 19900,
-        'audit_fee_cents' => 0,
         'tier' => 'gold',
     ])->assertUnprocessable()->assertJsonValidationErrors(['tier']);
 });
@@ -305,7 +286,7 @@ it('nests the real journey level data in the public pricing list', function () {
     $template = JourneyTemplate::factory()->create(['country_code' => 'KH', 'industry_id' => $fnb->id]);
     $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pathway_name' => 'The Launchpad']);
     Milestone::factory()->create(['journey_level_id' => $level->id, 'name' => 'Corporate & Legal', 'sort_order' => 1]);
-    Package::factory()->create(['name' => 'Compliance Readiness', 'tier' => 'starter', 'journey_level_id' => $level->id, 'audit_fee_cents' => 0]);
+    Package::factory()->create(['name' => 'Compliance Readiness', 'tier' => 'starter', 'journey_level_id' => $level->id]);
 
     $response = $this->getJson('/api/v1/pricing');
 
@@ -313,7 +294,6 @@ it('nests the real journey level data in the public pricing list', function () {
         ->assertJsonPath('data.0.tier', 'starter')
         ->assertJsonPath('data.0.journey_level_code', 'L1')
         ->assertJsonPath('data.0.pathway_name', 'The Launchpad')
-        ->assertJsonPath('data.0.audit_fee_cents', 0)
         ->assertJsonPath('data.0.milestones.0.name', 'Corporate & Legal');
 });
 

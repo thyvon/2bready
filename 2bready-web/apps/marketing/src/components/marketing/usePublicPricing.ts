@@ -29,7 +29,6 @@ type ApiPackageGroup = {
   name: string;
   name_kh: string | null;
   description: string;
-  audit_fee_cents: string | number;
   journey_level_code: string;
   pathway_name?: string;
   pillar?: string;
@@ -65,9 +64,6 @@ export type PricingPlan = {
   name: string;
   monthlyCents: number | null;
   yearlyCents: number | null;
-  /** The TP firm's manual-audit fee at this level, in cents. */
-  auditFeeCents: number;
-  fee: string;
   description: string;
   milestones: PlanMilestone[];
   cta: { label: string; href: string };
@@ -88,9 +84,9 @@ export function yearlySavePct(monthlyCents: number | null, yearlyCents: number |
 }
 
 // The API is the source of truth for EVERYTHING on the card — level, name,
-// price, period, milestones and their main document templates, and the audit
-// fee. Nothing static is mixed in; only the icon is position-matched. Works
-// for any number of packages.
+// price, period, milestones and their main document templates. Nothing static
+// is mixed in; only the icon is position-matched. Works for any number of
+// packages.
 function buildPlans(apiGroups: ApiPackageGroup[]): PricingPlan[] {
   const fallbackIcon: PricingPlan['icon'] = 'compliance';
 
@@ -104,7 +100,6 @@ function buildPlans(apiGroups: ApiPackageGroup[]): PricingPlan[] {
       description: m.description ?? null,
       documents: (m.document_templates ?? []).map((t) => ({ name: t.name, description: t.description ?? null })),
     }));
-    const auditFeeCents = Number(pkg.audit_fee_cents ?? 0);
 
     return {
       level: pkg.journey_level_code,
@@ -112,13 +107,8 @@ function buildPlans(apiGroups: ApiPackageGroup[]): PricingPlan[] {
       name: pkg.name,
       monthlyCents: findPrice('monthly'),
       yearlyCents: findPrice('yearly'),
-      auditFeeCents,
-      fee: auditFeeCents === 0 ? 'No verification fee' : `+${formatPrice(auditFeeCents)} manual audit fee`,
       description: pkg.description,
       milestones,
-      // Company registration lives in the client portal (admin has no
-      // self-signup); after signup + onboarding they pick this plan on
-      // Billing. Level carried as a param for a future preselect hook.
       cta: { label: 'Select Pathway', href: `${clientPortalUrl('/register')}?level=${pkg.journey_level_code.toLowerCase()}` },
     };
   });

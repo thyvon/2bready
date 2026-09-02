@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\SignOff\Models;
 
+use App\Domain\Document\Models\Document;
 use App\Domain\SignOff\Enums\SignoffDocumentCategory;
 use App\Domain\SignOff\Enums\SignoffDocumentStatus;
 use App\Domain\User\Models\User;
@@ -50,6 +51,7 @@ class SignoffDocument extends Model
 
     protected $fillable = [
         'company_id',
+        'document_id',
         'category',
         'title',
         'file_path',
@@ -77,6 +79,12 @@ class SignoffDocument extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by_user_id');
+    }
+
+    /** @return BelongsTo<Document, $this> */
+    public function document(): BelongsTo
+    {
+        return $this->belongsTo(Document::class);
     }
 
     /** @return BelongsTo<User, $this> */

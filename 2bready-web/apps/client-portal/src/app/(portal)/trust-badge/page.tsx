@@ -1,103 +1,63 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import Link from 'next/link';
-import { Breadcrumbs, SectionCard, EmptyState, GlowButton, ErrorState } from '@2bready/ui-core';
+import { SectionCard, EmptyState, GlowButton, ErrorState } from '@2bready/ui-core';
 import { useTranslation } from '@/lib/i18n';
-import { useNavItems } from '@/components/layout/nav-items';
 import { TrustBadgeJourney } from '@/components/dashboard/TrustBadgeJourney';
 import { useJourney } from '@/components/JourneyProvider';
 import { usePackages } from '@/components/PackageProvider';
-import { PageLoader } from '@/components/PageLoader';
 import { allDocuments, countVerified } from '@/lib/journey-api';
 import { tierByLevelCode } from '@/lib/package-api';
-import { listTrustBadges, type TrustBadge } from '@/lib/trust-badge-api';
 import { formatDate } from '@/lib/utils';
 
 export default function TrustBadgePage() {
   const { t } = useTranslation();
-  const { all } = useNavItems();
-  const item = all.find((i) => i.href === '/trust-badge');
-  const { journey, loading: journeyLoading } = useJourney();
-  const { packages, loading: packagesLoading } = usePackages();
+  const { journey, loading, trustBadges, trustBadgesError, refetchAll } = useJourney();
+  const { packages } = usePackages();
   const levels = journey?.levels ?? [];
   const documents = allDocuments(journey);
   const totalDocs = documents.length;
   const verifiedDocs = countVerified(documents);
   const overallPct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
   const unlockedLevels = levels.filter((level) => level.unlocked).map((level) => level.code);
+  const tierMap = useMemo(() => tierByLevelCode(packages), [packages]);
 
-  const [badges, setBadges] = useState<TrustBadge[]>([]);
-  const [badgesLoading, setBadgesLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadBadges() {
-      setBadgesLoading(true);
-      setLoadError(false);
-      try {
-        const earned = await listTrustBadges();
-        if (!cancelled) setBadges(earned);
-      } catch {
-        if (!cancelled) setLoadError(true);
-      } finally {
-        if (!cancelled) setBadgesLoading(false);
-      }
-    }
-
-    void loadBadges();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (journeyLoading || packagesLoading || badgesLoading) return <PageLoader />;
-
-  const firstBadge = badges[0];
+  const firstBadge = trustBadges[0];
 
   return (
     <Box className="flex flex-col gap-6">
-      <Breadcrumbs
-        icon={
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: '8px',
-              bgcolor: 'text.primary',
-              color: 'background.paper',
-              flexShrink: 0,
-            }}
-          >
-            {item?.icon}
-          </Box>
-        }
-        items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'Trust Badge' }]}
-      />
-
       <Typography variant="body2" color="text.secondary">
         {t('trust_badge.intro')}
       </Typography>
 
-      {loadError ? (
+      {loading ? (
+        <SectionCard>
+          <Box className="flex flex-col gap-3">
+            <Box className="flex items-center gap-3">
+              <Skeleton variant="circular" width={56} height={56} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" height={24} />
+                <Skeleton variant="text" width="40%" height={16} />
+              </Box>
+            </Box>
+          </Box>
+        </SectionCard>
+      ) : trustBadgesError ? (
         <ErrorState
           title={t('trust_badge.load_error')}
-          action={<GlowButton size="small" onClick={() => window.location.reload()}>{t('common.retry')}</GlowButton>}
+          action={<GlowButton size="small" onClick={() => void refetchAll()}>{t('common.retry')}</GlowButton>}
         />
-      ) : badges.length === 0 ? (
+      ) : trustBadges.length === 0 ? (
         <SectionCard>
           <Box className="flex flex-col items-center text-center gap-3" sx={{ py: 3 }}>
             <Box
@@ -139,7 +99,7 @@ export default function TrustBadgePage() {
         </SectionCard>
       ) : (
         <Stack spacing={2}>
-          {badges.map((badge) => {
+          {trustBadges.map((badge) => {
             const certificate = badge.certificate ?? null;
             return (
               <SectionCard key={badge.id}>
@@ -225,12 +185,17 @@ export default function TrustBadgePage() {
       <TrustBadgeJourney
         levels={levels}
         unlockedLevels={unlockedLevels}
-        tierByLevelCode={tierByLevelCode(packages)}
+        tierByLevelCode={tierMap}
         overallPct={overallPct}
       />
 
       <SectionCard title={t('trust_badge.public_verification_title')} subtitle={t('trust_badge.public_verification_subtitle')}>
-        {firstBadge?.certificate ? (
+        {loading ? (
+          <Box className="flex flex-col items-center text-center gap-3" sx={{ py: 2 }}>
+            <Skeleton variant="rounded" width="80%" height={16} />
+            <Skeleton variant="rounded" width="60%" height={16} />
+          </Box>
+        ) : firstBadge?.certificate ? (
           <Box className="flex flex-col items-center text-center gap-3" sx={{ py: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'success.main' }}>
               <VerifiedIcon fontSize="small" />

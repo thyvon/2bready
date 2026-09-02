@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type ReactElement } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -11,35 +11,34 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Typography from '@mui/material/Typography';
+import Avatar from '@mui/material/Avatar';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
+import HourglassTopOutlinedIcon from '@mui/icons-material/HourglassTopOutlined';
+import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import { getApiError } from '@2bready/api-client';
 import api from '@/lib/api';
-import {
-  Breadcrumbs,
-  SectionCard,
-  EmptyState,
-  StatusBadge,
-  DocumentPreviewDialog,
-  DocumentUploadPreviewDialog,
-  PillToggle,
-  ConfirmDialog,
-} from '@2bready/ui-core';
-import { useTranslation } from '@/lib/i18n';
-import { useNavItems } from '@/components/layout/nav-items';
+import { SectionCard, EmptyState, StatusBadge, DocumentPreviewDialog, DocumentUploadPreviewDialog, PillToggle, ConfirmDialog } from '@2bready/ui-core';
+import Skeleton from '@mui/material/Skeleton';
+import { useTranslation, type TranslationKey } from '@/lib/i18n';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { JourneyTree, type RenderDocAction } from '@/components/dashboard/JourneyTree';
+import { PackageDialog } from '@/components/dashboard/PackageDialog';
 import { useJourney } from '@/components/JourneyProvider';
 import { usePackages } from '@/components/PackageProvider';
-import { PageLoader } from '@/components/PageLoader';
 import { useToast } from '@/components/ToastProvider';
 import { useAuthStore } from '@/store/auth.store';
 import { TIER_LABELS } from '@/lib/journey-data';
@@ -57,14 +56,16 @@ import { tierByLevelCode } from '@/lib/package-api';
 import { uploadDocument, getPreviewUrl } from '@/lib/document-api';
 import { getLegalConsentStatus } from '@/lib/legal-consent-api';
 import { LegalConsentDialog } from '@/components/LegalConsentDialog';
+import { sendJourneyDocumentToStaff, listSignoffDocuments, type SignoffDocument } from '@/lib/signoff-document-api';
+import { listCompanyUsers } from '@/lib/company-api';
 
-const FILTERS: Array<{ key: DocStatus | 'all'; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'verified', label: 'Verified' },
-  { key: 'review', label: 'In Review' },
-  { key: 'rejected', label: 'Rejected' },
-  { key: 'expired', label: 'Expired' },
+const FILTERS: Array<{ key: DocStatus | 'all'; labelKey: TranslationKey }> = [
+  { key: 'all', labelKey: 'journey.filter_all' },
+  { key: 'pending', labelKey: 'journey.filter_pending' },
+  { key: 'verified', labelKey: 'journey.filter_verified' },
+  { key: 'review', labelKey: 'journey.filter_review' },
+  { key: 'rejected', labelKey: 'journey.filter_rejected' },
+  { key: 'expired', labelKey: 'journey.filter_expired' },
 ];
 
 interface PreviewState {
@@ -84,8 +85,6 @@ const CLOSED_PREVIEW: PreviewState = { open: false, title: '', url: null, mimeTy
 // same data. Merged rather than kept as two near-identical pages.
 export default function JourneyPage() {
   const { t } = useTranslation();
-  const { all } = useNavItems();
-  const item = all.find((i) => i.href === '/journey');
   const { journey, loading, refetch } = useJourney();
   const { packages } = usePackages();
   const toast = useToast();
@@ -142,6 +141,27 @@ export default function JourneyPage() {
   // Delete sub-document confirmation state
   const [deleteSubDoc, setDeleteSubDoc] = useState<JourneyDocument | null>(null);
 
+  // Send to staff dialog state — supports single-doc and bulk send
+  const [sendDocs, setSendDocs] = useState<JourneyDocument[]>([]);
+  const [employees, setEmployees] = useState<Array<{ id: string; name: string; email: string }>>([]);
+  const [pickedRecipients, setPickedRecipients] = useState<string[]>([]);
+  const [sending, setSending] = useState(false);
+
+  // Signoff doc tracking — which journey docs have already been sent
+  const [sentSignoffs, setSentSignoffs] = useState<SignoffDocument[]>([]);
+  const signoffByDocId = useMemo(() => {
+    const map = new Map<string, SignoffDocument>();
+    for (const doc of sentSignoffs) {
+      if (doc.document_id) map.set(doc.document_id, doc);
+    }
+    return map;
+  }, [sentSignoffs]);
+
+  // Bulk selection state for verified unsent docs
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [packageDialogOpen, setPackageDialogOpen] = useState(false);
+  const [upgradeLevelCode, setUpgradeLevelCode] = useState<string | undefined>(undefined);
+
   // Legal consent gate (v3 §4.2): restricted P3/P4 (L3/L4) documents require
   // an accepted consent before preview/upload. We check status lazily on the
   // action (never pre-flight the whole journey) and queue the action to run
@@ -175,9 +195,23 @@ export default function JourneyPage() {
       }
       setConsentGate({ levelCode, textEn: status.text_en, textKh: status.text_kh, run });
     } catch (err) {
-      toast.error(getApiError(err).message || 'Could not check consent.');
+      toast.error(getApiError(err).message || t('journey.toast_consent_error'));
     }
   };
+
+  // Load signoff docs to track which journey docs have been sent
+  const fetchSignoffs = useCallback(async () => {
+    try {
+      const docs = await listSignoffDocuments();
+      setSentSignoffs(docs);
+    } catch {
+      // Non-critical — tree still works, just no send-status chips
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchSignoffs();
+  }, [fetchSignoffs]);
 
   function handleBackfillUpload(doc: JourneyDocument, entry: DocumentHistoryEntry) {
     setBackfillTarget({ doc, entry });
@@ -199,7 +233,7 @@ export default function JourneyPage() {
         await api.patch(`/my/document-templates/${addSubDoc.doc.id}`, {
           name: addSubDoc.name.trim(),
         });
-        toast.success('Sub-document updated.');
+        toast.success(t('journey.toast_subdoc_updated'));
       } else {
         await api.post(`/my/document-templates/${addSubDoc.doc.id}/children`, {
           name: addSubDoc.name.trim(),
@@ -208,12 +242,12 @@ export default function JourneyPage() {
           client_can_add_subdocs: false,
           recurrence_type: 'one_time',
         });
-        toast.success('Sub-document added.');
+        toast.success(t('journey.toast_subdoc_added'));
       }
       setAddSubDoc({ doc: null, name: '', editing: false });
       await refetch();
     } catch (err) {
-      toast.error(getApiError(err).message || 'Could not save sub-document.');
+      toast.error(getApiError(err).message || t('journey.toast_subdoc_could_not_save'));
     }
   }
 
@@ -225,10 +259,10 @@ export default function JourneyPage() {
     if (!deleteSubDoc) return;
     try {
       await api.delete(`/my/document-templates/${deleteSubDoc.id}`);
-      toast.success('Sub-document deleted.');
+      toast.success(t('journey.toast_subdoc_deleted'));
       await refetch();
     } catch (err) {
-      toast.error(getApiError(err).message || 'Could not delete sub-document.');
+      toast.error(getApiError(err).message || t('journey.toast_subdoc_could_not_delete'));
     } finally {
       setDeleteSubDoc(null);
     }
@@ -240,6 +274,35 @@ export default function JourneyPage() {
 
   function handleCancelAddSubDoc() {
     setAddSubDoc({ doc: null, name: '', editing: false });
+  }
+
+  function handleOpenSendDialog(docs: JourneyDocument[]) {
+    if (docs.length === 0) return;
+    setSendDocs(docs);
+    setPickedRecipients([]);
+    const companyId = currentCompanyId;
+    if (companyId) {
+      listCompanyUsers(companyId)
+        .then(setEmployees)
+        .catch(() => setEmployees([]));
+    }
+  }
+
+  async function handleSendToStaff() {
+    const docIds = sendDocs.map((d) => d.document_id).filter((id): id is string => !!id);
+    if (docIds.length === 0 || pickedRecipients.length === 0) return;
+    setSending(true);
+    try {
+      await Promise.all(docIds.map((id) => sendJourneyDocumentToStaff(id, pickedRecipients)));
+      toast.success(t('signoff_document.send_success'));
+      setSendDocs([]);
+      setSelectedIds(new Set());
+      void fetchSignoffs();
+    } catch (err) {
+      toast.error(getApiError(err).message);
+    } finally {
+      setSending(false);
+    }
   }
 
   const filteredLevels: JourneyLevel[] = useMemo(() => {
@@ -268,6 +331,17 @@ export default function JourneyPage() {
     0,
   );
 
+  function statusIcon(status: DocStatus | 'draft'): ReactNode {
+    switch (status) {
+      case 'pending': return <ScheduleOutlinedIcon fontSize="small" />;
+      case 'review': return <HourglassTopOutlinedIcon fontSize="small" />;
+      case 'verified': return <CheckCircleOutlinedIcon fontSize="small" />;
+      case 'rejected': return <ErrorOutlineIcon fontSize="small" />;
+      case 'expired': return <ErrorOutlineIcon fontSize="small" />;
+      case 'draft': return <EditOffOutlinedIcon fontSize="small" />;
+    }
+  }
+
   const renderDocAction: RenderDocAction = (doc, ctx) => {
     const status = toDocStatus(doc.status);
     const levelUnlocked = ctx.level.unlocked;
@@ -276,8 +350,8 @@ export default function JourneyPage() {
     if (!levelUnlocked) {
       return (
         <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
-          <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />
-          <Tooltip title={`Upgrade to ${TIER_LABELS[tierMap[levelCode]] ?? 'a paid'} plan to unlock this level`}>
+          <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} icon={statusIcon(status) as ReactElement} />
+          <Tooltip title={t('journey.tooltip_upgrade', { tier: TIER_LABELS[tierMap[levelCode]] ?? 'a paid' })}>
             <LockOutlinedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
           </Tooltip>
         </Box>
@@ -293,8 +367,8 @@ export default function JourneyPage() {
     if (draft && status !== 'verified' && status !== 'review') {
       return (
         <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
-          <StatusBadge status="draft" label="Draft" />
-          <Tooltip title="Review draft">
+          <StatusBadge status="draft" label={t('journey.status_draft')} icon={statusIcon('draft') as ReactElement} />
+          <Tooltip title={t('journey.tooltip_review_draft')}>
             <IconButton size="small" onClick={() => setStagedUpload({ doc, file: draft })}>
               <DescriptionOutlinedIcon fontSize="small" />
             </IconButton>
@@ -321,11 +395,14 @@ export default function JourneyPage() {
       />
     );
 
+    // Verified + has document_id — always show checkbox for bulk selection
+    const canSelect = status === 'verified' && !!doc.document_id;
+
     return (
       <Box className="flex items-center gap-2" sx={{ flexShrink: 0 }}>
-        <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} />
+        <StatusBadge status={status} label={DOC_STATUS_LABEL[status]} icon={statusIcon(status) as ReactElement} />
         {status === 'pending' && (
-          <Tooltip title="Upload">
+          <Tooltip title={t('journey.tooltip_upload')}>
             <IconButton size="small" component="label" loading={isUploading} disabled={isUploading}>
               <UploadOutlinedIcon fontSize="small" />
               {filePicker}
@@ -333,7 +410,7 @@ export default function JourneyPage() {
           </Tooltip>
         )}
         {(status === 'rejected' || status === 'expired') && (
-          <Tooltip title="Re-upload">
+          <Tooltip title={t('journey.tooltip_reupload')}>
             <IconButton size="small" component="label" loading={isUploading} disabled={isUploading}>
               <RefreshOutlinedIcon fontSize="small" />
               {filePicker}
@@ -343,23 +420,31 @@ export default function JourneyPage() {
         {(status === 'verified' || status === 'review') && (
           <>
             {doc.document_id && (
-              <Tooltip title="Preview">
+              <Tooltip title={t('journey.tooltip_preview')}>
                 <IconButton size="small" onClick={() => void gateByLevel(levelCode, () => handlePreview(doc.document_id!, doc.name))}>
                   <VisibilityOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
-            {status === 'verified' && (
-              <Tooltip title="Download">
-                <IconButton size="small">
-                  <DownloadOutlinedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+            {canSelect && (
+              <Checkbox
+                size="small"
+                checked={selectedIds.has(doc.id)}
+                onChange={() => {
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(doc.id)) next.delete(doc.id);
+                    else next.add(doc.id);
+                    return next;
+                  });
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
             )}
           </>
         )}
         {doc.client_can_add_subdocs && (
-          <Tooltip title="Add sub-document">
+          <Tooltip title={t('journey.tooltip_add_subdoc')}>
             <IconButton size="small" onClick={() => openAddSubDoc(doc)}>
               <AddIcon fontSize="small" />
             </IconButton>
@@ -367,12 +452,12 @@ export default function JourneyPage() {
         )}
         {doc.company_id === currentCompanyId && doc.parent_id && (
           <>
-            <Tooltip title="Edit sub-document">
+            <Tooltip title={t('journey.tooltip_edit_subdoc')}>
               <IconButton size="small" onClick={() => openEditSubDoc(doc)}>
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Delete sub-document">
+            <Tooltip title={t('journey.tooltip_delete_subdoc')}>
               <IconButton size="small" color="error" onClick={() => handleDeleteSubDoc(doc)}>
                 <DeleteOutlinedIcon fontSize="small" />
               </IconButton>
@@ -403,14 +488,14 @@ export default function JourneyPage() {
           return next;
         });
         setStagedUpload(null);
-        toast.success(`${doc.name} uploaded — now being scanned.`);
+        toast.success(t('journey.toast_uploaded', { name: doc.name }));
         // The malware scan runs on a background queue worker, not on this
         // request — poll for a bit so the tree updates itself the moment the
         // scan finishes (pending_scan → review), instead of requiring a
         // manual page reload to see it.
         void pollForScanResult(doc.id, doc.name);
       } catch (err) {
-        toast.error(getApiError(err).message || `Could not upload ${doc.name}. Please try again.`);
+        toast.error(getApiError(err).message || t('journey.toast_could_not_upload', { name: doc.name }));
       } finally {
         setUploadingIds((prev) => {
           const next = new Set(prev);
@@ -431,7 +516,7 @@ export default function JourneyPage() {
   function handleSaveDraft() {
     if (!stagedUpload) return;
     setDrafts((prev) => ({ ...prev, [stagedUpload.doc.id]: stagedUpload.file }));
-    toast.info(`${stagedUpload.doc.name} saved as a draft — confirm or replace it anytime.`);
+    toast.info(t('journey.toast_saved_draft', { name: stagedUpload.doc.name }));
     setStagedUpload(null);
   }
 
@@ -446,7 +531,7 @@ export default function JourneyPage() {
       const fresh = await refetch();
       const doc = findDocument(fresh, documentId);
       if (doc && toDocStatus(doc.status) !== 'pending') {
-        toast.success(`${docName} scan complete — now ${DOC_STATUS_LABEL[toDocStatus(doc.status)]}.`);
+        toast.success(t('journey.toast_scan_complete', { name: docName, status: DOC_STATUS_LABEL[toDocStatus(doc.status)] }));
         return;
       }
     }
@@ -465,46 +550,23 @@ export default function JourneyPage() {
       const result = await getPreviewUrl(documentId);
       setPreview((prev) => ({ ...prev, url: result.url, mimeType: result.mime_type, loading: false }));
     } catch (err) {
-      setPreview((prev) => ({ ...prev, loading: false, error: getApiError(err).message || 'Could not load preview.' }));
+      setPreview((prev) => ({ ...prev, loading: false, error: getApiError(err).message || t('journey.toast_preview_error') }));
     }
   }
 
-  if (loading) return <PageLoader />;
-
   return (
     <Box className="flex flex-col gap-6">
-      <Breadcrumbs
-        icon={
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: '8px',
-              bgcolor: 'text.primary',
-              color: 'background.paper',
-              flexShrink: 0,
-            }}
-          >
-            {item?.icon}
-          </Box>
-        }
-        items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'Compliance Journey' }]}
-      />
-
       <PageHeader
-        eyebrow="Journey → Level → Milestone → Documents"
-        title="Your full compliance checklist"
-        subtitle={`${levels.length} levels · ${totalDocs} documents total. Search or filter to find a document, or click a milestone to browse its checklist — Pro and Enterprise levels stay visible so you can see what upgrading unlocks.`}
+        eyebrow={t('journey.page_eyebrow')}
+        title={t('journey.page_title')}
+        subtitle={loading ? undefined : t('journey.page_subtitle', { levels: String(levels.length), total: String(totalDocs) })}
       />
 
       <SectionCard>
         <Box className="flex flex-col gap-4">
           <TextField
             size="small"
-            placeholder="Search documents..."
+            placeholder={t('journey.search_placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             slotProps={{
@@ -527,24 +589,85 @@ export default function JourneyPage() {
             }}
           />
 
-          <PillToggle options={FILTERS} value={filter} onChange={setFilter} layoutId="journey-filter-pill" />
+          <Box className="flex items-center justify-between gap-3">
+            <PillToggle
+              options={FILTERS.map((f) => ({ key: f.key, label: t(f.labelKey) }))}
+              value={filter}
+              onChange={setFilter}
+              layoutId="journey-filter-pill"
+            />
 
-          {totalMatches === 0 && <EmptyState title="No documents match" description="Try a different search term or filter." />}
+            {selectedIds.size > 0 && (
+              <Box className="flex items-center gap-3">
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<SendOutlinedIcon />}
+                  onClick={() => {
+                    const allDocs = levels.flatMap((l) => l.milestones.flatMap((m) => m.documents));
+                    const flat = allDocs.flatMap(function flatten(doc: JourneyDocument): JourneyDocument[] {
+                      return [doc, ...doc.children.flatMap(flatten)];
+                    });
+                    const selected = flat.filter((d) => selectedIds.has(d.id) && d.document_id && toDocStatus(d.status) === 'verified');
+                    handleOpenSendDialog(selected);
+                  }}
+                >
+                  {t('signoff_document.send_to_staff')} ({selectedIds.size})
+                </Button>
+                <Button size="small" variant="text" onClick={() => setSelectedIds(new Set())}>
+                  {t('common.clear')}
+                </Button>
+              </Box>
+            )}
+          </Box>
+
+          {!loading && totalMatches === 0 && <EmptyState title={t('journey.empty_no_match')} description={t('journey.empty_no_match_desc')} />}
         </Box>
       </SectionCard>
 
       {/* Outside the search/filter card — each level is its own Accordion/
           card below it, same as the taxonomy editor, rather than nesting
           every level inside one shared card. */}
-      {totalMatches > 0 && (
+      {loading ? (
+        <Box className="flex flex-col gap-4">
+          {[0, 1, 2].map((i) => (
+            <Box
+              key={i}
+              sx={{
+                borderRadius: '12px',
+                border: '1px solid',
+                borderColor: 'divider',
+                overflow: 'hidden',
+              }}
+            >
+              <Box sx={{ px: 2.5, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '6px', flexShrink: 0 }} />
+                <Skeleton variant="text" width={120 + (i % 2) * 40} height={18} />
+                <Skeleton variant="text" width={60} height={14} sx={{ ml: 'auto', opacity: 0.5 }} />
+              </Box>
+              <Box sx={{ px: 2.5, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {[0, 1].map((j) => (
+                  <Box key={j} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pl: 4 }}>
+                    <Skeleton variant="rounded" width={20} height={20} sx={{ borderRadius: '4px', flexShrink: 0 }} />
+                    <Skeleton variant="text" width={`${50 + (j % 3) * 15}%`} height={14} />
+                    <Skeleton variant="rounded" width={72} height={22} sx={{ borderRadius: '12px', flexShrink: 0, ml: 'auto' }} />
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      ) : totalMatches > 0 && (
         <JourneyTree
           levels={filteredLevels}
           isUnlocked={(level) => level.unlocked}
           tierFor={(level) => tierMap[level.code]}
           defaultMilestonesOpen={isFiltering}
           renderDocAction={renderDocAction}
+          sentDocIds={new Set(signoffByDocId.keys())}
           onBackfillUpload={handleBackfillUpload}
           onPreviewDocument={handlePreview}
+          onUpgrade={(code) => { setUpgradeLevelCode(code); setPackageDialogOpen(true); }}
         />
       )}
 
@@ -636,6 +759,44 @@ export default function JourneyPage() {
           run?.();
         }}
       />
+
+      {/* Send to staff dialog — single or bulk */}
+      <Dialog open={sendDocs.length > 0} onClose={() => setSendDocs([])} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('signoff_document.send_dialog_title')}</DialogTitle>
+        <DialogContent className="flex flex-col gap-4 pt-2">
+          <Typography variant="body2" color="text.secondary">
+            {sendDocs.length} {sendDocs.length === 1 ? 'document' : 'documents'}
+          </Typography>
+          {sendDocs.length <= 5 && (
+            <Box className="flex flex-col gap-0.5">
+              {sendDocs.map((d) => (
+                <Typography key={d.id} variant="caption" color="text.secondary">• {d.name}</Typography>
+              ))}
+            </Box>
+          )}
+          {employees.map((emp) => (
+            <Box key={emp.id} className="flex items-center gap-2">
+              <Checkbox checked={pickedRecipients.includes(emp.id)} onChange={(e) => {
+                setPickedRecipients((prev) => (e.target.checked ? [...prev, emp.id] : prev.filter((id) => id !== emp.id)));
+              }} />
+              <Avatar sx={{ width: 32, height: 32, fontSize: 14, bgcolor: 'primary.main' }}>
+                {emp.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography variant="body2">{emp.name}</Typography>
+                <Typography variant="caption" color="text.secondary">{emp.email}</Typography>
+              </Box>
+            </Box>
+          ))}
+          {employees.length === 0 && <Typography variant="body2" color="text.secondary">{t('signoff_document.no_employees')}</Typography>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="text" onClick={() => setSendDocs([])}>{t('common.cancel')}</Button>
+          <Button variant="contained" onClick={() => void handleSendToStaff()} loading={sending} disabled={pickedRecipients.length === 0}>{t('signoff_document.send_btn')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <PackageDialog open={packageDialogOpen} onClose={() => setPackageDialogOpen(false)} levelCode={upgradeLevelCode} />
     </Box>
   );
 }

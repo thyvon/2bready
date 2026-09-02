@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -48,6 +47,8 @@ interface LevelCardsGridProps {
   onOpenReport?: (levelCode: string) => void;
   /** Opens the level's certificate PDF in the shared preview dialog. */
   onOpenCertificate?: (levelCode: string) => void;
+  /** Opens the package selection dialog for an upgrade. */
+  onUpgrade?: (levelCode: string) => void;
 }
 
 /**
@@ -55,7 +56,7 @@ interface LevelCardsGridProps {
  * from `journey.levels` by code — they arrive sorted by sort_order across all
  * pillars, which is exactly the reading order this view wants.
  */
-export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel, onOpenReport, onOpenCertificate }: LevelCardsGridProps) {
+export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel, onOpenReport, onOpenCertificate, onUpgrade }: LevelCardsGridProps) {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -80,6 +81,7 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel, onOpe
           badge={badgesByLevel?.get(level.code)}
           onOpenReport={onOpenReport}
           onOpenCertificate={onOpenCertificate}
+          onUpgrade={onUpgrade}
         />
       ))}
 
@@ -93,6 +95,7 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel, onOpe
     badge,
     onOpenCertificate,
     onOpenReport,
+    onUpgrade,
   }: {
     level: JourneyLevel;
     pct: number;
@@ -100,22 +103,20 @@ export function LevelCardsGrid({ journey, activeLevelCodes, badgesByLevel, onOpe
     badge?: LevelBadgeLink;
     onOpenCertificate?: (levelCode: string) => void;
     onOpenReport?: (levelCode: string) => void;
+    onUpgrade?: (levelCode: string) => void;
   }) {
     const chip = isActivePlan ? (
       <Chip size="small" color="success" variant="outlined" label={t('journey.active_plan')} />
     ) : level.unlocked ? (
       <Chip size="small" variant="outlined" label={t('journey.unlocked')} />
     ) : (
-      // Locked levels upsell straight to the billing page.
-      <Link href="/billing">
-        <Chip
-          size="small"
-          icon={<LockOutlinedIcon fontSize="small" />}
-          variant="outlined"
-          label={t('journey.upgrade')}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </Link>
+      <Chip
+        size="small"
+        icon={<LockOutlinedIcon fontSize="small" />}
+        variant="outlined"
+        label={t('journey.upgrade')}
+        onClick={(e) => { e.stopPropagation(); onUpgrade?.(level.code); }}
+      />
     );
 
     const complete = pct === 100;

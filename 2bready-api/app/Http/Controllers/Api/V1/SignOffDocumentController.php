@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Document\Models\Document;
+use App\Domain\SignOff\Actions\ListVerifiedJourneyDocumentsAction;
 use App\Domain\SignOff\Actions\ReviewSignoffDocumentAction;
+use App\Domain\SignOff\Actions\SendJourneyDocumentToStaffAction;
 use App\Domain\SignOff\Actions\SendSignoffDocumentToStaffAction;
 use App\Domain\SignOff\Actions\UploadSignoffDocumentAction;
 use App\Domain\SignOff\Models\SignoffDocument;
@@ -15,6 +18,7 @@ use App\Http\Requests\Api\V1\SignOff\SendSignoffDocumentRequest;
 use App\Http\Requests\Api\V1\SignOff\StoreSignoffDocumentRequest;
 use App\Http\Resources\Api\V1\SignoffDocumentResource;
 use App\Http\Resources\Api\V1\SignoffDocumentUserResource;
+use App\Http\Resources\Api\V1\VerifiedJourneyDocumentResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,6 +54,20 @@ class SignOffDocumentController extends Controller
         }
 
         return ApiResponse::success(SignoffDocumentResource::collection($query->get()));
+    }
+
+    /**
+     * Lists verified journey documents eligible for signoff.
+     * Excludes documents already linked to a signoff_document record.
+     */
+    public function verifiedJourneyDocuments(Request $request, ListVerifiedJourneyDocumentsAction $action): JsonResponse
+    {
+        $this->authorize('viewAny', SignoffDocument::class);
+
+        $company = Company::findOrFail($request->user()->current_company_id);
+        $documents = $action->execute($company);
+
+        return ApiResponse::success(VerifiedJourneyDocumentResource::collection($documents));
     }
 
     public function store(StoreSignoffDocumentRequest $request, UploadSignoffDocumentAction $action): JsonResponse
@@ -140,6 +158,42 @@ class SignOffDocumentController extends Controller
         $rows = $action->execute(
             $signoffDocument,
             Company::find($signoffDocument->company_id),
+            $recipients->all(),
+            $request->user(),
+        );
+
+        return ApiResponse::success(SignoffDocumentUserResource::collection($rows));
+    }
+
+    /**
+     * Send a verified journey document to staff for signoff.
+     * Creates a signoff_document record linked to the journey document.
+     */
+    public function sendJourneyDocument(SendSignoffDocumentRequest $request, string $documentId, SendJourneyDocumentToStaffAction $action): JsonResponse
+    {
+        $this->authorize('viewAny', SignoffDocument::class);
+
+        $document = Document::query()
+            ->withoutGlobalScope('company')
+            ->where('id', $documentId)
+            ->where('company_id', $request->user()->current_company_id)
+            ->where('status', 'verified')
+            ->firstOrFail();
+
+        $company = Company::findOrFail($request->user()->current_company_id);
+
+        $recipients = User::query()
+            ->whereIn('id', $request->validated('user_ids'))
+            ->whereHas('companies', fn ($q) => $q->where('companies.id', $company->id))
+            ->pluck('id');
+
+        if ($recipients->isEmpty()) {
+            return ApiResponse::error('None of the selected users belong to this company.', [], 422);
+        }
+
+        $rows = $action->execute(
+            $document,
+            $company,
             $recipients->all(),
             $request->user(),
         );
