@@ -10,6 +10,11 @@ use App\Http\Controllers\Api\V1\Public\PublicVerificationController;
 use App\Http\Controllers\Api\V1\PublicDataRoomController;
 use Illuminate\Support\Facades\Route;
 
+// Health check endpoint — no auth, no middleware, used by Docker + Cloudflare Tunnel
+Route::get('health', function () {
+    return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
+});
+
 Route::prefix('v1')->group(function () {
     require __DIR__.'/api/auth.php';
 

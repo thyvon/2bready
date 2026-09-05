@@ -22,6 +22,7 @@
 2bready-web/out/
 
 # DevOps
+.env.production
 devops/nginx/certs/
 
 # OS

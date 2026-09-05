@@ -1,119 +1,308 @@
 # 2bReady
 
-Compliance-readiness SaaS platform. Companies register, follow a guided compliance journey (documents, audits, trust badges), while auditors review and admins run the back office.
+Compliance-readiness SaaS platform for Cambodian SMEs. Companies follow a guided compliance journey (documents, audits, trust badges), auditors review, admins run the back office.
 
-This is a monorepo with two projects that run together in local development:
-
-| Project | What it is | Stack |
-|---|---|---|
-| `2bready-api` | Backend REST API | Laravel 11, PHP 8.2+, PostgreSQL, Redis |
-| `2bready-web` | Frontend (marketing site + product app) | Next.js 16, TypeScript, MUI |
-
-For deep architecture/domain rules, see each project's own `CLAUDE.md` (`2bready-api/CLAUDE.md`, `2bready-web/CLAUDE.md`) and `Project Documents/2bReady_MVP_Proposal_v2.md`. This README is just "how do I get it running."
-
-## Prerequisites
-
-- **Docker Desktop** (or compatible engine) — the API's database/redis/storage all run in containers via Laravel Sail
-- **PHP 8.2+ and Composer** — only needed once, to install the API's `vendor/` folder before Sail can boot (Sail itself runs the app in a container, but bootstrapping `vendor/` needs a local PHP+Composer, or the Docker one-liner below)
-- **Node 20+ and npm** — for the frontend
-
-## First-time setup
-
-### 1. Clone and enter the repo
+## Quick Start
 
 ```bash
 git clone https://github.com/thyvon/2bready.git
 cd 2bready
+cp .env.production.example .env.production
+nano .env.production          # fill in required values
+make prod                     # build and start everything
 ```
 
-### 2. API (`2bready-api`)
+## Stack
 
-```bash
-cd 2bready-api
-cp .env.example .env
-
-# Install PHP dependencies
-composer install
-# No PHP/Composer installed locally? Use Docker instead:
-# docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install
-
-php artisan key:generate
-
-# Boots PostgreSQL, Redis, MinIO (S3-compatible storage), Mailpit
-./vendor/bin/sail up -d
-
-./vendor/bin/sail artisan migrate --seed
-```
-
-Optional shell alias so you can type `sail` instead of `./vendor/bin/sail` (add to `~/.bashrc` / `~/.zshrc`):
-
-```bash
-alias sail='[ -f sail ] && sh sail || ./vendor/bin/sail'
-```
-
-### 3. Web (`2bready-web`)
-
-```bash
-cd ../2bready-web
-cp .env.example .env.local
-npm install
-npm run dev
-```
-
-### 4. Open it
-
-| Service | URL |
+| Layer | Technology |
 |---|---|
-| Web app | http://localhost:3000 |
-| API | http://localhost:8080 |
-| Mailpit (email UI — password resets, verification emails) | http://localhost:8026 |
-| MinIO console (S3 storage — uploaded documents) | http://localhost:8901 (user: `sail` / password: `password`) |
+| Edge | Cloudflare Tunnel (TLS, CDN, DDoS protection) |
+| Reverse Proxy | Nginx Alpine (path-based routing) |
+| Backend | Laravel 11, PHP 8.3-FPM, Supervisor (4 processes) |
+| Queue Worker | Laravel Horizon (Redis) |
+| Frontend | Next.js 16 + React 19 + MUI v9 + Tailwind v4 (4 apps) |
+| Database | PostgreSQL 16 |
+| Cache/Queue | Redis 7 (AOF persistence) |
+| PDF | Gotenberg 8 (Chromium, Khmer fonts) |
 
-Seeding only creates roles/permissions, not a demo user. Register your first account at http://localhost:3000/register, then promote it to admin if you need back-office access:
+## Architecture
 
-```bash
-sail artisan tinker
->>> $user = \App\Models\User::first();
->>> $user->assignRole('admin');
+```
+                    Cloudflare Tunnel
+                           │
+                    Nginx (edge proxy)
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+  Marketing (/)    Admin (/admin)    Client (/portal)
+  TP Portal (/tp-portal)
+        │                  │                  │
+        └──────────┬───────┴──────────────────┘
+                   │
+             API (nginx + PHP-FPM
+              + Horizon + Scheduler)
+                   │
+        ┌──────────┼──────────┐
+        │          │          │
+   PostgreSQL   Redis    Gotenberg
 ```
 
-## Day-to-day (once set up)
+9 containers, single Docker bridge network, zero exposed ports.
 
-Two terminals:
+## Prerequisites
+
+- Docker 20.10+ and Docker Compose v2
+- Git
+- Cloudflare account (or use port exposure — see below)
+
+## Environment Setup
 
 ```bash
-# Terminal 1 — API
-cd 2bready-api && sail up -d
-
-# Terminal 2 — Web
-cd 2bready-web && npm run dev
+cp .env.production.example .env.production
+nano .env.production
 ```
 
-`sail up -d` is idempotent — leave it running across sessions, only `sail down` if you want to fully stop the containers.
+**Required variables:**
 
-## Common commands
+| Variable | How to generate |
+|---|---|
+| `APP_KEY` | `docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32));"` |
+| `DB_PASSWORD` | `openssl rand -base64 32` |
+| `REDIS_PASSWORD` | `openssl rand -base64 32` |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Dashboard → Networks → Tunnels → Create |
 
-**API** (`2bready-api`, run inside Sail):
+**Domain variables** (pre-filled for `2bready.systemsolution.online`):
+
+| Variable | Value |
+|---|---|
+| `APP_URL` | `https://2bready.systemsolution.online` |
+| `SANCTUM_STATEFUL_DOMAINS` | `2bready.systemsolution.online` |
+| `FRONTEND_URL` | `https://2bready.systemsolution.online/portal` |
+| `ADMIN_FRONTEND_URL` | `https://2bready.systemsolution.online/admin` |
+| `NEXT_PUBLIC_API_URL` | `https://2bready.systemsolution.online` |
+
+## Deploy
+
 ```bash
-sail test                                          # run tests (Pest)
-sail exec laravel.test ./vendor/bin/pint           # format code
-sail exec laravel.test ./vendor/bin/phpstan analyse # static analysis
-sail artisan migrate:fresh --seed                  # reset the database
-sail artisan scramble:export                       # regenerate OpenAPI spec
+make prod          # build + start
+make status        # verify all containers are up
 ```
 
-**Web** (`2bready-web`):
+First build takes 5-10 minutes. Subsequent starts are fast.
+
+## Commands
+
+### Production
+
+| Command | Description |
+|---|---|
+| `make prod` | Build and start production |
+| `make prod-build` | Full rebuild (no cache) |
+| `make stop` | Stop containers (data persists) |
+| `make stop-all` | Stop + remove volumes |
+| `make status` | Container status |
+| `make clean` | Remove everything (containers + images + volumes) |
+
+### Logs
+
+| Command | Description |
+|---|---|
+| `make logs` | All logs |
+| `make logs-api` | API only |
+| `make logs-web` | Admin portal only |
+| `make logs-client` | Client portal only |
+| `make logs-tp` | TP portal only |
+| `make logs-marketing` | Marketing only |
+
+### Database
+
+| Command | Description |
+|---|---|
+| `make migrate` | Run pending migrations |
+| `make seed` | Run seeders |
+| `make migrate-fresh` | Drop all + re-migrate + seed |
+
+### Maintenance
+
+| Command | Description |
+|---|---|
+| `make cache-clear` | Clear all caches |
+| `make optimize` | Cache config/routes/views |
+| `make shell-api` | Shell into API container |
+| `make generate-types` | Regenerate TypeScript types from API |
+
+## Deploying Updates
+
+### Code changes
+
 ```bash
-npm run dev             # dev server (http://localhost:3000)
-npm run build            # production build
-npm run type-check       # TypeScript, no emit
-npm run lint              # ESLint
-npm run generate:types   # regenerate src/types/api.generated.ts from the API's OpenAPI spec (needs the API running)
+git pull origin main
+make prod
+```
+
+### With migrations
+
+```bash
+git pull origin main
+make migrate
+make seed   # if new seeders included
+```
+
+### Config changes
+
+```bash
+make cache-clear
+make optimize
+```
+
+## Cloudflare Tunnel
+
+1. Cloudflare Dashboard → **Networks** → **Tunnels** → **Create a tunnel**
+2. Choose **Cloudflared** connector, name it (e.g., `2bready-prod`)
+3. Copy the tunnel token → paste into `.env.production` as `CLOUDFLARE_TUNNEL_TOKEN`
+4. **Public Hostnames** tab → add `2bready.systemsolution.online` → `http://nginx:80`
+
+### Without Cloudflare
+
+Uncomment the port mapping in `docker-compose.prod.yml`:
+
+```yaml
+nginx:
+  ports:
+    - '${NGINX_PORT:-8082}:80'
+```
+
+Comment out or remove the `cloudflared` service block.
+
+## API Container (4 processes)
+
+| Process | Purpose |
+|---|---|
+| `nginx` | Reverse proxy to PHP-FPM |
+| `php-fpm` | PHP application server |
+| `horizon` | Queue worker (certificate PDFs, malware scans, expiry jobs) |
+| `scheduler` | Cron task runner |
+
+If jobs pile up in Redis, check Horizon:
+
+```bash
+make shell-api
+php artisan horizon:status
 ```
 
 ## Troubleshooting
 
-- **Port already in use** (3000, 8080, 8026, 8901): something else on your machine is bound to it. `npm run dev` will auto-pick the next free port; for Sail, override with `FORWARD_DB_PORT`, `FORWARD_MAILPIT_DASHBOARD_PORT`, `FORWARD_MINIO_CONSOLE_PORT`, etc. in `2bready-api/.env`.
-- **Frontend API calls failing**: confirm `NEXT_PUBLIC_API_URL` in `2bready-web/.env.local` matches where the API is actually running (default `http://localhost:8080`).
-- **Frontend types out of sync with the API**: run `npm run generate:types` in `2bready-web` — never hand-edit `src/types/api.generated.ts`.
-- **Sail won't start**: make sure Docker Desktop is running, then `sail down && sail up -d` to recreate containers.
+**Containers won't start:**
+```bash
+make status
+make logs-api
+```
+
+**Health check fails:**
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec api wget -qO- http://localhost/health
+```
+
+**Database connection refused:**
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec postgres pg_isready -U 2bready
+```
+
+**Next.js 404s:**
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec nginx nginx -t
+```
+
+**PDF generation fails:**
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec gotenberg ls /usr/share/fonts/custom/
+```
+
+**Port conflicts:**
+```bash
+lsof -i :8082    # find what's using the port
+# change NGINX_PORT in .env.production
+```
+
+**Disk space:**
+```bash
+docker system df
+docker system prune -a --volumes
+```
+
+## Development
+
+```bash
+# API
+cd 2bready-api
+cp .env.example .env
+composer install
+php artisan key:generate
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate --seed
+
+# Frontend
+cd 2bready-web
+npm install
+npm run dev
+```
+
+| Service | Dev URL |
+|---|---|
+| API | http://localhost:8080 |
+| Web | http://localhost:3000 |
+| Mailpit | http://localhost:8026 |
+| MinIO | http://localhost:8901 |
+
+## Project Structure
+
+```
+2bready/
+├── 2bready-api/              Laravel 11 API
+│   ├── Dockerfile            Multi-stage (Composer + PHP-FPM)
+│   ├── app/Domain/           Business logic
+│   └── routes/api.php        API routes
+├── 2bready-web/              npm workspaces monorepo
+│   ├── apps/
+│   │   ├── admin-portal/     /admin
+│   │   ├── client-portal/    /portal
+│   │   ├── tp-portal/        /tp-portal
+│   │   └── marketing/        /
+│   └── packages/
+│       ├── api-client/       Generated TypeScript types
+│       └── ui-core/          Shared MUI components
+├── devops/                   Production configs
+│   ├── nginx/                Reverse proxy
+│   ├── php/                  PHP-FPM tuning
+│   └── supervisor/           Process manager
+├── docker-compose.prod.yml   9 services
+├── .env.production.example   Environment template
+├── Makefile                  One-command ops
+└── Project Documents/        Proposals, ERD
+```
+
+## CI
+
+| Pipeline | Checks |
+|---|---|
+| API | Pint → Larastan L6 → Pest (80% min) |
+| Admin Portal | TypeScript → ESLint → Build |
+| TP Portal | TypeScript → ESLint → Build |
+
+## Security
+
+- TLS terminated at Cloudflare (no server-side certs)
+- Security headers: X-Frame-Options, X-Content-Type-Options, XSS-Protection, Referrer-Policy
+- Zero exposed ports (Cloudflare Tunnel)
+- Gzip compression on text/css/js/json/svg
+- Static assets cached 30 days (immutable)
+- Hidden files blocked (except .well-known)
+- PHP `expose_php=Off`
+- Database/Redis internal to Docker network only
+
+## Docs
+
+- [Architecture proposal](Project Documents/2bReady_MVP_Proposal_v3.md)
+- [Engineering conventions](Project Documents/SKILL.md)
+- [API rules](2bready-api/CLAUDE.md)
+- [Frontend rules](AGENTS.md)
