@@ -17,7 +17,7 @@ make prod                     # build and start everything
 | Layer | Technology |
 |---|---|
 | Edge | Cloudflare Tunnel (TLS, CDN, DDoS protection) |
-| Reverse Proxy | Nginx Alpine (path-based routing) |
+| Reverse Proxy | Nginx Alpine (path-based routing, HSTS, gzip) |
 | Backend | Laravel 11, PHP 8.3-FPM, Supervisor (4 processes) |
 | Queue Worker | Laravel Horizon (Redis) |
 | Frontend | Next.js 16 + React 19 + MUI v9 + Tailwind v4 (4 apps) |
@@ -88,6 +88,12 @@ make prod          # build + start
 make status        # verify all containers are up
 ```
 
+Or use the deploy script (includes health check):
+
+```bash
+./scripts/deploy.sh
+```
+
 First build takes 5-10 minutes. Subsequent starts are fast.
 
 ## Commands
@@ -122,14 +128,32 @@ First build takes 5-10 minutes. Subsequent starts are fast.
 | `make seed` | Run seeders |
 | `make migrate-fresh` | Drop all + re-migrate + seed |
 
-### Maintenance
+### Shell Access
+
+| Command | Description |
+|---|---|
+| `make shell-api` | Shell into API container |
+| `make shell-postgres` | PostgreSQL CLI |
+| `make shell-redis` | Redis CLI |
+
+### Utilities
 
 | Command | Description |
 |---|---|
 | `make cache-clear` | Clear all caches |
 | `make optimize` | Cache config/routes/views |
-| `make shell-api` | Shell into API container |
+| `make generate-key` | Generate new APP_KEY |
+| `make fix-permissions` | Fix storage/bootstrap ownership |
 | `make generate-types` | Regenerate TypeScript types from API |
+
+### Scripts
+
+| Script | Description |
+|---|---|
+| `./scripts/deploy.sh` | Deploy with health check |
+| `./scripts/deploy.sh abc123` | Deploy specific commit |
+| `./scripts/rollback.sh` | Rollback to previous commit |
+| `./scripts/rollback.sh abc123` | Rollback to specific commit |
 
 ## Deploying Updates
 
@@ -233,15 +257,10 @@ docker system prune -a --volumes
 ## Development
 
 ```bash
-# API
-cd 2bready-api
-cp .env.example .env
-composer install
-php artisan key:generate
-./vendor/bin/sail up -d
-./vendor/bin/sail artisan migrate --seed
+# One command to start API (Sail)
+make dev
 
-# Frontend
+# Frontend (separate terminal)
 cd 2bready-web
 npm install
 npm run dev
@@ -272,9 +291,10 @@ npm run dev
 │       ├── api-client/       Generated TypeScript types
 │       └── ui-core/          Shared MUI components
 ├── devops/                   Production configs
-│   ├── nginx/                Reverse proxy
+│   ├── nginx/                Reverse proxy + API nginx
 │   ├── php/                  PHP-FPM tuning
 │   └── supervisor/           Process manager
+├── scripts/                  Deploy + rollback helpers
 ├── docker-compose.prod.yml   9 services
 ├── .env.production.example   Environment template
 ├── Makefile                  One-command ops
@@ -292,7 +312,7 @@ npm run dev
 ## Security
 
 - TLS terminated at Cloudflare (no server-side certs)
-- Security headers: X-Frame-Options, X-Content-Type-Options, XSS-Protection, Referrer-Policy
+- Security headers: X-Frame-Options, X-Content-Type-Options, XSS-Protection, Referrer-Policy, HSTS
 - Zero exposed ports (Cloudflare Tunnel)
 - Gzip compression on text/css/js/json/svg
 - Static assets cached 30 days (immutable)

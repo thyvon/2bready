@@ -348,12 +348,7 @@ php artisan horizon:workers
 ### 10.3 Check Redis
 
 ```bash
-make shell-api
-php artisan tinker
-```
-
-```php
-Redis::ping();  // Should return "+PONG"
+make shell-redis
 ```
 
 ### 10.4 System resources
@@ -373,7 +368,13 @@ docker stats
 
 ## 11. Updating
 
-### 11.1 Code updates
+### 11.1 Quick deploy (with health check)
+
+```bash
+./scripts/deploy.sh
+```
+
+### 11.2 Manual deploy
 
 ```bash
 cd /home/deploy/2bready
@@ -381,7 +382,7 @@ git pull origin main
 make prod
 ```
 
-### 11.2 With database migrations
+### 11.3 With database migrations
 
 ```bash
 git pull origin main
@@ -389,11 +390,21 @@ make migrate
 make seed   # if new seeders included
 ```
 
-### 11.3 Full rebuild (dependencies changed)
+### 11.4 Full rebuild (dependencies changed)
 
 ```bash
 make prod-build
 make prod
+```
+
+### 11.5 Rollback
+
+```bash
+# Rollback to previous commit
+./scripts/rollback.sh
+
+# Rollback to specific commit
+./scripts/rollback.sh abc123
 ```
 
 ---
@@ -407,8 +418,8 @@ make prod
 make status
 
 # Check specific container logs
-docker compose -f docker-compose.prod.yml --env-file .env.production logs nginx
-docker compose -f docker-compose.prod.yml --env-file .env.production logs api
+make logs-api
+make logs
 ```
 
 ### Port 80/443 already in use
@@ -440,10 +451,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production restart pos
 
 ```bash
 # Check Redis
-docker compose -f docker-compose.prod.yml --env-file .env.production exec redis redis-cli -a YOUR_PASSWORD ping
-
-# Restart Redis
-docker compose -f docker-compose.prod.yml --env-file .env.production restart redis
+make shell-redis
 ```
 
 ### Horizon not processing jobs
@@ -488,6 +496,12 @@ docker compose -f docker-compose.prod.yml --env-file .env.production logs cloudf
 grep CLOUDFLARE_TUNNEL_TOKEN .env.production
 ```
 
+### Fix permissions after host-side file changes
+
+```bash
+make fix-permissions
+```
+
 ---
 
 ## 13. Security Hardening
@@ -529,7 +543,10 @@ sudo dpkg-reconfigure -plow unattended-upgrades
 ├── 2bready/                  # Application code
 │   ├── docker-compose.prod.yml
 │   ├── .env.production       # Secrets (not in git)
-│   ├── Makefile
+│   ├── Makefile              # One-command ops
+│   ├── scripts/              # Deploy + rollback helpers
+│   │   ├── deploy.sh
+│   │   └── rollback.sh
 │   ├── devops/               # Nginx, PHP, Supervisor configs
 │   ├── 2bready-api/          # Laravel API
 │   └── 2bready-web/          # Next.js apps
@@ -542,14 +559,20 @@ sudo dpkg-reconfigure -plow unattended-upgrades
 
 | Task | Command |
 |---|---|
-| Deploy | `make prod` |
+| Deploy | `make prod` or `./scripts/deploy.sh` |
+| Deploy specific commit | `./scripts/deploy.sh abc123` |
 | Stop | `make stop` |
 | Restart | `make prod` (after `make stop`) |
+| Rollback | `./scripts/rollback.sh` |
 | View logs | `make logs` |
 | Run migrations | `make migrate` |
 | Shell into API | `make shell-api` |
+| Shell into PostgreSQL | `make shell-postgres` |
+| Shell into Redis | `make shell-redis` |
 | Check status | `make status` |
 | Full rebuild | `make prod-build && make prod` |
+| Fix permissions | `make fix-permissions` |
+| Generate APP_KEY | `make generate-key` |
 
 ---
 
