@@ -41,11 +41,11 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 15s
 
   # Laravel API (nginx + PHP-FPM + scheduler + Horizon via supervisor)
   api:
@@ -93,10 +93,10 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 30s
 
   # Admin portal — back office (basePath /admin)
@@ -113,11 +113,11 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/admin"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/admin"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
 
   # Client portal — company-facing (basePath /portal)
   client:
@@ -133,11 +133,11 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/portal"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3001/portal"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
 
   # TP portal — third-party auditor self-service (basePath /tp-portal)
   tp:
@@ -153,11 +153,11 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/tp-portal"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3002/tp-portal"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
 
   # Marketing site — public landing page (owns the root /)
   marketing:
@@ -173,11 +173,11 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3002/"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
 
   # Chrome HTML→PDF service for SOP/certificate PDFs (Khmer font rendering)
   gotenberg:
@@ -189,10 +189,10 @@ services:
     networks:
       - 2bready
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 10s
 
   # PostgreSQL 16
