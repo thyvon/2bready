@@ -8,6 +8,9 @@ set -euo pipefail
 #   ./scripts/deploy.sh          # deploy latest main
 #   ./scripts/deploy.sh abc123   # deploy specific commit
 
+# Ensure we're in the project root
+cd "$(dirname "$0")/.." || exit 1
+
 COMMIT="${1:-main}"
 COMPOSE_PROD="docker compose -f docker-compose.prod.yml --env-file .env.production"
 

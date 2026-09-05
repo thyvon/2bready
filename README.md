@@ -47,7 +47,7 @@ make prod                     # build and start everything
    PostgreSQL   Redis    Gotenberg
 ```
 
-9 containers, single Docker bridge network, zero exposed ports.
+10 containers, single Docker bridge network, zero exposed ports.
 
 ## Prerequisites
 

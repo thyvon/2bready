@@ -200,9 +200,9 @@ This will:
 1. Pull Docker base images
 2. Build the API container (PHP-FPM + Nginx + Supervisor)
 3. Build all 4 Next.js apps (admin, client, tp, marketing)
-4. Start all 9 containers
-5. Run database migrations
-6. Seed the database
+4. Start all 10 containers
+
+**Note:** Run migrations separately on first deploy (see 6.3 below).
 
 **First build takes 5-10 minutes.** Grab a coffee.
 

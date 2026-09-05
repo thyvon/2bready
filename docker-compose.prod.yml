@@ -75,6 +75,9 @@ services:
       CACHE_STORE: redis
       BROADCAST_CONNECTION: ${BROADCAST_CONNECTION:-log}
       FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      SESSION_SECURE_COOKIE: 'true'
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
@@ -185,6 +188,12 @@ services:
       - ./2bready-api/resources/fonts:/usr/share/fonts/custom:ro
     networks:
       - 2bready
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   # PostgreSQL 16
   postgres:

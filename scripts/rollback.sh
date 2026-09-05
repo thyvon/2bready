@@ -8,6 +8,9 @@ set -euo pipefail
 #   ./scripts/rollback.sh         # rollback to previous commit
 #   ./scripts/rollback.sh abc123  # rollback to specific commit
 
+# Ensure we're in the project root
+cd "$(dirname "$0")/.." || exit 1
+
 COMPOSE_PROD="docker compose -f docker-compose.prod.yml --env-file .env.production"
 
 # Default to previous commit
@@ -34,6 +37,8 @@ fi
 
 # 3. Checkout and deploy
 echo ""
+# Tag current commit before rollback
+git tag "rollback/$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
 echo "Checking out ${TARGET}..."
 git checkout "$TARGET"
 
