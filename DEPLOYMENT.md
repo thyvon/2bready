@@ -30,7 +30,7 @@ ssh root@YOUR_SERVER_IP
 apt update && apt upgrade -y
 ```
 
-### 2.2 Create a deploy user
+### 2.2 Create a deploy user (optional)
 
 ```bash
 adduser deploy
@@ -39,6 +39,12 @@ usermod -aG docker deploy
 
 # Switch to deploy user
 su - deploy
+```
+
+### 2.3 Create project directory
+
+```bash
+mkdir -p /var/www
 ```
 
 ### 2.3 Install Docker
@@ -70,7 +76,7 @@ sudo apt install -y make
 ## 3. Clone the Repository
 
 ```bash
-cd /home/deploy
+cd /var/www
 git clone https://github.com/thyvon/2bready.git
 cd 2bready
 ```
@@ -186,7 +192,7 @@ This routes `https://2bready.systemsolution.online` → `2bready_nginx:80` insid
 ### 6.1 First-time build
 
 ```bash
-cd /home/deploy/2bready
+cd /var/www/2bready
 make prod
 ```
 
@@ -306,17 +312,17 @@ cat backup.sql | docker compose -f docker-compose.prod.yml --env-file .env.produ
 crontab -e
 
 # Add this line (runs at 2 AM daily)
-0 2 * * * cd /home/deploy/2bready && docker compose -f docker-compose.prod.yml --env-file .env.production exec -T postgres pg_dump -U 2bready 2bready | gzip > /home/deploy/backups/2bready_$(date +\%Y\%m\%d).sql.gz
+0 2 * * * cd /var/www/2bready && docker compose -f docker-compose.prod.yml --env-file .env.production exec -T postgres pg_dump -U 2bready 2bready | gzip > /var/www/backups/2bready_$(date +\%Y\%m\%d).sql.gz
 
 # Create the backups directory
-mkdir -p /home/deploy/backups
+mkdir -p /var/www/backups
 ```
 
 ### 9.3 Backup retention (keep 30 days)
 
 ```bash
 # Add to crontab (runs at 3 AM daily)
-0 3 * * * find /home/deploy/backups -name "*.sql.gz" -mtime +30 -delete
+0 3 * * * find /var/www/backups -name "*.sql.gz" -mtime +30 -delete
 ```
 
 ---
@@ -377,7 +383,7 @@ docker stats
 ### 11.2 Manual deploy
 
 ```bash
-cd /home/deploy/2bready
+cd /var/www/2bready
 git pull origin main
 make prod
 ```
@@ -539,7 +545,7 @@ sudo dpkg-reconfigure -plow unattended-upgrades
 ## 14. Server Layout
 
 ```
-/home/deploy/
+/var/www/
 ├── 2bready/                  # Application code
 │   ├── docker-compose.prod.yml
 │   ├── .env.production       # Secrets (not in git)
