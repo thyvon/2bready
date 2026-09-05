@@ -180,10 +180,10 @@ In the tunnel's **Public Hostnames** tab:
 2. Set **Subdomain**: `2bready` (or leave empty for root domain)
 3. Set **Domain**: `systemsolution.online`
 4. Set **Service Type**: `HTTP`
-5. Set **URL**: `2bready_nginx:80`
+5. Set **URL**: `http://2bready_nginx:80`
 6. Click **Save hostname**
 
-This routes `https://2bready.systemsolution.online` → `2bready_nginx:80` inside your Docker network.
+This routes `https://2bready.systemsolution.online` → `http://2bready_nginx:80` inside your Docker network.
 
 ---
 
