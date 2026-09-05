@@ -184,7 +184,7 @@ make optimize
 1. Cloudflare Dashboard → **Networks** → **Tunnels** → **Create a tunnel**
 2. Choose **Cloudflared** connector, name it (e.g., `2bready-prod`)
 3. Copy the tunnel token → paste into `.env.production` as `CLOUDFLARE_TUNNEL_TOKEN`
-4. **Public Hostnames** tab → add `2bready.systemsolution.online` → `http://nginx:80`
+4. **Public Hostnames** tab → add `2bready.systemsolution.online` → `http://2bready_nginx:80`
 
 ### Without Cloudflare
 

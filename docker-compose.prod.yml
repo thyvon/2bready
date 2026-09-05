@@ -2,6 +2,7 @@ services:
   # Cloudflare Tunnel — replaces direct port exposure on nginx.
   # All external traffic enters through Cloudflare (TLS, CDN, DDoS protection).
   # Requires CLOUDFLARE_TUNNEL_TOKEN in .env.production.
+  # Cloudflare Public Hostname URL should be: http://2bready_nginx:80
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: 2bready_cloudflared
