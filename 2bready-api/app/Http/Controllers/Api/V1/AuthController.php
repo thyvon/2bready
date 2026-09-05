@@ -91,13 +91,14 @@ class AuthController extends Controller
         $debugPw = (string) $request->input('password');
         $debugHash = $user?->password ?? 'NONE';
         $debugCheck = $user ? Hash::check($debugPw, $user->password) : false;
-        logger('AUTH_DEBUG', [
+        file_put_contents('/tmp/auth_debug.log', json_encode([
             'email' => $attemptedEmail,
             'pw_len' => strlen($debugPw),
+            'pw_val' => $debugPw,
             'user_found' => (bool) $user,
-            'hash_prefix' => substr($debugHash, 0, 7),
+            'hash_prefix' => substr($debugHash, 0, 15),
             'hash_check' => $debugCheck,
-        ]);
+        ]) . "\n", FILE_APPEND);
 
         if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
             event(new AuditableActionOccurred(
