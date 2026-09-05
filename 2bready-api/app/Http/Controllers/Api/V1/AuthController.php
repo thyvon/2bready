@@ -24,6 +24,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -85,7 +86,9 @@ class AuthController extends Controller
     {
         $attemptedEmail = (string) $request->input('email');
 
-        if (! Auth::attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $attemptedEmail)->first();
+
+        if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
             event(new AuditableActionOccurred(
                 action: 'auth.login_failed',
                 actorEmail: $attemptedEmail,
@@ -96,12 +99,7 @@ class AuthController extends Controller
             ]);
         }
 
-        /** @var User $user */
-        $user = Auth::user();
-
         if (! $user->isActive()) {
-            Auth::logout();
-
             event(new AuditableActionOccurred(
                 action: 'auth.login_rejected_suspended',
                 actorId: $user->id,
@@ -114,8 +112,6 @@ class AuthController extends Controller
         }
 
         if (! $user->can($requiredPermission)) {
-            Auth::logout();
-
             event(new AuditableActionOccurred(
                 action: 'auth.login_rejected_wrong_portal',
                 actorId: $user->id,
