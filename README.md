@@ -302,6 +302,7 @@ npm run dev
 
 ## Docs
 
+- **[Deployment Guide](DEPLOYMENT.md)** — full step-by-step for fresh servers
 - [Architecture proposal](Project Documents/2bReady_MVP_Proposal_v3.md)
 - [Engineering conventions](Project Documents/SKILL.md)
 - [API rules](2bready-api/CLAUDE.md)
