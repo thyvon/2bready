@@ -88,18 +88,6 @@ class AuthController extends Controller
 
         $user = User::where('email', $attemptedEmail)->first();
 
-        $debugPw = (string) $request->input('password');
-        $debugHash = $user?->password ?? 'NONE';
-        $debugCheck = $user ? Hash::check($debugPw, $user->password) : false;
-        file_put_contents('/tmp/auth_debug.log', json_encode([
-            'email' => $attemptedEmail,
-            'pw_len' => strlen($debugPw),
-            'pw_val' => $debugPw,
-            'user_found' => (bool) $user,
-            'hash_prefix' => substr($debugHash, 0, 15),
-            'hash_check' => $debugCheck,
-        ]) . "\n", FILE_APPEND);
-
         if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
             event(new AuditableActionOccurred(
                 action: 'auth.login_failed',
