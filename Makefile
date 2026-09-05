@@ -1,7 +1,8 @@
-.PHONY: help prod prod-build prod-logs stop stop-all clean status \
+.PHONY: help dev prod prod-build prod-logs stop stop-all clean status \
        logs logs-api logs-web logs-client logs-tp logs-marketing \
-       shell-api migrate migrate-fresh seed \
-       cache-clear optimize generate-types
+       shell-api shell-postgres shell-redis \
+       migrate migrate-fresh seed \
+       cache-clear optimize generate-key fix-permissions generate-types
 
 COMPOSE_PROD = docker compose -f docker-compose.prod.yml --env-file .env.production
 
@@ -10,6 +11,17 @@ help: ## Show this help
 	@echo ""
 	@echo "Commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# ============================================
+# DEVELOPMENT
+# ============================================
+
+dev: ## Start development environment (Sail + npm)
+	cd 2bready-api && ./vendor/bin/sail up -d
+	@echo "Development environment started!"
+	@echo "  API: http://localhost:8080"
+	@echo "  Web: http://localhost:3000"
+	@echo "  Mailpit: http://localhost:8026"
 
 # ============================================
 # PRODUCTION
@@ -73,6 +85,12 @@ logs-marketing: ## Tail marketing logs only
 shell-api: ## Access API container shell
 	$(COMPOSE_PROD) exec api sh
 
+shell-postgres: ## Access PostgreSQL shell
+	$(COMPOSE_PROD) exec postgres psql -U $${DB_USERNAME} -d $${DB_DATABASE}
+
+shell-redis: ## Access Redis CLI
+	$(COMPOSE_PROD) exec redis redis-cli -a $${REDIS_PASSWORD}
+
 # ============================================
 # DATABASE
 # ============================================
@@ -102,8 +120,15 @@ optimize: ## Optimize for production
 	$(COMPOSE_PROD) exec api php artisan view:cache
 
 # ============================================
-# FRONTEND
+# UTILITIES
 # ============================================
+
+generate-key: ## Generate a new APP_KEY
+	$(COMPOSE_PROD) exec api php artisan key:generate --force
+
+fix-permissions: ## Fix storage/bootstrap/cache permissions
+	$(COMPOSE_PROD) exec api chown -R www-data:www-data storage bootstrap/cache
+	$(COMPOSE_PROD) exec api chmod -R 775 storage bootstrap/cache
 
 generate-types: ## Regenerate TypeScript types from API OpenAPI spec
 	cd 2bready-web && npm run generate:types

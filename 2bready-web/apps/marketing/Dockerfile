@@ -24,6 +24,7 @@ ARG NEXT_PUBLIC_CLIENT_PORTAL_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_ADMIN_PORTAL_URL=${NEXT_PUBLIC_ADMIN_PORTAL_URL}
 ENV NEXT_PUBLIC_CLIENT_PORTAL_URL=${NEXT_PUBLIC_CLIENT_PORTAL_URL}
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build --workspace=marketing
@@ -32,6 +33,7 @@ RUN npm run build --workspace=marketing
 FROM node:20-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
