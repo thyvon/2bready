@@ -1,3 +1,7 @@
+# Build context is the project root (2bready/), not this directory —
+# devops/ configs live at the project root, not inside 2bready-api/.
+# See docker-compose.prod.yml.
+
 # ---- Build stage ----
 FROM php:8.3-cli-alpine AS builder
 
@@ -8,10 +12,10 @@ RUN apk add --no-cache git unzip libpq-dev \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY composer.json composer.lock ./
+COPY 2bready-api/composer.json 2bready-api/composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
-COPY . .
+COPY 2bready-api/ .
 RUN composer dump-autoload --optimize --no-dev
 
 
@@ -23,14 +27,10 @@ WORKDIR /var/www/html
 RUN apk add --no-cache libpq-dev nginx supervisor \
     && docker-php-ext-install pdo pdo_pgsql opcache pcntl
 
-# PHP-FPM config
+# Configs from project-root devops/ (not inside 2bready-api/)
 COPY devops/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY devops/php/www.conf /usr/local/etc/php-fpm.d/www.conf
-
-# Nginx config
 COPY devops/nginx/api.conf /etc/nginx/http.d/default.conf
-
-# Supervisor config
 COPY devops/supervisor/supervisord.conf /etc/supervisord.conf
 
 COPY --from=builder /app .

@@ -50,8 +50,8 @@ services:
   # Laravel API (nginx + PHP-FPM + scheduler + Horizon via supervisor)
   api:
     build:
-      context: ./2bready-api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: 2bready-api/Dockerfile
     container_name: 2bready_api
     restart: unless-stopped
     environment:

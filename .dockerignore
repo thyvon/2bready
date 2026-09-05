@@ -1,0 +1,17 @@
+# Exclude from API build context (project root)
+.git
+.github
+.idea
+.vscode
+*.md
+!2bready-api/composer.json
+!2bready-api/composer.lock
+2bready-web/node_modules
+2bready-web/.next
+2bready-web/apps/*/node_modules
+2bready-web/apps/*/.next
+.env*
+!.env.example
+!.env.ci
+dev-screenshots/
+claude/
