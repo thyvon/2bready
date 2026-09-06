@@ -6,6 +6,10 @@
 *.md
 !2bready-api/composer.json
 !2bready-api/composer.lock
+2bready-api/storage/framework/testing
+2bready-api/storage/logs
+2bready-api/tests
+2bready-api/.env*
 2bready-web/node_modules
 2bready-web/.next
 2bready-web/apps/*/node_modules

@@ -16,7 +16,6 @@ COPY 2bready-api/composer.json 2bready-api/composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 COPY 2bready-api/ .
-RUN composer dump-autoload --optimize --no-dev
 
 
 # ---- Production stage ----
@@ -34,10 +33,12 @@ COPY devops/nginx/api.conf /etc/nginx/http.d/default.conf
 COPY devops/supervisor/supervisord.conf /etc/supervisord.conf
 
 COPY --from=builder /app .
+COPY 2bready-api/docker-entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
