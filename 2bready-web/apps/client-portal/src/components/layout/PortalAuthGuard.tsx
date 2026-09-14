@@ -22,6 +22,11 @@ export function PortalAuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hasHydrated, user, clearAuth } = useAuthStore();
   const blocked = hasHydrated && isAuthenticated && !(user?.can_access_client_portal ?? false);
 
+  // Not authenticated — redirect to login. Gate on hasHydrated so the
+  // initial Zustand hydration doesn't flash a redirect before persisted
+  // state is restored.
+  const needsLogin = hasHydrated && !isAuthenticated;
+
   // A brand-new account that verified its email but never finished (or
   // abandoned) the CompanySetupWizard has no company yet. register/login/
   // totp-complete all already redirect to /onboarding at that instant (see
@@ -35,16 +40,25 @@ export function PortalAuthGuard({ children }: { children: React.ReactNode }) {
   const needsOnboarding = hasHydrated && isAuthenticated && !!user?.email_verified_at && !user?.current_company_id;
 
   useEffect(() => {
-    if (blocked) {
+    if (needsLogin) {
+      router.replace('/login');
+    } else if (blocked) {
       clearAuth();
       router.replace('/login');
     } else if (needsOnboarding) {
       router.replace('/onboarding');
     }
-  }, [blocked, needsOnboarding, clearAuth, router]);
+  }, [needsLogin, blocked, needsOnboarding, clearAuth, router]);
 
+  if (needsLogin) return null;
   if (blocked) return null;
   if (needsOnboarding) return null;
+
+  // Wait for Zustand hydration before rendering children — without this
+  // guard, the portal shell briefly flashes on every page reload for
+  // unauthenticated visitors because children render before the persisted
+  // auth state is restored, then the redirect kicks in.
+  if (!hasHydrated) return null;
 
   // Mirrors the backend's own enforcement (EnsureEmailIsVerified middleware) —
   // gated ahead of the company-status check below since an unverified account

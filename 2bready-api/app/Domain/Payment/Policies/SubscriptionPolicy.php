@@ -32,6 +32,13 @@ class SubscriptionPolicy
         return $user->hasRole('company_owner') && $user->current_company_id !== null;
     }
 
+    public function cancel(User $user, Subscription $subscription): bool
+    {
+        // Company owner can cancel their own pending/active subscriptions;
+        // internal roles can cancel any subscription.
+        return $this->isInternal($user) || ($user->hasRole('company_owner') && $user->current_company_id === $subscription->company_id);
+    }
+
     private function isInternal(User $user): bool
     {
         return $user->hasAnyRole(['admin', 'staff', 'finance']);

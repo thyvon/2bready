@@ -4,7 +4,8 @@ export function formatCents(cents: number, currency = 'USD'): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '—';
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(date));
 }
 

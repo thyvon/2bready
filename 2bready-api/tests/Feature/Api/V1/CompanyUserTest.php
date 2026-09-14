@@ -59,7 +59,8 @@ it('lets an admin add a new member to a company team', function () {
     $user = User::where('email', 'new.member@example.org')->first();
     expect($user->hasRole('company_member'))->toBeTrue()
         ->and($user->companies->pluck('id'))->toContain($company->id)
-        ->and($user->status->value)->toBe('active');
+        ->and($user->status->value)->toBe('active')
+        ->and($user->current_company_id)->toBe($company->id);
 });
 
 it('lets an admin add a second owner to a company team', function () {

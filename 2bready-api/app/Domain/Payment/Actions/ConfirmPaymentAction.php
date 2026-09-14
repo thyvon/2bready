@@ -9,6 +9,7 @@ use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\Package\Enums\BillingPeriod;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Enums\SubscriptionStatus;
+use App\Domain\Payment\Events\PaymentConfirmed;
 use App\Domain\Payment\Exceptions\InvalidPaymentTransitionException;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
@@ -50,6 +51,8 @@ class ConfirmPaymentAction
 
             return $payment;
         });
+
+        event(new PaymentConfirmed($payment->fresh()));
 
         return $payment->fresh();
     }

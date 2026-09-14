@@ -20,7 +20,10 @@ use Illuminate\Support\Collection;
  */
 class SendJourneyDocumentToStaffAction
 {
-    /** @return Collection<int, SignoffDocumentUser> */
+    /**
+     * @param  list<string>  $recipientUserIds
+     * @return Collection<int, SignoffDocumentUser>
+     */
     public function execute(
         Document $document,
         Company $company,

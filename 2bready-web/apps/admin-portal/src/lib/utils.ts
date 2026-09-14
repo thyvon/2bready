@@ -12,6 +12,7 @@ export function decimalToCents(decimal: string): number {
   return Math.round(Number(decimal) * 100);
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '—';
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(date));
 }

@@ -119,6 +119,12 @@ class RolePermissionSeeder extends Seeder
             'signoff_document.view',
             'signoff_document.manage',
 
+            // SOPs — platform-wide templates (admin/staff) + company-specific
+            // SOPs (company_owner + admin/staff). Company users view their
+            // company's SOPs and global SOPs they've adopted.
+            'sop.view',
+            'sop.manage',
+
             // Support
             'support.view',
             'support.create',
@@ -190,6 +196,7 @@ class RolePermissionSeeder extends Seeder
             'trust_badge.view', 'trust_badge.manage',
             'data_room.view', 'data_room.manage', 'data_room.share',
             'signoff_document.view', 'signoff_document.manage',
+            'sop.view', 'sop.manage',
             'tp_partner.manage', 'marketplace.manage',
             'support.view', 'support.create', 'support.manage',
             'notification.view',
@@ -233,6 +240,8 @@ class RolePermissionSeeder extends Seeder
             // Signed-off documents: upload/send are role-based in the policy
             // (company_owner/member), so no extra permission needed here.
             'signoff_document.view',
+            // SOPs: company_owner can adopt global templates + manage company SOPs
+            'sop.view', 'sop.manage',
             'support.view', 'support.create',
             'notification.view',
             'report.view', 'audit_log.view',
@@ -249,6 +258,8 @@ class RolePermissionSeeder extends Seeder
             'trust_badge.view',
             'data_room.view',
             'signoff_document.view',
+            // SOPs: company_member can view SOPs assigned to their company
+            'sop.view',
             'support.view', 'support.create',
             'notification.view',
         ]);

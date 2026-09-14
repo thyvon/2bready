@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('subscriptions')->group(function () {
     Route::get('/', [SubscriptionController::class, 'index']);
     Route::post('/', [SubscriptionController::class, 'store']);
+    Route::post('{subscription}/cancel', [SubscriptionController::class, 'cancel']);
 });
 
 Route::prefix('payments')->group(function () {

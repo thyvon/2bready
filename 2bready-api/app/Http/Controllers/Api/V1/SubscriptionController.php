@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Package\Models\Package;
+use App\Domain\Payment\Actions\CancelSubscriptionAction;
 use App\Domain\Payment\Actions\SubscribeToPackageAction;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\Subscription;
@@ -59,5 +60,14 @@ class SubscriptionController extends Controller
             'payment' => new PaymentResource($result['payment']),
             'gateway_data' => $result['gateway_data'],
         ]);
+    }
+
+    public function cancel(Subscription $subscription, CancelSubscriptionAction $action): JsonResponse
+    {
+        $this->authorize('cancel', $subscription);
+
+        $subscription = $action->execute($subscription);
+
+        return ApiResponse::success(new SubscriptionResource($subscription));
     }
 }

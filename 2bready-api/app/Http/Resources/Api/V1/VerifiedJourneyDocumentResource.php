@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1;
 use App\Domain\Document\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -27,7 +28,7 @@ class VerifiedJourneyDocumentResource extends JsonResource
             'mime_type' => $this->mime_type,
             'size_bytes' => $this->size_bytes,
             'status' => $this->status->value,
-            'verified_at' => $this->verified_at?->toISOString(),
+            'verified_at' => filled($this->verified_at) ? Carbon::parse($this->verified_at)->toISOString() : null,
             'comment' => $this->comment,
             'document_template' => $this->whenLoaded('documentTemplate', function () {
                 return [

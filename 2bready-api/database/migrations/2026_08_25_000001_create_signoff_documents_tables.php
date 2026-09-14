@@ -17,14 +17,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // The adoption join table is named sop_company (singular) in the
-        // original migration — cover both spellings defensively.
-        Schema::dropIfExists('signoff_document_users_backup');
-        Schema::dropIfExists('sop_signoffs');
-        Schema::dropIfExists('sop_companies');
-        Schema::dropIfExists('sop_company');
-        Schema::dropIfExists('sops');
-
         Schema::create('signoff_documents', function (Blueprint $table): void {
             $table->char('id', 26)->primary();
             $table->char('company_id', 26)->index();

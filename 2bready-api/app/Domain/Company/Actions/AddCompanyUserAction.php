@@ -37,6 +37,7 @@ class AddCompanyUserAction
 
         $user->syncRoles($role);
         $user->companies()->attach($company->id);
+        $user->update(['current_company_id' => $company->id]);
 
         return $user->load(['roles', 'companies']);
     }
