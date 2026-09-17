@@ -86,3 +86,46 @@ it('rejects a test send before mail settings have been configured', function () 
 
     $this->actingAs($admin)->postJson('/api/v1/settings/mail/test')->assertUnprocessable();
 });
+
+it('routes Resend host to resend HTTPS transport on runtime config', function () {
+    $admin = User::factory()->admin()->create();
+    $service = app(MailSettingService::class);
+    $service->save('smtp.resend.com', 587, 'resend', 're_test_key_123', 'tls', 'noreply@2bready.asia', '2bReady', $admin);
+
+    $service->applyRuntimeConfig();
+
+    expect(config('mail.default'))->toBe('resend')
+        ->and(config('services.resend.key'))->toBe('re_test_key_123')
+        ->and(config('mail.from.address'))->toBe('noreply@2bready.asia');
+});
+
+it('sends email via ResendTransport over HTTPS API', function () {
+    \Illuminate\Support\Facades\Http::fake([
+        'https://api.resend.com/emails' => \Illuminate\Support\Facades\Http::response([
+            'id' => 'resend-msg-12345',
+        ], 200),
+    ]);
+
+    $transport = new \App\Domain\Shared\Mail\ResendTransport('re_test_key_123');
+
+    $email = (new \Symfony\Component\Mime\Email())
+        ->from('noreply@2bready.asia')
+        ->to('test@example.com')
+        ->subject('Test Subject')
+        ->text('Hello Text Body')
+        ->html('<p>Hello HTML Body</p>');
+
+    $envelope = \Symfony\Component\Mailer\Envelope::create($email);
+    $sentMessage = new \Symfony\Component\Mailer\SentMessage($email, $envelope);
+
+    $transport->send($sentMessage);
+
+    \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+        return $request->url() === 'https://api.resend.com/emails'
+            && $request->hasHeader('Authorization', 'Bearer re_test_key_123')
+            && $request['subject'] === 'Test Subject'
+            && $request['to'] === ['test@example.com']
+            && $request['html'] === '<p>Hello HTML Body</p>';
+    });
+});
+

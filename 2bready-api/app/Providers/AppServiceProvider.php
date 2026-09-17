@@ -43,6 +43,7 @@ use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\Payment\Policies\PaymentPolicy;
 use App\Domain\Payment\Policies\SubscriptionPolicy;
+use App\Domain\Shared\Mail\ResendTransport;
 use App\Domain\Shared\Services\MailSettingService;
 use App\Domain\SignOff\Models\SignoffDocument;
 use App\Domain\SignOff\Policies\SignOffDocumentPolicy;
@@ -67,6 +68,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -96,6 +98,17 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // Custom Resend REST API mail transport (port 443 HTTPS).
+        Mail::extend('resend', function (array $config = []) {
+            $apiKey = $config['key']
+                ?? config('services.resend.key')
+                ?? env('RESEND_KEY')
+                ?? env('RESEND_API_KEY')
+                ?? '';
+
+            return new ResendTransport((string) $apiKey);
+        });
 
         // Best-effort: this runs on every request AND every artisan command,
         // including the very first `migrate` on a fresh install before the

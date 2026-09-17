@@ -124,6 +124,20 @@ class MailSettingService
             return;
         }
 
+        // Resend: route through HTTPS API transport (port 443) instead of SMTP
+        // so cloud VPS outbound SMTP port blocks (DigitalOcean/AWS/GCP) never drop delivery.
+        if (str_contains(strtolower($this->host() ?? ''), 'resend') || str_starts_with($this->password() ?? '', 're_')) {
+            config([
+                'mail.default' => 'resend',
+                'mail.mailers.resend.transport' => 'resend',
+                'services.resend.key' => $this->password(),
+                'mail.from.address' => $this->fromAddress(),
+                'mail.from.name' => $this->fromName(),
+            ]);
+
+            return;
+        }
+
         config([
             'mail.default' => 'smtp',
             'mail.mailers.smtp.transport' => 'smtp',
