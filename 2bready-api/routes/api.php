@@ -34,6 +34,11 @@ Route::prefix('v1')->group(function () {
     // the two don't collide on the same URI.
     Route::get('industry-options', [IndustryController::class, 'publicIndex']);
 
+    // Public — client-portal's "Add Company" dialog needs industries that have
+    // an active JourneyTemplate so a new company can activate its journey
+    // immediately upon creation.
+    Route::get('industry-options/with-templates', [IndustryController::class, 'publicIndexWithTemplates']);
+
     // Public — a Smart Data Room link's token + PIN IS the credential, there
     // is no Sanctum token at all on this path (see
     // VerifyDataRoomAccessAction/PublicDataRoomController). Authenticated

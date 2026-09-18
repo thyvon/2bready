@@ -33,6 +33,20 @@ class IndustryController extends Controller
         return ApiResponse::success(PublicIndustryResource::collection($industries));
     }
 
+    // Returns only industries that have an active JourneyTemplate — used by
+    // client-portal's "Add Company" dialog to show only industries where a
+    // compliance journey can actually be activated.
+    public function publicIndexWithTemplates(): JsonResponse
+    {
+        $industries = Industry::query()
+            ->where('is_active', true)
+            ->whereHas('journeyTemplates', fn ($q) => $q->where('is_active', true))
+            ->orderBy('sort_order')
+            ->get();
+
+        return ApiResponse::success(PublicIndustryResource::collection($industries));
+    }
+
     // Every authenticated user (any role) can reach this — a company_owner
     // needs the list to fill out the setup wizard's industry dropdown, not
     // just admin/staff. Non-admin/staff/finance only ever sees active rows,

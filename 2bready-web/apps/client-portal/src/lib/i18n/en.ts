@@ -81,6 +81,17 @@ const en = {
   'company_suspended.title': 'Account suspended',
   'company_suspended.body': "{company}'s account is currently suspended. You won't be able to access compliance data until this is resolved.",
 
+  // ─── Add Company ─────────────────────────────────────────────────────────
+  'company.add_company': 'Add Company',
+  'company.add_dialog_title': 'Add New Company',
+  'company.name_label': 'Company Name',
+  'company.name_placeholder': 'Enter company name',
+  'company.industry_label': 'Industry',
+  'company.industry_placeholder': 'Select industry',
+  'company.country_label': 'Country',
+  'company.toast_created': 'Company created successfully.',
+  'company.toast_create_error': 'Could not create company. Please try again.',
+
   // ─── Email verification lockout ─────────────────────────────────────────
   'email_verification.title': 'Verify your email',
   'email_verification.body': "We sent a verification link to {email}. Please check your inbox and click the link to continue — you won't be able to access your compliance data until it's verified.",

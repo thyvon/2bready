@@ -86,6 +86,17 @@ const kh: Record<keyof typeof en, string> = {
   'company_suspended.title': 'គណនីត្រូវបានផ្អាក',
   'company_suspended.body': 'គណនីរបស់ {company} កំពុងត្រូវបានផ្អាកនាពេលបច្ចុប្បន្ន។ អ្នកនឹងមិនអាចចូលប្រើទិន្នន័យអនុលោមភាពបានទេ រហូតដល់បញ្ហានេះត្រូវបានដោះស្រាយ។',
 
+  // ─── Add Company ─────────────────────────────────────────────────────────
+  'company.add_company': 'បន្ថែមក្រុមហ៊ុន',
+  'company.add_dialog_title': 'បន្ថែមក្រុមហ៊ុនថ្មី',
+  'company.name_label': 'ឈ្មោះក្រុមហ៊ុន',
+  'company.name_placeholder': 'បញ្ចូលឈ្មោះក្រុមហ៊ុន',
+  'company.industry_label': 'វិស័យ',
+  'company.industry_placeholder': 'ជ្រើសរើសវិស័យ',
+  'company.country_label': 'ប្រទេស',
+  'company.toast_created': 'ក្រុមហ៊ុនត្រូវបានបង្កើតដោយជោគជ័យ។',
+  'company.toast_create_error': 'មិនអាចបង្កើតក្រុមហ៊ុនបានទេ។ សូមព្យាយាមម្តងទៀត។',
+
   // ─── Email verification lockout ─────────────────────────────────────────
   'email_verification.title': 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក',
   'email_verification.body': 'យើងបានផ្ញើតំណផ្ទៀងផ្ទាត់ទៅ {email}។ សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក ហើយចុចលើតំណដើម្បីបន្ត — អ្នកនឹងមិនអាចចូលប្រើទិន្នន័យអនុលោមភាពរបស់អ្នកបានទេ រហូតដល់វាត្រូវបានផ្ទៀងផ្ទាត់។',

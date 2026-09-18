@@ -22,7 +22,12 @@ export interface IndustryOption {
 
 type ApiResponseShape<T> = { data: T };
 
-export function useIndustries() {
+interface UseIndustriesOptions {
+  /** Only return industries that have an active JourneyTemplate. */
+  withTemplatesOnly?: boolean;
+}
+
+export function useIndustries(options: UseIndustriesOptions = {}) {
   const [industries, setIndustries] = useState<IndustryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -30,7 +35,11 @@ export function useIndustries() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`${apiUrl}/api/v1/industry-options`)
+    const endpoint = options.withTemplatesOnly
+      ? `${apiUrl}/api/v1/industry-options/with-templates`
+      : `${apiUrl}/api/v1/industry-options`;
+
+    fetch(endpoint)
       .then((res) => {
         if (!res.ok) throw new Error(`Unexpected status ${res.status}`);
         return res.json() as Promise<ApiResponseShape<IndustryOption[]>>;
@@ -49,7 +58,7 @@ export function useIndustries() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [options.withTemplatesOnly]);
 
   return { industries, loading, error };
 }
