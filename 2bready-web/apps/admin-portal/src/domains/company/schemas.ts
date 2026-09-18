@@ -15,6 +15,7 @@ export const companyFormSchema = z.object({
   industry_id: z.string().min(1, 'Industry is required'),
   country_code: z.string().length(2, 'Use a 2-letter country code'),
   employee_count: optionalEmployeeCount,
+  compliance_start_date: z.string().optional().or(z.literal('')),
   default_locale: z.enum(['en', 'kh']),
 });
 
@@ -23,7 +24,7 @@ export type CompanyFormOutput = z.output<typeof companyFormSchema>;
 
 export const COMPANY_FORM_STEPS = [
   { labelKey: 'company.step_identity', fields: ['name', 'name_kh', 'registration_no'] as const },
-  { labelKey: 'company.step_profile', fields: ['industry_id', 'country_code', 'employee_count'] as const },
+  { labelKey: 'company.step_profile', fields: ['industry_id', 'country_code', 'employee_count', 'compliance_start_date'] as const },
   { labelKey: 'company.step_review', fields: ['default_locale'] as const },
 ] as const;
 
@@ -34,6 +35,7 @@ export const companyFormDefaults: CompanyFormInput = {
   industry_id: '',
   country_code: 'KH',
   employee_count: undefined,
+  compliance_start_date: '',
   default_locale: 'en',
 };
 

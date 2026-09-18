@@ -10,6 +10,7 @@ use App\Domain\Payment\Actions\SubscribeToPackageAction;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\Subscription;
 use App\Exceptions\DuplicateSubscriptionException;
+use App\Domain\Journey\Exceptions\JourneyTemplateNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Payment\SubscribeRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
@@ -53,6 +54,8 @@ class SubscriptionController extends Controller
             $result = $action->execute($user->currentCompany, $package, PaymentMethod::from($request->validated('method')));
         } catch (DuplicateSubscriptionException $e) {
             return ApiResponse::error($e->getMessage(), [], 409);
+        } catch (JourneyTemplateNotFoundException $e) {
+            return ApiResponse::error($e->getMessage(), [], 422);
         }
 
         return ApiResponse::created([

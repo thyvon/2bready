@@ -89,7 +89,7 @@ export function PricingCard({ pricing, status, loading = false, onSelect, period
 
   const { pkg, level } = pricing;
   const isFree = pkg.price_cents === 0;
-  const taken = status !== 'none';
+  const taken = status === 'active' || status === 'pending';
 
   if (loading) {
     return <PricingCardSkeleton />;
@@ -221,7 +221,11 @@ export function PricingCard({ pricing, status, loading = false, onSelect, period
       )}
 
       <Box sx={{ mt: 'auto', pt: 1 }}>
-        {taken ? (
+        {status === 'free' ? (
+          <Button variant="contained" fullWidth onClick={onSelect} color="success">
+            {t('billing.btn_start_free')}
+          </Button>
+        ) : taken ? (
           <Button variant="outlined" fullWidth disabled>
             {t(BUTTON_LABEL[status as Exclude<PricingStatus, 'none'>] as TranslationKey)}
           </Button>

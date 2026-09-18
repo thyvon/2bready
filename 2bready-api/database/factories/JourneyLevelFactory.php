@@ -29,7 +29,7 @@ class JourneyLevelFactory extends Factory
             'code' => 'L'.fake()->numberBetween(1, 4),
             'name' => fake()->word(),
             'pathway_name' => fake()->words(2, true),
-            'pillar' => fake()->randomElement(['comply', 'scale', 'lead']),
+            'pillar' => fake()->randomElement(['verify', 'connect', 'grow']),
             'sort_order' => 0,
         ];
     }

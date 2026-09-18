@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Industry\Models;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Package\Models\Package;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\HasUlid;
@@ -60,5 +61,11 @@ class Industry extends Model
     public function companies(): HasMany
     {
         return $this->hasMany(Company::class);
+    }
+
+    /** @return HasMany<JourneyTemplate, $this> */
+    public function journeyTemplates(): HasMany
+    {
+        return $this->hasMany(JourneyTemplate::class);
     }
 }

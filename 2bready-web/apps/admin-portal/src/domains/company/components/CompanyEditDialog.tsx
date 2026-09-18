@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -13,9 +13,9 @@ import MenuItem from '@mui/material/MenuItem';
 import Alert from '@mui/material/Alert';
 
 import { companyEditSchema, companyEditDefaults, type CompanyEditInput, type CompanyEditOutput } from '@/domains/company/schemas';
-import { COUNTRY_OPTIONS, LOCALE_OPTIONS, STATUS_OPTIONS, industryLabel } from '@/domains/company/constants';
+import { COUNTRY_OPTIONS, LOCALE_OPTIONS, STATUS_OPTIONS, industryLabel, optionLabel } from '@/domains/company/constants';
 import { useIndustries } from '@/domains/company/hooks';
-import { updateCompany } from '@/domains/company/api';
+import { updateCompany, listCountriesWithTemplates } from '@/domains/company/api';
 import type { Company } from '@/domains/company/types';
 import { useToast } from '@/components/feedback/ToastProvider';
 import { getApiError } from '@/lib/utils';
@@ -37,20 +37,25 @@ interface CompanyEditDialogProps {
 // `status`, which only this app's users (admin/staff/finance) may ever set.
 export default function CompanyEditDialog({ open, company, onClose, onSaved }: CompanyEditDialogProps) {
   const { t, locale } = useTranslation();
-  const { industries, loading: industriesLoading } = useIndustries();
+  const { industries, loading: industriesLoading } = useIndustries({ withTemplatesOnly: true });
   const toast = useToast();
   const [serverError, setServerError] = useState('');
+  const [countries, setCountries] = useState<string[]>([]);
 
   const {
     register,
     control,
     handleSubmit,
     reset,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CompanyEditInput>({
     resolver: zodResolver(companyEditSchema),
     defaultValues: companyEditDefaults(company),
   });
+
+  const selectedIndustryId = useWatch({ control, name: 'industry_id' });
 
   useEffect(() => {
     if (open) {
@@ -59,10 +64,34 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, company]);
 
-  // Cleared on close (and on every submit) rather than in the open-effect
-  // above — a previous failed attempt's error must never linger into the
-  // next open, and keeping setState out of the effect keeps the React
-  // Compiler lint happy.
+  // Fetch countries when industry changes; dropdown is disabled when no
+  // industry is selected, and the country_code reset effect handles stale
+  // selections when the list updates.
+  useEffect(() => {
+    if (!selectedIndustryId || !open) return;
+
+    let cancelled = false;
+
+    listCountriesWithTemplates(selectedIndustryId)
+      .then((data) => {
+        if (!cancelled) setCountries(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCountries([]);
+      });
+
+    return () => { cancelled = true; };
+  }, [selectedIndustryId, open]);
+
+  // Reset country when industry changes and current selection is no longer valid
+  useEffect(() => {
+    if (!selectedIndustryId || countries.length === 0) return;
+    const current = getValues('country_code');
+    if (current && !countries.includes(current)) {
+      setValue('country_code', countries[0]);
+    }
+  }, [selectedIndustryId, countries, getValues, setValue]);
+
   const handleClose = () => {
     setServerError('');
     onClose();
@@ -152,9 +181,15 @@ export default function CompanyEditDialog({ open, company, onClose, onSaved }: C
                 name="country_code"
                 control={control}
                 render={({ field }) => (
-                  <FormSelect {...field} fullWidth error={!!errors.country_code} helperText={errors.country_code?.message}>
-                    {COUNTRY_OPTIONS.map((opt) => (
-                      <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
+                  <FormSelect
+                    {...field}
+                    fullWidth
+                    disabled={!selectedIndustryId}
+                    error={!!errors.country_code}
+                    helperText={errors.country_code?.message}
+                  >
+                    {countries.map((code) => (
+                      <MenuItem key={code} value={code}>{optionLabel(t, COUNTRY_OPTIONS, code)}</MenuItem>
                     ))}
                   </FormSelect>
                 )}

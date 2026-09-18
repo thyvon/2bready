@@ -32,6 +32,7 @@ class PackageGroupResource extends JsonResource
             'industry_code' => $this->whenLoaded('industry', fn () => $this->industry?->code),
             'journey_level_id' => $this->journey_level_id,
             'journey_level_code' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->code),
+            'journey_level_name' => $this->whenLoaded('journeyLevel', fn () => $this->journeyLevel?->name),
             'tier' => $this->tier,
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,

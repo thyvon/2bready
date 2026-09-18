@@ -40,7 +40,7 @@ class JourneyTemplateSeeder extends Seeder
                 'name' => 'Bronze',
                 'pathway_name' => 'The Launchpad',
                 'description' => 'Audit-ready under Cambodian law — GDT, MoC, MLVT and NSSF compliance handled precisely, with risk mitigated and regulatory alignment completed.',
-                'pillar' => 'comply',
+                'pillar' => 'verify',
                 'sort_order' => 1,
                 'milestones' => [
                     'Corporate & Legal' => 'Your company\'s legal foundation: registration, incorporation papers and industry classification verified against MoC records.',
@@ -53,7 +53,7 @@ class JourneyTemplateSeeder extends Seeder
                 'code' => 'L2',
                 'name' => 'Silver',
                 'pathway_name' => 'Product Engineering',
-                'pillar' => 'scale',
+                'pillar' => 'connect',
                 'description' => 'Certified quality and safety standards — lab-verified products, protected IP and packaging that builds consumer trust.',
                 'sort_order' => 2,
                 'milestones' => [
@@ -66,7 +66,7 @@ class JourneyTemplateSeeder extends Seeder
                 'code' => 'L3',
                 'name' => 'Gold',
                 'pathway_name' => 'Operational Excellence',
-                'pillar' => 'scale',
+                'pillar' => 'connect',
                 'description' => 'Internal governance and financial clarity — standardized SOPs and CAS-aligned books that unlock B2B operational scaling.',
                 'sort_order' => 3,
                 'milestones' => [
@@ -78,7 +78,7 @@ class JourneyTemplateSeeder extends Seeder
                 'code' => 'L4',
                 'name' => 'Platinum',
                 'pathway_name' => 'Global Readiness',
-                'pillar' => 'lead',
+                'pillar' => 'grow',
                 'description' => 'Investable and export-ready — institutional-grade finance, international certifications and market-entry strategy beyond Cambodia.',
                 'sort_order' => 4,
                 'milestones' => [

@@ -35,7 +35,7 @@ export const journeyLevelFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   pathway_name: z.string().min(1, 'Pathway name is required').max(255),
   description: z.string().max(2000).optional().or(z.literal('')),
-  pillar: z.enum(['comply', 'scale', 'lead']),
+  pillar: z.enum(['verify', 'connect', 'grow']),
   sort_order: sortOrder,
 });
 export type JourneyLevelFormInput = z.input<typeof journeyLevelFormSchema>;
@@ -44,7 +44,7 @@ export const journeyLevelFormDefaults: JourneyLevelFormInput = {
   name: '',
   pathway_name: '',
   description: '',
-  pillar: 'comply',
+  pillar: 'verify',
   sort_order: 0,
 };
 

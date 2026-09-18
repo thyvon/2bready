@@ -78,7 +78,11 @@ export default function LoginPage() {
           overflow: 'hidden',
           border: '1px solid',
           borderColor: 'divider',
-          boxShadow: '0 24px 64px -16px rgba(0,0,0,0.35)',
+          boxShadow: '0 8px 40px -12px rgba(0,0,0,0.2)',
+          transition: 'box-shadow 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 12px 48px -8px rgba(0,0,0,0.28)',
+          },
         }}
       >
         {/* Left: brand / aurora panel — desktop only */}

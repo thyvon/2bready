@@ -32,7 +32,7 @@ export const TIER_LABELS: Record<Tier, string> = {
 export type LevelCode = 'L1' | 'L2' | 'L3' | 'L4';
 
 export interface Pillar {
-  id: 'comply' | 'scale' | 'lead';
+  id: 'verify' | 'connect' | 'grow';
   label: string;
   name: string;
   sub: string;
@@ -42,25 +42,25 @@ export interface Pillar {
 
 export const PILLARS: Pillar[] = [
   {
-    id: 'comply',
+    id: 'verify',
     label: 'Foundation',
-    name: 'Comply',
+    name: 'Verify',
     sub: 'Audit-Ready · Local Laws',
     description: 'Precision in GDT, MoC, MLVT compliance. Risk mitigation and full regulatory alignment.',
     tier: 'starter',
   },
   {
-    id: 'scale',
+    id: 'connect',
     label: 'Momentum',
-    name: 'Scale',
+    name: 'Connect',
     sub: 'Automation · Efficiency',
     description: 'Remove bottlenecks of manual paperwork. Financial clarity and operational excellence.',
     tier: 'pro',
   },
   {
-    id: 'lead',
+    id: 'grow',
     label: 'Vision',
-    name: 'Lead',
+    name: 'Grow',
     sub: 'Investor Ready · Regional',
     description: 'Market authority, investor confidence, and regional expansion beyond Cambodia.',
     tier: 'enterprise',

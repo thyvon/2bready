@@ -155,9 +155,9 @@ const en = {
   'journey.milestone_complete': 'Complete',
   'journey.milestone_verified_count': '{verified}/{total} verified',
   'journey.milestone_zero_verified': '0/{total} verified',
-  'journey.pillar_comply': 'Comply',
-  'journey.pillar_scale': 'Scale',
-  'journey.pillar_lead': 'Lead',
+  'journey.pillar_verify': 'Verify',
+  'journey.pillar_connect': 'Connect',
+  'journey.pillar_grow': 'Grow',
 
   // ─── Legal consent (restricted L3/L4 documents) ─────────────────────────
   'legal_consent.title': 'Confirm access',

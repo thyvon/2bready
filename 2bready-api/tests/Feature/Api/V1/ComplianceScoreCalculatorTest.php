@@ -23,7 +23,7 @@ function calculatorFixture(string $levelCode = 'L3'): array
     $company = Company::factory()->create();
     $template = JourneyTemplate::factory()->create();
     Journey::factory()->create(['company_id' => $company->id, 'journey_template_id' => $template->id]);
-    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => $levelCode, 'pillar' => 'scale', 'sort_order' => 3]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => $levelCode, 'pillar' => 'connect', 'sort_order' => 3]);
 
     return compact('company', 'level');
 }
@@ -78,7 +78,7 @@ it('ignores non-required templates', function () {
 it('ignores templates at other levels', function () {
     ['company' => $company] = calculatorFixture();
     $otherTemplate = JourneyTemplate::factory()->create();
-    $otherLevel = JourneyLevel::factory()->create(['journey_template_id' => $otherTemplate->id, 'code' => 'L2', 'pillar' => 'comply', 'sort_order' => 2]);
+    $otherLevel = JourneyLevel::factory()->create(['journey_template_id' => $otherTemplate->id, 'code' => 'L2', 'pillar' => 'verify', 'sort_order' => 2]);
     $milestone = Milestone::factory()->create(['journey_level_id' => $otherLevel->id]);
     DocumentTemplate::factory()->create(['milestone_id' => $milestone->id]);
 

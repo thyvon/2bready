@@ -19,6 +19,16 @@ export async function listIndustries(): Promise<Industry[]> {
   return res.data.data;
 }
 
+export async function listIndustriesWithTemplates(): Promise<Industry[]> {
+  const res = await api.get<{ data: Industry[] }>('/industry-options/with-templates');
+  return res.data.data;
+}
+
+export async function listCountriesWithTemplates(industryId: string): Promise<string[]> {
+  const res = await api.get<{ data: string[] }>('/industry-options/countries', { params: { industry_id: industryId } });
+  return res.data.data;
+}
+
 export async function getCompany(id: string): Promise<Company> {
   const res = await api.get<{ data: Company }>(`/companies/${id}`);
   return res.data.data;
@@ -95,4 +105,28 @@ export type AddCompanyUserPayload = {
 export async function addCompanyUser(companyId: string, payload: AddCompanyUserPayload): Promise<User> {
   const res = await api.post<{ data: User }>(`/companies/${companyId}/users`, payload);
   return res.data.data;
+}
+
+export interface AssignCompanyUserPayload {
+  user_id: string;
+  role: 'company_owner' | 'company_member';
+}
+
+// Assigns an existing user to a company's team — the "invite from existing
+// accounts" flow, distinct from addCompanyUser which creates a new user.
+export async function assignCompanyUser(companyId: string, payload: AssignCompanyUserPayload): Promise<User> {
+  const res = await api.post<{ data: User }>(`/companies/${companyId}/users/assign`, payload);
+  return res.data.data;
+}
+
+// Lists users available for assignment to a company — company-side roles
+// who are NOT already in this company's team.
+export async function listAssignableUsers(companyId: string): Promise<User[]> {
+  const res = await api.get<{ data: User[] }>(`/companies/${companyId}/users/assignable`);
+  return res.data.data;
+}
+
+// Removes a user from a company's team — detaches from the pivot.
+export async function removeCompanyUser(companyId: string, userId: string): Promise<void> {
+  await api.delete(`/companies/${companyId}/users/${userId}`);
 }

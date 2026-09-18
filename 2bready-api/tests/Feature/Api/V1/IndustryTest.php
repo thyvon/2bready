@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Industry\Models\Industry;
+use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,6 +33,70 @@ it('excludes description and is_active from the public industry list', function 
     $response = $this->getJson('/api/v1/industry-options');
 
     $response->assertOk()->assertJsonMissingPath('data.0.description')->assertJsonMissingPath('data.0.is_active');
+});
+
+// ─── Public list (with templates only) ─────────────────────────────────────
+
+it('returns only industries that have an active journey template', function () {
+    $withTemplate = Industry::factory()->create(['code' => 'FNB', 'is_active' => true]);
+    JourneyTemplate::factory()->create(['industry_id' => $withTemplate->id, 'is_active' => true]);
+
+    $withoutTemplate = Industry::factory()->create(['code' => 'RETAIL', 'is_active' => true]);
+
+    $response = $this->getJson('/api/v1/industry-options/with-templates');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(1);
+    expect($response->json('data.0.code'))->toBe('FNB');
+});
+
+it('excludes industries with only inactive journey templates', function () {
+    $industry = Industry::factory()->create(['code' => 'FNB', 'is_active' => true]);
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'is_active' => false]);
+
+    $response = $this->getJson('/api/v1/industry-options/with-templates');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(0);
+});
+
+it('excludes inactive industries even if they have active templates', function () {
+    $industry = Industry::factory()->inactive()->create(['code' => 'RETIRED']);
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'is_active' => true]);
+
+    $response = $this->getJson('/api/v1/industry-options/with-templates');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(0);
+});
+
+// ─── Countries with templates ──────────────────────────────────────────────
+
+it('returns distinct countries with active templates for an industry', function () {
+    $industry = Industry::factory()->create();
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH', 'is_active' => true]);
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'country_code' => 'VN', 'is_active' => true]);
+
+    $response = $this->getJson("/api/v1/industry-options/countries?industry_id={$industry->id}");
+
+    $response->assertOk();
+    expect($response->json('data'))->toBe(['KH', 'VN']);
+});
+
+it('excludes countries with only inactive templates', function () {
+    $industry = Industry::factory()->create();
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH', 'is_active' => false]);
+
+    $response = $this->getJson("/api/v1/industry-options/countries?industry_id={$industry->id}");
+
+    $response->assertOk();
+    expect($response->json('data'))->toBe([]);
+});
+
+it('requires industry_id parameter', function () {
+    $this->getJson('/api/v1/industry-options/countries')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['industry_id']);
 });
 
 // ─── List ────────────────────────────────────────────────────────────────────

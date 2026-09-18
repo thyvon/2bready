@@ -37,7 +37,7 @@ import {
   type DocumentHistoryEntry,
 } from '@/lib/journey-api';
 
-const PILLAR_I18N_KEY: Record<string, string> = { comply: 'journey.pillar_comply', scale: 'journey.pillar_scale', lead: 'journey.pillar_lead' };
+const PILLAR_I18N_KEY: Record<string, string> = { verify: 'journey.pillar_verify', connect: 'journey.pillar_connect', grow: 'journey.pillar_grow' };
 
 // A milestone with any real progress (something uploaded, even if still
 // under review/rejected — anything past the untouched "pending" state)
@@ -567,7 +567,7 @@ function LevelAccordion({
               {badge.name} · {badge.pathway_name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {t((PILLAR_I18N_KEY[badge.pillar] ?? 'journey.pillar_comply') as TranslationKey)} · {badge.milestones.length} milestones
+              {t((PILLAR_I18N_KEY[badge.pillar] ?? 'journey.pillar_verify') as TranslationKey)} · {badge.milestones.length} milestones
             </Typography>
           </Box>
           <Chip

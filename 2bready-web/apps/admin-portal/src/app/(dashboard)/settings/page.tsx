@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -41,12 +41,14 @@ export default function SettingsPage() {
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<GoogleOAuthSettingInput>({
     resolver: zodResolver(googleOAuthSettingSchema),
     defaultValues: { enabled: false, client_id: '', client_secret: '' },
   });
+
+  const enabled = useWatch({ control, name: 'enabled' });
+  const clientSecret = useWatch({ control, name: 'client_secret' });
 
   useEffect(() => {
     if (!hasRole('admin')) router.replace('/settings/profile');
@@ -95,8 +97,6 @@ export default function SettingsPage() {
   if (loading) {
     return <PageSkeleton sections={1} fieldsPerSection={4} />;
   }
-
-  const enabled = watch('enabled');
 
   return (
     <>
@@ -150,7 +150,7 @@ export default function SettingsPage() {
           </Box>
 
           <Box className="flex justify-end">
-            <Button type="submit" variant="contained" loading={isSubmitting} disabled={enabled && !secretConfigured && !watch('client_secret')}>
+            <Button type="submit" variant="contained" loading={isSubmitting} disabled={enabled && !secretConfigured && !clientSecret}>
               {t('common.save')}
             </Button>
           </Box>

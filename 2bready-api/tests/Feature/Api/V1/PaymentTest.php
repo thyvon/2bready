@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Industry\Models\Industry;
+use App\Domain\Journey\Models\JourneyTemplate;
 use App\Domain\Package\Models\Package;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
@@ -153,6 +155,82 @@ it('requires authentication to subscribe', function () {
         'package_id' => $package->id,
         'method' => 'manual_bank_transfer',
     ])->assertUnauthorized();
+});
+
+// ─── Free package subscription ─────────────────────────────────────────────
+
+it('lets a company_owner subscribe to a free package and activates immediately', function () {
+    $industry = Industry::factory()->create();
+    $company = Company::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH']);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH']);
+    $package = Package::factory()->create(['price_cents' => 0, 'tier' => 'free']);
+
+    $response = $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.subscription.status', 'active')
+        ->assertJsonPath('data.payment', null)
+        ->assertJsonPath('data.gateway_data', []);
+
+    $subscription = Subscription::where('company_id', $company->id)->first();
+    expect($subscription->status->value)->toBe('active')
+        ->and($subscription->started_at)->not->toBeNull()
+        ->and($subscription->expires_at)->toBeNull();
+
+    expect($company->fresh()->active_subscription_id)->toBe($subscription->id);
+});
+
+it('creates no payment record for a free package', function () {
+    $industry = Industry::factory()->create();
+    $company = Company::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH']);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH']);
+    $package = Package::factory()->create(['price_cents' => 0]);
+
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertCreated();
+
+    expect(Payment::where('company_id', $company->id)->count())->toBe(0);
+});
+
+it('prevents duplicate free subscription for the same journey level', function () {
+    $industry = Industry::factory()->create();
+    $company = Company::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH']);
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    JourneyTemplate::factory()->create(['industry_id' => $industry->id, 'country_code' => 'KH']);
+    $package = Package::factory()->create(['price_cents' => 0]);
+
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertCreated();
+
+    // Second free subscription for same level must be rejected
+    $package2 = Package::factory()->create(['price_cents' => 0, 'journey_level_id' => $package->journey_level_id]);
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package2->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertStatus(409);
+});
+
+it('returns 422 when no journey template exists for free package', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $package = Package::factory()->create(['price_cents' => 0]);
+
+    // No JourneyTemplate created — should fail with 422
+    $this->actingAs($owner)->postJson('/api/v1/subscriptions', [
+        'package_id' => $package->id,
+        'method' => 'manual_bank_transfer',
+    ])->assertStatus(422);
+
+    expect(Subscription::where('company_id', $company->id)->count())->toBe(0);
 });
 
 // ─── Submit manual payment ───────────────────────────────────────────────────

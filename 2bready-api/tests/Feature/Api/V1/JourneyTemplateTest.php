@@ -149,7 +149,7 @@ it('lets an admin add a level to a journey template', function () {
         'code' => 'L1',
         'name' => 'Bronze',
         'pathway_name' => 'Foundational Compliance',
-        'pillar' => 'comply',
+        'pillar' => 'verify',
         'sort_order' => 1,
     ]);
 
@@ -167,7 +167,7 @@ it('rejects a duplicate level code within the same template', function () {
         'code' => 'L1',
         'name' => 'Bronze Again',
         'pathway_name' => 'Foundational Compliance',
-        'pillar' => 'comply',
+        'pillar' => 'verify',
     ])->assertUnprocessable()->assertJsonValidationErrors(['code']);
 });
 

@@ -1,45 +1,66 @@
 import { useEffect, useState } from 'react';
-import { listIndustries } from './api';
+import { listIndustries, listIndustriesWithTemplates } from './api';
 import type { Industry } from './types';
 
-// Module-level cache: industries are a small, rarely-changing reference dataset.
+interface UseIndustriesOptions {
+  /** Only return industries that have an active JourneyTemplate. */
+  withTemplatesOnly?: boolean;
+}
+
+// Module-level caches: industries are a small, rarely-changing reference dataset.
 // Multiple components (companies, journey-templates, packages, dialogs) all
 // call useIndustries() — this ensures only one HTTP request fires and all
 // consumers share the result.
-let cachedIndustries: Industry[] | null = null;
-let inflightPromise: Promise<Industry[]> | null = null;
+let cachedAll: Industry[] | null = null;
+let cachedWithTemplates: Industry[] | null = null;
+let inflightAll: Promise<Industry[]> | null = null;
+let inflightWithTemplates: Promise<Industry[]> | null = null;
 
-export function useIndustries() {
-  const [industries, setIndustries] = useState<Industry[]>(cachedIndustries ?? []);
-  const [loading, setLoading] = useState(cachedIndustries === null);
+export function useIndustries(options: UseIndustriesOptions = {}) {
+  const withTemplatesOnly = options.withTemplatesOnly ?? false;
+
+  const cache = withTemplatesOnly ? cachedWithTemplates : cachedAll;
+  const [industries, setIndustries] = useState<Industry[]>(cache ?? []);
+  const [loading, setLoading] = useState(cache === null);
 
   useEffect(() => {
-    if (cachedIndustries) {
-      setIndustries(cachedIndustries);
-      setLoading(false);
-      return;
-    }
+    if (cache) return;
 
     let cancelled = false;
 
-    // Deduplicate concurrent callers — they all share the same in-flight request.
-    const promise = inflightPromise ?? listIndustries();
-    inflightPromise = promise;
+    const fetcher = withTemplatesOnly ? listIndustriesWithTemplates : listIndustries;
+    const inflightKey = withTemplatesOnly ? inflightWithTemplates : inflightAll;
+    const promise = inflightKey ?? fetcher();
+
+    if (withTemplatesOnly) {
+      inflightWithTemplates = promise;
+    } else {
+      inflightAll = promise;
+    }
 
     promise
       .then((data) => {
-        cachedIndustries = data;
+        if (withTemplatesOnly) {
+          cachedWithTemplates = data;
+        } else {
+          cachedAll = data;
+        }
         if (!cancelled) setIndustries(data);
       })
       .finally(() => {
-        inflightPromise = null;
+        if (withTemplatesOnly) {
+          inflightWithTemplates = null;
+        } else {
+          inflightAll = null;
+        }
         if (!cancelled) setLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withTemplatesOnly]);
 
   return { industries, loading };
 }

@@ -39,6 +39,11 @@ Route::prefix('v1')->group(function () {
     // immediately upon creation.
     Route::get('industry-options/with-templates', [IndustryController::class, 'publicIndexWithTemplates']);
 
+    // Public — returns distinct country codes that have active JourneyTemplates
+    // for a given industry, so the create/edit company form can dynamically
+    // filter the country dropdown after an industry is selected.
+    Route::get('industry-options/countries', [IndustryController::class, 'countriesWithTemplates']);
+
     // Public — a Smart Data Room link's token + PIN IS the credential, there
     // is no Sanctum token at all on this path (see
     // VerifyDataRoomAccessAction/PublicDataRoomController). Authenticated

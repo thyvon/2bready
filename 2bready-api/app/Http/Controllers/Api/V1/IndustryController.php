@@ -9,6 +9,7 @@ use App\Domain\Industry\Actions\DeleteIndustryAction;
 use App\Domain\Industry\Actions\UpdateIndustryAction;
 use App\Domain\Industry\DTOs\IndustryData;
 use App\Domain\Industry\Models\Industry;
+use App\Domain\Journey\Models\JourneyTemplate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Industry\StoreIndustryRequest;
 use App\Http\Requests\Api\V1\Industry\UpdateIndustryRequest;
@@ -45,6 +46,25 @@ class IndustryController extends Controller
             ->get();
 
         return ApiResponse::success(PublicIndustryResource::collection($industries));
+    }
+
+    // Returns distinct country codes that have active JourneyTemplates for a
+    // given industry — used by the create/edit company forms to dynamically
+    // filter the country dropdown after an industry is selected.
+    public function countriesWithTemplates(Request $request): JsonResponse
+    {
+        $request->validate([
+            'industry_id' => ['required', 'string', 'exists:industries,id'],
+        ]);
+
+        $countries = JourneyTemplate::where('industry_id', $request->industry_id)
+            ->where('is_active', true)
+            ->distinct()
+            ->pluck('country_code')
+            ->sort()
+            ->values();
+
+        return ApiResponse::success($countries);
     }
 
     // Every authenticated user (any role) can reach this — a company_owner

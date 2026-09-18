@@ -20,5 +20,8 @@ Route::prefix('companies')->group(function () {
     Route::post('{company}/switch', [CompanyController::class, 'switch'])->withoutMiddleware('company.active');
     Route::get('{company}/users', [CompanyUserController::class, 'index']);
     Route::post('{company}/users', [CompanyUserController::class, 'store']);
+    Route::post('{company}/users/assign', [CompanyUserController::class, 'assign']);
+    Route::get('{company}/users/assignable', [CompanyUserController::class, 'assignable']);
     Route::patch('{company}/users/{user}', [CompanyUserController::class, 'update']);
+    Route::delete('{company}/users/{user}', [CompanyUserController::class, 'destroy']);
 });

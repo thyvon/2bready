@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -40,7 +40,7 @@ export default function AdminPackagesPage() {
   const { hasAnyRole } = useAuthStore();
   const toast = useToast();
   const { t, locale } = useTranslation();
-  const { industries } = useIndustries();
+  const { industries } = useIndustries({ withTemplatesOnly: true });
 
   const [packages, setPackages] = useState<Package[]>([]);
   const [journeyLevels, setJourneyLevels] = useState<JourneyLevel[]>([]);
@@ -91,8 +91,19 @@ export default function AdminPackagesPage() {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PackageFormInput>({ resolver: zodResolver(packageFormSchema), defaultValues: packageFormDefaults });
+
+  const tierValue = useWatch({ control, name: 'tier' });
+  const isFreeTier = tierValue === 'free';
+
+  useEffect(() => {
+    if (isFreeTier) {
+      setValue('monthly_price', '0');
+      setValue('yearly_price', '0');
+    }
+  }, [isFreeTier, setValue]);
 
   const openCreate = async () => {
     setEditing(null);
@@ -192,6 +203,19 @@ export default function AdminPackagesPage() {
         return industry ? industryLabel(industry, locale) : t('package.all_industries');
       },
     },
+    {
+      key: 'journey_level_id',
+      label: t('package.journey_level_col'),
+      render: (p) => {
+        if (!p.journey_level_code) return <span className="text-gray-400">—</span>;
+        return (
+          <span className="text-sm font-medium">
+            {p.journey_level_code}
+            {p.journey_level_name && <span className="text-gray-500 font-normal ml-1">— {p.journey_level_name}</span>}
+          </span>
+        );
+      },
+    },
     { key: 'tier', label: t('package.tier_col'), render: (p) => t(`package.tier.${p.tier}`) },
     {
       key: 'prices',
@@ -287,33 +311,6 @@ export default function AdminPackagesPage() {
 
             <Box className="flex gap-4">
               <Box className="flex-1">
-                <FieldLabel>{t('package.monthly_price')}</FieldLabel>
-                <FormTextField
-                  type="number"
-                  placeholder="19.90"
-                  fullWidth
-                  slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
-                  error={!!errors.monthly_price}
-                  helperText={errors.monthly_price?.message}
-                  {...register('monthly_price')}
-                />
-              </Box>
-              <Box className="flex-1">
-                <FieldLabel>{t('package.yearly_price')}</FieldLabel>
-                <FormTextField
-                  type="number"
-                  placeholder="199.00"
-                  fullWidth
-                  slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
-                  error={!!errors.yearly_price}
-                  helperText={errors.yearly_price?.message}
-                  {...register('yearly_price')}
-                />
-              </Box>
-            </Box>
-
-            <Box className="flex gap-4">
-              <Box className="flex-1">
                 <FieldLabel>{t('package.industry_col')}</FieldLabel>
                 <Controller
                   name="industry_id"
@@ -370,6 +367,35 @@ export default function AdminPackagesPage() {
                   error={!!errors.sort_order}
                   helperText={errors.sort_order?.message}
                   {...register('sort_order')}
+                />
+              </Box>
+            </Box>
+
+            <Box className="flex gap-4">
+              <Box className="flex-1">
+                <FieldLabel>{t('package.monthly_price')}</FieldLabel>
+                <FormTextField
+                  type="number"
+                  placeholder={isFreeTier ? '0.00' : '19.90'}
+                  fullWidth
+                  disabled={isFreeTier}
+                  slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
+                  error={!!errors.monthly_price}
+                  helperText={errors.monthly_price?.message}
+                  {...register('monthly_price')}
+                />
+              </Box>
+              <Box className="flex-1">
+                <FieldLabel>{t('package.yearly_price')}</FieldLabel>
+                <FormTextField
+                  type="number"
+                  placeholder={isFreeTier ? '0.00' : '199.00'}
+                  fullWidth
+                  disabled={isFreeTier}
+                  slotProps={{ htmlInput: { step: '0.01', min: 0 } }}
+                  error={!!errors.yearly_price}
+                  helperText={errors.yearly_price?.message}
+                  {...register('yearly_price')}
                 />
               </Box>
             </Box>

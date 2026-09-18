@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Company\Actions\AddCompanyUserAction;
+use App\Domain\Company\Actions\AssignCompanyUserAction;
+use App\Domain\Company\Actions\RemoveCompanyUserAction;
 use App\Domain\Company\Actions\UpdateCompanyUserAction;
 use App\Domain\Company\Models\Company;
 use App\Domain\User\Models\User;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Company\AssignCompanyUserRequest;
 use App\Http\Requests\Api\V1\Company\StoreCompanyUserRequest;
 use App\Http\Requests\Api\V1\Company\UpdateCompanyUserRequest;
 use App\Http\Resources\Api\V1\UserResource;
@@ -73,5 +76,47 @@ class CompanyUserController extends Controller
         $user = $action->execute($company, $user, $request->validated());
 
         return ApiResponse::success(new UserResource($user->load(['roles', 'companies'])));
+    }
+
+    // Assigns an existing user to this company's team — the "invite from
+    // existing accounts" flow, distinct from store() which creates a new user.
+    public function assign(AssignCompanyUserRequest $request, Company $company, AssignCompanyUserAction $action): JsonResponse
+    {
+        $this->authorize('createUser', $company);
+
+        $user = User::findOrFail($request->validated('user_id'));
+
+        $user = $action->execute($company, $user, $request->validated('role'));
+
+        return ApiResponse::created(new UserResource($user));
+    }
+
+    // Lists users available for assignment to a company — company-side roles
+    // (company_owner/company_member) who are NOT already in this company's team.
+    public function assignable(Company $company): JsonResponse
+    {
+        $this->authorize('view', $company);
+
+        $existingUserIds = $company->users()->pluck('users.id');
+
+        $users = User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['company_owner', 'company_member']))
+            ->whereNotIn('id', $existingUserIds)
+            ->with(['roles'])
+            ->orderBy('name')
+            ->get();
+
+        return ApiResponse::success(UserResource::collection($users));
+    }
+
+    // Removes a user from a company's team — detaches from the pivot.
+    // Blocks removal of the last owner.
+    public function destroy(Company $company, User $user, RemoveCompanyUserAction $action): JsonResponse
+    {
+        $this->authorize('createUser', $company);
+
+        $action->execute($company, $user);
+
+        return ApiResponse::noContent();
     }
 }

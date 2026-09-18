@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Industry\Models\Industry;
+use App\Domain\Journey\Models\Journey;
+use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\PlatformSettingSeeder;
@@ -314,6 +316,109 @@ it('forbids a company_owner from updating another company', function () {
     $this->actingAs($owner)
         ->patchJson("/api/v1/companies/{$otherCompany->id}", ['name' => 'Hijack'])
         ->assertForbidden();
+});
+
+// ─── Industry change guard ─────────────────────────────────────────────────
+
+it('blocks industry change when company has an active journey', function () {
+    $industry1 = Industry::factory()->create(['code' => 'FNB']);
+    $industry2 = Industry::factory()->create(['code' => 'RETAIL']);
+    $company = Company::factory()->create(['industry_id' => $industry1->id]);
+    $admin = User::factory()->admin()->create();
+
+    Journey::factory()->create(['company_id' => $company->id, 'status' => 'active']);
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'industry_id' => $industry2->id,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['industry_id']);
+
+    expect($company->fresh()->industry_id)->toBe($industry1->id);
+});
+
+it('blocks industry change when company has an active subscription', function () {
+    $industry1 = Industry::factory()->create(['code' => 'FNB']);
+    $industry2 = Industry::factory()->create(['code' => 'RETAIL']);
+    $company = Company::factory()->create(['industry_id' => $industry1->id]);
+    $admin = User::factory()->admin()->create();
+
+    Subscription::factory()->create(['company_id' => $company->id, 'status' => 'active']);
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'industry_id' => $industry2->id,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['industry_id']);
+
+    expect($company->fresh()->industry_id)->toBe($industry1->id);
+});
+
+it('allows industry change when company has no active journey or subscription', function () {
+    $industry1 = Industry::factory()->create(['code' => 'FNB']);
+    $industry2 = Industry::factory()->create(['code' => 'RETAIL']);
+    $company = Company::factory()->create(['industry_id' => $industry1->id]);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'industry_id' => $industry2->id,
+    ])->assertOk()->assertJsonPath('data.industry_id', $industry2->id);
+});
+
+it('allows setting same industry_id even with active journey', function () {
+    $industry = Industry::factory()->create(['code' => 'FNB']);
+    $company = Company::factory()->create(['industry_id' => $industry->id]);
+    $admin = User::factory()->admin()->create();
+
+    Journey::factory()->create(['company_id' => $company->id, 'status' => 'active']);
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'industry_id' => $industry->id,
+    ])->assertOk();
+});
+
+// ─── Country change guard ──────────────────────────────────────────────────
+
+it('blocks country change when company has an active journey', function () {
+    $company = Company::factory()->create(['country_code' => 'KH']);
+    $admin = User::factory()->admin()->create();
+
+    Journey::factory()->create(['company_id' => $company->id, 'status' => 'active']);
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'country_code' => 'VN',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['country_code']);
+
+    expect($company->fresh()->country_code)->toBe('KH');
+});
+
+it('blocks country change when company has an active subscription', function () {
+    $company = Company::factory()->create(['country_code' => 'KH']);
+    $admin = User::factory()->admin()->create();
+
+    Subscription::factory()->create(['company_id' => $company->id, 'status' => 'active']);
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'country_code' => 'VN',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['country_code']);
+
+    expect($company->fresh()->country_code)->toBe('KH');
+});
+
+it('allows country change when company has no active journey or subscription', function () {
+    $company = Company::factory()->create(['country_code' => 'KH']);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'country_code' => 'VN',
+    ])->assertOk()->assertJsonPath('data.country_code', 'VN');
+});
+
+it('allows setting same country_code even with active journey', function () {
+    $company = Company::factory()->create(['country_code' => 'KH']);
+    $admin = User::factory()->admin()->create();
+
+    Journey::factory()->create(['company_id' => $company->id, 'status' => 'active']);
+
+    $this->actingAs($admin)->patchJson("/api/v1/companies/{$company->id}", [
+        'country_code' => 'KH',
+    ])->assertOk();
 });
 
 // ─── Delete ──────────────────────────────────────────────────────────────────

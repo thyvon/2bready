@@ -56,7 +56,7 @@ function createCompanyJourney(Company $company): JourneyTemplate
  *  is ever added to the real taxonomy. */
 function milestoneAtLevel(JourneyTemplate $template, string $code): Milestone
 {
-    $pillars = ['comply', 'scale', 'lead'];
+    $pillars = ['verify', 'connect', 'grow'];
     $levelNumber = (int) substr($code, 1);
     $level = JourneyLevel::factory()->create([
         'journey_template_id' => $template->id,
@@ -152,7 +152,7 @@ it('lets a company_owner hire a TP firm for their own company via bank transfer'
     $owner = User::factory()->companyOwner()->withCompany($company)->create();
     $tpPartner = TpPartner::factory()->create(['price_l3_cents' => 39900]);
     $journeyTemplate = createCompanyJourney($company);
-    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'lead', 'sort_order' => 3]);
+    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'grow', 'sort_order' => 3]);
     Milestone::factory()->create(['journey_level_id' => $l3Level->id]);
     subscribeCompanyToLevel($company, $l3Level);
 
@@ -179,7 +179,7 @@ it("ignores a client-supplied company_id and uses the caller's own company", fun
     $otherCompany = Company::factory()->create();
     $tpPartner = TpPartner::factory()->create();
     $journeyTemplate = createCompanyJourney($company);
-    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'lead', 'sort_order' => 3]);
+    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'grow', 'sort_order' => 3]);
     Milestone::factory()->create(['journey_level_id' => $l3Level->id]);
     subscribeCompanyToLevel($company, $l3Level);
 
@@ -237,9 +237,9 @@ it('rejects a self-service hire for a journey level the company has not unlocked
     // L2 and L3 deliberately share a pillar — L3 stays locked until L2's
     // milestone is completed for this company, which we never do here.
     $template = createCompanyJourney($company);
-    $levelL2 = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L2', 'pillar' => 'comply', 'sort_order' => 1]);
+    $levelL2 = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L2', 'pillar' => 'verify', 'sort_order' => 1]);
     Milestone::factory()->create(['journey_level_id' => $levelL2->id]);
-    $levelL3 = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L3', 'pillar' => 'comply', 'sort_order' => 2]);
+    $levelL3 = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L3', 'pillar' => 'verify', 'sort_order' => 2]);
     Milestone::factory()->create(['journey_level_id' => $levelL3->id]);
 
     $this->actingAs($owner)->postJson('/api/v1/tp-hires/hire', [
@@ -346,7 +346,7 @@ it('activates the hire once the company pays and admin confirms, and the TP can 
         ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $company->id);
 
     $journeyTemplate = createCompanyJourney($company);
-    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'lead', 'sort_order' => 3]);
+    $l3Level = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'grow', 'sort_order' => 3]);
     $milestone = Milestone::factory()->create(['journey_level_id' => $l3Level->id]);
     subscribeCompanyToLevel($company, $l3Level);
     $template = DocumentTemplate::factory()->create(['milestone_id' => $milestone->id]);
@@ -540,8 +540,8 @@ it('excludes a hired level from the journey tree while the company hasn\'t unloc
     // of L2's milestones has a completion for this company (see
     // JourneyProgressService). Neither milestone is completed here, so L3
     // stays locked even though the firm is hired for it.
-    $l2 = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L2', 'pillar' => 'comply', 'sort_order' => 1]);
-    $l3 = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'comply', 'sort_order' => 2]);
+    $l2 = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L2', 'pillar' => 'verify', 'sort_order' => 1]);
+    $l3 = JourneyLevel::factory()->create(['journey_template_id' => $journeyTemplate->id, 'code' => 'L3', 'pillar' => 'verify', 'sort_order' => 2]);
     Milestone::factory()->create(['journey_level_id' => $l2->id]);
     Milestone::factory()->create(['journey_level_id' => $l3->id]);
 

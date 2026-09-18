@@ -26,7 +26,7 @@ class UpdateJourneyLevelRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'pathway_name' => ['sometimes', 'string', 'max:255'],
-            'pillar' => ['sometimes', 'string', 'in:comply,scale,lead'],
+            'pillar' => ['sometimes', 'string', 'in:verify,connect,grow'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
     }

@@ -2,7 +2,7 @@ import { createApiClient } from '@2bready/api-client';
 import { useAuthStore } from '@/store/auth.store';
 
 const api = createApiClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL + '/api/v1',
+  baseURL: (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080') + '/api/v1',
   getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('admin_auth_token') : null),
   onUnauthorized: () => {
     if (typeof window !== 'undefined') {

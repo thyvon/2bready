@@ -236,3 +236,169 @@ it('lets an admin enable Google sign-in for a company member', function () {
 
     expect($member->fresh()->google_auth_enabled)->toBeTrue();
 });
+
+// ─── Assign existing user ──────────────────────────────────────────────────
+
+it('lets an admin assign an existing user to a company', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $user = User::factory()->withRole('company_member')->create();
+
+    $response = $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users/assign", [
+        'user_id' => $user->id,
+        'role' => 'company_member',
+    ]);
+
+    $response->assertCreated()->assertJsonPath('data.id', $user->id);
+
+    expect($company->users()->where('users.id', $user->id)->exists())->toBeTrue()
+        ->and($user->fresh()->current_company_id)->toBe($company->id);
+});
+
+it('lets an admin assign a user as company_owner', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $user = User::factory()->withRole('company_member')->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users/assign", [
+        'user_id' => $user->id,
+        'role' => 'company_owner',
+    ])->assertCreated();
+
+    expect($user->fresh()->hasRole('company_owner'))->toBeTrue();
+});
+
+it('rejects assigning a user already in the company', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $existing = User::factory()->withRole('company_member')->withCompany($company)->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users/assign", [
+        'user_id' => $existing->id,
+        'role' => 'company_member',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['user_id']);
+});
+
+it('validates the assign payload', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+
+    $this->actingAs($admin)->postJson("/api/v1/companies/{$company->id}/users/assign", [
+        'user_id' => 'nonexistent',
+        'role' => 'superadmin',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['user_id', 'role']);
+});
+
+it('forbids a company_owner from assigning users via the back office', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $user = User::factory()->withRole('company_member')->create();
+
+    $this->actingAs($owner)->postJson("/api/v1/companies/{$company->id}/users/assign", [
+        'user_id' => $user->id,
+        'role' => 'company_member',
+    ])->assertForbidden();
+});
+
+it('requires authentication to assign a user', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->create();
+
+    $this->postJson("/api/v1/companies/{$company->id}/users/assign", [
+        'user_id' => $user->id,
+        'role' => 'company_member',
+    ])->assertUnauthorized();
+});
+
+// ─── List assignable users ──────────────────────────────────────────────────
+
+it('lets an admin list users available for assignment', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $member = User::factory()->withRole('company_member')->withCompany($company)->create();
+    $available = User::factory()->withRole('company_member')->create();
+
+    $response = $this->actingAs($admin)->getJson("/api/v1/companies/{$company->id}/users/assignable");
+
+    $response->assertOk();
+    $ids = collect($response->json('data'))->pluck('id');
+    expect($ids)->toContain($available->id)
+        ->and($ids)->not->toContain($member->id);
+});
+
+it('excludes internal users from assignable list', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    User::factory()->admin()->create();
+
+    $this->actingAs($admin)->getJson("/api/v1/companies/{$company->id}/users/assignable")
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+});
+
+// ─── Remove user from company ──────────────────────────────────────────────
+
+it('lets an admin remove a member from a company', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $member = User::factory()->withRole('company_member')->withCompany($company)->create();
+
+    $this->actingAs($admin)->deleteJson("/api/v1/companies/{$company->id}/users/{$member->id}")
+        ->assertNoContent();
+
+    expect($company->users()->where('users.id', $member->id)->exists())->toBeFalse();
+});
+
+it('lets an admin remove an owner when another owner remains', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $ownerA = User::factory()->companyOwner()->withCompany($company)->create();
+    User::factory()->companyOwner()->withCompany($company)->create();
+
+    $this->actingAs($admin)->deleteJson("/api/v1/companies/{$company->id}/users/{$ownerA->id}")
+        ->assertNoContent();
+
+    expect($company->users()->where('users.id', $ownerA->id)->exists())->toBeFalse();
+});
+
+it('blocks removing the last owner of a company', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+
+    $this->actingAs($admin)->deleteJson("/api/v1/companies/{$company->id}/users/{$owner->id}")
+        ->assertUnprocessable()->assertJsonValidationErrors(['user_id']);
+
+    expect($company->users()->where('users.id', $owner->id)->exists())->toBeTrue();
+});
+
+it('resets current_company_id when removed user had this as current company', function () {
+    $admin = User::factory()->admin()->create();
+    $company = Company::factory()->create();
+    $otherCompany = Company::factory()->create();
+    $member = User::factory()->withRole('company_member')->create();
+    $member->companies()->attach([$company->id, $otherCompany->id]);
+    $member->update(['current_company_id' => $company->id]);
+
+    $this->actingAs($admin)->deleteJson("/api/v1/companies/{$company->id}/users/{$member->id}")
+        ->assertNoContent();
+
+    expect($member->fresh()->current_company_id)->not->toBe($company->id);
+});
+
+it('forbids a company_owner from removing users via the back office', function () {
+    $company = Company::factory()->create();
+    $owner = User::factory()->companyOwner()->withCompany($company)->create();
+    $member = User::factory()->withRole('company_member')->withCompany($company)->create();
+
+    $this->actingAs($owner)->deleteJson("/api/v1/companies/{$company->id}/users/{$member->id}")
+        ->assertForbidden();
+});
+
+it('requires authentication to remove a user', function () {
+    $company = Company::factory()->create();
+    $member = User::factory()->withRole('company_member')->withCompany($company)->create();
+
+    $this->deleteJson("/api/v1/companies/{$company->id}/users/{$member->id}")
+        ->assertUnauthorized();
+});

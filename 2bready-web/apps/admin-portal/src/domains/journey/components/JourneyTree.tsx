@@ -34,7 +34,7 @@ import { useTranslation } from '@/lib/i18n';
 import { formatDate } from '@/lib/utils';
 import type { DocumentHistoryEntry, JourneyDocument, JourneyLevel, JourneyMilestone } from '@/domains/journey/types';
 
-const PILLAR_LABEL: Record<string, string> = { comply: 'Comply', scale: 'Scale', lead: 'Lead' };
+const PILLAR_LABEL: Record<string, string> = { verify: 'Verify', connect: 'Connect', grow: 'Grow' };
 
 function milestoneHasActivity(milestone: JourneyMilestone): boolean {
   return milestone.completed || milestone.documents.some((doc) => doc.status !== 'pending');

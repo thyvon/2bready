@@ -248,7 +248,7 @@ it('lets an admin approve a submitted audit, recalculating the compliance score'
 
     // One required template at L3, verified — so the recalculated score is 100.
     $template = auditJourney($company);
-    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L3', 'pillar' => 'scale', 'sort_order' => 3]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L3', 'pillar' => 'connect', 'sort_order' => 3]);
     $milestone = Milestone::factory()->create(['journey_level_id' => $level->id]);
     $docTemplate = DocumentTemplate::factory()->create(['milestone_id' => $milestone->id]);
     Document::factory()->verified()->create([

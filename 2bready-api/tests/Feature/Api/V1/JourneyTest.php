@@ -27,9 +27,9 @@ beforeEach(function () {
     $this->industry = Industry::factory()->create(['code' => 'F&B']);
     $this->template = JourneyTemplate::factory()->create(['country_code' => 'KH', 'industry_id' => $this->industry->id]);
 
-    $this->l1 = JourneyLevel::factory()->create(['journey_template_id' => $this->template->id, 'code' => 'L1', 'pillar' => 'comply', 'sort_order' => 1]);
-    $this->l2 = JourneyLevel::factory()->create(['journey_template_id' => $this->template->id, 'code' => 'L2', 'pillar' => 'scale', 'sort_order' => 2]);
-    $this->l3 = JourneyLevel::factory()->create(['journey_template_id' => $this->template->id, 'code' => 'L3', 'pillar' => 'scale', 'sort_order' => 3]);
+    $this->l1 = JourneyLevel::factory()->create(['journey_template_id' => $this->template->id, 'code' => 'L1', 'pillar' => 'verify', 'sort_order' => 1]);
+    $this->l2 = JourneyLevel::factory()->create(['journey_template_id' => $this->template->id, 'code' => 'L2', 'pillar' => 'connect', 'sort_order' => 2]);
+    $this->l3 = JourneyLevel::factory()->create(['journey_template_id' => $this->template->id, 'code' => 'L3', 'pillar' => 'connect', 'sort_order' => 3]);
 
     $this->l1MilestoneA = Milestone::factory()->create(['journey_level_id' => $this->l1->id, 'sort_order' => 1]);
     $this->l2MilestoneA = Milestone::factory()->create(['journey_level_id' => $this->l2->id, 'sort_order' => 1]);

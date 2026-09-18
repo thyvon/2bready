@@ -7,6 +7,7 @@ import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import TranslateOutlinedIcon from '@mui/icons-material/TranslateOutlined';
@@ -24,11 +25,14 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import DetailField from '@/components/ui/DetailField';
 import PageSkeleton from '@/components/ui/PageSkeleton';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { useToast } from '@/components/feedback/ToastProvider';
 import CompanyEditDialog from '@/domains/company/components/CompanyEditDialog';
 import CompanyUserEditDialog from '@/domains/company/components/CompanyUserEditDialog';
 import AddCompanyUserDialog from '@/domains/company/components/AddCompanyUserDialog';
+import AssignCompanyUserDialog from '@/domains/company/components/AssignCompanyUserDialog';
 import { useIndustries } from '@/domains/company/hooks';
-import { listCompanyUsers, listCompanySubscriptions } from '@/domains/company/api';
+import { listCompanyUsers, listCompanySubscriptions, deleteCompany, removeCompanyUser } from '@/domains/company/api';
+import { ConfirmDialog } from '@2bready/ui-core';
 import { industryLabel, optionLabel, companyRoleOf, COUNTRY_OPTIONS } from '@/domains/company/constants';
 import type { User } from '@/domains/user/types';
 import { formatDate, getApiError } from '@/lib/utils';
@@ -40,6 +44,7 @@ import { JourneyHero } from '@/domains/journey/components/JourneyHero';
 import { LevelCardsGrid } from '@/domains/journey/components/LevelCardsGrid';
 import { allDocuments, countVerified } from '@/domains/journey/helpers';
 import { flattenDocuments } from '@/domains/journey/types';
+import { useRouter } from 'next/navigation';
 
 // Same per-level emoji as the grid cards; score labels are explicit keys so
 // the i18n dict typing stays exact (no template-literal keys).
@@ -52,9 +57,11 @@ const LEVEL_SCORE_KEYS: Record<string, 'journey.level_l1_score' | 'journey.level
 
 export default function CompanyOverviewPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const { company, setCompany } = useCompanyWorkspace();
   const { t, locale } = useTranslation();
   const { industries } = useIndustries();
+  const toast = useToast();
 
   const [journey, setJourney] = useState<Journey | null>(null);
   // All company users — rendered in the team card, owners first.
@@ -62,10 +69,15 @@ export default function CompanyOverviewPage() {
   const [activeLevelCodes, setActiveLevelCodes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Team-card inline edit — opens the shared CompanyUserEditDialog.
   const [editingMember, setEditingMember] = useState<User | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [removingMember, setRemovingMember] = useState<User | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +138,17 @@ export default function CompanyOverviewPage() {
   const overallPct = totalDocs === 0 ? 0 : Math.round((verifiedDocs / totalDocs) * 100);
   const pendingDocs = totalDocs - verifiedDocs;
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteCompany(params.id);
+      router.push('/companies');
+    } catch {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  };
+
   // Highest currently-unlocked level across every pillar (not scoped to one
   // pillar like client-portal's own Overview page) — an admin's reason for
   // being on this tab is often exactly to spot-check "does this company's
@@ -175,9 +198,14 @@ export default function CompanyOverviewPage() {
           title={t('company.details')}
           className="lg:col-span-2"
           action={
-            <IconButton size="small" onClick={() => setEditOpen(true)} aria-label={t('common.edit')}>
-              <EditIcon fontSize="small" />
-            </IconButton>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <IconButton size="small" onClick={() => setEditOpen(true)} aria-label={t('common.edit')}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={() => setDeleteOpen(true)} aria-label={t('common.delete')} sx={{ color: 'error.main' }}>
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </Box>
           }
         >
           <Box className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
@@ -214,9 +242,14 @@ export default function CompanyOverviewPage() {
           title={t('company.team_title')}
           className="lg:col-span-1"
           action={
-            <IconButton size="small" aria-label={t('company_users.add_user')} onClick={() => setAddOpen(true)}>
-              <AddIcon fontSize="small" />
-            </IconButton>
+            <Box className="flex gap-1">
+              <IconButton size="small" aria-label={t('company_users.assign_user')} onClick={() => setAssignOpen(true)}>
+                <PersonOutlineOutlinedIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" aria-label={t('company_users.add_user')} onClick={() => setAddOpen(true)}>
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Box>
           }
         >
           {members.length === 0 ? (
@@ -254,9 +287,14 @@ export default function CompanyOverviewPage() {
                         )}
                       </Box>
                     </Box>
-<IconButton size="small" aria-label={t('common.edit')} onClick={() => setEditingMember(member)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                    <Box className="flex gap-0.5">
+                      <IconButton size="small" aria-label={t('common.edit')} onClick={() => setEditingMember(member)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" aria-label={t('common.delete')} onClick={() => setRemovingMember(member)}>
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </Box>
                 );
               })}
@@ -285,6 +323,37 @@ export default function CompanyOverviewPage() {
         onSaved={(user) => setMembers((prev) => [...prev, user])}
       />
 
+      <AssignCompanyUserDialog
+        companyId={company.id}
+        open={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        onSaved={(user) => setMembers((prev) => [...prev, user])}
+      />
+
+      <ConfirmDialog
+        open={!!removingMember}
+        title={t('company_users.remove_user')}
+        description={t('company_users.remove_user_confirm', { name: removingMember?.name ?? '' })}
+        confirmLabel={t('common.delete')}
+        danger
+        loading={removing}
+        onCancel={() => setRemovingMember(null)}
+        onConfirm={async () => {
+          if (!removingMember) return;
+          setRemoving(true);
+          try {
+            await removeCompanyUser(company.id, removingMember.id);
+            setMembers((prev) => prev.filter((u) => u.id !== removingMember.id));
+            toast.success(t('company_users.remove_success'));
+          } catch (err) {
+            toast.error(getApiError(err).message);
+          } finally {
+            setRemoving(false);
+            setRemovingMember(null);
+          }
+        }}
+      />
+
       <CompanyEditDialog
         open={editOpen}
         company={company}
@@ -293,6 +362,18 @@ export default function CompanyOverviewPage() {
           setEditOpen(false);
           setCompany(updated);
         }}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title={t('admin.delete_company')}
+        description={t('admin.delete_company_confirm', { name: company.name })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        danger
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
       />
     </Box>
   );

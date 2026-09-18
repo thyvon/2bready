@@ -469,6 +469,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/users/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["companyUser.assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/users/assignable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["companyUser.assignable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/users/{user}": {
         parameters: {
             query?: never;
@@ -479,7 +511,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["companyUser.destroy"];
         options?: never;
         head?: never;
         patch: operations["companyUser.update"];
@@ -813,6 +845,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["industry.publicIndex"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/industry-options/with-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["industry.publicIndexWithTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/industry-options/countries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["industry.countriesWithTemplates"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1689,6 +1753,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/subscriptions/{subscription}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["subscription.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/support/tickets": {
         parameters: {
             query?: never;
@@ -2191,6 +2271,12 @@ export interface components {
         AssignAuditorRequest: {
             auditor_id: string;
         };
+        /** AssignCompanyUserRequest */
+        AssignCompanyUserRequest: {
+            user_id: string;
+            /** @enum {string} */
+            role: "company_owner" | "company_member";
+        };
         /** AssignSupportTicketRequest */
         AssignSupportTicketRequest: {
             /** @description Null clears the assignment. */
@@ -2451,7 +2537,7 @@ export interface components {
          * JourneyPillar
          * @enum {string}
          */
-        JourneyPillar: "comply" | "scale" | "lead";
+        JourneyPillar: "verify" | "connect" | "grow";
         /** JourneyResource */
         JourneyResource: {
             id: string;
@@ -2600,6 +2686,7 @@ export interface components {
             industry_code?: string;
             journey_level_id: string | null;
             journey_level_code?: string;
+            journey_level_name?: string;
             tier: components["schemas"]["Tier"];
             is_active: boolean;
             sort_order: number;
@@ -3001,7 +3088,7 @@ export interface components {
             description?: string | null;
             pathway_name: string;
             /** @enum {string} */
-            pillar: "comply" | "scale" | "lead";
+            pillar: "verify" | "connect" | "grow";
             sort_order?: number;
         };
         /** StoreJourneyTemplateRequest */
@@ -3271,14 +3358,7 @@ export interface components {
             name?: string;
             name_kh?: string | null;
             registration_no?: string | null;
-            /**
-             * Format: date-time
-             * @description When the company's real compliance obligations began (e.g.
-             *     incorporation) — anchors periodic-document gap detection, see
-             *     ComplianceAnchorResolver. Self-service like registration_no:
-             *     it's the company's own historical fact, not a control with
-             *     compliance-bypass consequences like employee_count below.
-             */
+            /** Format: date-time */
             compliance_start_date?: string | null;
             industry_id?: string;
             country_code?: string;
@@ -3338,7 +3418,7 @@ export interface components {
             description?: string | null;
             pathway_name?: string;
             /** @enum {string} */
-            pillar?: "comply" | "scale" | "lead";
+            pillar?: "verify" | "connect" | "grow";
             sort_order?: number;
         };
         /** UpdateJourneyTemplateRequest */
@@ -3551,7 +3631,7 @@ export interface components {
             mime_type: string;
             size_bytes: number;
             status: string;
-            verified_at: string;
+            verified_at: string | null;
             comment: string | null;
             document_template?: {
                 id: string;
@@ -4569,6 +4649,93 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "companyUser.assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignCompanyUserRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "companyUser.assignable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"][];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "companyUser.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The user ID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "companyUser.update": {
         parameters: {
             query?: never;
@@ -5394,6 +5561,53 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    "industry.publicIndexWithTemplates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PublicIndustryResource"][];
+                        meta: string;
+                    };
+                };
+            };
+        };
+    };
+    "industry.countriesWithTemplates": {
+        parameters: {
+            query: {
+                industry_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown[];
+                        meta: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "industry.index": {
@@ -7606,10 +7820,8 @@ export interface operations {
                     "application/json": {
                         data: {
                             subscription: components["schemas"]["SubscriptionResource"];
-                            payment: components["schemas"]["PaymentResource"];
-                            gateway_data: {
-                                [key: string]: unknown;
-                            };
+                            payment: components["schemas"]["PaymentResource"] | null;
+                            gateway_data: string;
                         };
                         meta: string;
                     };
@@ -7629,6 +7841,34 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "subscription.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The subscription ID */
+                subscription: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SubscriptionResource"];
+                        meta: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "supportTicket.index": {

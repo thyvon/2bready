@@ -23,7 +23,7 @@ function engineFixture(bool $bypassed = false): array
     ]);
     $template = JourneyTemplate::factory()->create();
     Journey::factory()->create(['company_id' => $company->id, 'journey_template_id' => $template->id]);
-    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pillar' => 'comply', 'sort_order' => 1]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pillar' => 'verify', 'sort_order' => 1]);
     $milestone = Milestone::factory()->create(['journey_level_id' => $level->id, 'sort_order' => 1]);
     DocumentTemplate::factory()->create([
         'milestone_id' => $milestone->id,
@@ -63,7 +63,7 @@ it('does not bypass a milestone when the company has the flag but the document i
     $company = Company::factory()->create(['bypass_flags' => ['company_internal_rules' => true]]);
     $template = JourneyTemplate::factory()->create();
     Journey::factory()->create(['company_id' => $company->id, 'journey_template_id' => $template->id]);
-    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pillar' => 'comply', 'sort_order' => 1]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pillar' => 'verify', 'sort_order' => 1]);
     $milestone = Milestone::factory()->create(['journey_level_id' => $level->id, 'sort_order' => 1]);
     // A required doc that has no bypass_key — never waivable.
     DocumentTemplate::factory()->create([
@@ -86,7 +86,7 @@ it('ignores non-required templates when evaluating a bypass', function () {
     $company = Company::factory()->create(['bypass_flags' => ['company_internal_rules' => true]]);
     $template = JourneyTemplate::factory()->create();
     Journey::factory()->create(['company_id' => $company->id, 'journey_template_id' => $template->id]);
-    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pillar' => 'comply', 'sort_order' => 1]);
+    $level = JourneyLevel::factory()->create(['journey_template_id' => $template->id, 'code' => 'L1', 'pillar' => 'verify', 'sort_order' => 1]);
     $milestone = Milestone::factory()->create(['journey_level_id' => $level->id, 'sort_order' => 1]);
     DocumentTemplate::factory()->create([
         'milestone_id' => $milestone->id,

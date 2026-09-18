@@ -22,7 +22,7 @@ class StoreJourneyLevelRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'pathway_name' => ['required', 'string', 'max:255'],
-            'pillar' => ['required', 'string', 'in:comply,scale,lead'],
+            'pillar' => ['required', 'string', 'in:verify,connect,grow'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
     }

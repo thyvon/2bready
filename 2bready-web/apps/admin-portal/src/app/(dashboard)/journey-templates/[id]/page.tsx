@@ -267,7 +267,12 @@ export default function JourneyTemplateDetailPage() {
       if (!prev) return prev;
       const levels = prev.levels ?? [];
       const idx = levels.findIndex((l) => l.id === level.id);
-      const next = idx === -1 ? [...levels, level] : levels.map((l) => (l.id === level.id ? level : l));
+      // Preserve nested children (milestones) from local state — the update
+      // API response doesn't eager-load them, so blindly replacing would wipe
+      // the tree.
+      const existing = idx !== -1 ? levels[idx] : null;
+      const merged = { ...level, milestones: level.milestones?.length ? level.milestones : existing?.milestones ?? [] };
+      const next = idx === -1 ? [...levels, merged] : levels.map((l) => (l.id === level.id ? merged : l));
       return { ...prev, levels: next };
     });
   }
@@ -277,14 +282,14 @@ export default function JourneyTemplateDetailPage() {
       if (!prev) return prev;
       return {
         ...prev,
-        levels: (prev.levels ?? []).map((l) =>
-          l.id !== milestone.journey_level_id
-            ? l
-            : {
-                ...l,
-                milestones: upsertInList(l.milestones ?? [], milestone),
-              }
-        ),
+        levels: (prev.levels ?? []).map((l) => {
+          if (l.id !== milestone.journey_level_id) return l;
+          const existingList = l.milestones ?? [];
+          // Preserve nested children (document_templates) from local state.
+          const existing = existingList.find((m) => m.id === milestone.id);
+          const merged = { ...milestone, document_templates: milestone.document_templates?.length ? milestone.document_templates : existing?.document_templates ?? [] };
+          return { ...l, milestones: upsertInList(existingList, merged) };
+        }),
       };
     });
   }
@@ -299,8 +304,11 @@ export default function JourneyTemplateDetailPage() {
           milestones: (l.milestones ?? []).map((m) => {
             if (m.id !== milestoneId) return m;
             const docs = m.document_templates ?? [];
+            const existing = docs.find((d) => d.id === doc.id);
+            // Preserve nested children from local state.
+            const merged = { ...doc, children: doc.children?.length ? doc.children : existing?.children ?? [] };
             const idx = docs.findIndex((d) => d.id === doc.id);
-            const next = idx === -1 ? [...docs, doc] : docs.map((d) => (d.id === doc.id ? doc : d));
+            const next = idx === -1 ? [...docs, merged] : docs.map((d) => (d.id === doc.id ? merged : d));
             return { ...m, document_templates: next };
           }),
         })),
@@ -690,9 +698,9 @@ export default function JourneyTemplateDetailPage() {
                 control={levelForm.control}
                 render={({ field }) => (
                   <FormSelect {...field} fullWidth>
-                    <MenuItem value="comply">{t('journey_template.pillar.comply')}</MenuItem>
-                    <MenuItem value="scale">{t('journey_template.pillar.scale')}</MenuItem>
-                    <MenuItem value="lead">{t('journey_template.pillar.lead')}</MenuItem>
+                    <MenuItem value="verify">{t('journey_template.pillar.verify')}</MenuItem>
+                    <MenuItem value="connect">{t('journey_template.pillar.connect')}</MenuItem>
+                    <MenuItem value="grow">{t('journey_template.pillar.grow')}</MenuItem>
                   </FormSelect>
                 )}
               />

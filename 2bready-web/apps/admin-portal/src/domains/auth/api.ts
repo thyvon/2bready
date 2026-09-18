@@ -52,7 +52,7 @@ export async function googleAuthStatus(): Promise<boolean> {
 // leave this app for Google's consent screen, then come back to the backend's
 // callback route, which redirects here again with an exchange code.
 export function googleAuthRedirectUrl(): string {
-  return `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google/redirect?portal=admin`;
+  return `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/api/v1/auth/google/redirect?portal=admin`;
 }
 
 export async function googleAuthExchange(code: string): Promise<LoginResponse> {

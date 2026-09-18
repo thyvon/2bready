@@ -160,9 +160,9 @@ const kh: Record<keyof typeof en, string> = {
   'journey.milestone_complete': 'បញ្ចប់',
   'journey.milestone_verified_count': '{verified}/{total} បានផ្ទៀងផ្ទាត់',
   'journey.milestone_zero_verified': '0/{total} បានផ្ទៀងផ្ទាត់',
-  'journey.pillar_comply': 'អនុលោម',
-  'journey.pillar_scale': 'ពង្រីក',
-  'journey.pillar_lead': 'ដឹកនាំ',
+  'journey.pillar_verify': 'ផ្ទៀងផ្ទាត់',
+  'journey.pillar_connect': 'ភ្ជាប់',
+  'journey.pillar_grow': 'លូតលាស់',
 
   // ─── Legal consent (restricted L3/L4 documents) ─────────────────────────
   'legal_consent.title': 'បញ្ជាក់ការចូលប្រើប្រាស់',
