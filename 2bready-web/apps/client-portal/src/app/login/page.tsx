@@ -13,9 +13,11 @@ import Alert from '@mui/material/Alert';
 import MuiLink from '@mui/material/Link';
 import GoogleIcon from '@mui/icons-material/Google';
 import { GlowButton } from '@2bready/ui-core';
+import { BrandLogo } from '@2bready/ui-core';
 import FormTextField from '@/components/forms/FormTextField';
 import { getApiError } from '@2bready/api-client';
 import { BrandMark } from '@/components/layout/BrandMark';
+import { useThemeBrandLogo } from '@/lib/branding';
 import AuroraBackground from '@/components/layout/AuroraBackground';
 import { loginSchema, loginDefaults, type LoginInput } from '@/lib/login-schema';
 import { login, googleAuthStatus, googleAuthRedirectUrl } from '@/lib/auth-api';
@@ -29,6 +31,7 @@ export default function LoginPage() {
   const { setAuth, setPendingTotp } = useAuthStore();
   const [serverError, setServerError] = useState('');
   const [googleEnabled, setGoogleEnabled] = useState(false);
+  const logoUrl = useThemeBrandLogo();
 
   useEffect(() => {
     googleAuthStatus().then(setGoogleEnabled).catch(() => setGoogleEnabled(false));
@@ -108,7 +111,7 @@ export default function LoginPage() {
                 mb: 3,
               }}
             >
-              <BrandMark size={28} />
+              <BrandLogo logoUrl={logoUrl} fallback={<BrandMark size={28} />} height={28} maxWidth={120} />
             </Box>
             <Typography
               sx={{
@@ -145,7 +148,7 @@ export default function LoginPage() {
         >
           <Box sx={{ width: '100%', maxWidth: 360 }}>
             <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-              <BrandMark size={28} />
+              <BrandLogo logoUrl={logoUrl} fallback={<BrandMark size={28} />} height={28} maxWidth={120} />
             </Box>
 
             <Box sx={{ mb: 4, textAlign: 'center' }}>
