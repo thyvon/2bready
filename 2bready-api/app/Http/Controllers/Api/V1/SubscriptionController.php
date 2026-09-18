@@ -57,7 +57,7 @@ class SubscriptionController extends Controller
 
         return ApiResponse::created([
             'subscription' => new SubscriptionResource($result['subscription']),
-            'payment' => new PaymentResource($result['payment']),
+            'payment' => $result['payment'] ? new PaymentResource($result['payment']) : null,
             'gateway_data' => $result['gateway_data'],
         ]);
     }

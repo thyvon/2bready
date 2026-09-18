@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Payment\Actions;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Journey\Actions\ActivateJourneyAction;
 use App\Domain\Package\Models\Package;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Enums\PaymentStatus;
@@ -13,13 +14,17 @@ use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\Payment\Services\PaymentGatewayResolver;
 use App\Exceptions\DuplicateSubscriptionException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SubscribeToPackageAction
 {
-    public function __construct(private readonly PaymentGatewayResolver $gatewayResolver) {}
+    public function __construct(
+        private readonly PaymentGatewayResolver $gatewayResolver,
+        private readonly ActivateJourneyAction $activateJourneyAction,
+    ) {}
 
-    /** @return array{subscription: Subscription, payment: Payment, gateway_data: array<string, mixed>} */
+    /** @return array{subscription: Subscription, payment: Payment|null, gateway_data: array<string, mixed>} */
     public function execute(Company $company, Package $package, PaymentMethod $method): array
     {
         // One live subscription per journey level, across ALL packages of that
@@ -36,6 +41,11 @@ class SubscribeToPackageAction
 
         if ($liveExists) {
             throw new DuplicateSubscriptionException($package);
+        }
+
+        // Free packages activate immediately — no payment flow needed.
+        if ($package->price_cents === 0) {
+            return $this->activateFreePackage($company, $package);
         }
 
         $subscription = Subscription::create([
@@ -57,5 +67,25 @@ class SubscribeToPackageAction
         $gatewayData = $this->gatewayResolver->resolve($method)->initiate($payment);
 
         return ['subscription' => $subscription, 'payment' => $payment, 'gateway_data' => $gatewayData];
+    }
+
+    private function activateFreePackage(Company $company, Package $package): array
+    {
+        $subscription = DB::transaction(function () use ($company, $package): Subscription {
+            $subscription = Subscription::create([
+                'company_id' => $company->id,
+                'package_id' => $package->id,
+                'status' => SubscriptionStatus::Active,
+                'started_at' => now(),
+            ]);
+
+            $company->update(['active_subscription_id' => $subscription->id]);
+
+            $this->activateJourneyAction->execute($company);
+
+            return $subscription;
+        });
+
+        return ['subscription' => $subscription, 'payment' => null, 'gateway_data' => []];
     }
 }

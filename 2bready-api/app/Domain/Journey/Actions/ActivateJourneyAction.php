@@ -6,21 +6,27 @@ namespace App\Domain\Journey\Actions;
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Journey\Enums\JourneyStatus;
+use App\Domain\Journey\Exceptions\JourneyTemplateNotFoundException;
 use App\Domain\Journey\Models\Journey;
 use App\Domain\Journey\Models\JourneyTemplate;
 
 /**
- * Fired when a company is created — matches its (country_code, industry_id)
- * against a JourneyTemplate and instantiates the company's Journey. Every
- * matching company gets a Journey row unconditionally; "journey activation
- * by plan" (per the proposal) is enforced one layer up, in
- * JourneyProgressService::unlockedLevelCodes(), which caps which levels
- * actually surface as unlocked based on the company's active subscription.
+ * Activates a company's journey by matching (country_code, industry_id) to an
+ * active JourneyTemplate. Idempotent — returns existing Journey if already
+ * activated.
  */
 class ActivateJourneyAction
 {
-    public function execute(Company $company): ?Journey
+    public function execute(Company $company): Journey
     {
+        $existing = Journey::query()
+            ->where('company_id', $company->id)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
         $template = JourneyTemplate::query()
             ->where('country_code', $company->country_code)
             ->where('industry_id', $company->industry_id)
@@ -28,7 +34,10 @@ class ActivateJourneyAction
             ->first();
 
         if (! $template) {
-            return null;
+            throw new JourneyTemplateNotFoundException(
+                $company->country_code,
+                (string) $company->industry_id,
+            );
         }
 
         return Journey::create([

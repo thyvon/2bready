@@ -102,7 +102,9 @@ export default function BillingPage() {
         setSubscribing(pricing.pkg.id);
         try {
           const result = await subscribeToPackage(pricing.pkg.id);
-          setBankDetails({ payment: result.payment, gatewayData: result.gateway_data });
+          if (result.payment) {
+            setBankDetails({ payment: result.payment, gatewayData: result.gateway_data });
+          }
           await refresh();
           toast.success(t('billing.toast_started', { name: pricing.pkg.name }));
         } catch (err) {

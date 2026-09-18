@@ -20,7 +20,7 @@ export interface BankTransferGatewayData {
 
 export interface SubscribeResult {
   subscription: Subscription;
-  payment: Payment;
+  payment: Payment | null;
   gateway_data: BankTransferGatewayData;
 }
 

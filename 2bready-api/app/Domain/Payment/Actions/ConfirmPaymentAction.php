@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Payment\Actions;
 
+use App\Domain\Journey\Actions\ActivateJourneyAction;
+use App\Domain\Journey\Exceptions\JourneyTemplateNotFoundException;
 use App\Domain\Marketplace\Actions\ActivateTpHireAction;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\Package\Enums\BillingPeriod;
@@ -15,11 +17,15 @@ use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\User\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /** Admin/finance confirms a payment — activates whatever it paid for. */
 class ConfirmPaymentAction
 {
-    public function __construct(private readonly ActivateTpHireAction $activateTpHire) {}
+    public function __construct(
+        private readonly ActivateTpHireAction $activateTpHire,
+        private readonly ActivateJourneyAction $activateJourneyAction,
+    ) {}
 
     public function execute(Payment $payment, User $confirmedBy): Payment
     {
@@ -74,5 +80,19 @@ class ConfirmPaymentAction
         ]);
 
         $subscription->company->update(['active_subscription_id' => $subscription->id]);
+
+        // Activate the company's journey now that the subscription is active.
+        // If no matching JourneyTemplate exists yet, log and continue — the
+        // subscription is still valid; journey will activate when a template
+        // becomes available.
+        try {
+            $this->activateJourneyAction->execute($subscription->company);
+        } catch (JourneyTemplateNotFoundException $e) {
+            Log::warning('Journey activation skipped — no template found', [
+                'company_id' => $subscription->company_id,
+                'country_code' => $subscription->company->country_code,
+                'industry_id' => $subscription->company->industry_id,
+            ]);
+        }
     }
 }
