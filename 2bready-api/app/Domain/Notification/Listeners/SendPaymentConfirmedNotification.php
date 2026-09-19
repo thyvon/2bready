@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace App\Domain\Notification\Listeners;
 
 use App\Domain\Company\Models\Company;
+use App\Domain\Notification\Enums\NotificationType;
 use App\Domain\Notification\Notifications\PaymentConfirmedNotification;
+use App\Domain\Notification\Traits\DispatchesWithPreferences;
 use App\Domain\Payment\Events\PaymentConfirmed;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-/**
- * Notifies a company's users when their payment is confirmed.
- * Cross-domain: event lives in Payment, listener in Notification.
- * Queued so mail never runs on the confirmation thread.
- */
 class SendPaymentConfirmedNotification implements ShouldQueue
 {
+    use DispatchesWithPreferences;
+
     public function handle(PaymentConfirmed $event): void
     {
         $payment = $event->payment->loadMissing(['company.users', 'payable.package']);
@@ -28,7 +27,11 @@ class SendPaymentConfirmedNotification implements ShouldQueue
         }
 
         foreach ($company->users as $user) {
-            $user->notify(PaymentConfirmedNotification::forPayment($payment));
+            $this->notifyWithPreferences(
+                $user,
+                PaymentConfirmedNotification::forPayment($payment),
+                NotificationType::PaymentConfirmed,
+            );
         }
     }
 }

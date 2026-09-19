@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Listeners;
 
-use App\Domain\Company\Models\Company;
+use App\Domain\Notification\Enums\NotificationType;
 use App\Domain\Notification\Notifications\SubscriptionCancelledNotification;
+use App\Domain\Notification\Traits\DispatchesWithPreferences;
 use App\Domain\Payment\Events\SubscriptionCancelled;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-/**
- * Notifies a company's users when their subscription is cancelled.
- * Cross-domain: event lives in Payment, listener in Notification.
- */
 class SendSubscriptionCancelledNotification implements ShouldQueue
 {
+    use DispatchesWithPreferences;
+
     public function handle(SubscriptionCancelled $event): void
     {
         $subscription = $event->subscription->loadMissing(['company.users', 'package']);
 
-        /** @var Company|null $company */
         $company = $subscription->company;
 
         if ($company === null) {
@@ -27,7 +25,11 @@ class SendSubscriptionCancelledNotification implements ShouldQueue
         }
 
         foreach ($company->users as $user) {
-            $user->notify(SubscriptionCancelledNotification::forSubscription($subscription));
+            $this->notifyWithPreferences(
+                $user,
+                SubscriptionCancelledNotification::forSubscription($subscription),
+                NotificationType::SubscriptionCancelled,
+            );
         }
     }
 }

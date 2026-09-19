@@ -79,8 +79,22 @@ const kh: Record<keyof typeof en, string> = {
   'header.language': 'ភាសា',
   'header.notifications': 'ការជូនដំណឹង',
   'header.no_notifications': 'មិនទាន់មានការជូនដំណឹងទេ',
+  'header.mark_all_read': 'សម្គាល់ថាអានរួចទាំងអស់',
+  'header.earlier': 'មុននេះ',
+  'header.today': 'ថ្ងៃនេះ',
+  'header.yesterday': 'ម្សិលមិញ',
+  'header.undo': 'មិនធ្វើ',
+  'header.marked_as_read': 'បានសម្គាល់ថាអានរួច',
   'header.account': 'គណនី',
   'header.sign_out': 'ចាកចេញ',
+
+  // ─── Notification Preferences ───────────────────────────────────────────
+  'notification_preferences.title': 'ចំណូលចិត្តការជូនដំណឹង',
+  'notification_preferences.description': 'ជ្រើសរើសការជូនដំណឹងដែលអ្នកទទួលបាននិងរបៀប។',
+  'notification_preferences.email': 'អ៊ីមែល',
+  'notification_preferences.in_app': 'ក្នុងកម្មវិធី',
+  'notification_preferences.save': 'រក្សាទុកចំណូលចិត្ត',
+  'notification_preferences.saved': 'បានរក្សាទុកចំណូលចិត្ត',
 
   // ─── Company suspended lockout screen ───────────────────────────────────
   'company_suspended.title': 'គណនីត្រូវបានផ្អាក',

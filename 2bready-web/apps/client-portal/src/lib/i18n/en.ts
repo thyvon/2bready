@@ -74,8 +74,22 @@ const en = {
   'header.language': 'Language',
   'header.notifications': 'Notifications',
   'header.no_notifications': 'No notifications yet',
+  'header.mark_all_read': 'Mark all as read',
+  'header.earlier': 'Earlier',
+  'header.today': 'Today',
+  'header.yesterday': 'Yesterday',
+  'header.undo': 'Undo',
+  'header.marked_as_read': 'Marked as read',
   'header.account': 'Account',
   'header.sign_out': 'Sign out',
+
+  // ─── Notification Preferences ───────────────────────────────────────────
+  'notification_preferences.title': 'Notification Preferences',
+  'notification_preferences.description': 'Choose which notifications you receive and how.',
+  'notification_preferences.email': 'Email',
+  'notification_preferences.in_app': 'In-app',
+  'notification_preferences.save': 'Save preferences',
+  'notification_preferences.saved': 'Preferences saved',
 
   // ─── Company suspended lockout screen ───────────────────────────────────
   'company_suspended.title': 'Account suspended',
