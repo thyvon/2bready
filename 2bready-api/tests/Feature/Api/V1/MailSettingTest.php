@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 use App\Domain\Company\Models\Company;
 use App\Domain\Shared\Mail\MailSettingTestMail;
+use App\Domain\Shared\Mail\ResendTransport;
 use App\Domain\Shared\Services\MailSettingService;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Envelope;
+use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mime\Email;
 
 uses(RefreshDatabase::class);
 
@@ -100,27 +105,27 @@ it('routes Resend host to resend HTTPS transport on runtime config', function ()
 });
 
 it('sends email via ResendTransport over HTTPS API', function () {
-    \Illuminate\Support\Facades\Http::fake([
-        'https://api.resend.com/emails' => \Illuminate\Support\Facades\Http::response([
+    Http::fake([
+        'https://api.resend.com/emails' => Http::response([
             'id' => 'resend-msg-12345',
         ], 200),
     ]);
 
-    $transport = new \App\Domain\Shared\Mail\ResendTransport('re_test_key_123');
+    $transport = new ResendTransport('re_test_key_123');
 
-    $email = (new \Symfony\Component\Mime\Email())
+    $email = (new Email)
         ->from('noreply@2bready.asia')
         ->to('test@example.com')
         ->subject('Test Subject')
         ->text('Hello Text Body')
         ->html('<p>Hello HTML Body</p>');
 
-    $envelope = \Symfony\Component\Mailer\Envelope::create($email);
-    $sentMessage = new \Symfony\Component\Mailer\SentMessage($email, $envelope);
+    $envelope = Envelope::create($email);
+    $sentMessage = new SentMessage($email, $envelope);
 
     $transport->send($sentMessage);
 
-    \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+    Http::assertSent(function ($request) {
         return $request->url() === 'https://api.resend.com/emails'
             && $request->hasHeader('Authorization', 'Bearer re_test_key_123')
             && $request['subject'] === 'Test Subject'
@@ -128,4 +133,3 @@ it('sends email via ResendTransport over HTTPS API', function () {
             && $request['html'] === '<p>Hello HTML Body</p>';
     });
 });
-

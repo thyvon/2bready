@@ -34,11 +34,19 @@ use App\Domain\Journey\Policies\JourneyTemplatePolicy;
 use App\Domain\Journey\Policies\MilestonePolicy;
 use App\Domain\Marketplace\Models\TpHire;
 use App\Domain\Marketplace\Policies\TpHirePolicy;
+use App\Domain\Notification\Listeners\SendAuditApprovedNotification;
 use App\Domain\Notification\Listeners\SendDocumentExpiredNotification;
+use App\Domain\Notification\Listeners\SendDocumentVerifiedNotification;
+use App\Domain\Notification\Listeners\SendPaymentConfirmedNotification;
+use App\Domain\Notification\Listeners\SendPaymentRejectedNotification;
+use App\Domain\Notification\Listeners\SendSubscriptionCancelledNotification;
 use App\Domain\Package\Models\Lead;
 use App\Domain\Package\Models\Package;
 use App\Domain\Package\Policies\LeadPolicy;
 use App\Domain\Package\Policies\PackagePolicy;
+use App\Domain\Payment\Events\PaymentConfirmed;
+use App\Domain\Payment\Events\PaymentRejected;
+use App\Domain\Payment\Events\SubscriptionCancelled;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Subscription;
 use App\Domain\Payment\Policies\PaymentPolicy;
@@ -155,10 +163,15 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         Event::listen(DocumentVerified::class, CompleteMilestoneOnDocumentVerified::class);
+        Event::listen(DocumentVerified::class, SendDocumentVerifiedNotification::class);
         Event::listen(DocumentExpired::class, RevertMilestoneCompletionOnDocumentExpired::class);
         Event::listen(DocumentExpired::class, SendDocumentExpiredNotification::class);
         Event::listen(AuditDecisionMade::class, UpdateComplianceScoreListener::class);
         Event::listen(AuditDecisionMade::class, IssueTrustBadgeListener::class);
+        Event::listen(AuditDecisionMade::class, SendAuditApprovedNotification::class);
+        Event::listen(PaymentConfirmed::class, SendPaymentConfirmedNotification::class);
+        Event::listen(PaymentRejected::class, SendPaymentRejectedNotification::class);
+        Event::listen(SubscriptionCancelled::class, SendSubscriptionCancelledNotification::class);
         Event::listen(AuditableActionOccurred::class, RecordAuditLogListener::class);
         // Fires on RegisterUserAction's event(new Registered($user)) — sends the
         // verification email via User's now-wired MustVerifyEmail trait. Internal

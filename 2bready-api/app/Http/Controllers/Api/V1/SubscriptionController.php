@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Journey\Exceptions\JourneyTemplateNotFoundException;
 use App\Domain\Package\Models\Package;
 use App\Domain\Payment\Actions\CancelSubscriptionAction;
 use App\Domain\Payment\Actions\SubscribeToPackageAction;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\Subscription;
 use App\Exceptions\DuplicateSubscriptionException;
-use App\Domain\Journey\Exceptions\JourneyTemplateNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Payment\SubscribeRequest;
 use App\Http\Resources\Api\V1\PaymentResource;

@@ -11,14 +11,11 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Tells a company a recurring document has now lapsed. Sent by
- * SendDocumentExpiredNotification (listener on DocumentExpired) to every
- * user of the owning company. Deliberately silent on journey-level impact —
- * RevertMilestoneCompletionOnDocumentExpired (a separate listener on the
- * same event) is what actually reverts the milestone; this notification
- * doesn't need to duplicate that logic, just report the fact.
+ * Tells a company user their document has been verified.
+ * Sent by SendDocumentVerifiedNotification (listener on DocumentVerified).
+ * Separate from the milestone-completion logic — purely informational.
  */
-class DocumentExpiredNotification extends Notification implements ShouldQueue
+class DocumentVerifiedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -39,8 +36,8 @@ class DocumentExpiredNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => "Expired: \"{$this->documentName}\" needs renewal",
-            'message' => "Your compliance document \"{$this->documentName}\" has expired.",
+            'title' => "Document verified: \"{$this->documentName}\"",
+            'message' => "Your compliance document \"{$this->documentName}\" has been verified.",
             'action_url' => config('app.client_url', '/portal'),
         ];
     }
@@ -48,8 +45,8 @@ class DocumentExpiredNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("Expired: \"{$this->documentName}\" needs renewal")
-            ->line("Your compliance document \"{$this->documentName}\" has expired.")
-            ->line('Upload a current version to restore this requirement to good standing.');
+            ->subject("Document verified: \"{$this->documentName}\"")
+            ->line("Your compliance document \"{$this->documentName}\" has been verified.")
+            ->line('This requirement is now in good standing.');
     }
 }

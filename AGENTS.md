@@ -65,6 +65,54 @@ Scramble (Laravel) → OpenAPI (`/docs/api.json`) → `packages/api-client/src/g
 7. MUI for interactive elements, Tailwind for layout/spacing, no inline style for spacing. CSS vars via `cssVariables: true`.
 8. Two layout conventions coexist (do not "unify" them): admin/tp-portal use `src/domains/{x}/api.ts|hooks.ts|schemas.ts`; client-portal uses flat `src/lib/{x}-api.ts` + `src/lib/{x}-schema.ts`.
 
+## Code consistency patterns
+
+**Before writing any new code, always check existing patterns first.** Look at 2-3 similar files/domains in the codebase to understand the established conventions (file structure, naming, component patterns, API flow). Never assume a pattern — verify it exists. If two patterns coexist, follow the one closest to the area you're working in.
+
+Every new page/feature must follow these patterns — they are the established convention, not suggestions.
+
+**Frontend — Page structure:**
+- Every page starts with `'use client'`, then React imports, then MUI, then local components, then domain imports, then `lib/` imports.
+- State ordering: `router`, `toast`, `t` (translation), then domain hooks, then `useState` in this order: data array, `loading`, `dialogOpen`, `editing`, `serverError`, `pendingDelete`, `deleting`, then any domain-specific state.
+- Data loading: `useEffect` with `let cancelled = false` + named `async function run()` or async IIFE — never bare `await` at top-level of effect. Both patterns coexist (admin uses named function, client uses IIFE).
+- Refetch after mutations: silent `refetch()` callback that calls the list API without flipping `loading` (no spinner flash).
+
+**Frontend — Forms:**
+- Always RHF + Zod. Schema in `domains/{x}/schemas.ts`. Defaults exported alongside schema.
+- `useWatch` for conditional fields (React Compiler lint is ON — never top-level `watch()`).
+- Dialog forms: `reset(defaults)` on open, `setServerError('')` on open, `onSubmit` catches → `setServerError(getApiError(err).message)`.
+- Money: `centsToDecimal` / `decimalToCents` from `lib/utils.ts` — never `/ 100` inline.
+
+**Frontend — Tables (DataTable):**
+- Columns defined as `Column<T>[]` array with `key`, `label`, `render`.
+- Status column uses `<StatusBadge status={...} />`.
+- Actions column: `IconButton` with `EditIcon` + `DeleteIcon`, aligned right.
+- Empty state: `emptyTitle` + `emptyDescription` props on DataTable.
+
+**Frontend — Error/loading/empty:**
+- `toast.error(getApiError(err).message)` for all API errors.
+- Loading: `loading` state controls skeleton/spinner on the page or DataTable.
+- Empty: `EmptyState` component with icon + title + description + optional action button.
+
+**Frontend — Dialogs:**
+- Destructive actions use `ConfirmDialog` from `@2bready/ui-core` with `danger` prop.
+- Create/Edit dialogs: MUI `Dialog` + `DialogTitle` + `DialogContent` + `DialogActions`, wrapped in `<Box component="form" onSubmit={handleSubmit(onSubmit)}>`.
+
+**Backend — Controller flow:**
+- Every endpoint: `FormRequest` → one `Action` class → `Resource` response.
+- `ApiResponse::success()` / `ApiResponse::created()` / `ApiResponse::noContent()` — never raw `response()->json()`.
+- Route model binding for single entities. Authorization via `$this->authorize()` calling the Policy.
+
+**Backend — Actions:**
+- One class per use case, `execute()` method, strict types.
+- Fire domain events for side effects — never call another domain's Action directly.
+- Validation exceptions via `ValidationException::withMessages()`.
+
+**Backend — Tests (Pest):**
+- Every endpoint gets: happy path (200/201/204), validation (422), auth (401), policy (403).
+- Factories for all models. `actingAs()` for auth.
+- Test names describe the scenario: `it('lets an admin remove a member from a company')`.
+
 ## API surface (v1, prefix /api/v1)
 
 - Public: `auth/*`, `leads`, `pricing`, `industry-options`, `data-room/{token}/verify`, `data-room/{token}/documents/{doc}/preview-url`
@@ -79,9 +127,9 @@ Scramble (Laravel) → OpenAPI (`/docs/api.json`) → `packages/api-client/src/g
 0. **Sprint 8 remainder**: support.php / notification.php / report.php still stubbed (Support & Notification domains have scaffold structure only); SOP portion of Sprint 8 is done.
 0b. **Data Room leftover decision**: does LegalConsent gate external data-room viewers for P3/P4 docs? Currently not consulted (defensible per v3 isolation mandate) — owner to confirm.
 1. **Support ticketing backend** — Models/Enums/DTOs scaffolded, `support.php` still `// TODO: add routes`; needs endpoints/actions/policies/tests.
-2. **Notification domain wiring** — folder structure exists but no Actions/routes; hook listeners onto existing events (payment confirmed, audit approved…), email channel via Mailpit.
+2. **Notification domain wiring** — DONE: 5 notification listeners wired to existing events (PaymentConfirmed, PaymentRejected, AuditDecisionMade, DocumentVerified, SubscriptionCancelled) + 5 notification classes (mail + database channels) + 6 Pest listener tests. NotificationController (index/markAsRead/markAllAsRead) + routes + 9 Pest API tests. Migration for `notifications` table (char(26) PK, char(26) notifiable_id for ULIDs). Client-portal `NotificationBell` wired to fetch real notifications with unread badge, mark-as-read, mark-all-as-read. All registered in AppServiceProvider. (2026-09)
 3. **Report/Report & analytics dashboard** — no Report domain at all; `report.php` stubbed.
-4. **Subscription expiry** — nothing flips `active`→`expired`; entitlements never lapse (`JourneyProgressService` MAX-cap makes accumulation permanent).
+4. **Subscription expiry** — DONE: `ExpireOverdueSubscriptionsAction` + `ExpireSubscriptionsJob` scheduled daily 01:30; `JourneyProgressService` already filters by Active status. Sweeps `active → expired` when `expires_at` passes. (2026-09)
 5. **Stale `companies.active_subscription_id`** — written by `ConfirmPaymentAction`, read by nothing (cap logic moved to multi-subscription MAX); decide delete-vs-repurpose; tests still bless it.
 6. **ADMIT Unit lead-upsell trigger** (14 days, 0% progress — from platform_settings).
 7. Minor debt: submit/confirm/reject have guards but no optimistic locking under concurrency; admin payments filter omits `failed`; client billing page i18n + `PricingCard` inline cents division violations; empty scaffold dirs (`TrustBadge/DTOs`, `Audit/QueryFilters`).
@@ -129,3 +177,4 @@ Local ports: admin 3000, client 3001, marketing 3002, API 8080, Mailpit 8026, Mi
 - Client portal theme now uses brand colors (2026-09): primary `#183659` (navy), secondary/success `#71B77C` (green), info `#31867E` (teal) — aligned with marketing landing page per brand guidelines. Contained primary buttons = navy bg; secondary = green accent CTA. CSS variables `--2br-nav-active-bg` etc. added. Admin/tp portals still on Vercel monochrome — do not change without owner instruction.
 - **Backend first, then frontend** — always implement and test the API endpoint + Pest tests before wiring the frontend. Don't skip or parallelize; the frontend should consume a proven contract.
 - **Don't assume it works without testing** — always run relevant tests (Pest, typecheck, lint) after changes. Never say "done" without verification.
+- **Update AGENTS.md immediately after completing a scope** — don't wait until session end. When a feature is done, update the "Build state" section right away. When a backlog item is completed, move it from MISSING to EXISTS. When a new convention is learned, add it to Working conventions. Stale AGENTS.md = wrong assumptions next session.
