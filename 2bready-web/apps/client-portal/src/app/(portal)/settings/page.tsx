@@ -7,7 +7,7 @@ export default function SettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/settings/notifications');
+    router.replace('/settings/profile');
   }, [router]);
 
   return null;

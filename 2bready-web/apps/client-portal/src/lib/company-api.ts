@@ -23,6 +23,21 @@ export async function switchActiveCompany(companyId: string): Promise<AuthUser> 
   return res.data.data;
 }
 
+export type UpdateCompanyPayload = {
+  name?: string;
+  name_kh?: string | null;
+  registration_no?: string | null;
+  compliance_start_date?: string | null;
+  industry_id?: string;
+  country_code?: string;
+  default_locale?: string;
+};
+
+export async function updateCompany(companyId: string, data: UpdateCompanyPayload): Promise<Company> {
+  const res = await api.patch<{ data: Company }>(`/companies/${companyId}`, data);
+  return res.data.data;
+}
+
 // Team members of a company (company_owner + company_member roles) — used for
 // e.g. the SOP sign-off employee picker.
 export async function listCompanyUsers(

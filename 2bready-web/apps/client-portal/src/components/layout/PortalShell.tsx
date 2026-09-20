@@ -15,17 +15,15 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 
   if (isSidebar) {
     return (
-      <Box className="flex h-screen">
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         <TopProgressBar />
         <DesktopSidebar />
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <PortalNavbar mode="sidebar" />
           <Box
             component="main"
             sx={{
               flex: 1,
-              width: '100%',
-              overflowY: 'auto',
               px: { xs: 2, md: 4 },
               pt: { xs: 2.5, md: 3.5 },
               pb: { xs: 5, md: 7 },
@@ -43,7 +41,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Box className="flex min-h-screen flex-col">
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <TopProgressBar />
       <PortalNavbar mode="topbar" />
       <Box

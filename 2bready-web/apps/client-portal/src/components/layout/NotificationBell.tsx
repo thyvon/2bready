@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
 import IconButton from '@mui/material/IconButton';
@@ -11,6 +12,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import Fade from '@mui/material/Fade';
+import CircularProgress from '@mui/material/CircularProgress';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
@@ -74,6 +77,7 @@ const NOTIFICATION_SOUND = typeof Audio !== 'undefined'
 
 export function NotificationBell() {
   const { t } = useTranslation();
+  const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -181,7 +185,11 @@ export function NotificationBell() {
 
   const notificationPanel = (
     <Box sx={{ maxHeight: 440, overflowY: 'auto' }}>
-      {notifications.length === 0 && !loading ? (
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress size={24} />
+        </Box>
+      ) : notifications.length === 0 ? (
         <EmptyState title={t('header.no_notifications')} />
       ) : (
         <>
@@ -225,7 +233,7 @@ export function NotificationBell() {
                       handleMarkAsRead(notification.id);
                     }
                     if (notification.data.action_url) {
-                      window.location.href = notification.data.action_url;
+                      router.push(notification.data.action_url);
                     }
                   }}
                   sx={{
@@ -299,28 +307,30 @@ export function NotificationBell() {
       {isMobile ? (
         <>
           {bell}
-          {open && (
-            <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
-              <Paper
-                sx={{
-                  position: 'fixed',
-                  top: 72,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 'calc(100vw - 32px)',
-                  maxWidth: 380,
-                  zIndex: 20,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: '12px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-                  overflow: 'hidden',
-                }}
-              >
-                {notificationPanel}
-              </Paper>
-            </ClickAwayListener>
-          )}
+          <Fade in={open} timeout={200}>
+            <Box>
+              <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
+                <Paper
+                  sx={{
+                    position: 'fixed',
+                    top: 72,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 'calc(100vw - 32px)',
+                    maxWidth: 380,
+                    zIndex: 20,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: '12px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {notificationPanel}
+                </Paper>
+              </ClickAwayListener>
+            </Box>
+          </Fade>
         </>
       ) : (
         <>
@@ -332,21 +342,25 @@ export function NotificationBell() {
             modifiers={[{ name: 'preventOverflow', options: { padding: 16 } }]}
             sx={{ zIndex: 20 }}
           >
-            <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
-              <Paper
-                sx={{
-                  mt: 1,
-                  width: 380,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: '12px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-                  overflow: 'hidden',
-                }}
-              >
-                {notificationPanel}
-              </Paper>
-            </ClickAwayListener>
+            <Fade in={open} timeout={200}>
+              <Box>
+                <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
+                  <Paper
+                    sx={{
+                      mt: 1,
+                      width: 380,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: '12px',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {notificationPanel}
+                  </Paper>
+                </ClickAwayListener>
+              </Box>
+            </Fade>
           </Popper>
         </>
       )}

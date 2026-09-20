@@ -5,8 +5,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, type TranslationKey } from '@/lib/i18n';
 import { useToast } from '@/components/ToastProvider';
 import {
   getNotificationPreferences,
@@ -14,13 +13,13 @@ import {
   type NotificationPreference,
 } from '@/lib/notification-api';
 
-const TYPE_ICONS: Record<string, string> = {
-  payment_confirmed: 'Payment Confirmed',
-  payment_rejected: 'Payment Rejected',
-  audit_approved: 'Audit Approved',
-  document_verified: 'Document Verified',
-  document_expired: 'Document Expired',
-  subscription_cancelled: 'Subscription Cancelled',
+const TYPE_LABELS: Record<string, TranslationKey> = {
+  payment_confirmed: 'notification_preferences.type_payment_confirmed',
+  payment_rejected: 'notification_preferences.type_payment_rejected',
+  audit_approved: 'notification_preferences.type_audit_approved',
+  document_verified: 'notification_preferences.type_document_verified',
+  document_expired: 'notification_preferences.type_document_expired',
+  subscription_cancelled: 'notification_preferences.type_subscription_cancelled',
 };
 
 export function NotificationPreferences() {
@@ -72,29 +71,6 @@ export function NotificationPreferences() {
     }
   };
 
-  if (loading) {
-    return (
-      <Box>
-        {/* Header skeleton */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 1, px: 2, py: 1, mb: 1 }}>
-          <Skeleton variant="text" width="40%" height={14} />
-          <Skeleton variant="text" width="100%" height={14} />
-          <Skeleton variant="text" width="100%" height={14} />
-        </Box>
-        {[1, 2, 3, 4].map((i) => (
-          <Box key={i} sx={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 1, px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-            <Skeleton variant="text" width="60%" height={18} />
-            <Skeleton variant="rounded" width={40} height={22} sx={{ borderRadius: '12px' }} />
-            <Skeleton variant="rounded" width={40} height={22} sx={{ borderRadius: '12px' }} />
-          </Box>
-        ))}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Skeleton variant="rounded" width={120} height={40} sx={{ borderRadius: '20px' }} />
-        </Box>
-      </Box>
-    );
-  }
-
   return (
     <Box>
       <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
@@ -117,7 +93,7 @@ export function NotificationPreferences() {
         }}
       >
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
-          Type
+          {t('notification_preferences.type')}
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
           {t('notification_preferences.email')}
@@ -144,7 +120,7 @@ export function NotificationPreferences() {
           }}
         >
           <Typography variant="body2">
-            {TYPE_ICONS[pref.type] ?? pref.label}
+            {TYPE_LABELS[pref.type] ? t(TYPE_LABELS[pref.type]) : pref.label}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Switch
@@ -164,15 +140,17 @@ export function NotificationPreferences() {
       ))}
 
       {/* Save button */}
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? '...' : t('notification_preferences.save')}
-        </Button>
-      </Box>
+      {!loading && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? '...' : t('notification_preferences.save')}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

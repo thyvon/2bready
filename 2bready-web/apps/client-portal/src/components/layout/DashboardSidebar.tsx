@@ -38,28 +38,22 @@ function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: bo
             fontSize: '0.875rem',
             fontWeight: active ? 600 : 400,
             color: active ? '#ffffff' : 'rgba(255,255,255,0.65)',
-            transition: 'color 0.15s ease, background-color 0.15s ease',
-            '&:hover': {
-              color: '#ffffff',
-              bgcolor: 'rgba(255,255,255,0.08)',
-            },
+            transition: 'color 0.15s ease',
+            '&:hover': { color: '#ffffff' },
           }}
         >
-          {/* Active indicator — green accent bar */}
-          {active && (
-            <Box
-              sx={{
-                position: 'absolute',
-                left: collapsed ? '50%' : 0,
-                top: '50%',
-                transform: collapsed ? 'translate(-50%, -50%)' : 'translateY(-50%)',
-                width: collapsed ? 16 : 3,
-                height: collapsed ? 16 : '60%',
-                borderRadius: '0 4px 4px 0',
-                bgcolor: '#71B77C',
-              }}
-            />
-          )}
+          {/* Active pill — always rendered, opacity toggled (never mounts/unmounts) */}
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '6px',
+              bgcolor: 'rgba(255,255,255,0.1)',
+              opacity: active ? 1 : 0,
+              transition: 'opacity 0.15s ease',
+              zIndex: 0,
+            }}
+          />
 
           <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {item.icon}
@@ -131,6 +125,10 @@ export function DesktopSidebar() {
         bgcolor: '#183659',
         overflow: 'hidden',
         transition: 'width 0.2s ease',
+        position: 'sticky',
+        top: 0,
+        alignSelf: 'flex-start',
+        height: '100vh',
       }}
     >
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>

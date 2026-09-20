@@ -24,6 +24,10 @@ html:not([data-mui-color-scheme]) body {
   visibility: hidden;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);

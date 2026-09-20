@@ -257,18 +257,20 @@ export function PortalNavbar({ mode = 'topbar' }: { mode?: NavMode }) {
         </Box>
       )}
 
-      {/* Sidebar collapse toggle — only in sidebar mode */}
+      {/* Sidebar collapse toggle — only in sidebar mode, hidden on mobile */}
       {mode === 'sidebar' && (
-        <Tooltip title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-          <IconButton
-            size="small"
-            onClick={toggleSidebarCollapsed}
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-          >
-            {sidebarCollapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+          <Tooltip title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <IconButton
+              size="small"
+              onClick={toggleSidebarCollapsed}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+            >
+              {sidebarCollapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+        </Box>
       )}
 
       {/* Spacer */}
