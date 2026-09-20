@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Skeleton from '@mui/material/Skeleton';
+import CircularProgress from '@mui/material/CircularProgress';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
 import TableBody from '@mui/material/TableBody';
@@ -173,72 +173,36 @@ export default function BillingPage() {
             layoutId="billing-period-toggle"
           />
         </Box>
-        <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {!ready
-            ? [0, 1, 2, 3].map((i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    border: '2px solid',
-                    borderColor: 'divider',
-                    borderRadius: '12px',
-                    p: 3,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <Skeleton variant="text" width="50%" height={20} />
-                    <Skeleton variant="text" width="70%" height={28} />
-                    <Skeleton variant="text" width="90%" height={14} />
-                  </Box>
-                  <Box>
-                    <Skeleton variant="text" width="40%" height={32} />
-                    <Skeleton variant="text" width="60%" height={12} sx={{ opacity: 0.5 }} />
-                  </Box>
-                  <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {[1, 2, 3].map((j) => (
-                      <Box key={j} className="flex items-start gap-2">
-                        <Skeleton variant="rounded" width={18} height={18} sx={{ flexShrink: 0, borderRadius: '4px' }} />
-                        <Skeleton variant="text" width={`${60 + (j % 3) * 15}%`} height={14} />
-                      </Box>
-                    ))}
-                  </Box>
-                  <Skeleton variant="rounded" height={40} sx={{ mt: 'auto', borderRadius: '20px' }} />
-                </Box>
-              ))
-            : levelPricing.map((pricing) => (
-                <PricingCard
-                  key={pricing.pkg.id}
-                  pricing={pricing}
-                  status={statusFor(pricing)}
-                  loading={subscribing === pricing.pkg.id}
-                  onSelect={() => handleSelect(pricing)}
-                />
-              ))}
-        </Box>
+        {!ready ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {levelPricing.map((pricing) => (
+              <PricingCard
+                key={pricing.pkg.id}
+                pricing={pricing}
+                status={statusFor(pricing)}
+                loading={subscribing === pricing.pkg.id}
+                onSelect={() => handleSelect(pricing)}
+              />
+            ))}
+          </Box>
+        )}
       </SectionCard>
 
       <SectionCard title={t('billing.payment_history_title')}>
         {!ready ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {[0, 1, 2].map((i) => (
-              <Box key={i} className="flex items-center gap-3">
-                <Skeleton variant="text" width={100 + (i % 3) * 30} height={14} />
-                <Skeleton variant="text" width={60} height={14} />
-                <Skeleton variant="text" width={80} height={14} sx={{ ml: 'auto' }} />
-                <Skeleton variant="text" width={90} height={14} />
-                <Skeleton variant="rounded" width={100} height={22} sx={{ borderRadius: '12px' }} />
-              </Box>
-            ))}
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
           </Box>
         ) : payments.length === 0 ? (
           <EmptyState
             icon={<ReceiptLongOutlinedIcon fontSize="inherit" />}
             title={paymentsError ? t('common.retry') : t('billing.no_payment_history_title')}
             description={paymentsError ? t('billing.toast_could_not_submit') : t('billing.no_payment_history_desc')}
-            action={paymentsError ? <Button size="small" variant="outlined" onClick={() => window.location.reload()}>{t('common.retry')}</Button> : undefined}
+            action={paymentsError ? <Button size="small" variant="outlined" onClick={() => void refresh()}>{t('common.retry')}</Button> : undefined}
           />
         ) : (
           <Table size="small">
@@ -345,7 +309,7 @@ export default function BillingPage() {
               </Box>
               <Box className="flex justify-between">
                 <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_method')}</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{paymentDetail.method === 'manual_bank_transfer' ? 'Bank Transfer' : paymentDetail.method}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{paymentDetail.method === 'manual_bank_transfer' ? t('billing.method_bank_transfer') : paymentDetail.method}</Typography>
               </Box>
               <Box className="flex justify-between items-center">
                 <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_status')}</Typography>

@@ -24,13 +24,18 @@ html:not([data-mui-color-scheme]) body {
   visibility: hidden;
 }
 
-html {
-  scrollbar-gutter: stable;
-}
-
 body {
   background: var(--color-background);
   color: var(--color-foreground);
+}
+
+/* Hide the scrollbar on html — content still scrolls, just no visible bar */
+html::-webkit-scrollbar {
+  display: none;
+}
+html {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 

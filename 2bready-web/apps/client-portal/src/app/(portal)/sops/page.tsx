@@ -17,12 +17,11 @@ import Typography from '@mui/material/Typography';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
-import { Breadcrumbs, SectionCard, GlowButton, EmptyState, RichTextContentViewer } from '@2bready/ui-core';
+import { SectionCard, GlowButton, EmptyState, RichTextContentViewer } from '@2bready/ui-core';
+import { getApiError } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-import { useNavItems } from '@/components/layout/nav-items';
 import { useToast } from '@/components/ToastProvider';
 import { useAuthStore } from '@/store/auth.store';
-import { PageLoader } from '@/components/PageLoader';
 import {
   listSops,
   getSopEffectiveContent,
@@ -50,8 +49,6 @@ export default function SopsPage() {
   const { t, locale } = useTranslation();
   const toast = useToast();
   const user = useAuthStore((s) => s.user);
-  const { all } = useNavItems();
-  const item = all.find((i) => i.href === '/sops');
   const canManage = isCompanyOwner(user);
 
   // ─── Data ──────────────────────────────────────────────────────────────
@@ -142,6 +139,8 @@ export default function SopsPage() {
       await acknowledgeSignoff(signoff.id);
       toast.success(t('sop.ack_success'));
       setMySignoffs((prev) => prev.map((s) => (s.id === signoff.id ? { ...s, signed_at: new Date().toISOString() } : s)));
+    } catch (err) {
+      toast.error(getApiError(err).message || t('sop.load_error'));
     } finally {
       setAcknowledgingId(null);
     }
@@ -193,36 +192,17 @@ export default function SopsPage() {
   const pendingSignoffs = mySignoffs.filter((s) => !s.signed_at);
   const doneSignoffs = mySignoffs.filter((s) => s.signed_at);
 
-  if (loading) return <PageLoader />;
-
   return (
     <Box className="flex flex-col gap-6">
-      <Breadcrumbs
-        icon={
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: '8px',
-              bgcolor: 'text.primary',
-              color: 'background.paper',
-              flexShrink: 0,
-            }}
-          >
-            {item?.icon}
-          </Box>
-        }
-        items={[{ label: t('nav.overview'), href: '/' }, { label: item?.label ?? 'SOPs' }]}
-      />
-
       {loadError && <Alert severity="error">{loadError}</Alert>}
 
       {/* ─── Your acknowledgments ────────────────────────────────────────── */}
       <SectionCard title={t('sop.acknowledgments_title')} subtitle={t('sop.acknowledgments_subtitle')}>
-        {!loadError && pendingSignoffs.length === 0 && doneSignoffs.length === 0 ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : !loadError && pendingSignoffs.length === 0 && doneSignoffs.length === 0 ? (
           <EmptyState icon={<TaskAltOutlinedIcon />} title={t('sop.no_assignments')} description={t('sop.no_assignments_desc')} />
         ) : (
           <Box className="flex flex-col">
@@ -269,7 +249,11 @@ export default function SopsPage() {
 
       {/* ─── Reading view ────────────────────────────────────────────────── */}
       <SectionCard title={t('sop.yours_title')} subtitle={t('sop.yours_subtitle')}>
-        {!loadError && sops.length === 0 ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : !loadError && sops.length === 0 ? (
           <EmptyState
             icon={<MenuBookOutlinedIcon />}
             title={t('sop.empty')}
@@ -329,15 +313,14 @@ export default function SopsPage() {
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-              Need help drafting SOPs?
+              {t('sop.cta_title')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              ADMIT Unit&apos;s compliance experts can draft your Organizational Chart, Job Descriptions, and Core SOP
-              Documents for you — book a free consultation.
+              {t('sop.cta_desc')}
             </Typography>
           </Box>
           <GlowButton href="/support" size="medium">
-            Request Consultation
+            {t('sop.cta_button')}
           </GlowButton>
         </Box>
       </SectionCard>

@@ -273,6 +273,9 @@ const en = {
   'sop.send_success': 'SOP sent for sign-off.',
   'sop.status_col': 'Status',
   'sop.employee_col': 'Employee',
+  'sop.cta_title': 'Need help drafting SOPs?',
+  'sop.cta_desc': 'ADMIT Unit\'s compliance experts can draft your Organizational Chart, Job Descriptions, and Core SOP Documents for you — book a free consultation.',
+  'sop.cta_button': 'Request Consultation',
 
   // ─── Login ───────────────────────────────────────────────────────────────
   'login.brand_tagline': 'Verify. Connect. Grow.',
@@ -397,6 +400,7 @@ const en = {
   'billing.payment_detail_type': 'Type',
   'billing.payment_detail_amount': 'Amount',
   'billing.payment_detail_method': 'Method',
+  'billing.method_bank_transfer': 'Bank Transfer',
   'billing.payment_detail_status': 'Status',
   'billing.payment_detail_created': 'Created',
   'billing.payment_detail_submitted': 'Submitted',

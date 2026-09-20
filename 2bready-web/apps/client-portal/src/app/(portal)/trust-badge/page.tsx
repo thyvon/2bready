@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
+import CircularProgress from '@mui/material/CircularProgress';
 import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
@@ -42,14 +42,8 @@ export default function TrustBadgePage() {
 
       {loading ? (
         <SectionCard>
-          <Box className="flex flex-col gap-3">
-            <Box className="flex items-center gap-3">
-              <Skeleton variant="circular" width={56} height={56} />
-              <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" height={24} />
-                <Skeleton variant="text" width="40%" height={16} />
-              </Box>
-            </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
           </Box>
         </SectionCard>
       ) : trustBadgesError ? (
@@ -191,9 +185,8 @@ export default function TrustBadgePage() {
 
       <SectionCard title={t('trust_badge.public_verification_title')} subtitle={t('trust_badge.public_verification_subtitle')}>
         {loading ? (
-          <Box className="flex flex-col items-center text-center gap-3" sx={{ py: 2 }}>
-            <Skeleton variant="rounded" width="80%" height={16} />
-            <Skeleton variant="rounded" width="60%" height={16} />
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
           </Box>
         ) : firstBadge?.certificate ? (
           <Box className="flex flex-col items-center text-center gap-3" sx={{ py: 2 }}>

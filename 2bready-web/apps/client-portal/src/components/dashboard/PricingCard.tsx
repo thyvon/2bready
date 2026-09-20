@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
+import CircularProgress from '@mui/material/CircularProgress';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -54,27 +54,12 @@ function PricingCardSkeleton() {
         p: 3,
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 280,
       }}
     >
-      <Box>
-        <Skeleton variant="text" width="50%" height={20} />
-        <Skeleton variant="text" width="70%" height={28} />
-        <Skeleton variant="text" width="90%" height={16} />
-      </Box>
-      <Box>
-        <Skeleton variant="text" width="40%" height={32} />
-        <Skeleton variant="text" width="60%" height={14} />
-      </Box>
-      <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {[1, 2, 3].map((i) => (
-          <Box key={i} className="flex items-start gap-2">
-            <Skeleton variant="rounded" width={18} height={18} sx={{ flexShrink: 0, borderRadius: '4px' }} />
-            <Skeleton variant="text" width={`${70 + (i % 3) * 10}%`} height={16} />
-          </Box>
-        ))}
-      </Box>
-      <Skeleton variant="rounded" height={40} sx={{ mt: 'auto', borderRadius: '20px' }} />
+      <CircularProgress size={28} />
     </Box>
   );
 }
@@ -90,10 +75,6 @@ export function PricingCard({ pricing, status, loading = false, onSelect, period
   const { pkg, level } = pricing;
   const isFree = pkg.price_cents === 0;
   const taken = status === 'active' || status === 'pending';
-
-  if (loading) {
-    return <PricingCardSkeleton />;
-  }
 
   return (
     <Box

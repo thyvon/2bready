@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Dialog from '@mui/material/Dialog';
@@ -32,7 +33,6 @@ import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import { getApiError } from '@2bready/api-client';
 import api from '@/lib/api';
 import { SectionCard, EmptyState, StatusBadge, DocumentPreviewDialog, DocumentUploadPreviewDialog, PillToggle, ConfirmDialog } from '@2bready/ui-core';
-import Skeleton from '@mui/material/Skeleton';
 import { useTranslation, type TranslationKey } from '@/lib/i18n';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { JourneyTree, type RenderDocAction } from '@/components/dashboard/JourneyTree';
@@ -629,33 +629,8 @@ export default function JourneyPage() {
           card below it, same as the taxonomy editor, rather than nesting
           every level inside one shared card. */}
       {loading ? (
-        <Box className="flex flex-col gap-4">
-          {[0, 1, 2].map((i) => (
-            <Box
-              key={i}
-              sx={{
-                borderRadius: '12px',
-                border: '1px solid',
-                borderColor: 'divider',
-                overflow: 'hidden',
-              }}
-            >
-              <Box sx={{ px: 2.5, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '6px', flexShrink: 0 }} />
-                <Skeleton variant="text" width={120 + (i % 2) * 40} height={18} />
-                <Skeleton variant="text" width={60} height={14} sx={{ ml: 'auto', opacity: 0.5 }} />
-              </Box>
-              <Box sx={{ px: 2.5, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {[0, 1].map((j) => (
-                  <Box key={j} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pl: 4 }}>
-                    <Skeleton variant="rounded" width={20} height={20} sx={{ borderRadius: '4px', flexShrink: 0 }} />
-                    <Skeleton variant="text" width={`${50 + (j % 3) * 15}%`} height={14} />
-                    <Skeleton variant="rounded" width={72} height={22} sx={{ borderRadius: '12px', flexShrink: 0, ml: 'auto' }} />
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          ))}
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress size={28} />
         </Box>
       ) : totalMatches > 0 && (
         <JourneyTree

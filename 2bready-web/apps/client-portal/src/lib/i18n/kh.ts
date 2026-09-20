@@ -278,6 +278,9 @@ const kh: Record<keyof typeof en, string> = {
   'sop.send_success': 'SOP ត្រូវបានផ្ញើសម្រាប់ទទួលស្គាល់។',
   'sop.status_col': 'ស្ថានភាព',
   'sop.employee_col': 'បុគ្គលិក',
+  'sop.cta_title': 'ត្រូវការជំនួយក្នុងការរៀបចំគោលការណ៍ប្រតិបត្តិការ?',
+  'sop.cta_desc': 'ក្រុមការងារ ADMIT Unit អាចជួយរៀបចំតារាងរចនាសម្ព័ន្ធ ការពិពណ៌នាការងារ និងគោលការណ៍ប្រតិបត្តិការសំខាន់ៗសម្រាប់ក្រុមហ៊ុនរបស់អ្នក។',
+  'sop.cta_button': 'ស្នើសុំការពិគ្រោះយោបល់',
 
   // ─── Login ───────────────────────────────────────────────────────────────
   'login.brand_tagline': 'ផ្ទៀងផ្ទាត់។ តភ្ជាប់។ លូតលាស់។',
@@ -400,6 +403,7 @@ const kh: Record<keyof typeof en, string> = {
   'billing.payment_detail_type': 'ប្រភេទ',
   'billing.payment_detail_amount': 'ចំនួនទឹកប្រាក់',
   'billing.payment_detail_method': 'វិធីសាស្ត្រ',
+  'billing.method_bank_transfer': 'ការផ្ទេរប្រាក់តាមធនាគារ',
   'billing.payment_detail_status': 'ស្ថានភាព',
   'billing.payment_detail_created': 'បង្កើត',
   'billing.payment_detail_submitted': 'បានដាក់ស្នើ',

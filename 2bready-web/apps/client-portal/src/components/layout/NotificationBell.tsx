@@ -307,30 +307,32 @@ export function NotificationBell() {
       {isMobile ? (
         <>
           {bell}
-          <Fade in={open} timeout={200}>
-            <Box>
-              <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
-                <Paper
-                  sx={{
-                    position: 'fixed',
-                    top: 72,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 'calc(100vw - 32px)',
-                    maxWidth: 380,
-                    zIndex: 20,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: '12px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {notificationPanel}
-                </Paper>
-              </ClickAwayListener>
-            </Box>
-          </Fade>
+          {open && (
+            <Fade in timeout={200}>
+              <Box>
+                <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
+                  <Paper
+                    sx={{
+                      position: 'fixed',
+                      top: 72,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 'calc(100vw - 32px)',
+                      maxWidth: 380,
+                      zIndex: 20,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: '12px',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {notificationPanel}
+                  </Paper>
+                </ClickAwayListener>
+              </Box>
+            </Fade>
+          )}
         </>
       ) : (
         <>

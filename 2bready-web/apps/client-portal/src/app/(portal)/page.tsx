@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Skeleton from '@mui/material/Skeleton';
+import CircularProgress from '@mui/material/CircularProgress';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { SectionCard, GlowButton } from '@2bready/ui-core';
@@ -79,25 +79,10 @@ export default function OverviewPage() {
 
   return (
     <Box className="flex flex-col gap-6">
-      {/* Hero — skeleton circle + text lines when loading, real component when ready */}
+      {/* Hero — loading spinner when loading, real component when ready */}
       {loading ? (
-        <Box
-          sx={{
-            borderRadius: '12px',
-            border: '1px solid',
-            borderColor: 'divider',
-            p: 3,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 3,
-          }}
-        >
-          <Skeleton variant="circular" width={64} height={64} />
-          <Box sx={{ flex: 1 }}>
-            <Skeleton variant="text" width={180} height={24} />
-            <Skeleton variant="text" width={260} height={14} sx={{ opacity: 0.6 }} />
-          </Box>
-          <Skeleton variant="text" width={80} height={20} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress size={28} />
         </Box>
       ) : (
         <TrustJourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
@@ -134,33 +119,6 @@ export default function OverviewPage() {
                   </Box>
                 );
               })}
-            </Box>
-          </SectionCard>
-        </>
-      )}
-
-      {/* Skeleton for API-dependent sections while loading */}
-      {loading && (
-        <>
-          <SectionCard>
-            <Box className="flex items-center gap-4">
-              <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: '8px', flexShrink: 0 }} />
-              <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" height={18} />
-                <Skeleton variant="text" width="80%" height={14} sx={{ opacity: 0.6 }} />
-              </Box>
-              <Skeleton variant="rounded" width={100} height={36} sx={{ borderRadius: '20px', flexShrink: 0 }} />
-            </Box>
-          </SectionCard>
-          <SectionCard>
-            <Box className="flex flex-col gap-3">
-              {[0, 1, 2, 3].map((i) => (
-                <Box key={i} className="flex items-center gap-3">
-                  <Skeleton variant="text" width={140} height={14} />
-                  <Skeleton variant="rounded" height={8} sx={{ flexGrow: 1, borderRadius: 4 }} />
-                  <Skeleton variant="text" width={40} height={14} />
-                </Box>
-              ))}
             </Box>
           </SectionCard>
         </>
