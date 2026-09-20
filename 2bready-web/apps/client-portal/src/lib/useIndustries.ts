@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8080';
 
 // client-portal has no auth/API wiring at all yet (onboarding runs before any
 // real session exists here) — this hits the one industry endpoint that's

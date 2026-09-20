@@ -6,7 +6,7 @@ import axios from 'axios';
 // The backend never responds 401 here anyway (a wrong PIN is 403, an
 // unknown/expired/revoked token is 404), so a plain instance with no auth
 // header and no interceptors is both simpler and safer.
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8080';
 
 const publicApi = axios.create({
   baseURL: `${apiUrl}/api/v1`,

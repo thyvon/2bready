@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -12,10 +12,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
 import CheckIcon from '@mui/icons-material/Check';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -25,12 +21,20 @@ import { getApiError } from '@2bready/api-client';
 import { useAuthStore } from '@/store/auth.store';
 import { switchActiveCompany, registerOwnCompany } from '@/lib/company-api';
 import { useIndustries, type IndustryOption } from '@/lib/useIndustries';
+import { COUNTRY_OPTIONS } from '@/lib/company-setup-schema';
 import { useToast } from '@/components/ToastProvider';
 import { useTranslation } from '@/lib/i18n';
+import FormTextField from '@/components/forms/FormTextField';
+import FormSelect from '@/components/forms/FormSelect';
+import { FormDatePicker } from '@2bready/ui-core';
 
 const addCompanySchema = z.object({
-  name: z.string().min(1, 'Company name is required'),
+  name: z.string().min(1, 'Company name is required').max(255),
+  name_kh: z.string().max(255).optional().or(z.literal('')),
+  registration_no: z.string().max(100).optional().or(z.literal('')),
   industry_id: z.string().min(1, 'Industry is required'),
+  country_code: z.string().length(2, 'Use a 2-letter country code'),
+  compliance_start_date: z.string().optional().or(z.literal('')),
 });
 
 type AddCompanyInput = z.infer<typeof addCompanySchema>;
@@ -47,7 +51,7 @@ export function CompanySwitcher() {
   const token = useAuthStore((s) => s.token);
   const setAuth = useAuthStore((s) => s.setAuth);
   const toast = useToast();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { industries } = useIndustries({ withTemplatesOnly: true });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [switching, setSwitching] = useState(false);
@@ -56,11 +60,20 @@ export function CompanySwitcher() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<AddCompanyInput>({
     resolver: zodResolver(addCompanySchema),
+    defaultValues: {
+      name: '',
+      name_kh: '',
+      registration_no: '',
+      industry_id: '',
+      country_code: 'KH',
+      compliance_start_date: '',
+    },
   });
 
   const companies = user?.companies ?? [];
@@ -84,6 +97,14 @@ export function CompanySwitcher() {
 
   const handleAddCompany = () => {
     setAnchorEl(null);
+    reset({
+      name: '',
+      name_kh: '',
+      registration_no: '',
+      industry_id: '',
+      country_code: 'KH',
+      compliance_start_date: '',
+    });
     setAddDialogOpen(true);
   };
 
@@ -93,8 +114,11 @@ export function CompanySwitcher() {
     try {
       const result = await registerOwnCompany({
         name: data.name,
+        name_kh: data.name_kh || undefined,
+        registration_no: data.registration_no || undefined,
         industry_id: data.industry_id,
-        country_code: 'KH',
+        country_code: data.country_code,
+        compliance_start_date: data.compliance_start_date || undefined,
       });
       setAuth(result.user, token);
       setAddDialogOpen(false);
@@ -148,38 +172,93 @@ export function CompanySwitcher() {
         </MenuItem>
       </Menu>
 
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogTitle>{t('company.add_dialog_title')}</DialogTitle>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
-            <TextField
-              {...register('name')}
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '16px !important' }}>
+            <FormTextField
               label={t('company.name_label')}
               placeholder={t('company.name_placeholder')}
-              error={!!errors.name}
-              helperText={errors.name?.message}
+              required
               fullWidth
               autoFocus
+              error={!!errors.name}
+              helperText={errors.name?.message}
+              {...register('name')}
             />
-            <FormControl fullWidth error={!!errors.industry_id}>
-              <InputLabel>{t('company.industry_label')}</InputLabel>
-              <Select
-                {...register('industry_id')}
-                label={t('company.industry_label')}
-                defaultValue=""
-              >
-                {industries.map((industry: IndustryOption) => (
-                  <MenuItem key={industry.id} value={industry.id}>
-                    {industry.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.industry_id && (
-                <Box component="span" sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5, ml: 1.5 }}>
-                  {errors.industry_id.message}
-                </Box>
+            <FormTextField
+              label={t('company.name_kh_label') ?? 'Company Name (Khmer)'}
+              placeholder="ឈ្មោះក្រុមហ៊ុន"
+              fullWidth
+              error={!!errors.name_kh}
+              helperText={errors.name_kh?.message}
+              {...register('name_kh')}
+            />
+            <FormTextField
+              label={t('company.registration_no_label') ?? 'Business Registration No.'}
+              placeholder="e.g. 00012345"
+              fullWidth
+              error={!!errors.registration_no}
+              helperText={errors.registration_no?.message}
+              {...register('registration_no')}
+            />
+            <Controller
+              name="industry_id"
+              control={control}
+              render={({ field }) => (
+                <FormSelect
+                  {...field}
+                  label={t('company.industry_label')}
+                  required
+                  fullWidth
+                  error={!!errors.industry_id}
+                  helperText={errors.industry_id?.message}
+                >
+                  {industries.map((industry: IndustryOption) => (
+                    <MenuItem key={industry.id} value={industry.id}>
+                      {locale === 'kh' && industry.name_kh ? industry.name_kh : industry.name}
+                    </MenuItem>
+                  ))}
+                </FormSelect>
               )}
-            </FormControl>
+            />
+            <Controller
+              name="country_code"
+              control={control}
+              render={({ field }) => (
+                <FormSelect
+                  {...field}
+                  label={t('company.country_label') ?? 'Country'}
+                  required
+                  fullWidth
+                  error={!!errors.country_code}
+                  helperText={errors.country_code?.message}
+                >
+                  {COUNTRY_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </FormSelect>
+              )}
+            />
+            <Controller
+              name="compliance_start_date"
+              control={control}
+              render={({ field }) => (
+                <FormDatePicker
+                  label={t('company.compliance_start_date') ?? 'Compliance Start Date'}
+                  variant="outlined"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  fullWidth
+                  error={!!errors.compliance_start_date}
+                  helperText={errors.compliance_start_date?.message ?? 'Optional — leave blank to use today.'}
+                />
+              )}
+            />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
             <Button variant="outlined" onClick={() => setAddDialogOpen(false)} disabled={creating}>

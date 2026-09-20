@@ -5,10 +5,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 import Skeleton from '@mui/material/Skeleton';
 import { useTranslation } from '@/lib/i18n';
+import { useToast } from '@/components/ToastProvider';
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -26,13 +25,10 @@ const TYPE_ICONS: Record<string, string> = {
 
 export function NotificationPreferences() {
   const { t } = useTranslation();
+  const toast = useToast();
   const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; type: 'success' | 'error' }>({
-    open: false,
-    type: 'success',
-  });
 
   useEffect(() => {
     let cancelled = false;
@@ -68,9 +64,9 @@ export function NotificationPreferences() {
         })),
       );
       setPreferences(updated);
-      setSnackbar({ open: true, type: 'success' });
+      toast.success(t('notification_preferences.saved'));
     } catch {
-      setSnackbar({ open: true, type: 'error' });
+      toast.error(t('notification_preferences.save_error'));
     } finally {
       setSaving(false);
     }
@@ -79,9 +75,22 @@ export function NotificationPreferences() {
   if (loading) {
     return (
       <Box>
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} height={60} sx={{ mb: 1 }} />
+        {/* Header skeleton */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 1, px: 2, py: 1, mb: 1 }}>
+          <Skeleton variant="text" width="40%" height={14} />
+          <Skeleton variant="text" width="100%" height={14} />
+          <Skeleton variant="text" width="100%" height={14} />
+        </Box>
+        {[1, 2, 3, 4].map((i) => (
+          <Box key={i} sx={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 1, px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Skeleton variant="text" width="60%" height={18} />
+            <Skeleton variant="rounded" width={40} height={22} sx={{ borderRadius: '12px' }} />
+            <Skeleton variant="rounded" width={40} height={22} sx={{ borderRadius: '12px' }} />
+          </Box>
         ))}
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton variant="rounded" width={120} height={40} sx={{ borderRadius: '20px' }} />
+        </Box>
       </Box>
     );
   }
@@ -164,17 +173,6 @@ export function NotificationPreferences() {
           {saving ? '...' : t('notification_preferences.save')}
         </Button>
       </Box>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ open: false, type: 'success' })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={snackbar.type} onClose={() => setSnackbar({ open: false, type: 'success' })}>
-          {snackbar.type === 'success' ? t('notification_preferences.saved') : 'Error'}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

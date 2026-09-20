@@ -18,6 +18,7 @@ interface AuthState {
   totpFlow: TotpFlowState;
   hasHydrated: boolean;
   setAuth: (user: AuthUser, token: string) => void;
+  updateUser: (user: AuthUser) => void;
   setPendingTotp: (user: AuthUser, token: string, flow: 'setup_required' | 'challenge') => void;
   completeTotpFlow: (token: string) => void;
   clearAuth: () => void;
@@ -35,6 +36,10 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, token) => {
         localStorage.setItem('client_auth_token', token);
         set({ user, token, isAuthenticated: true, totpFlow: 'none' });
+      },
+
+      updateUser: (user) => {
+        set({ user });
       },
 
       setPendingTotp: (user, token, flow) => {

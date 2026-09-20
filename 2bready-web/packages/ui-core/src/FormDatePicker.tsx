@@ -47,7 +47,7 @@ export interface FormDatePickerProps {
 // across both apps used before (no calendar UI, inconsistent
 // browser/OS-native styling that couldn't follow the app theme).
 export const FormDatePicker = forwardRef<HTMLInputElement, FormDatePickerProps>(function FormDatePicker(
-  { value, onChange, onBlur, name, label, size, variant = 'standard', fullWidth, error, helperText, disabled, minDate, maxDate, sx, startAdornment },
+  { value, onChange, onBlur, name, label, size = 'medium', variant = 'standard', fullWidth, error, helperText, disabled, minDate, maxDate, sx, startAdornment },
   ref,
 ) {
   const parsed = value ? parseISO(value) : null;

@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth.store';
 // browser-visible API URL has been configured yet. Without this fallback the
 // browser tries to post to `undefined/api/v1/...`, which makes sign-up appear
 // to do nothing.
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8080';
 
 // First real API wiring in this app (previously fully mock/UI-only). No redirect
 // on 401 the way admin-portal's onUnauthorized does — there's no /login page here

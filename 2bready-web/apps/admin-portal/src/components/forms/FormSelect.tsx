@@ -10,7 +10,7 @@ type FormSelectProps = Omit<TextFieldProps, 'select' | 'variant'>;
 // select>. Same prop surface as TextField, so migrating an existing select is
 // a drop-in rename.
 const FormSelect = forwardRef<HTMLDivElement, FormSelectProps>(function FormSelect(props, ref) {
-  return <TextField {...props} select variant="standard" ref={ref} />;
+  return <TextField {...props} select variant="standard" size="medium" ref={ref} />;
 });
 
 export default FormSelect;

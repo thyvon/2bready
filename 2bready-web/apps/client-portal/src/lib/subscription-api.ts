@@ -78,5 +78,6 @@ export async function listMyPayments(): Promise<Payment[]> {
 // subscription actually activates.
 export async function submitManualPayment(paymentId: string): Promise<Payment> {
   const res = await api.post<{ data: Payment }>(`/payments/${paymentId}/submit`);
+  invalidateSubscriptionsCache();
   return res.data.data;
 }

@@ -15,6 +15,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import IconButton from '@mui/material/IconButton';
 import { SectionCard, EmptyState, StatusBadge, PillToggle, ConfirmDialog } from '@2bready/ui-core';
 import { getApiError, formatCents, formatDate } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -55,6 +57,7 @@ export default function BillingPage() {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [bankDetails, setBankDetails] = useState<{ payment: Payment; gatewayData: BankTransferGatewayData } | null>(null);
+  const [paymentDetail, setPaymentDetail] = useState<Payment | null>(null);
 
   // Confirm dialog state
   const [confirmAction, setConfirmAction] = useState<{ title: string; description: string; onConfirm: () => void } | null>(null);
@@ -260,16 +263,21 @@ export default function BillingPage() {
                     <StatusBadge status={payment.status} label={t(PAYMENT_STATUS_I18N[payment.status] ?? 'billing.payment_status_pending')} />
                   </TableCell>
                   <TableCell align="right">
-                    {payment.status === 'pending' && payment.method === 'manual_bank_transfer' && (
-                      <Box className="flex justify-end gap-2">
-                        <Button size="small" variant="text" onClick={() => handleViewBankDetails(payment)}>
-                          {t('billing.view_bank_details')}
-                        </Button>
-                        <Button size="small" variant="outlined" loading={submitting === payment.id} onClick={() => handleMarkSent(payment.id)}>
-                          {t('billing.btn_ive_sent_it')}
-                        </Button>
-                      </Box>
-                    )}
+                    <Box className="flex justify-end gap-1">
+                      <IconButton size="small" onClick={() => setPaymentDetail(payment)} aria-label={t('billing.btn_view')}>
+                        <VisibilityOutlinedIcon fontSize="small" />
+                      </IconButton>
+                      {payment.status === 'pending' && payment.method === 'manual_bank_transfer' && (
+                        <>
+                          <Button size="small" variant="text" onClick={() => handleViewBankDetails(payment)}>
+                            {t('billing.view_bank_details')}
+                          </Button>
+                          <Button size="small" variant="outlined" loading={submitting === payment.id} onClick={() => handleMarkSent(payment.id)}>
+                            {t('billing.btn_ive_sent_it')}
+                          </Button>
+                        </>
+                      )}
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -314,6 +322,74 @@ export default function BillingPage() {
             onClick={() => bankDetails && handleMarkSent(bankDetails.payment.id)}
           >
             {t('billing.btn_ive_sent_transfer')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={paymentDetail !== null} onClose={() => setPaymentDetail(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('billing.payment_detail_title')}</DialogTitle>
+        <DialogContent>
+          {paymentDetail && (
+            <Box className="flex flex-col gap-3">
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_reference')}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{paymentDetail.gateway_reference ?? '—'}</Typography>
+              </Box>
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_type')}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{paymentDetail.payable_type === 'tp_hire' ? t('billing.type_tp_hire') : t('billing.type_package')}</Typography>
+              </Box>
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_amount')}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatCents(paymentDetail.amount_cents, paymentDetail.currency)}</Typography>
+              </Box>
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_method')}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{paymentDetail.method === 'manual_bank_transfer' ? 'Bank Transfer' : paymentDetail.method}</Typography>
+              </Box>
+              <Box className="flex justify-between items-center">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_status')}</Typography>
+                <StatusBadge status={paymentDetail.status} label={t(PAYMENT_STATUS_I18N[paymentDetail.status] ?? 'billing.payment_status_pending')} />
+              </Box>
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_created')}</Typography>
+                <Typography variant="body2">{formatDate(paymentDetail.created_at ?? '')}</Typography>
+              </Box>
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_submitted')}</Typography>
+                <Typography variant="body2">{formatDate(paymentDetail.submitted_at ?? '')}</Typography>
+              </Box>
+              <Box className="flex justify-between">
+                <Typography variant="body2" color="text.secondary">{t('billing.payment_detail_confirmed')}</Typography>
+                <Typography variant="body2">{formatDate(paymentDetail.confirmed_at ?? '')}</Typography>
+              </Box>
+              {paymentDetail.bank_name && (
+                <>
+                  <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, mt: 1 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1.5 }}>{t('billing.payment_detail_bank')}</Typography>
+                  </Box>
+                  <Box className="flex flex-col gap-1.5">
+                    <Box className="flex justify-between">
+                      <Typography variant="body2" color="text.secondary">{t('billing.bank_label')}</Typography>
+                      <Typography variant="body2">{paymentDetail.bank_name}</Typography>
+                    </Box>
+                    <Box className="flex justify-between">
+                      <Typography variant="body2" color="text.secondary">{t('billing.account_name_label')}</Typography>
+                      <Typography variant="body2">{paymentDetail.account_name}</Typography>
+                    </Box>
+                    <Box className="flex justify-between">
+                      <Typography variant="body2" color="text.secondary">{t('billing.account_number_label')}</Typography>
+                      <Typography variant="body2">{paymentDetail.account_number}</Typography>
+                    </Box>
+                  </Box>
+                </>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPaymentDetail(null)} color="inherit">
+            {t('billing.payment_detail_close')}
           </Button>
         </DialogActions>
       </Dialog>

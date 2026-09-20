@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
@@ -11,7 +10,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
@@ -20,6 +18,7 @@ import { useTranslation } from '@/lib/i18n';
 import { useAuthStore } from '@/store/auth.store';
 import { useLayoutStore } from '@/store/layout.store';
 import { logout } from '@/lib/auth-api';
+import { ProfileDialog } from './ProfileDialog';
 
 export function UserMenu() {
   const { t } = useTranslation();
@@ -28,6 +27,7 @@ export function UserMenu() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const { setSettingsDrawerOpen } = useLayoutStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = async () => {
     setAnchorEl(null);
@@ -71,18 +71,18 @@ export function UserMenu() {
           </>
         )}
 
+        <MenuItem onClick={() => { setAnchorEl(null); setProfileOpen(true); }}>
+          <ListItemIcon>
+            <PersonOutlineIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary={t('settings.tab_profile')} />
+        </MenuItem>
+
         <MenuItem onClick={() => { setAnchorEl(null); setSettingsDrawerOpen(true); }}>
           <ListItemIcon>
             <TuneOutlinedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primary={t('settings.title' as never)} />
-        </MenuItem>
-
-        <MenuItem component={Link} href="/settings" onClick={() => setAnchorEl(null)}>
-          <ListItemIcon>
-            <SettingsOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary={t('nav.settings')} />
         </MenuItem>
 
         <Divider sx={{ my: 0.5 }} />
@@ -93,6 +93,8 @@ export function UserMenu() {
           <ListItemText primary={t('header.sign_out')} />
         </MenuItem>
       </Menu>
+
+      <ProfileDialog open={profileOpen} onClose={() => setProfileOpen(false)} />
     </>
   );
 }

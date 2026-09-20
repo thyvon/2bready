@@ -11,7 +11,7 @@ type FormTextFieldProps = Omit<TextFieldProps, 'variant'>;
 // boxed/outlined. Same prop surface as TextField, so migrating an existing
 // field is a drop-in rename.
 const FormTextField = forwardRef<HTMLDivElement, FormTextFieldProps>(function FormTextField(props, ref) {
-  return <TextField {...props} variant="standard" ref={ref} />;
+  return <TextField {...props} variant="standard" size="medium" ref={ref} />;
 });
 
 export default FormTextField;

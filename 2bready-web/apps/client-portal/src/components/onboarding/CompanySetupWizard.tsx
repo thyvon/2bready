@@ -151,7 +151,7 @@ function ReviewSection({
 // doesn't lose their entered data and can just retry from the review step.
 export function CompanySetupWizard({ onComplete }: CompanySetupWizardProps) {
   const { locale } = useTranslation();
-  const { industries, loading: industriesLoading } = useIndustries();
+  const { industries, loading: industriesLoading } = useIndustries({ withTemplatesOnly: true });
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [serverError, setServerError] = useState('');
