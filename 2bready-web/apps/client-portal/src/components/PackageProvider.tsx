@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getPublicPackages, type PackageGroup } from '@/lib/package-api';
+import { useAuthStore } from '@/store/auth.store';
 
 interface PackageContextValue {
   packages: PackageGroup[];
@@ -13,6 +14,7 @@ interface PackageContextValue {
 const PackageContext = createContext<PackageContextValue | null>(null);
 
 export default function PackageProvider({ children }: { children: React.ReactNode }) {
+  const currentCompanyId = useAuthStore((s) => s.user?.current_company_id ?? null);
   const [packages, setPackages] = useState<PackageGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -34,6 +36,8 @@ export default function PackageProvider({ children }: { children: React.ReactNod
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setLoading(true);
+      setError(false);
       try {
         const data = await getPublicPackages();
         if (!cancelled) setPackages(data);
@@ -44,7 +48,7 @@ export default function PackageProvider({ children }: { children: React.ReactNod
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [currentCompanyId]);
 
   const value = useMemo<PackageContextValue>(() => ({ packages, loading, error, refetch: fetchPackages }), [packages, loading, error, fetchPackages]);
 

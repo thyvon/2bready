@@ -5,6 +5,7 @@ import { getMyJourney, allDocuments, countVerified, type Journey } from '@/lib/j
 import { listMySubscriptions, type Subscription } from '@/lib/subscription-api';
 import { listTrustBadges, type TrustBadge } from '@/lib/trust-badge-api';
 import type { LevelBadgeLink } from '@/components/dashboard/LevelCardsGrid';
+import { useAuthStore } from '@/store/auth.store';
 
 interface JourneyContextValue {
   journey: Journey | null;
@@ -38,6 +39,7 @@ const JourneyContext = createContext<JourneyContextValue | null>(null);
 // others also need subscriptions + trust badges.  Fetching all three once in
 // the layout means pages render instantly with everything already available.
 export default function JourneyProvider({ children }: { children: React.ReactNode }) {
+  const currentCompanyId = useAuthStore((s) => s.user?.current_company_id ?? null);
   const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeLevelCodes, setActiveLevelCodes] = useState<Set<string>>(new Set());
@@ -99,6 +101,7 @@ export default function JourneyProvider({ children }: { children: React.ReactNod
     let cancelled = false;
 
     async function load() {
+      setLoading(true);
       await fetchAll();
       if (!cancelled) setLoading(false);
     }
@@ -107,7 +110,7 @@ export default function JourneyProvider({ children }: { children: React.ReactNod
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currentCompanyId]);
 
   const refetch = useCallback(async () => {
     try {

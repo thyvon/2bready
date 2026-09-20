@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
+import Skeleton from '@mui/material/Skeleton';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { SectionCard, GlowButton } from '@2bready/ui-core';
@@ -79,10 +79,31 @@ export default function OverviewPage() {
 
   return (
     <Box className="flex flex-col gap-6">
-      {/* Hero — loading spinner when loading, real component when ready */}
+      {/* Hero skeleton — matches TrustJourneyHero dark gradient card */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={28} />
+        <Box
+          sx={{
+            borderRadius: '8px',
+            p: { xs: 3, md: 4 },
+            background: 'linear-gradient(135deg, #0b1a33 0%, #16305c 100%)',
+            color: '#fff',
+          }}
+        >
+          <Box className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="rounded" width={120} height={20} sx={{ borderRadius: '9999px', mb: 1.5, bgcolor: 'rgba(255,255,255,0.1)' }} />
+              <Skeleton variant="text" width={280} height={32} sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
+              <Skeleton variant="text" width={200} height={14} sx={{ bgcolor: 'rgba(255,255,255,0.06)' }} />
+            </Box>
+            <Box className="flex items-center gap-2.5" sx={{ flexShrink: 0 }}>
+              {[0, 1, 2].map((i) => (
+                <Box key={i} sx={{ px: 2, py: 1.25, borderRadius: '8px', bgcolor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', minWidth: 76, textAlign: 'center' }}>
+                  <Skeleton variant="text" width={40} height={24} sx={{ bgcolor: 'rgba(255,255,255,0.1)', mx: 'auto' }} />
+                  <Skeleton variant="text" width={56} height={12} sx={{ bgcolor: 'rgba(255,255,255,0.06)', mx: 'auto' }} />
+                </Box>
+              ))}
+            </Box>
+          </Box>
         </Box>
       ) : (
         <TrustJourneyHero overallPct={overallPct} currentLevel={currentLevel} pendingDocs={pendingDocs} />
@@ -119,6 +140,35 @@ export default function OverviewPage() {
                   </Box>
                 );
               })}
+            </Box>
+          </SectionCard>
+        </>
+      )}
+
+      {/* Skeletons for below-fold sections while loading */}
+      {loading && (
+        <>
+          {/* Level cards skeleton */}
+          <Box className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Box key={i} sx={{ borderRadius: '8px', border: '1px solid', borderColor: 'divider', p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Skeleton variant="text" width="60%" height={20} />
+                <Skeleton variant="text" width="40%" height={14} />
+                <Skeleton variant="rounded" height={8} sx={{ borderRadius: 4, mt: 1 }} />
+              </Box>
+            ))}
+          </Box>
+
+          {/* Readiness scores skeleton */}
+          <SectionCard title={t('overview.readiness_scores')}>
+            <Box className="flex flex-col gap-3">
+              {[0, 1, 2, 3].map((i) => (
+                <Box key={i} className="flex items-center gap-3">
+                  <Skeleton variant="text" width={140} height={14} />
+                  <Skeleton variant="rounded" height={8} sx={{ flexGrow: 1, borderRadius: 4 }} />
+                  <Skeleton variant="text" width={40} height={14} />
+                </Box>
+              ))}
             </Box>
           </SectionCard>
         </>
